@@ -1,0 +1,103 @@
+{
+  "checkedAt": "2026-09-29T12:21:37.113Z",
+  "deploymentId": "dpl_44VnzAa9ZXQZsi8gtTsrrvv1a9fq",
+  "code": "400b9b5d2b13d0ec4f64f024b4ebab0a3c6c68ac",
+  "keyCreated": true,
+  "keyRevoked": true,
+  "ssoPreserved": true,
+  "originalKeysPreserved": true,
+  "redirectFollowing": false,
+  "studentWrites": 0,
+  "results": [
+    {
+      "route": "/api/preview-identity",
+      "status": 200,
+      "elapsedMs": 263,
+      "cacheControl": "private, no-store",
+      "contentType": "application/json",
+      "identity": {
+        "deploymentHost": "english-academy-student-2u7fzc58e-thetilldawn-3859s-projects.vercel.app",
+        "gitCommitRef": "codex/vocabulary-templates-20260920",
+        "gitCommitSha": "400b9b5d2b13d0ec4f64f024b4ebab0a3c6c68ac",
+        "supabaseProjectRef": "wojxpruvbjzbhrpmsbuy",
+        "vercelEnvironment": "preview"
+      }
+    },
+    {
+      "route": "/admin/login",
+      "status": 200,
+      "elapsedMs": 263,
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "route": "/",
+      "status": 200,
+      "elapsedMs": 376,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "route": "/code",
+      "status": 307,
+      "elapsedMs": 263,
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "contentType": "text/html; charset=utf-8",
+      "redirectPath": "/"
+    },
+    {
+      "route": "/api/admin/wordbook-library",
+      "status": 401,
+      "elapsedMs": 585,
+      "cacheControl": "private, no-store",
+      "contentType": "application/json"
+    },
+    {
+      "route": "/api/admin/wordbook-compositions",
+      "status": 401,
+      "elapsedMs": 196,
+      "cacheControl": "private, no-store",
+      "contentType": "application/json"
+    },
+    {
+      "route": "/api/student/session",
+      "status": 401,
+      "elapsedMs": 127,
+      "cacheControl": "private, no-store",
+      "contentType": "application/json"
+    },
+    {
+      "route": "/student",
+      "status": 200,
+      "elapsedMs": 183,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "contentType": "text/html; charset=utf-8",
+      "streamedRedirectToIndex": true
+    },
+    {
+      "route": "/api/student/dashboard/sections",
+      "status": 405,
+      "elapsedMs": 101,
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "contentType": null
+    }
+  ],
+  "errors": [],
+  "withoutKeyStatusBefore": 302,
+  "activationChecks": [
+    {
+      "status": 200,
+      "redirectOrigin": null
+    }
+  ],
+  "routeActivationRetries": [
+    {
+      "route": "/api/preview-identity",
+      "attempt": 0,
+      "status": 302,
+      "redirectPath": "/sso-api"
+    }
+  ],
+  "revokedKeyStatus": 302,
+  "passed": true
+}

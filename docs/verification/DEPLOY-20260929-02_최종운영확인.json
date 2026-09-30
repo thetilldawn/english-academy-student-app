@@ -1,0 +1,175 @@
+{
+  "code": "400b9b5d2b13d0ec4f64f024b4ebab0a3c6c68ac",
+  "production": {
+    "id": "dpl_J4PFv77FrSeUx2ZE9Dq3wgCcSYJM",
+    "url": "english-academy-student-nrhsy2rdw-thetilldawn-3859s-projects.vercel.app",
+    "readyState": "READY",
+    "target": "production",
+    "ready": 1790684652443,
+    "alias": [
+      "english-academy-student-app.vercel.app",
+      "english-academy-student-app-thetilldawn-3859s-projects.vercel.app",
+      "english-academy-student-app-git-main-thetilldawn-3859s-projects.vercel.app"
+    ],
+    "sha": "400b9b5d2b13d0ec4f64f024b4ebab0a3c6c68ac",
+    "branch": "main"
+  },
+  "preview": {
+    "id": "dpl_44VnzAa9ZXQZsi8gtTsrrvv1a9fq",
+    "code": "400b9b5d2b13d0ec4f64f024b4ebab0a3c6c68ac",
+    "passed": true,
+    "keyRevoked": true,
+    "ssoPreserved": true,
+    "originalKeysPreserved": true
+  },
+  "response": {
+    "checkedAt": "2026-09-29T12:25:30.864Z",
+    "origin": "https://english-academy-student-app.vercel.app",
+    "studentWrites": 0,
+    "results": [
+      {
+        "route": "/admin/login",
+        "status": 200,
+        "expected": 200,
+        "elapsedMs": 585,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "expected": 200,
+        "elapsedMs": 557,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/code",
+        "status": 307,
+        "expected": 307,
+        "elapsedMs": 518,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "redirectPath": "/"
+      },
+      {
+        "route": "/api/preview-identity",
+        "status": 404,
+        "expected": 404,
+        "elapsedMs": 422,
+        "cacheControl": "private, no-store",
+        "contentType": null
+      },
+      {
+        "route": "/api/admin/wordbook-library",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 658,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/admin/wordbook-compositions",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 207,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/session",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 78,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/student",
+        "status": 200,
+        "expected": 307,
+        "elapsedMs": 214,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "streamedRedirectToIndex": true
+      },
+      {
+        "route": "/api/student/dashboard/sections",
+        "status": 405,
+        "expected": 405,
+        "elapsedMs": 96,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": null
+      }
+    ],
+    "errors": [],
+    "passed": true
+  },
+  "authorization": {
+    "checkedAt": "2026-09-29T12:26:18.507Z",
+    "studentWrites": 0,
+    "results": [
+      {
+        "origin": "https://english-academy-student-app.vercel.app",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "errorOnly": true
+      },
+      {
+        "origin": "https://example.com",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "errorOnly": true
+      }
+    ],
+    "passed": true
+  },
+  "errorQueries": {
+    "deploymentId": "dpl_J4PFv77FrSeUx2ZE9Dq3wgCcSYJM",
+    "since": "2026-09-29T12:24:12.443Z",
+    "until": "2026-09-29T12:26:18.602Z",
+    "results": [
+      {
+        "filter": "--status-code 5xx",
+        "code": 0,
+        "parsed": true,
+        "validScope": true,
+        "count": 0,
+        "uniqueCount": 0,
+        "mayBeTruncated": false,
+        "diagnostic": null
+      },
+      {
+        "filter": "--level error",
+        "code": 0,
+        "parsed": true,
+        "validScope": true,
+        "count": 0,
+        "uniqueCount": 0,
+        "mayBeTruncated": false,
+        "diagnostic": null
+      },
+      {
+        "filter": "--level fatal",
+        "code": 0,
+        "parsed": true,
+        "validScope": true,
+        "count": 0,
+        "uniqueCount": 0,
+        "mayBeTruncated": false,
+        "diagnostic": null
+      }
+    ],
+    "passed": true
+  },
+  "protection": {
+    "productionId": "dpl_J4PFv77FrSeUx2ZE9Dq3wgCcSYJM",
+    "keyCount": 0,
+    "ssoDeploymentType": "all_except_custom_domains",
+    "checkedAt": "2026-09-29T12:25:30Z"
+  },
+  "studentWrites": 0,
+  "authenticatedProductionUiChecked": false
+}

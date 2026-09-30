@@ -1,0 +1,1271 @@
+{
+  "observation": {
+    "deploymentId": "dpl_9VAAfnJRtED2YTv6tJztRXo6RpzK",
+    "readyAt": "2026-09-29T11:59:28.874Z",
+    "requestedObservationMinutes": 15,
+    "observationStartedAt": "2026-09-29T12:00:21.490Z",
+    "studentWrites": 0,
+    "samples": [
+      {
+        "checkedAt": "2026-09-29T12:00:21.550Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 593,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 431,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 463,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 459,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 611,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 246,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 162,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 186,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 108,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:01:24.890Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 107,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 245,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 28,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 181,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 490,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 300,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 105,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 198,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 103,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:02:26.738Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 105,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 69,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 32,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 103,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 69,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 50,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 48,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 65,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 36,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:03:27.388Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 102,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 51,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 25,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 73,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 61,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 49,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 35,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 56,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 39,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:04:27.971Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 108,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 59,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 35,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 72,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 34,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 63,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 29,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 44,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 71,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:05:28.564Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 103,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 64,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 16,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 61,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 55,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 53,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 38,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 59,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 32,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:06:29.121Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 110,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 44,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 20,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 57,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 42,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 43,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 58,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 40,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 46,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:07:29.666Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 106,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 41,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 34,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 65,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 55,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 39,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 158,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 82,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 50,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:08:30.386Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 103,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 42,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 27,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 53,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 58,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 57,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 44,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 52,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 45,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:09:30.954Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 99,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 71,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 35,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 54,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 43,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 37,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 50,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 65,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 41,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:10:31.534Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 118,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 45,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 33,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 76,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 47,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 123,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 44,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 90,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 50,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:11:32.238Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 115,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 69,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 19,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 53,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 52,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 43,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 39,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 57,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 38,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:12:32.805Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 111,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 49,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 20,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 57,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 40,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 37,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 51,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 46,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 43,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:13:33.361Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 98,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 62,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 28,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 77,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 53,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 46,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 43,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 60,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 37,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      },
+      {
+        "checkedAt": "2026-09-29T12:14:28.965Z",
+        "origin": "https://english-academy-student-app.vercel.app",
+        "studentWrites": 0,
+        "results": [
+          {
+            "route": "/admin/login",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 102,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/",
+            "status": 200,
+            "expected": 200,
+            "elapsedMs": 46,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "route": "/code",
+            "status": 307,
+            "expected": 307,
+            "elapsedMs": 20,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "redirectPath": "/"
+          },
+          {
+            "route": "/api/preview-identity",
+            "status": 404,
+            "expected": 404,
+            "elapsedMs": 58,
+            "cacheControl": "private, no-store",
+            "contentType": null
+          },
+          {
+            "route": "/api/admin/wordbook-library",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 40,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/admin/wordbook-compositions",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 34,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/api/student/session",
+            "status": 401,
+            "expected": 401,
+            "elapsedMs": 36,
+            "cacheControl": "private, no-store",
+            "contentType": "application/json"
+          },
+          {
+            "route": "/student",
+            "status": 200,
+            "expected": 307,
+            "elapsedMs": 50,
+            "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+            "contentType": "text/html; charset=utf-8",
+            "streamedRedirectToIndex": true
+          },
+          {
+            "route": "/api/student/dashboard/sections",
+            "status": 405,
+            "expected": 405,
+            "elapsedMs": 51,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "contentType": null
+          }
+        ],
+        "errors": [],
+        "passed": true
+      }
+    ],
+    "errors": [
+      "Runtime-log read failed"
+    ],
+    "observationEndedAt": "2026-09-29T12:14:29.413Z",
+    "passed": false
+  },
+  "separateErrorQuery": {
+    "deploymentId": "dpl_9VAAfnJRtED2YTv6tJztRXo6RpzK",
+    "since": "2026-09-29T11:59:28.874Z",
+    "until": "2026-09-29T12:20:12.222Z",
+    "http5xx": 0,
+    "error": 0,
+    "fatal": 0,
+    "passed": true
+  },
+  "note": "관찰 GET은 모두 통과. 전체 로그 조회 제한 시간으로 report.passed=false; 별도 배포별 오류 조회로 보완했다."
+}
