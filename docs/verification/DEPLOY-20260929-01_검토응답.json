@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-09-29T09:37:22.015Z",
+  "deploymentId": "dpl_CgE1CyXsZeR6Kcqq8NfTQX1jxkmw",
+  "code": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+  "passed": true,
+  "keyCreated": true,
+  "keyRevoked": true,
+  "ssoPreserved": true,
+  "originalKeysPreserved": true,
+  "withoutKeyStatusBefore": 302,
+  "revokedKeyStatus": 302,
+  "activationStatuses": [
+    302,
+    200
+  ],
+  "studentWrites": 0,
+  "redirectFollowing": false,
+  "results": [
+    {
+      "route": "/api/preview-identity",
+      "status": 200,
+      "elapsedMs": 65,
+      "cacheControl": "private, no-store",
+      "identity": {
+        "deploymentHost": "english-academy-student-jye8me7zp-thetilldawn-3859s-projects.vercel.app",
+        "gitCommitRef": "codex/vocabulary-templates-20260920",
+        "gitCommitSha": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+        "supabaseProjectRef": "wojxpruvbjzbhrpmsbuy",
+        "vercelEnvironment": "preview"
+      }
+    },
+    {
+      "route": "/admin/login",
+      "status": 200,
+      "elapsedMs": 28
+    },
+    {
+      "route": "/",
+      "status": 200,
+      "elapsedMs": 924
+    },
+    {
+      "route": "/code",
+      "status": 307,
+      "elapsedMs": 30,
+      "redirectPath": "/"
+    },
+    {
+      "route": "/api/admin/wordbook-library",
+      "status": 401,
+      "elapsedMs": 823,
+      "cacheControl": "private, no-store"
+    },
+    {
+      "route": "/api/admin/wordbook-compositions",
+      "status": 401,
+      "elapsedMs": 185,
+      "cacheControl": "private, no-store"
+    },
+    {
+      "route": "/api/student/session",
+      "status": 401,
+      "elapsedMs": 95,
+      "cacheControl": "private, no-store"
+    }
+  ]
+}

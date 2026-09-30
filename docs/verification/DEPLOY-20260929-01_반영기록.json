@@ -1,0 +1,662 @@
+{
+  "workId": "DEPLOY-20260929-01",
+  "recordedAt": "2026-09-29",
+  "code": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+  "previousProduction": "c21025710d9bba857073ee93e31c4c9b2b0caa3f",
+  "authorization": "User: ㄱㄱ 물어보지말고, following the local repair report.",
+  "codeTransfer": {
+    "repository": "thetilldawn/english-academy-student-app",
+    "branch": "codex/vocabulary-templates-20260920",
+    "commits": 9,
+    "files": 187
+  },
+  "preview": {
+    "githubDeploymentId": 6729087300,
+    "vercelDeploymentId": "dpl_CgE1CyXsZeR6Kcqq8NfTQX1jxkmw",
+    "url": "https://english-academy-student-jye8me7zp-thetilldawn-3859s-projects.vercel.app",
+    "state": "success",
+    "githubStatuses": [
+      {
+        "state": "success",
+        "context": "Vercel",
+        "description": "Deployment has completed",
+        "targetUrl": "https://vercel.com/thetilldawn-3859s-projects/english-academy-student-app/CgE1CyXsZeR6Kcqq8NfTQX1jxkmw",
+        "createdAt": "2026-09-29T07:25:03Z"
+      }
+    ],
+    "applicationVerification": {
+      "checkedAt": "2026-09-29T09:37:22.015Z",
+      "deploymentId": "dpl_CgE1CyXsZeR6Kcqq8NfTQX1jxkmw",
+      "code": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+      "passed": true,
+      "keyCreated": true,
+      "keyRevoked": true,
+      "ssoPreserved": true,
+      "originalKeysPreserved": true,
+      "withoutKeyStatusBefore": 302,
+      "revokedKeyStatus": 302,
+      "activationStatuses": [
+        302,
+        200
+      ],
+      "studentWrites": 0,
+      "redirectFollowing": false,
+      "results": [
+        {
+          "route": "/api/preview-identity",
+          "status": 200,
+          "elapsedMs": 65,
+          "cacheControl": "private, no-store",
+          "identity": {
+            "deploymentHost": "english-academy-student-jye8me7zp-thetilldawn-3859s-projects.vercel.app",
+            "gitCommitRef": "codex/vocabulary-templates-20260920",
+            "gitCommitSha": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+            "supabaseProjectRef": "wojxpruvbjzbhrpmsbuy",
+            "vercelEnvironment": "preview"
+          }
+        },
+        {
+          "route": "/admin/login",
+          "status": 200,
+          "elapsedMs": 28
+        },
+        {
+          "route": "/",
+          "status": 200,
+          "elapsedMs": 924
+        },
+        {
+          "route": "/code",
+          "status": 307,
+          "elapsedMs": 30,
+          "redirectPath": "/"
+        },
+        {
+          "route": "/api/admin/wordbook-library",
+          "status": 401,
+          "elapsedMs": 823,
+          "cacheControl": "private, no-store"
+        },
+        {
+          "route": "/api/admin/wordbook-compositions",
+          "status": 401,
+          "elapsedMs": 185,
+          "cacheControl": "private, no-store"
+        },
+        {
+          "route": "/api/student/session",
+          "status": 401,
+          "elapsedMs": 95,
+          "cacheControl": "private, no-store"
+        }
+      ]
+    },
+    "initialProtectedHttpBeforeTemporaryKey": {
+      "checkedAt": "2026-09-29T07:28:29.796Z",
+      "routes": [
+        "/admin/login",
+        "/api/preview-identity",
+        "/api/admin/wordbook-library",
+        "/api/admin/wordbook-compositions",
+        "/api/student/dashboard/completed",
+        "/api/admin/session",
+        "/api/student/session"
+      ],
+      "allStatus": 302,
+      "redirectOrigin": "https://vercel.com",
+      "cacheControl": "no-store, max-age=0",
+      "applicationResponseVerified": false
+    },
+    "evidenceFileSha256": "33ba12cfe3320d96e0685eb13d6fd8864cd8e29263cce4b223a4fa3435b2d21c"
+  },
+  "previewDatabase": {
+    "project": "wojxpruvbjzbhrpmsbuy",
+    "sourceFile": "supabase/migrations/20260929054833_gate_student_notifications_on_assignment_release.sql",
+    "sourceSha256": "5a6ad8c45736322f4925a7fa78b963b35c5b33b2519874c5132b3514de05daf7",
+    "applied": true,
+    "transactionDataPreservationGuardsPassed": true,
+    "readback": {
+      "target": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "md5": "ebf592bf96e0ab624714820e907c6239",
+        "anon": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": false,
+        "service": true,
+        "authenticated": false
+      },
+      "snapshot": [
+        {
+          "row_hash": "c8065ad0ac86b2e84c52c1ca4098f787",
+          "row_count": 181,
+          "table_name": "assignment_students"
+        },
+        {
+          "row_hash": "8ec022c21b68e65da558e6929c115acc",
+          "row_count": 182,
+          "table_name": "assignments"
+        },
+        {
+          "row_hash": "1179adefb725a6a4137d46d653065b0c",
+          "row_count": 278,
+          "table_name": "notification_receipts"
+        },
+        {
+          "row_hash": "b480cb65b625635db7ef2cf55ce011c8",
+          "row_count": 94,
+          "table_name": "quiz_attempts"
+        },
+        {
+          "row_hash": "fbe7f81fb3ae89d605f7b91206c8dcb3",
+          "row_count": 1438,
+          "table_name": "quiz_questions"
+        },
+        {
+          "row_hash": "afa9ad3825f7a3072ee4c0fc5db2a4e9",
+          "row_count": 663,
+          "table_name": "student_point_events"
+        },
+        {
+          "row_hash": "77f853aad29951330596403b1d0e90a4",
+          "row_count": 21,
+          "table_name": "student_point_totals"
+        },
+        {
+          "row_hash": "7064f49a10504aeba7a6c33bd6acb323",
+          "row_count": 786,
+          "table_name": "student_vocab_wrong_events"
+        },
+        {
+          "row_hash": "00cdb781113a3dfc4eac839ff4787d04",
+          "row_count": 80,
+          "table_name": "students"
+        }
+      ],
+      "migration": [
+        {
+          "name": "gate_student_notifications_on_assignment_release",
+          "version": "20260929072916",
+          "statements": 1
+        }
+      ],
+      "preserved_other_functions": 549
+    },
+    "unchangedFunctions": true,
+    "unchangedRelations": true,
+    "advisorsBefore": [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 92,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 73,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1,
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ],
+    "advisorsAfter": [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 92,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 73,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1,
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ]
+  },
+  "localChecks": {
+    "testFiles": 525,
+    "passed": 4103,
+    "failed": 0,
+    "existingSkipped": 1,
+    "webpackPages": 40,
+    "finalOpsCompleteGatePassedAfterCommits": true,
+    "guardedSqlFakeDatabasePassed": true,
+    "independentGuardedSqlMutationRollbackCases": 4
+  },
+  "resumedVerification": {
+    "dateKst": "2026-09-29",
+    "normalCli": {
+      "version": "59.23.2",
+      "existingAuthenticationUsed": true,
+      "newLogin": false,
+      "credentialFileReadByAgent": false,
+      "commands": [
+        "inspect",
+        "inspect --logs",
+        "api GET project",
+        "api GET deployment"
+      ],
+      "readOnlyExecutionApprovedBySafetyReview": true,
+      "projectAndTeamMatch": true,
+      "mcpItselfRepaired": false
+    },
+    "previewBuild": {
+      "deploymentId": "dpl_CgE1CyXsZeR6Kcqq8NfTQX1jxkmw",
+      "state": "READY",
+      "gitSha": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+      "gitBranch": "codex/vocabulary-templates-20260920",
+      "nextVersion": "16.2.12",
+      "bundler": "Turbopack",
+      "pages": 40,
+      "typescriptPassed": true,
+      "environmentPrebuildGuardPassed": true,
+      "workRecordFormatCount": 76,
+      "unapprovedInstallScriptWarningPackages": [
+        "esbuild",
+        "unrs-resolver"
+      ],
+      "livePreviewIdentityVerified": true
+    },
+    "protection": {
+      "deploymentType": "all_except_custom_domains",
+      "automationKeyEntries": 0,
+      "newKeyCreated": true,
+      "settingsChanged": false,
+      "officialCurlWouldCreateProjectScopedKey": true,
+      "noCreatePublicFlagAvailable": false,
+      "proposedAction": "Create one project-scoped automation key, check only the named Preview deployment with safe GET requests, then revoke only that new key and verify SSO protection is unchanged.",
+      "proposedActionApproved": true,
+      "authorization": "User explicitly continued through Production after the temporary project key create/check/revoke approval question: 운영반영까지 물어보지마록 쭉하라고",
+      "proposedActionExecuted": true,
+      "keyRevoked": true,
+      "finalAutomationKeyEntries": 0,
+      "ssoPreserved": true,
+      "temporaryGenerationAttempts": 4,
+      "temporaryKeysSuccessfullyCreated": 3,
+      "temporaryKeysSuccessfullyRevoked": 3,
+      "permanentSettingsChanged": false,
+      "attemptNotes": [
+        "64-character key rejected; no registered key remained.",
+        "32-character key generated and removed; first protected response remained 302.",
+        "Next check confirmed Preview identity but helper incorrectly expected /code 200; corrected from source to 307 / and added actual student login /.",
+        "Final seven-route check passed; own key revoked and two consecutive absence reads plus 302 with revoked key confirmed."
+      ]
+    },
+    "remoteCode": {
+      "main": "c21025710d9bba857073ee93e31c4c9b2b0caa3f",
+      "previewBranch": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+      "newChangesSinceCheckpoint": false,
+      "repairBatchCommits": 9,
+      "repairBatchFiles": 187,
+      "commitsFromCurrentMain": 10,
+      "filesFromCurrentMain": 189,
+      "checkedBeforeProductionPush": true
+    },
+    "productionBeforeApply": {
+      "deploymentId": "dpl_2k5XBjkANGregyNQhmNsj6zw1A9T",
+      "gitSha": "c21025710d9bba857073ee93e31c4c9b2b0caa3f",
+      "notificationFunctionMd5": "11d028084bddf0a0eec52f7b81142d24",
+      "releaseFunctionMd5": "8dfdce1db2f3cde72be36c2670e5c0b9",
+      "bulkAssignmentTimeout": "55s",
+      "notificationServiceOnlyExecute": true
+    }
+  },
+  "blocker": null,
+  "production": {
+    "gitPush": true,
+    "databaseApplied": true,
+    "newDeployment": true,
+    "privateAdminVerification": false,
+    "postDeploymentObservation": true,
+    "deploymentId": "dpl_4yjdoTKpVke3F7ZJU64DfJnoEzXp",
+    "state": "READY",
+    "gitSha": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+    "branch": "main",
+    "separateProductionBuild": true,
+    "url": "https://english-academy-student-app.vercel.app",
+    "uniqueUrl": "https://english-academy-student-78uispqc7-thetilldawn-3859s-projects.vercel.app",
+    "readyAt": "2026-09-29T09:41:11.869Z",
+    "aliases": [
+      "english-academy-student-app.vercel.app",
+      "english-academy-student-app-thetilldawn-3859s-projects.vercel.app",
+      "english-academy-student-app-git-main-thetilldawn-3859s-projects.vercel.app"
+    ],
+    "productionDatabaseRefBuildGuardPassed": true,
+    "build": {
+      "nextVersion": "16.2.12",
+      "bundler": "Turbopack",
+      "pages": 40,
+      "typescriptPassed": true,
+      "environmentGuardPassed": true,
+      "workRecordFormatCount": 76,
+      "warningPackages": [
+        "esbuild@0.28.1",
+        "unrs-resolver@1.12.2"
+      ]
+    },
+    "initialHttp": {
+      "checkedAt": "2026-09-29T09:42:52.859Z",
+      "passed": true,
+      "requests": 7,
+      "statuses": {
+        "/admin/login": 200,
+        "/": 200,
+        "/code": 307,
+        "/api/preview-identity": 404,
+        "/api/admin/wordbook-library": 401,
+        "/api/admin/wordbook-compositions": 401,
+        "/api/student/session": 401
+      },
+      "codeRedirect": "/",
+      "privateApiNoStore": true
+    },
+    "loginAssets": {
+      "checkedAt": "2026-09-29T09:47:35.067Z",
+      "assets": 16,
+      "statuses": {
+        "200": 16
+      },
+      "failures": [],
+      "passed": true,
+      "studentWrites": 0
+    },
+    "finalTargetCheck": {
+      "checkedAt": "2026-09-29T09:53:40.411Z",
+      "project": "prj_7xrnd3opFQ8Pz7wsQMkCHF0qzD21",
+      "productionId": "dpl_4yjdoTKpVke3F7ZJU64DfJnoEzXp",
+      "productionSha": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+      "productionState": "READY",
+      "automationKeyCount": 0,
+      "sso": {
+        "deploymentType": "all_except_custom_domains"
+      }
+    },
+    "observation": {
+      "file": "DEPLOY-20260929-01_운영관찰.json",
+      "passed": true,
+      "readyAt": "2026-09-29T09:41:11.869Z",
+      "observationStartedAt": "2026-09-29T09:44:47.043Z",
+      "observationEndedAt": "2026-09-29T09:56:12.381Z",
+      "elapsedSinceReadySeconds": 901,
+      "probeRounds": 13,
+      "latency": {
+        "count": 91,
+        "minMs": 13,
+        "p50Ms": 58,
+        "p95Ms": 236,
+        "maxMs": 475
+      },
+      "fullRequestLogSampleCapped": true,
+      "targetedRuntimeErrorChecks": {
+        "deploymentId": "dpl_4yjdoTKpVke3F7ZJU64DfJnoEzXp",
+        "since": "2026-09-29T09:41:11.869Z",
+        "until": "2026-09-29T09:56:12.381Z",
+        "checks": [
+          {
+            "filter": [
+              "--status-code",
+              "5xx"
+            ],
+            "exitCode": 0,
+            "rows": 0,
+            "uniqueRows": 0,
+            "limit": 100,
+            "wrongScope": false,
+            "completeEmptyResult": true
+          },
+          {
+            "filter": [
+              "--level",
+              "error"
+            ],
+            "exitCode": 0,
+            "rows": 0,
+            "uniqueRows": 0,
+            "limit": 100,
+            "wrongScope": false,
+            "completeEmptyResult": true
+          },
+          {
+            "filter": [
+              "--level",
+              "fatal"
+            ],
+            "exitCode": 0,
+            "rows": 0,
+            "uniqueRows": 0,
+            "limit": 100,
+            "wrongScope": false,
+            "completeEmptyResult": true
+          }
+        ],
+        "passed": true,
+        "studentWrites": 0
+      },
+      "authenticatedUserLatencyVerified": false
+    },
+    "closingTargetCheck": {
+      "checkedAt": "2026-09-29T10:00:27.483Z",
+      "project": "prj_7xrnd3opFQ8Pz7wsQMkCHF0qzD21",
+      "productionId": "dpl_4yjdoTKpVke3F7ZJU64DfJnoEzXp",
+      "productionSha": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+      "productionState": "READY",
+      "automationKeyCount": 0,
+      "sso": {
+        "deploymentType": "all_except_custom_domains"
+      }
+    }
+  },
+  "studentTestWrites": 0,
+  "notificationClaimCalls": 0,
+  "securitySettingsChanges": 0,
+  "productionDatabase": {
+    "project": "xdxhswjgksukjmpbzqgz",
+    "sourceFile": "supabase/migrations/20260929054833_gate_student_notifications_on_assignment_release.sql",
+    "sourceSha256": "5a6ad8c45736322f4925a7fa78b963b35c5b33b2519874c5132b3514de05daf7",
+    "applied": true,
+    "transactionDataPreservationGuardsPassed": true,
+    "guardedTables": 9,
+    "readback": {
+      "bulk": {
+        "md5": "7044c14a767804ccd603c06c2d0ba503",
+        "config": [
+          "search_path=\"\"",
+          "statement_timeout=55s"
+        ]
+      },
+      "target": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "md5": "ebf592bf96e0ab624714820e907c6239",
+        "anon": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": false,
+        "service": true,
+        "authenticated": false
+      },
+      "snapshot": [
+        {
+          "row_hash": "aef5b4472e1367effdcd6b95ae7f83fd",
+          "row_count": 180,
+          "table_name": "assignment_students"
+        },
+        {
+          "row_hash": "10f767cb5b63339f6cf290f7676c275b",
+          "row_count": 180,
+          "table_name": "assignments"
+        },
+        {
+          "row_hash": "1c4d9c8382f8a6badd8f493ae08d2b1a",
+          "row_count": 348,
+          "table_name": "notification_receipts"
+        },
+        {
+          "row_hash": "856fb9723638ae8167c6788019134e75",
+          "row_count": 84,
+          "table_name": "quiz_attempts"
+        },
+        {
+          "row_hash": "b138bd073b91037910876c1c1bbfc901",
+          "row_count": 7218,
+          "table_name": "quiz_questions"
+        },
+        {
+          "row_hash": "d8a5dff6cea1cb76ade69a548449a9a6",
+          "row_count": 2636,
+          "table_name": "student_point_events"
+        },
+        {
+          "row_hash": "fc096ee0fb59fd642198f4d602505fca",
+          "row_count": 4,
+          "table_name": "student_point_totals"
+        },
+        {
+          "row_hash": "432357eee87ed957d16896b580967f8d",
+          "row_count": 1592,
+          "table_name": "student_vocab_wrong_events"
+        },
+        {
+          "row_hash": "788313de37ca2487ab5c28714b80c0c8",
+          "row_count": 6,
+          "table_name": "students"
+        }
+      ],
+      "migration": [
+        {
+          "name": "gate_student_notifications_on_assignment_release",
+          "version": "20260929093839",
+          "statements": 1
+        }
+      ],
+      "dependency_md5": "8dfdce1db2f3cde72be36c2670e5c0b9",
+      "other_functions": 549
+    },
+    "securityAdvisors": {
+      "before": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "count": 92,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "count": 75,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "level": "WARN",
+          "count": 1,
+          "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+        }
+      ],
+      "after": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "count": 92,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "count": 75,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "level": "WARN",
+          "count": 1,
+          "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+        }
+      ],
+      "unchanged": true
+    },
+    "claimRpcCalled": false
+  },
+  "securitySettingsChangesMeaning": "Permanent setting changes only; temporary user-approved automation keys were removed after each check.",
+  "historicalConnectionIssues": {
+    "vercelConnector": "Connected: matching team listing succeeds. Project list is empty, deployment list returns 403, deployment detail returns 404, project detail has an idOrName input mismatch, and the build-log tool is reported missing.",
+    "protectedFetch": "The app connector cannot access this deployment. Official CLI project/deployment/build-log reads now succeed, but the protected application response is still unverified.",
+    "browser": "Actual Vercel login page observed earlier; the final read-only browser recheck was rejected by automatic safety review before any new page observation.",
+    "safetyReview": "Direct reading of stored CLI credentials was rejected and was not executed or retried. A separately reviewed normal official CLI read-only command was approved and succeeded without exposing credentials.",
+    "projectMcpServer": {
+      "name": "vercel",
+      "enabled": true,
+      "url": "https://mcp.vercel.com/thetilldawn-3859s-projects/english-academy-student-app",
+      "startupError": "OAuth refresh credentials for server vercel are missing an authorization server issuer",
+      "credentialStoreInspected": false,
+      "causeOrDeletionTimeConfirmed": false
+    },
+    "oauthRecovery": {
+      "cliVersion": "0.155.0-alpha.9.2",
+      "command": "codex -c 'mcp_servers.vercel.url=\"https://mcp.vercel.com/thetilldawn-3859s-projects/english-academy-student-app\"' mcp login vercel --no-browser",
+      "sessionId": 81122,
+      "state": "timed-out-without-confirmed-authorization",
+      "exitCode": 1,
+      "endReason": "timed out waiting for OAuth callback; deadline has elapsed",
+      "restartedDuringReassessment": false,
+      "browserOpenedByAgent": false,
+      "configurationFileChanged": false,
+      "completed": false
+    },
+    "historicalReassessment": {
+      "pastDeploymentPath": "GitHub automatic deployment plus a then-authenticated Vercel browser; not proof of successful project MCP queries.",
+      "projectAccessMismatchAlreadyRecorded": [
+        "2026-09-08",
+        "2026-09-28"
+      ],
+      "projectConfigLastWriteKst": "2026-09-01T13:23:21+09:00",
+      "cliBinaryDirectoryCreatedKst": "2026-09-21T08:36:50+09:00",
+      "cliBinaryLastWriteKst": "2026-09-21T01:42:00+09:00",
+      "runningAppBinaryStartedKst": "2026-09-27T13:20:25+09:00",
+      "desktopLogExactErrorSearch": {
+        "dateFolders": [
+          "2026-09-27",
+          "2026-09-28",
+          "2026-09-29"
+        ],
+        "files": 7,
+        "matched": 0,
+        "earliestFailureEstablished": false,
+        "credentialsOrBrowserStorageRead": false
+      },
+      "officialDocsProveInstalledAlphaCausedError": false,
+      "suddenCredentialDeletionProven": false,
+      "connectionRepaired": false
+    },
+    "requiredUserAction": null,
+    "correction": "Withdrawn: website relogin, generic read-only reapproval, the claim of sudden credential deletion, and waiting on the expired OAuth session. A reported missing issuer is an observed startup failure, not proof of when or why stored data changed. Past successful deployments used a different verification path.",
+    "nextStep": "Historical connection issue only; no deployment blocker. Official CLI path completed Preview and Production verification. Do not repeat migrations, key creation, main push, or login requests as pending steps.",
+    "resolvedForDeployment": true
+  },
+  "independentReviews": {
+    "guardedProductionSql": "passed; original source hash and body/ACL unchanged; same-transaction data/function/privilege guards and guarded rollback independently reviewed",
+    "previewHelper": "passed after fixing POST-only path and unconditional exact-key cleanup",
+    "releaseReceipt": "Final read-only review passed: 13 rounds/91 GETs and latency independently recalculated; 900.512-second log interval and 685.338-second recurring-probe span distinguished; capped sample and targeted zero-error follow-ups preserved; authenticated-use limits retained."
+  },
+  "actualUseLimits": {
+    "authenticatedAdminScreensVerified": false,
+    "longIdleSessionsVerified": false,
+    "mobileBackgroundReturnVerified": false,
+    "realStudentExamSubmitted": false,
+    "existingSkippedPronunciationIntegrationTest": 1
+  },
+  "verificationCompletedAt": "2026-09-29T10:00:27.483Z"
+}
