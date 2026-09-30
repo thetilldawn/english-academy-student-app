@@ -2050,8 +2050,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 124,
-      "pathSetSha256": "ab6b962a3f88c85bcfad26cd03c4c9308232103a54f19233af0cc1df395ec8c0"
+      "fileCount": 125,
+      "pathSetSha256": "a04cbb6077ab42a618b249d8c56e8c0ad051c1023b54259d052e89e4b7d23f7c"
     },
     {
       "path": "src/lib/deploy",
@@ -2840,6 +2840,11 @@
       "path": "supabase/migrations/20260930050611_add_personal_notebook_assignments.sql",
       "owner": "assignments",
       "flow": "assignment-notebook-create"
+    },
+    {
+      "path": "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql",
+      "owner": "students",
+      "flow": "student-wrong-word-read"
     }
   ],
   "features": [
@@ -7476,7 +7481,8 @@
         "database": [
           "supabase/migrations/20260929140225_share_wrong_word_notebook_reads.sql",
           "supabase/migrations/20260921020000_page_student_wrong_words.sql",
-          "supabase/migrations/20260929165150_expand_student_word_notebook.sql"
+          "supabase/migrations/20260929165150_expand_student_word_notebook.sql",
+          "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql"
         ],
         "cacheStreaming": [
           "src/app/api/student/wrong-words/route.ts"
@@ -7488,6 +7494,7 @@
           "src/features/students/server/wrong-word-cursor.test.ts",
           "src/lib/database/wrong-word-notebook.integration.test.ts",
           "src/lib/database/notebook-study.integration.test.ts",
+          "src/lib/database/notebook-query-cost.integration.test.ts",
           "src/features/student-dashboard/client/components/notebook-reader.test.tsx",
           "src/design-system/primitives/fit-text/fit-text.test.tsx",
           "src/features/students/server/notebook-cursor.test.ts",
@@ -7619,7 +7626,8 @@
           "src/features/students/server/wrong-word-cursor.ts"
         ],
         "database": [
-          "supabase/migrations/20260930034455_add_student_word_practice.sql"
+          "supabase/migrations/20260930034455_add_student_word_practice.sql",
+          "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql"
         ],
         "cacheStreaming": [
           "src/features/quiz-player/server/practice-http.ts",
@@ -7631,6 +7639,7 @@
           "src/features/quiz-player/domain/practice-plan.test.ts",
           "src/features/quiz-player/api/practice-transport.test.ts",
           "src/lib/database/student-word-practice.integration.test.ts",
+          "src/lib/database/notebook-query-cost.integration.test.ts",
           "src/features/quiz-player/server/practice-http.test.ts",
           "src/lib/quiz/cached-flow-contract.test.ts",
           "src/components/student-shell.test.tsx",
@@ -7736,7 +7745,8 @@
           "src/lib/services/assignment-replacement-errors.ts"
         ],
         "database": [
-          "supabase/migrations/20260930050611_add_personal_notebook_assignments.sql"
+          "supabase/migrations/20260930050611_add_personal_notebook_assignments.sql",
+          "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql"
         ],
         "cacheStreaming": [
           "src/features/assignments/controller/use-notebook-assignment.ts",
@@ -7747,6 +7757,7 @@
           "src/features/assignments/server/notebook-assignment-http.test.ts",
           "src/features/assignments/ui/notebook-assignment-dialog.test.tsx",
           "src/lib/database/notebook-assignment.integration.test.ts",
+          "src/lib/database/notebook-query-cost.integration.test.ts",
           "src/lib/services/quiz/question-snapshot.test.ts",
           "src/features/assignments/ui/assignment-workspace.test.tsx",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",

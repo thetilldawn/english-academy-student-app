@@ -1,0 +1,76 @@
+{
+  "checkedAt": "2026-09-30T08:06:52.868Z",
+  "initialTimeoutCode": "57014",
+  "existingRoleTimeoutSeconds": 8,
+  "sourceSha256": "6302a5115a8b76bf92fd8d618c53083536331923a8d06148b558df529dd5235f",
+  "guardedSha256": "008f12605ae34b593be9cf98af23918b9ef99cdbf19111ee972d1184f3fb640d",
+  "baselineJsonComparison": [
+    {
+      "identical": true,
+      "original_hash": "09e873b418555629b43a98b4bbbd796f",
+      "candidate_hash": "09e873b418555629b43a98b4bbbd796f",
+      "different_keys": []
+    }
+  ],
+  "localRegression": {
+    "files": 4,
+    "passed": 33,
+    "failed": 0,
+    "skipped": 0,
+    "syntheticWrongEvents": 600,
+    "syntheticActiveQuestions": 3000,
+    "syntheticPending": 20,
+    "includesQueueWithoutActiveAssignment": true
+  },
+  "preview": {
+    "history": [
+      {
+        "version": "20260930080220",
+        "name": "materialize_notebook_occurrence_keys"
+      }
+    ],
+    "definition": [
+      {
+        "definition_hash": "88ba97c41d1eebdd13c0c5f012040b44",
+        "owner": "postgres",
+        "acl": "{postgres=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      }
+    ],
+    "readWithin8s": [
+      {
+        "items": 11,
+        "total_count": 93,
+        "response_hash": "cc2482361cc6f7ed3e0507d9d73c1f33"
+      }
+    ]
+  },
+  "production": {
+    "history": [
+      {
+        "version": "20260930080332",
+        "name": "materialize_notebook_occurrence_keys"
+      }
+    ],
+    "definition": [
+      {
+        "definition_hash": "88ba97c41d1eebdd13c0c5f012040b44",
+        "owner": "postgres",
+        "acl": "{postgres=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      }
+    ],
+    "actualRpcPlanningMs": 14.168,
+    "actualRpcExecutionMs": 6369.054
+  },
+  "studentTestMutations": 0,
+  "boundary": "Local structural assertion proves one expression in the materialized CTE, not instrumented function call counts. Actual production RPC 8-second check is separate."
+}

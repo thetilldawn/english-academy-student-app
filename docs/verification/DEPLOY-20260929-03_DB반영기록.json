@@ -1,0 +1,211 @@
+{
+  "checkedAt": "2026-09-30T07:07:06.337Z",
+  "code": "8595803c51835b80ff9473ae40462fd052faa5b3",
+  "studentMutationsForTesting": 0,
+  "preview": {
+    "project": "wojxpruvbjzbhrpmsbuy",
+    "migrations": [
+      {
+        "version": "20260930065038",
+        "name": "share_wrong_word_notebook_reads"
+      },
+      {
+        "version": "20260930065101",
+        "name": "expand_student_word_notebook"
+      },
+      {
+        "version": "20260930065121",
+        "name": "add_student_word_practice"
+      },
+      {
+        "version": "20260930065143",
+        "name": "add_personal_notebook_assignments"
+      }
+    ],
+    "counts": {
+      "assignment_count": 182,
+      "source_count": 182,
+      "notebook_assignments": 0,
+      "invalid_existing_policy": 0,
+      "notebook_questions": 0,
+      "practice_sessions": 0
+    },
+    "functions": {
+      "function_count": 47,
+      "definition_and_permission_hash": "b1b93ae64e666293aa20d3d1ffce7943"
+    }
+  },
+  "production": {
+    "project": "xdxhswjgksukjmpbzqgz",
+    "migrations": [
+      {
+        "version": "20260930070204",
+        "name": "share_wrong_word_notebook_reads"
+      },
+      {
+        "version": "20260930070229",
+        "name": "expand_student_word_notebook"
+      },
+      {
+        "version": "20260930070301",
+        "name": "add_student_word_practice"
+      },
+      {
+        "version": "20260930070328",
+        "name": "add_personal_notebook_assignments"
+      }
+    ],
+    "counts": {
+      "assignment_count": 188,
+      "source_count": 188,
+      "notebook_assignments": 0,
+      "invalid_existing_policy": 0,
+      "notebook_questions": 0,
+      "practice_sessions": 0
+    },
+    "functions": {
+      "function_count": 47,
+      "definition_and_permission_hash": "b1b93ae64e666293aa20d3d1ffce7943"
+    },
+    "steps": [
+      {
+        "step": 10,
+        "success": true
+      },
+      {
+        "step": 11,
+        "success": true
+      },
+      {
+        "step": 12,
+        "success": true
+      },
+      {
+        "step": 13,
+        "success": true
+      }
+    ]
+  },
+  "protections": {
+    "oldTablesComparedInsideEachTransaction": 12,
+    "oldColumnValuesCountAndHashChecked": true,
+    "unrelatedFunctionDefinitionsAndFullAclChecked": true,
+    "existingTableAclAndPoliciesChecked": true,
+    "newTableRightsAndPoliciesChecked": true,
+    "app13LockedBeforeFirstRead": true,
+    "externalPerTableHashValuesReturned": false
+  },
+  "manifest": [
+    {
+      "name": "20260929140225_share_wrong_word_notebook_reads.sql",
+      "sourceSha256": "9e0688731ced9909a8e97dba4b98c54d43f3e047a135cae50bf9ce0d9098f4d5",
+      "guardedSha256": "db4a9c1650ecd7e790d8393afdfa68fa20ab481f227caf038bfc42a70fbb1d2e",
+      "bytes": 29536,
+      "changedFunctions": [
+        "private.wrong_history_identity_v1",
+        "private.wrong_history_headword_v1",
+        "private.wrong_word_notebook_page_v1",
+        "public.get_admin_student_wrong_word_page_v2",
+        "public.get_student_wrong_word_notebook_page_v1"
+      ],
+      "evidence": {
+        "student_writes": 0,
+        "existing_rows_preserved": true,
+        "existing_tables_preserved": 12,
+        "function_contracts_verified": 5
+      },
+      "negativeChecks": 3
+    },
+    {
+      "name": "20260929165150_expand_student_word_notebook.sql",
+      "sourceSha256": "babc23e4728e49c6d3f26b0f6c61345d84457b28a0e0a3a0f68569f2d0b1d22d",
+      "guardedSha256": "827a8d9f58aee745e190b5e511a38eff15a227a0bc8b41cb790cf3f589eb851f",
+      "bytes": 28329,
+      "changedFunctions": [
+        "public.get_student_wrong_word_notebook_page_v2",
+        "private.wrong_word_notebook_page_v2"
+      ],
+      "evidence": {
+        "student_writes": 0,
+        "existing_rows_preserved": true,
+        "existing_tables_preserved": 12,
+        "function_contracts_verified": 2
+      },
+      "negativeChecks": 3
+    },
+    {
+      "name": "20260930034455_add_student_word_practice.sql",
+      "sourceSha256": "ef796f199588ccdd71977154b300aa177f0efe72800b1993fe7177c47c3f0c65",
+      "guardedSha256": "e72753fbde91ece0f2b91a5112a2533debee4da64b504d0796eccf39d4e978b9",
+      "bytes": 63282,
+      "changedFunctions": [
+        "private.wrong_word_notebook_page_v2",
+        "private.wrong_word_notebook_page_v3",
+        "private.assert_word_practice_student_v1",
+        "private.word_practice_source_v1",
+        "private.word_practice_timer_v1",
+        "private.word_practice_milliseconds_v1",
+        "private.word_practice_read_v1",
+        "public.prepare_student_word_practice_v1",
+        "public.start_student_word_practice_v1",
+        "public.resume_student_word_practice_v1",
+        "public.get_student_word_practice_v1",
+        "public.answer_student_word_practice_v1",
+        "public.expire_student_word_practice_v1"
+      ],
+      "evidence": {
+        "student_writes": 0,
+        "existing_rows_preserved": true,
+        "existing_tables_preserved": 12,
+        "function_contracts_verified": 13
+      },
+      "negativeChecks": 3
+    },
+    {
+      "name": "20260930050611_add_personal_notebook_assignments.sql",
+      "sourceSha256": "2043220a0455e20953a7e036afa924ca5533afaddd744fec04aa13f6573bf750",
+      "guardedSha256": "191001c425f94741102cf53dc7cfe89dbe2add8f64a398e9c4c5405c551922a1",
+      "bytes": 78995,
+      "changedFunctions": [
+        "private.admin_history_read_rows_v1",
+        "private.record_initial_wrong_events_when_review_starts",
+        "private.snapshot_prior_wrong_count",
+        "private.snapshot_review_target_dictionary_identity_v1",
+        "private.snapshot_wrong_event_exam_use_identity_v1",
+        "private.resolve_vocab_state_on_correct_answer",
+        "public.list_assignment_question_dictionary_identities_v1",
+        "private.link_pending_review_targets_v2",
+        "private.assert_assignment_words_available_v2",
+        "private.default_quiz_attempt_point_rule_snapshot",
+        "private.list_student_direct_review_candidates_v1",
+        "private.record_vocab_quiz_point_events",
+        "public.replace_student_assignment_v7",
+        "private.student_dashboard_read_rows_v2",
+        "private.student_assignment_study_content_v1",
+        "private.check_assignment_source_relation_v1",
+        "private.wrong_word_notebook_page_v3",
+        "private.record_wrong_events_for_attempt",
+        "private.snapshot_vocab_state_dictionary_identity_v1",
+        "private.snapshot_review_queue_exam_use_identity_v1",
+        "private.wrong_word_notebook_page_v1",
+        "private.sync_assignment_primary_source_v1",
+        "private.guard_notebook_question_source_v1",
+        "private.assert_notebook_admin_v1",
+        "private.assert_notebook_question_plan_v1",
+        "private.notebook_grade_v1",
+        "private.assignment_source_labels_v1",
+        "public.get_notebook_assignment_result_v1",
+        "public.prepare_notebook_assignment_source_v1",
+        "public.create_notebook_assignments_v1"
+      ],
+      "evidence": {
+        "student_writes": 0,
+        "existing_rows_preserved": true,
+        "existing_tables_preserved": 12,
+        "function_contracts_verified": 30
+      },
+      "negativeChecks": 3
+    }
+  ],
+  "boundary": "Counts captured after migrations and before production code was released. Function hash compares the 47 changed functions, not all schema history. Real student use and authenticated production UI are not asserted."
+}
