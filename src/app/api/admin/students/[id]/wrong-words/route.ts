@@ -9,7 +9,7 @@ import {
 } from "@/lib/services/wrong-word-command";
 import { getStudentWrongWordPage, WrongWordPageForbiddenError } from "@/features/students/server/queries/wrong-word-page-query";
 import { WrongWordCursorError } from "@/features/students/server/wrong-word-cursor";
-import { wrongWordFiltersSchema } from "@/features/students/contracts/wrong-word-page";
+import { wrongWordFiltersFromSearchParams } from "@/features/students/contracts/wrong-word-filters";
 import { queueWrongWordsSchema } from "@/lib/validation";
 
 export const GET = withAuthenticationFailureResponse(async function GET(
@@ -28,9 +28,7 @@ export const GET = withAuthenticationFailureResponse(async function GET(
 
   try {
     const params = new URL(request.url).searchParams;
-    const filters = wrongWordFiltersSchema.safeParse({
-      datasetId: params.get("datasetId") ?? "", level: params.get("level") ?? "all", query: params.get("query") ?? "",
-    });
+    const filters = wrongWordFiltersFromSearchParams(params);
     if (!filters.success) return jsonError("오답 조회 조건을 확인해 주세요.", 400);
     const page = await getStudentWrongWordPage(id, { filters: filters.data, cursor: params.get("cursor") }, admin);
     if (!page) {

@@ -2,6 +2,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { WrongWordPageFilters } from "../contracts/wrong-word-page";
+import { wrongWordFilterKey } from "../contracts/wrong-word-filters";
+export { wrongWordFilterKey } from "../contracts/wrong-word-filters";
 
 const schema = z.object({
   version: z.literal(1), studentId: z.uuid(), filters: z.string().regex(/^[a-f0-9]{64}$/),
@@ -9,10 +11,9 @@ const schema = z.object({
   lastWrongAt: z.iso.datetime({ offset: true }), key: z.string().min(1).max(1000),
 }).strict();
 export class WrongWordCursorError extends Error {
-  constructor() { super("오답 목록의 조건이 바뀌었습니다. 첫 목록부터 다시 확인해 주세요."); }
-}
-export function wrongWordFilterKey(filters: WrongWordPageFilters) {
-  return JSON.stringify([filters.datasetId, filters.level, filters.query.trim()]);
+  constructor(public readonly reason: "identity" | "invalid" = "invalid") {
+    super(reason === "identity" ? "학생 정보가 바뀌었습니다. 첫 화면부터 다시 확인해 주세요." : "오답 목록의 조건이 바뀌었습니다. 첫 목록부터 다시 확인해 주세요.");
+  }
 }
 function filterHash(filters: WrongWordPageFilters) {
   return createHash("sha256").update(wrongWordFilterKey(filters)).digest("hex");
@@ -26,7 +27,11 @@ export function decodeWrongWordCursor(value: string, studentId: string, filters:
   try {
     if (value.length > 8000) throw new WrongWordCursorError();
     const parsed = schema.parse(JSON.parse(Buffer.from(value, "base64url").toString("utf8")));
-    if (parsed.studentId !== studentId || parsed.filters !== filterHash(filters)) throw new WrongWordCursorError();
+    if (parsed.studentId !== studentId) throw new WrongWordCursorError("identity");
+    if (parsed.filters !== filterHash(filters)) throw new WrongWordCursorError();
     return parsed;
-  } catch { throw new WrongWordCursorError(); }
+  } catch (error) {
+    if (error instanceof WrongWordCursorError) throw error;
+    throw new WrongWordCursorError();
+  }
 }

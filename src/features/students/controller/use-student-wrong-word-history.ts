@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { WrongWordPageFilters, WrongWordPageView } from "../contracts/wrong-word-page";
 import { loadStudentWrongWords, WrongWordRequestError } from "../api/wrong-word-transport";
+import { wrongWordFilterKey as filterKey } from "../contracts/wrong-word-filters";
 
 const TTL = 30_000;
-const filterKey = (filters: WrongWordPageFilters) => JSON.stringify([filters.datasetId, filters.level, filters.query.trim()]);
 
 export function useStudentWrongWordHistory({ active, cachedAt, cachedHistory, filters, loadErrorMessage, onLoaded, studentId }: {
   active: boolean; cachedAt: number | null; cachedHistory: WrongWordPageView | null;
@@ -24,7 +24,7 @@ export function useStudentWrongWordHistory({ active, cachedAt, cachedHistory, fi
   const invalidatedCache = useRef<WrongWordPageView | null>(null);
   const key = filterKey(filters);
   const matching = cachedHistory && filterKey(cachedHistory.filters) === key ? cachedHistory : null;
-  const { datasetId, level, query } = filters;
+  const { datasetId, level, query, minWrongCount, maxWrongCount } = filters;
 
   useEffect(() => {
     if (!active || locked || requesting.current) return;
@@ -43,7 +43,7 @@ export function useStudentWrongWordHistory({ active, cachedAt, cachedHistory, fi
       if (matching) invalidatedCache.current = matching;
       updateStatus({ invalidated: true });
     }
-    const applied = { datasetId, level, query: query.trim() };
+    const applied = { datasetId, level, query: query.trim(), ...(minWrongCount === undefined ? {} : { minWrongCount }), ...(maxWrongCount === undefined ? {} : { maxWrongCount }) };
     const timer = setTimeout(() => {
       void loadStudentWrongWords(studentId, abort.signal, applied, pageCursor).then(page => {
         if (abort.signal.aborted || sequence.current !== current) return;
@@ -75,7 +75,7 @@ export function useStudentWrongWordHistory({ active, cachedAt, cachedHistory, fi
       });
     }, query.trim() && !request.force ? 250 : 0);
     return () => { clearTimeout(timer); abort.abort(); requesting.current = false; };
-  }, [active, cachedAt, datasetId, key, level, loadErrorMessage, locked, matching, onLoaded, query, request, studentId]);
+  }, [active, cachedAt, datasetId, key, level, minWrongCount, maxWrongCount, loadErrorMessage, locked, matching, onLoaded, query, request, studentId]);
 
   const refresh = useCallback(() => {
     updateStatus({ invalidated: true });

@@ -19,9 +19,10 @@ export async function getStudentWrongWordPage(
   const filters = wrongWordFiltersSchema.parse(input.filters);
   const cursor = input.cursor ? decodeWrongWordCursor(input.cursor, studentId, filters) : null;
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc("get_admin_student_wrong_word_page_v1", {
+  const { data, error } = await supabase.rpc("get_admin_student_wrong_word_page_v2", {
     p_student_id: studentId, p_dataset_id: filters.datasetId || null, p_level: filters.level, p_query: filters.query,
     p_event_upper_id: cursor?.eventUpperId ?? null, p_after_wrong_at: cursor?.lastWrongAt ?? null, p_after_key: cursor?.key ?? null,
+    p_min_wrong_count: filters.minWrongCount ?? null, p_max_wrong_count: filters.maxWrongCount ?? null,
   });
   if (error?.code === "42501") throw new WrongWordPageForbiddenError("관리자 권한을 다시 확인해 주세요.");
   if (error) throw new Error("오답 단어 이력을 불러오지 못했습니다.");

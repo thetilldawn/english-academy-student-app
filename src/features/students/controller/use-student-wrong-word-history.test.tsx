@@ -30,6 +30,20 @@ function useHost(input: { studentId: string; active: boolean; filters: WrongWord
 }
 afterEach(() => vi.clearAllMocks());
 describe("on-demand wrong word history", () => {
+  it("횟수만바뀌어도첫페이지로읽고옛횟수의늦은응답을버린다", async () => {
+    let resolve!: (value: WrongWordPage) => void;
+    vi.mocked(loadStudentWrongWords).mockImplementationOnce(() => new Promise(done => { resolve = done; })).mockResolvedValueOnce(page("three"));
+    const two = { ...filters, minWrongCount: 2 };
+    const three = { ...filters, minWrongCount: 3 };
+    const { result, rerender } = renderHook(useHost, { initialProps: { studentId: "a", active: true, filters: two } });
+    await waitFor(() => expect(loadStudentWrongWords).toHaveBeenCalledTimes(1));
+    rerender({ studentId: "a", active: true, filters: three });
+    await waitFor(() => expect(result.current.history?.items[0].key).toBe("three0"));
+    expect(loadStudentWrongWords).toHaveBeenLastCalledWith("a", expect.any(AbortSignal), three, null);
+    await act(async () => resolve(page("two")));
+    expect(result.current.history?.filters).toEqual(three);
+    expect(result.current.history?.items[0].key).toBe("three0");
+  });
   it("does not resurrect a failed refresh cursor after another filter also fails", async () => {
     let resolve!: (value: WrongWordPage) => void;
     vi.mocked(loadStudentWrongWords).mockResolvedValueOnce(page()).mockRejectedValueOnce(new Error("A 갱신 실패"))

@@ -4,6 +4,16 @@ import { decodeWrongWordCursor, encodeWrongWordCursor, WrongWordCursorError } fr
 const input = { studentId: "00000000-0000-4000-8000-000000000001", filters: { datasetId: "", level: "all" as const, query: "" },
   eventUpperId: "9007199254740999", lastWrongAt: "2026-09-21T00:00:00.000001Z", key: "dictionary:word:검사" };
 describe("wrong word page cursor", () => {
+  it("binds a cursor to both count bounds and distinguishes identity changes", () => {
+    const filters = { ...input.filters, minWrongCount: 2, maxWrongCount: 4 };
+    const cursor = encodeWrongWordCursor({ ...input, filters });
+    expect(decodeWrongWordCursor(cursor, input.studentId, filters).lastWrongAt).toBe(input.lastWrongAt);
+    for (const changed of [{ ...filters, minWrongCount: 3 }, { ...filters, maxWrongCount: 5 }, input.filters]) {
+      expect(() => decodeWrongWordCursor(cursor, input.studentId, changed)).toThrow(WrongWordCursorError);
+    }
+    try { decodeWrongWordCursor(cursor, "00000000-0000-4000-8000-000000000002", filters); }
+    catch (error) { expect(error).toMatchObject({ reason: "identity" }); }
+  });
   it("preserves large event ids and precise timestamp strings", () => {
     expect(decodeWrongWordCursor(encodeWrongWordCursor(input), input.studentId, input.filters)).toMatchObject({eventUpperId:input.eventUpperId,lastWrongAt:input.lastWrongAt,key:input.key});
   });

@@ -13,7 +13,7 @@ describe("bounded admin wrong word query",()=>{
     rpc.mockResolvedValue({data:{items:[],eventUpperId:"0",summary,totalCount:0,datasetOptions:[],reviewDrafts:[]},error:null});
     expect(await getStudentWrongWordPage(student,{filters})).toEqual({items:[],nextCursor:null,summary,totalCount:0,datasetOptions:[],reviewDrafts:[]});
     expect(requireAdmin).toHaveBeenCalledOnce(); expect(rpc).toHaveBeenCalledOnce();
-    expect(rpc).toHaveBeenCalledWith("get_admin_student_wrong_word_page_v1",expect.objectContaining({p_student_id:student,p_event_upper_id:null,p_after_key:null}));
+    expect(rpc).toHaveBeenCalledWith("get_admin_student_wrong_word_page_v2",expect.objectContaining({p_student_id:student,p_event_upper_id:null,p_after_key:null,p_min_wrong_count:null,p_max_wrong_count:null}));
   });
   it("preserves forbidden vs missing vs database and malformed response errors",async()=>{
     rpc.mockResolvedValueOnce({data:null,error:{code:"42501"}}).mockResolvedValueOnce({data:null,error:null})

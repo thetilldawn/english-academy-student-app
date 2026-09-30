@@ -1,4 +1,5 @@
 import { wrongWordPageSchema, type WrongWordPageFilters } from "../contracts/wrong-word-page";
+import { wrongWordFilterSearchParams, wrongWordFiltersSchema } from "../contracts/wrong-word-filters";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 
 async function requestJson<T>(url: string, options?: RequestInit): Promise<T> {
@@ -26,7 +27,9 @@ function jsonPost(body: unknown): RequestInit {
 }
 
 export async function loadStudentWrongWords(studentId: string, signal: AbortSignal, filters: WrongWordPageFilters, cursor?: string | null) {
-  const query = new URLSearchParams({ datasetId: filters.datasetId, level: filters.level, query: filters.query });
+  const input = wrongWordFiltersSchema.safeParse(filters);
+  if (!input.success) throw new WrongWordRequestError("오답 조회 조건을 확인해 주세요. 검색어는 200자까지 입력할 수 있습니다.", 400);
+  const query = wrongWordFilterSearchParams(input.data);
   if (cursor) query.set("cursor", cursor);
   const response = await requestJson<{ page?: unknown }>(
     `/api/admin/students/${studentId}/wrong-words?${query}`,

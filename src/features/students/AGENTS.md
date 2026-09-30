@@ -1,5 +1,7 @@
 # 학생 관리 기능 안내
 
+- APP-20260929-10: 누적 오답 공통 읽기는 `student-management-screen`과 `student-wrong-word-read`를 함께 확인한다. 횟수 범위·키·URL 변환은 `contracts/wrong-word-filters.ts` 한 곳이다. 학생은 `public-server#getOwnWrongWordPage`에서 자체 세션의 본인만 확인하며 관리자 RPC/초안/문항 ID를 전달하지 않는다. 기존 관리자 uniqueWordCount는 미해결 수, 학생 summary.wordCount는 누적 전체 수다. 원문/initial 집계·v1 호환 유지, 실제 학습 화면/연습/배정은 별도 단계다.
+
 - APP-20260921-03: 내역 오답은 기본 접힘이며 첫 조회와 더보기는 최신 10개다. `wrong-word-page` 계약과 전용 query/cursor가 전체 집계와 페이지를 구분한다. 조건·학생 변경의 늦은 응답을 버리고, 더보기 실패는 읽은 목록을 보존하며 401/403은 숨긴다. 현재 조건의 성공 응답만 정상 빈 결과를 표시한다. 학생용 권한은 추가하지 않는다.
 
 - APP-20260921-02: 신규·프로필 저장의 이름/학교/학년은 필수다. 학교 직접 입력 시 중1~고3를 명시적으로 선택할 수 있다. 검증된 프로필 저장 결과는 `student-directory-events`의 최소 변경 알림과 `public-client`로 열린 배정에 전달하며 자료·범위 초안을 다시 읽거나 초기화하지 않는다. 필수 정보 SQL 검사는 새 저장/배정 명령만 보완하고 기존 기록·완료 응답·자동 후속 회차는 보존한다.

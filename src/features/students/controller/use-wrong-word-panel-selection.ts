@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import type { WrongWordPageView } from "../contracts/wrong-word-page";
+import { wrongWordFilterKey } from "../contracts/wrong-word-filters";
 
 import {
   keepSelectableQuestionIds,
@@ -30,7 +31,7 @@ export function useWrongWordPanelSelection({
     [history],
   );
   const filteredWords = useMemo(
-    () => history && history.filters.datasetId === datasetFilter && history.filters.level === levelFilter && history.filters.query === query.trim()
+    () => history && wrongWordFilterKey(history.filters) === wrongWordFilterKey({ datasetId: datasetFilter, level: levelFilter, query })
       ? history.items : [],
     [datasetFilter, history, levelFilter, query],
   );
