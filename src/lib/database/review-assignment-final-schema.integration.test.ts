@@ -7,6 +7,154 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const migrationsDirectory = path.resolve("supabase/migrations");
 
+describe.sequential("passed-only point settlement", () => {
+  let database: PGlite;
+  let pending: Awaited<ReturnType<typeof createRegularPointAttempt>>;
+  let failing: Awaited<ReturnType<typeof createRegularPointAttempt>>;
+  let passed: Awaited<ReturnType<typeof createRegularPointAttempt>>;
+  let positiveFailure: Awaited<ReturnType<typeof createRegularPointAttempt>>;
+  let originals: unknown;
+  let recordsBefore: unknown;
+  const policyMigration = fs.readFileSync(path.join(migrationsDirectory,
+    "20260930152638_require_passed_vocab_points.sql"), "utf8");
+
+  async function answerAll(attempt: typeof pending, stage: "initial" | "retry", correct: boolean | ((index:number)=>boolean)) {
+    for (const [index, q] of attempt.questions.entries()) {
+      await database.query(`select public.answer_quiz_question_v4($1,$2,$3,$4,$5::smallint,false)`,
+        [ids.student, attempt.attemptId, q.id, stage, (typeof correct==="function"?correct(index):correct) ? q.correct_choice_index : (q.correct_choice_index+1)%4]);
+      if (attempt.questions[index+1]) await database.query(
+        "select public.resume_quiz_after_feedback_v2($1,$2,$3,$4,0)",
+        [ids.student,attempt.attemptId,attempt.questions[index+1].id,stage]);
+    }
+  }
+  async function sum(attempt: typeof pending) {
+    return (await database.query<{net:number; outcomes:number; adjustments:number}>(
+      `select coalesce(sum(delta),0)::int net,
+      count(*) filter(where event_kind='quiz_outcome')::int outcomes,
+      count(*) filter(where event_kind='adjustment')::int adjustments
+      from public.student_point_events where quiz_attempt_id=$1`, [attempt.attemptId])).rows[0];
+  }
+  async function preserved() {
+    return (await database.query(`select
+      (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.quiz_attempts t) attempts,
+      (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.quiz_questions t) questions,
+      (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.students t) students,
+      (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.student_vocab_wrong_events t) wrongs`)).rows;
+  }
+  beforeAll(async () => {
+    database = await createFinalSchemaDatabase({beforeMigration:async(db,name)=>{
+      if(name!=="20260930152638_require_passed_vocab_points.sql") return;
+      database=db;
+      await seedReviewAssignmentScenario(database);
+      await database.exec("delete from public.student_vocab_review_queue");
+      pending=await createRegularPointAttempt(database,"Pending correction fixture");
+      await answerAll(pending,"initial",false);
+      failing=await createRegularPointAttempt(database,"Failing correction fixture");
+      await answerAll(failing,"initial",false);
+      passed=await createRegularPointAttempt(database,"Passed correction fixture");
+      await answerAll(passed,"initial",true);
+      positiveFailure=await createRegularPointAttempt(database,"Positive failed legacy fixture");
+      await answerAll(positiveFailure,"initial",index=>index<3);
+      await database.query("select public.start_quiz_retry_v2($1,$2)",[ids.student,positiveFailure.attemptId]);
+      const last=positiveFailure.questions.at(-1)!;
+      await database.query("select public.answer_quiz_question_v4($1,$2,$3,'retry',$4::smallint,false)",
+        [ids.student,positiveFailure.attemptId,last.id,(last.correct_choice_index+1)%4]);
+      expect(await sum(positiveFailure)).toEqual({net:3,outcomes:5,adjustments:0});
+      expect(await sum(pending)).toEqual({net:-12,outcomes:4,adjustments:0});
+      originals=(await database.query("select * from public.student_point_events order by id")).rows;
+      recordsBefore=await preserved();
+    }});
+  },120000);
+  afterAll(async()=>{await database?.close();});
+
+  it("neutralizes unfinished outcomes without changing original events or student records",async()=>{
+    expect(await sum(pending)).toEqual({net:0,outcomes:4,adjustments:4});
+    expect(await sum(failing)).toEqual({net:0,outcomes:4,adjustments:4});
+    expect(await sum(passed)).toEqual({net:8,outcomes:4,adjustments:0});
+    // Remove positive rewards too; include the zero-delta failed retry in the audit.
+    expect(await sum(positiveFailure)).toEqual({net:0,outcomes:5,adjustments:5});
+    expect((await database.query("select * from public.student_point_events where event_kind='quiz_outcome' order by id")).rows).toEqual(originals);
+    expect(await preserved()).toEqual(recordsBefore);
+    const before=(await database.query("select * from public.student_point_totals order by student_id")).rows;
+    await database.exec(policyMigration);
+    expect((await database.query("select * from public.student_point_totals order by student_id")).rows).toEqual(before);
+  });
+
+  it("restores neutralized initial points once only after a retry really passes",async()=>{
+    await database.query("select public.start_quiz_retry_v2($1,$2)",[ids.student,pending.attemptId]);
+    await answerAll(pending,"retry",true);
+    expect((await database.query("select status,passed from public.quiz_attempts where id=$1",[pending.attemptId])).rows).toEqual([{status:"completed",passed:true}]);
+    // Original formula: initial -12 + retry 8 = -4, despite the final pass.
+    expect(await sum(pending)).toEqual({net:-4,outcomes:8,adjustments:8});
+    await database.query("select private.record_vocab_quiz_point_events($1,$2,'vocab-points-v1',now())",[pending.attemptId,ids.student]);
+    await database.exec(policyMigration);
+    expect(await sum(pending)).toEqual({net:-4,outcomes:8,adjustments:8});
+    const summary=(await database.query("select * from public.get_quiz_attempt_point_summary_v1($1,$2)",[ids.student,pending.attemptId])).rows[0];
+    expect(summary).toMatchObject({event_count:8,correct_reward:8,wrong_effect:-12,net_change:-4,current_points:4});
+  });
+
+  it("keeps failed retries neutral and excludes them from the attempt summary",async()=>{
+    await database.query("select public.start_quiz_retry_v2($1,$2)",[ids.student,failing.attemptId]);
+    await answerAll(failing,"retry",false);
+    expect((await database.query("select status,passed from public.quiz_attempts where id=$1",[failing.attemptId])).rows).toEqual([{status:"completed",passed:false}]);
+    expect(await sum(failing)).toEqual({net:0,outcomes:4,adjustments:4});
+    const summary=(await database.query("select * from public.get_quiz_attempt_point_summary_v1($1,$2)",[ids.student,failing.attemptId])).rows[0];
+    expect(summary).toMatchObject({event_count:0,correct_reward:0,wrong_effect:0,net_change:0,current_points:4});
+    expect((await database.query(`select total_points=(select sum(delta) from public.student_point_events where student_id=$1) exact,
+      event_count=(select count(*) from public.student_point_events where student_id=$1) count_exact
+      from public.student_point_totals where student_id=$1`,[ids.student])).rows).toEqual([{exact:true,count_exact:true}]);
+  });
+
+  it("awards a new first-pass attempt and delays all new retry points until the final pass",async()=>{
+    const fresh=await createRegularPointAttempt(database,"Fresh first-pass fixture");
+    await answerAll(fresh,"initial",true);
+    expect(await sum(fresh)).toEqual({net:8,outcomes:4,adjustments:0});
+    const retry=await createRegularPointAttempt(database,"Fresh retry-pass fixture");
+    await answerAll(retry,"initial",false);
+    expect(await sum(retry)).toEqual({net:0,outcomes:0,adjustments:0});
+    await database.query("select public.start_quiz_retry_v2($1,$2)",[ids.student,retry.attemptId]);
+    await answerAll(retry,"retry",true);
+    expect(await sum(retry)).toEqual({net:-4,outcomes:8,adjustments:0});
+    await database.query("select private.record_vocab_quiz_point_events($1,$2,'vocab-points-v1',now())",[retry.attemptId,ids.student]);
+    expect(await sum(retry)).toEqual({net:-4,outcomes:8,adjustments:0});
+  });
+
+  it("retains private write and service-only read privileges",async()=>{
+    expect((await database.query(`select
+      has_function_privilege('anon','public.get_quiz_attempt_point_summary_v1(uuid,uuid)','execute') anon_read,
+      has_function_privilege('authenticated','public.get_quiz_attempt_point_summary_v1(uuid,uuid)','execute') user_read,
+      has_function_privilege('service_role','public.get_quiz_attempt_point_summary_v1(uuid,uuid)','execute') service_read,
+      has_function_privilege('service_role','private.record_vocab_quiz_point_events(uuid,uuid,text,timestamptz)','execute') service_write`)).rows)
+      .toEqual([{anon_read:false,user_read:false,service_read:true,service_write:false}]);
+  });
+
+  it("rejects a mismatched correction instead of silently accepting its unique key",async()=>{
+    const original=(await database.query<{id:number;student_id:string}>(`select id,student_id from public.student_point_events where quiz_attempt_id=$1 and event_kind='quiz_outcome' order by id limit 1`,[passed.attemptId])).rows[0];
+    await database.exec("begin");
+    try{
+      await database.query(`insert into public.student_point_events(event_key,event_kind,student_id,rule_version,reason_code,delta,occurred_at)
+        values($1,'adjustment',$2,'passed-only-v1','unpassed_attempt_neutralized',1,now())`,
+        ["passed-only-v1:neutralize:"+original.id,original.student_id]);
+      await expect(database.query("select private.record_vocab_quiz_point_events($1,$2,'vocab-points-v1',now())",[passed.attemptId,ids.student]))
+        .rejects.toMatchObject({code:"23514",message:"point_correction_conflict"});
+    }finally{await database.exec("rollback");}
+  });
+
+  it("rejects a missing-attempt outcome and rolls the whole migration back",async()=>{
+    await database.exec("begin");
+    try{
+      // Independent malformed legacy evidence, kept only inside this rollback.
+      await database.query(`insert into public.student_point_events(event_key,event_kind,student_id,dataset_id_snapshot,vocab_entry_id_snapshot,headword_snapshot,assignment_id,
+        quiz_attempt_id,quiz_question_id,stage,exam_kind,outcome,rule_version,reason_code,delta,occurred_at)
+        values('orphan-fixture','quiz_outcome',$1,$2,1,'fixture',$3,'00000000-0000-4000-8000-000000000999',
+        '00000000-0000-4000-8000-000000000998','initial','regular','correct','vocab-points-v1','regular_initial_correct',2,now())`,[ids.student,ids.dataset,passed.assignmentId]);
+      await expect(database.exec(policyMigration.replace(/^begin;$/m,"").replace(/^commit;$/m,"")))
+        .rejects.toMatchObject({code:"23514",message:"point_attempt_evidence_missing"});
+    }finally{await database.exec("rollback");}
+  });
+});
+
+
 describe("confirmed partial current wrong review", () => {
   let db: PGlite;
   let sources: string[];
@@ -4866,8 +5014,8 @@ describe.sequential("admin deletion controls", () => {
         target_timed_out: 4,
         target_wrong_events: 4,
         peer_wrong_events: 0,
-        target_point_events: 4,
-        target_points: -6,
+        target_point_events: 0,
+        target_points: 0,
         peer_point_events: 0,
         target_series_status: "cancelled",
         target_item_status: "cancelled",
@@ -4966,7 +5114,7 @@ describe.sequential("admin deletion controls", () => {
         peer_attempt_status: "in_progress",
         target_wrong_events: 4,
         peer_wrong_events: 0,
-        target_point_events: 4,
+        target_point_events: 0,
         peer_point_events: 0,
         target_audits: 1,
       });
@@ -6783,12 +6931,7 @@ describe.sequential("assignment retry rules", () => {
           and event.quiz_attempt_id = '${attemptId}'
         group by total.total_points, total.event_count;
       `);
-      expect(points.rows).toEqual([{
-        total_points: 3,
-        event_count: 4,
-        unique_outcomes: 4,
-        ledger_sum: 3,
-      }]);
+      expect(points.rows).toEqual([]);
       await expectPostgresError(
         database.query(`
           select public.start_quiz_retry_v2(
@@ -6804,7 +6947,7 @@ describe.sequential("assignment retry rules", () => {
     }
   }, 60_000);
 
-  it("records final-question initial and retry timeouts after answer v4 finishes", async () => {
+  it("does not score initial or retry timeouts when the attempt does not pass", async () => {
     const database = await createFinalSchemaDatabase();
     try {
       await seedReviewAssignmentScenario(database);
@@ -6893,9 +7036,7 @@ describe.sequential("assignment retry rules", () => {
         where quiz_question_id = '${timeoutTarget.id}'
         order by stage;
       `);
-      expect(initialTimeout.rows).toEqual([
-        { stage: "initial", outcome: "timeout", delta: -3 },
-      ]);
+      expect(initialTimeout.rows).toEqual([]);
 
       await database.query(`
         select public.start_quiz_retry_v2(
@@ -6930,10 +7071,7 @@ describe.sequential("assignment retry rules", () => {
         where quiz_question_id = '${timeoutTarget.id}'
         order by stage;
       `);
-      expect(timeoutEvents.rows).toEqual([
-        { stage: "initial", outcome: "timeout", delta: -3 },
-        { stage: "retry", outcome: "timeout", delta: 0 },
-      ]);
+      expect(timeoutEvents.rows).toEqual([]);
 
       const pointTotal = await database.query<{
         event_count: number;
@@ -6955,12 +7093,7 @@ describe.sequential("assignment retry rules", () => {
           total.event_count,
           total.last_event_at;
       `);
-      expect(pointTotal.rows).toEqual([{
-        total_points: 3,
-        event_count: 5,
-        ledger_sum: 3,
-        last_event_matches: true,
-      }]);
+      expect(pointTotal.rows).toEqual([]);
     } finally {
       await database.close();
     }
@@ -7038,7 +7171,7 @@ describe.sequential("assignment retry rules", () => {
     }
   }, 60_000);
 
-  it("records initial unanswered outcomes through the stale-attempt batch once", async () => {
+  it("expires unanswered initial attempts without awarding or deducting points", async () => {
     const database = await createFinalSchemaDatabase();
     try {
       await seedReviewAssignmentScenario(database);
@@ -7104,14 +7237,7 @@ describe.sequential("assignment retry rules", () => {
         where quiz_attempt_id = '${attemptId}'
         order by quiz_question_id;
       `);
-      expect(events.rows).toHaveLength(4);
-      expect(events.rows).toEqual(
-        events.rows.map(() => ({
-          stage: "initial",
-          outcome: "unanswered",
-          delta: -3,
-        })),
-      );
+      expect(events.rows).toEqual([]);
 
       const total = await database.query<{
         event_count: number;
@@ -7128,17 +7254,13 @@ describe.sequential("assignment retry rules", () => {
         where total.student_id = '${ids.student}'
         group by total.total_points, total.event_count;
       `);
-      expect(total.rows).toEqual([{
-        total_points: -12,
-        event_count: 4,
-        ledger_sum: -12,
-      }]);
+      expect(total.rows).toEqual([]);
     } finally {
       await database.close();
     }
   }, 60_000);
 
-  it("records retry unanswered outcomes through the stale-attempt batch once", async () => {
+  it("expires unanswered retry attempts without awarding or deducting points", async () => {
     const database = await createFinalSchemaDatabase();
     try {
       await seedReviewAssignmentScenario(database);
@@ -7226,10 +7348,7 @@ describe.sequential("assignment retry rules", () => {
         where quiz_question_id = '${retryTarget.id}'
         order by stage;
       `);
-      expect(targetEvents.rows).toEqual([
-        { stage: "initial", outcome: "wrong", delta: -3 },
-        { stage: "retry", outcome: "unanswered", delta: 0 },
-      ]);
+      expect(targetEvents.rows).toEqual([]);
 
       const total = await database.query<{
         event_count: number;
@@ -7246,11 +7365,7 @@ describe.sequential("assignment retry rules", () => {
         where total.student_id = '${ids.student}'
         group by total.total_points, total.event_count;
       `);
-      expect(total.rows).toEqual([{
-        total_points: 3,
-        event_count: 5,
-        ledger_sum: 3,
-      }]);
+      expect(total.rows).toEqual([]);
     } finally {
       await database.close();
     }
