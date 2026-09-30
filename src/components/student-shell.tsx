@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { ButtonLink } from "@/design-system/primitives/button/button";
 import { useEffect, useRef } from "react";
 
 import { StudentLogoutButton } from "@/components/student-logout-button";
@@ -27,7 +28,7 @@ export function StudentShell({
   identity?: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const focusedAttempt = pathname.startsWith("/student/attempt/");
+  const focusedAttempt = pathname.startsWith("/student/attempt/") || /^\/student\/practice\/[^/]+\/?$/u.test(pathname);
   const pageTitle = studentPageTitleForPathname(pathname);
   const shellRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -85,6 +86,7 @@ export function StudentShell({
               {points}
             </div>
             <div className={[styles.topbarActions, styles.studentControls].join(" ")}>
+              <ButtonLink href="/student/wordbook" prefetch={false} size="small" variant="quiet">내 단어장</ButtonLink>
               <ThemeToggle />
               <StudentLogoutButton />
             </div>

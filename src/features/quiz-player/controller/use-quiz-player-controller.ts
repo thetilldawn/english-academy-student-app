@@ -6,7 +6,7 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import { studentAppText } from "@/content/ko/student-app";
 import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 
-import { expireQuizAttempt } from "../api/quiz-attempt";
+import { regularQuizTransport, type QuizTransport } from "../api/quiz-transport";
 import {
   quizAnswerAnnouncement,
   quizAttemptUsesDeadlineClock,
@@ -27,8 +27,10 @@ import { useQuizSubmission } from "./use-quiz-submission";
 export function useQuizPlayerController(input: {
   initialAttempt: QuizAttempt;
   initialRemainingMilliseconds: number;
+  transport?: QuizTransport;
 }) {
   const router = useRouter();
+  const transport = input.transport ?? regularQuizTransport;
   const [state, dispatch] = useReducer(
     quizPlayerReducer,
     createQuizPlayerState(
@@ -94,6 +96,7 @@ export function useQuizPlayerController(input: {
   }, []);
 
   const recoverFromServer = useQuizRecovery({
+    transport,
     attemptId: state.attempt.id,
     deadlineSubmissionNotBeforeRef: deadlineSubmissionNotBefore,
     dispatch,
@@ -123,10 +126,10 @@ export function useQuizPlayerController(input: {
     expireStarted.current = true;
     inFlightRequest.current = "expiring";
     try {
-      const response = await expireQuizAttempt(state.attempt.id);
+      const response = await transport.expire(state.attempt.id);
       if (!mounted.current) return;
       if (response.ok) {
-        router.replace("/student/result/" + state.attempt.id);
+        router.replace(transport.resultHref(state.attempt.id));
         return;
       }
       const recovered = await recoverFromServer();
@@ -149,7 +152,7 @@ export function useQuizPlayerController(input: {
         });
       }
     }
-  }, [recoverFromServer, router, state.attempt.id]);
+  }, [recoverFromServer, router, state.attempt.id, transport]);
 
   useEffect(() => {
     if (
@@ -172,6 +175,7 @@ export function useQuizPlayerController(input: {
   ]);
 
   const { canInterruptFeedback, hasPendingChoice, interruptFeedback, submitChoice } = useQuizSubmission({
+    transport,
     canInterruptFeedbackAudio,
     cancelPendingPromptAudio,
     captureActivePromptAudio,
@@ -180,7 +184,7 @@ export function useQuizPlayerController(input: {
     dispatch,
     inFlightRequestRef: inFlightRequest,
     mountedRef: mounted,
-    onResult: (attemptId) => router.replace("/student/result/" + attemptId),
+    onResult: (attemptId) => router.replace(transport.resultHref(attemptId)),
     playAnswerAudio,
     primeChoiceAudio,
     recoverFromServer,

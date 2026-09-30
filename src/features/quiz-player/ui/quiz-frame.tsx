@@ -3,6 +3,7 @@ import type { KeyboardEvent, RefObject } from "react";
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { PronunciationText } from "@/components/pronunciation-text";
+import { FitText, FitTextGroup } from "@/design-system/primitives/fit-text/fit-text";
 import {
   HelpTip,
   inlineHelpClassName,
@@ -46,6 +47,7 @@ export function QuizFrame({
   onPlayAudio,
   onRetrySynchronization,
   phase,
+  phaseLabel,
   phaseQuestionCount,
   priorWrongIndicator,
   progress,
@@ -72,6 +74,7 @@ export function QuizFrame({
   onPlayAudio: (audioUrl: string | null) => void;
   onRetrySynchronization: () => void;
   phase: "initial" | "retry";
+  phaseLabel?: string;
   phaseQuestionCount: number;
   priorWrongIndicator: PriorWrongIndicator | null;
   progress: number;
@@ -117,9 +120,9 @@ export function QuizFrame({
       <div className={styles.topline}>
         <div className={styles.heading}>
           <p className={styles.phase}>
-            {phase === "retry"
+            {phaseLabel ?? (phase === "retry"
               ? studentAppText.attempt.retryPhase
-              : studentAppText.attempt.initialPhase}
+              : studentAppText.attempt.initialPhase)}
           </p>
           <strong className={styles.title}>{assignmentTitle}</strong>
         </div>
@@ -224,16 +227,16 @@ export function QuizFrame({
           className={[
             styles.prompt,
             isEnglishPrompt ? styles.promptEnglish : styles.promptKorean,
-            styles[`prompt-${promptDensity}`],
+            roles.prompt === "headword" ? "" : styles[`prompt-${promptDensity}`],
           ].join(" ")}
           data-question-id={currentQuestion.id}
           id="quiz-prompt"
           ref={promptRef}
           tabIndex={-1}
         >
-          <span>{currentQuestion.prompt}</span>
+          {roles.prompt === "headword" ? <FitText>{currentQuestion.prompt}</FitText> : <span>{currentQuestion.prompt}</span>}
           {showPromptPronunciation && currentQuestion.pronunciation.displayKo ? (
-            <PronunciationText className={styles.promptPronunciation} pronunciation={currentQuestion.pronunciation} />
+            <FitText className={styles.promptPronunciation}><PronunciationText pronunciation={currentQuestion.pronunciation} /></FitText>
           ) : null}
         </h1>
         {promptAudioUrl ? (
@@ -249,7 +252,7 @@ export function QuizFrame({
         ) : null}
       </div>
 
-      <div
+      <FitTextGroup
         aria-labelledby="quiz-prompt"
         className={styles.choiceList}
         role="group"
@@ -269,7 +272,7 @@ export function QuizFrame({
             />
           );
         })}
-      </div>
+      </FitTextGroup>
 
       <span
         aria-atomic="true"

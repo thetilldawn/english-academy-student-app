@@ -48,6 +48,7 @@ function fixedFeedbackReadyAt(input: {
 }
 
 async function synchronizeNextQuestion(input: {
+  resume?: typeof resumeQuizAfterFeedback;
   attemptId: string;
   delayMilliseconds: number;
   nextPhase: "initial" | "retry";
@@ -57,7 +58,7 @@ async function synchronizeNextQuestion(input: {
 }): Promise<QuizFeedbackSynchronization> {
   for (let request = 0; request < 2; request += 1) {
     try {
-      const resumed = await resumeQuizAfterFeedback({
+      const resumed = await (input.resume ?? resumeQuizAfterFeedback)({
         attemptId: input.attemptId,
         nextPhase: input.nextPhase,
         nextQuestionId: input.nextQuestionId,
@@ -94,6 +95,7 @@ async function synchronizeNextQuestion(input: {
 }
 
 export async function resolveQuizFeedbackTransition(input: {
+  resume?: typeof resumeQuizAfterFeedback;
   answerAudioUrl: string | null;
   attemptId: string;
   disposition: QuizAnswerDisposition;
@@ -164,6 +166,7 @@ export async function resolveQuizFeedbackTransition(input: {
             receivedAt: input.receivedAt,
           })
         : synchronizeNextQuestion({
+            resume: input.resume,
             attemptId: input.attemptId,
             delayMilliseconds,
             nextPhase: input.payload.nextPhase,

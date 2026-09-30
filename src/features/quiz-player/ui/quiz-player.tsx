@@ -1,6 +1,7 @@
 "use client";
 
 import { studentAppText } from "@/content/ko/student-app";
+import type { QuizTransport } from "../api/quiz-transport";
 
 import { useQuizPlayerController } from "../controller/use-quiz-player-controller";
 import {
@@ -23,13 +24,18 @@ export function formatQuizTime(seconds: number) {
 export function QuizPlayer({
   initialAttempt,
   initialRemainingMilliseconds,
+  transport,
+  phaseLabel,
 }: {
   initialAttempt: QuizAttempt;
   initialRemainingMilliseconds: number;
+  transport?: QuizTransport;
+  phaseLabel?: string;
 }) {
   const controller = useQuizPlayerController({
     initialAttempt,
     initialRemainingMilliseconds,
+    transport,
   });
   const { currentQuestion, state } = controller;
 
@@ -72,6 +78,7 @@ export function QuizPlayer({
   return (
     <main className={styles.shell} id="main-content">
       <QuizFrame
+        phaseLabel={phaseLabel}
         answerAnnouncement={controller.answerAnnouncement}
         assignmentTitle={state.attempt.assignmentTitle}
         choiceDensity={choiceDensity}

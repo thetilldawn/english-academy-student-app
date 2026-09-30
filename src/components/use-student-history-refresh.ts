@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 function shouldRefresh(pathname: string) {
   return pathname.startsWith("/student") &&
-    !pathname.startsWith("/student/attempt/");
+    !pathname.startsWith("/student/attempt/") && !/^\/student\/practice\/[^/]+\/?$/u.test(pathname);
 }
 
 // Back/forward can restore an old RSC summary. Ordinary navigation does not
@@ -17,6 +17,10 @@ export function useStudentHistoryRefresh(pathname: string) {
   useEffect(() => {
     const onPopState = () => {
       const destination = window.location.pathname;
+      if (pathname.startsWith("/student/wordbook") && destination.startsWith("/student/wordbook")) {
+        pendingPath.current = null;
+        return;
+      }
       // Closing a study modal must keep the underlying completed-list page and
       // its loaded items. Studying words does not mutate the point ledger.
       if (/^\/student\/assignments\/[^/]+\/words\/?$/.test(pathname)) {

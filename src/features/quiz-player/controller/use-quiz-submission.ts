@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, type Dispatch } from "
 import { studentAppText } from "@/content/ko/student-app";
 
 import { submitQuizAnswer } from "../api/quiz-attempt";
+import type { QuizTransport } from "../api/quiz-transport";
 import {
   ANSWER_SELECTION_DELAY_MS,
   applyQuizAnswerTransition,
@@ -55,6 +56,7 @@ function wait(milliseconds: number) {
 }
 
 export function useQuizSubmission(input: {
+  transport?: QuizTransport;
   canInterruptFeedbackAudio: () => boolean;
   cancelPendingPromptAudio: () => void;
   captureActivePromptAudio: () => Promise<TimedQuizAudioCompletion> | null;
@@ -197,7 +199,7 @@ export function useQuizSubmission(input: {
       };
 
       try {
-        const { ok, payload, receivedAt } = await submitQuizAnswer({
+        const { ok, payload, receivedAt } = await (input.transport?.answer ?? submitQuizAnswer)({
           attemptId: submission.attempt.id,
           questionId: submission.question.id,
           phase: answeredPhase,
@@ -222,6 +224,7 @@ export function useQuizSubmission(input: {
         input.dispatch({ type: "answer-received", payload });
         const disposition = quizAnswerDisposition(payload, answeredPhase);
         const transition = await resolveQuizFeedbackTransition({
+          resume: input.transport?.feedback,
           answerAudioUrl,
           attemptId: submission.attempt.id,
           disposition,

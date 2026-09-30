@@ -3,13 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useCallback, type Dispatch } from "react";
 
-import { recoverQuizAttempt } from "../api/quiz-attempt";
+import { regularQuizTransport, type QuizTransport } from "../api/quiz-transport";
 import { quizAttemptUsesDeadlineClock } from "../domain/quiz-session";
 import type { QuizPlayerAction } from "../domain/quiz-player-state";
 
 type MutableValue<T> = { current: T };
 
 export function useQuizRecovery(input: {
+  transport?: QuizTransport;
   attemptId: string;
   deadlineSubmissionNotBeforeRef: MutableValue<number>;
   dispatch: Dispatch<QuizPlayerAction>;
@@ -30,11 +31,12 @@ export function useQuizRecovery(input: {
     resetClock,
     timeWarningAnnouncedRef,
   } = input;
+  const transport = input.transport ?? regularQuizTransport;
 
   return useCallback(async () => {
     try {
       const { ok, payload, receivedAt, roundTripMilliseconds } =
-        await recoverQuizAttempt(attemptId);
+        await transport.read(attemptId);
       if (!mountedRef.current) return true;
       if (
         !ok ||
@@ -49,7 +51,7 @@ export function useQuizRecovery(input: {
         payload.attempt.phase === "completed"
       ) {
         inFlightRequestRef.current = null;
-        replace("/student/result/" + attemptId);
+        replace(transport.resultHref(attemptId));
         return true;
       }
 
@@ -108,5 +110,6 @@ export function useQuizRecovery(input: {
     replace,
     resetClock,
     timeWarningAnnouncedRef,
+    transport,
   ]);
 }

@@ -104,8 +104,12 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(controller).not.toContain("router.refresh()");
     expect(
       transport.match(
-        /boundedRequest\(\s*`\/api\/student\/attempts\/\$\{attemptId\}`/g,
+        /boundedRequest\(\s*`\$\{basePath\}\/\$\{attemptId\}`/g,
       ),
     ).toHaveLength(1);
+    expect(transport).toContain('basePath = "/api/student/attempts"');
+    const recovery = source("src/features/quiz-player/controller/use-quiz-recovery.ts");
+    expect(recovery.match(/await transport\.read\(attemptId\)/g)).toHaveLength(1);
+    expect(recovery).toContain("input.transport ?? regularQuizTransport");
   });
 });

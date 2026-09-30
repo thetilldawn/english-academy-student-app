@@ -111,7 +111,7 @@ const answerResponseSchema = z
     }
   });
 
-const attemptResponseSchema = z.object({
+export const attemptResponseSchema = z.object({
   attempt: attemptSchema,
   timerRemainingMilliseconds: z.number().int().nonnegative(),
   transitionRemainingMilliseconds: z.number().int().min(0).max(7_250).optional(),
@@ -160,10 +160,10 @@ export async function submitQuizAnswer(input: {
   questionId: string;
   phase: "initial" | "retry";
   choiceIndex: number | null;
-}): Promise<QuizTransportResult<QuizAnswerResponse>> {
+}, basePath = "/api/student/attempts"): Promise<QuizTransportResult<QuizAnswerResponse>> {
   const requestStartedAt = performance.now();
   const { response, payload } = await boundedRequest(
-    `/api/student/attempts/${input.attemptId}/${
+    `${basePath}/${input.attemptId}/${
       input.choiceIndex === null ? "timeouts" : "answers"
     }`,
     {
@@ -196,9 +196,10 @@ export async function submitQuizAnswer(input: {
 
 export async function recoverQuizAttempt(
   attemptId: string,
+  basePath = "/api/student/attempts",
 ): Promise<QuizTransportResult<QuizAttemptResponse>> {
   const requestStartedAt = performance.now();
-  const { response, payload } = await boundedRequest(`/api/student/attempts/${attemptId}`, {
+  const { response, payload } = await boundedRequest(`${basePath}/${attemptId}`, {
     cache: "no-store",
   }, readPayload);
   const receivedAt = performance.now();
@@ -221,10 +222,10 @@ export async function resumeQuizAfterFeedback(input: {
   nextPhase: "initial" | "retry";
   nextQuestionId: string;
   transitionRemainingMilliseconds: number;
-}): Promise<QuizTransportResult<QuizFeedbackResumeResponse>> {
+}, basePath = "/api/student/attempts"): Promise<QuizTransportResult<QuizFeedbackResumeResponse>> {
   const requestStartedAt = performance.now();
   const { response, payload } = await boundedRequest(
-    `/api/student/attempts/${input.attemptId}/feedback`,
+    `${basePath}/${input.attemptId}/feedback`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -254,8 +255,8 @@ export async function resumeQuizAfterFeedback(input: {
   };
 }
 
-export async function expireQuizAttempt(attemptId: string) {
-  return boundedRequest(`/api/student/attempts/${attemptId}/expire`, {
+export async function expireQuizAttempt(attemptId: string, basePath = "/api/student/attempts") {
+  return boundedRequest(`${basePath}/${attemptId}/expire`, {
     method: "POST",
   }, async (response) => response);
 }
