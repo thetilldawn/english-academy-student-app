@@ -1,0 +1,652 @@
+{
+  "checkedAt": "2026-09-30T08:31:25.176Z",
+  "code": "de1c61a3020e1047eebfdab10eb444ecfbe68687",
+  "preview": {
+    "target": "preview",
+    "checkedAt": "2026-09-30T08:28:15.781Z",
+    "id": "dpl_2ShKTfL7Guc2QXeYPJz5ZTXLcgUV",
+    "url": "english-academy-student-o2arhwjgr-thetilldawn-3859s-projects.vercel.app",
+    "state": "READY",
+    "gitSource": {
+      "ref": "codex/vocabulary-templates-20260920",
+      "repoId": 1315214177,
+      "sha": "de1c61a3020e1047eebfdab10eb444ecfbe68687",
+      "type": "github",
+      "prId": null
+    },
+    "code": "de1c61a3020e1047eebfdab10eb444ecfbe68687",
+    "ref": "codex/vocabulary-templates-20260920",
+    "createdAt": 1790756725485,
+    "ready": 1790756839351
+  },
+  "production": {
+    "target": "production",
+    "checkedAt": "2026-09-30T08:30:14.117Z",
+    "id": "dpl_ngiyujRn7Ajz8bjgJqPJGj8HAz4A",
+    "url": "english-academy-student-esyvmz0e6-thetilldawn-3859s-projects.vercel.app",
+    "state": "READY",
+    "gitSource": {
+      "ref": "main",
+      "repoId": 1315214177,
+      "sha": "de1c61a3020e1047eebfdab10eb444ecfbe68687",
+      "type": "github",
+      "prId": null
+    },
+    "code": "de1c61a3020e1047eebfdab10eb444ecfbe68687",
+    "ref": "main",
+    "createdAt": 1790756923819,
+    "ready": 1790757002404
+  },
+  "target": {
+    "checkedAt": "2026-09-30T08:30:38.413Z",
+    "deploymentId": "dpl_ngiyujRn7Ajz8bjgJqPJGj8HAz4A",
+    "state": "READY",
+    "target": "production",
+    "code": "de1c61a3020e1047eebfdab10eb444ecfbe68687",
+    "ref": "main",
+    "readyAt": 1790757002404,
+    "alias": "english-academy-student-app.vercel.app",
+    "aliasDeploymentId": "dpl_ngiyujRn7Ajz8bjgJqPJGj8HAz4A",
+    "projectProductionId": "dpl_ngiyujRn7Ajz8bjgJqPJGj8HAz4A",
+    "protectionKeyCount": 0,
+    "ssoPolicy": "all_except_custom_domains",
+    "passed": true
+  },
+  "productionChecks": {
+    "checkedAt": "2026-09-30T08:30:42.907Z",
+    "origin": "https://english-academy-student-app.vercel.app",
+    "studentWrites": 0,
+    "results": [
+      {
+        "route": "/admin/login",
+        "status": 200,
+        "expected": 200,
+        "elapsedMs": 549,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "expected": 200,
+        "elapsedMs": 446,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/code",
+        "status": 307,
+        "expected": 307,
+        "elapsedMs": 462,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "redirectPath": "/"
+      },
+      {
+        "route": "/api/preview-identity",
+        "status": 404,
+        "expected": 404,
+        "elapsedMs": 447,
+        "cacheControl": "private, no-store",
+        "contentType": null
+      },
+      {
+        "route": "/api/admin/wordbook-library",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 427,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/admin/wordbook-compositions",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 427,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/session",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 79,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/notebook",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 128,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/wrong-words",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 67,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 121,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/student",
+        "status": 200,
+        "expected": 307,
+        "elapsedMs": 173,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "streamedRedirectToIndex": true
+      },
+      {
+        "route": "/api/student/dashboard/sections",
+        "status": 405,
+        "expected": 405,
+        "elapsedMs": 97,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": null
+      }
+    ],
+    "errors": [],
+    "mutationGuards": [
+      {
+        "route": "/api/student/practice/preview",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice/preview",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments/preview",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments/preview",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      }
+    ],
+    "passed": true
+  },
+  "productionErrors": {
+    "deploymentId": "dpl_ngiyujRn7Ajz8bjgJqPJGj8HAz4A",
+    "since": "2026-09-30T08:30:02.404Z",
+    "until": "2026-09-30T08:31:19.642Z",
+    "results": [
+      {
+        "filter": "--status-code 5xx",
+        "code": 0,
+        "parsed": true,
+        "validScope": true,
+        "count": 0,
+        "uniqueCount": 0,
+        "mayBeTruncated": false,
+        "diagnostic": null
+      },
+      {
+        "filter": "--level error",
+        "code": 0,
+        "parsed": true,
+        "validScope": true,
+        "count": 0,
+        "uniqueCount": 0,
+        "mayBeTruncated": false,
+        "diagnostic": null
+      },
+      {
+        "filter": "--level fatal",
+        "code": 0,
+        "parsed": true,
+        "validScope": true,
+        "count": 0,
+        "uniqueCount": 0,
+        "mayBeTruncated": false,
+        "diagnostic": null
+      }
+    ],
+    "passed": true
+  },
+  "earlierCode": "8595803c51835b80ff9473ae40462fd052faa5b3",
+  "earlierPreviewChecks": {
+    "checkedAt": "2026-09-30T06:57:35.523Z",
+    "deploymentId": "dpl_DicBsE6Nsep5iY4tmshKfL4YRhKN",
+    "code": "8595803c51835b80ff9473ae40462fd052faa5b3",
+    "keyCreated": true,
+    "keyRevoked": true,
+    "ssoPreserved": true,
+    "originalKeysPreserved": true,
+    "redirectFollowing": false,
+    "studentWrites": 0,
+    "results": [
+      {
+        "route": "/api/preview-identity",
+        "status": 200,
+        "elapsedMs": 43,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json",
+        "identity": {
+          "deploymentHost": "english-academy-student-o8t4je4lj-thetilldawn-3859s-projects.vercel.app",
+          "gitCommitRef": "codex/vocabulary-templates-20260920",
+          "gitCommitSha": "8595803c51835b80ff9473ae40462fd052faa5b3",
+          "supabaseProjectRef": "wojxpruvbjzbhrpmsbuy",
+          "vercelEnvironment": "preview"
+        }
+      },
+      {
+        "route": "/admin/login",
+        "status": 200,
+        "elapsedMs": 243,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "elapsedMs": 398,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/code",
+        "status": 307,
+        "elapsedMs": 251,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "redirectPath": "/"
+      },
+      {
+        "route": "/api/admin/wordbook-library",
+        "status": 401,
+        "elapsedMs": 613,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/admin/wordbook-compositions",
+        "status": 401,
+        "elapsedMs": 211,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/session",
+        "status": 401,
+        "elapsedMs": 146,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/notebook",
+        "status": 401,
+        "elapsedMs": 320,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/wrong-words",
+        "status": 401,
+        "elapsedMs": 54,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 401,
+        "elapsedMs": 80,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/student",
+        "status": 200,
+        "elapsedMs": 195,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "streamedRedirectToIndex": true
+      },
+      {
+        "route": "/api/student/dashboard/sections",
+        "status": 405,
+        "elapsedMs": 76,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": null
+      }
+    ],
+    "errors": [],
+    "withoutKeyStatusBefore": 302,
+    "activationChecks": [
+      {
+        "status": 200,
+        "redirectOrigin": null
+      }
+    ],
+    "routeActivationRetries": [
+      {
+        "route": "/api/admin/wordbook-compositions",
+        "attempt": 0,
+        "status": 302,
+        "redirectPath": "/sso-api"
+      }
+    ],
+    "mutationGuards": [
+      {
+        "route": "/api/student/practice/preview",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice/preview",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments/preview",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments/preview",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      }
+    ],
+    "revokedKeyStatus": 302,
+    "passed": true
+  },
+  "earlierProductionChecks": {
+    "checkedAt": "2026-09-30T07:08:22.297Z",
+    "origin": "https://english-academy-student-app.vercel.app",
+    "studentWrites": 0,
+    "results": [
+      {
+        "route": "/admin/login",
+        "status": 200,
+        "expected": 200,
+        "elapsedMs": 650,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "expected": 200,
+        "elapsedMs": 442,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "route": "/code",
+        "status": 307,
+        "expected": 307,
+        "elapsedMs": 259,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "redirectPath": "/"
+      },
+      {
+        "route": "/api/preview-identity",
+        "status": 404,
+        "expected": 404,
+        "elapsedMs": 423,
+        "cacheControl": "private, no-store",
+        "contentType": null
+      },
+      {
+        "route": "/api/admin/wordbook-library",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 399,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/admin/wordbook-compositions",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 398,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/session",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 87,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/notebook",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 375,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/wrong-words",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 56,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 401,
+        "expected": 401,
+        "elapsedMs": 86,
+        "cacheControl": "private, no-store",
+        "contentType": "application/json"
+      },
+      {
+        "route": "/student",
+        "status": 200,
+        "expected": 307,
+        "elapsedMs": 183,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "contentType": "text/html; charset=utf-8",
+        "streamedRedirectToIndex": true
+      },
+      {
+        "route": "/api/student/dashboard/sections",
+        "status": 405,
+        "expected": 405,
+        "elapsedMs": 84,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "contentType": null
+      }
+    ],
+    "errors": [],
+    "mutationGuards": [
+      {
+        "route": "/api/student/practice/preview",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice/preview",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/student/practice",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments/preview",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments/preview",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      },
+      {
+        "route": "/api/admin/notebook-assignments",
+        "status": 403,
+        "expected": 403,
+        "cacheControl": "private, no-store",
+        "privateDataReturned": false
+      }
+    ],
+    "passed": true
+  },
+  "compatibility": {
+    "runtimeSourceChangesSinceEarlierCode": 0,
+    "changes": "One additive SQL migration, one synthetic database test, ownership map and verification records only.",
+    "additionalPreviewAccessKeyCreated": false,
+    "previewLatestBuildChecked": true,
+    "previewLatestProtectedAppRequestsRepeated": false
+  },
+  "authenticatedProductionRead": {
+    "account": "Existing test account only",
+    "words": 532,
+    "firstPage": 10,
+    "afterLoadMore": 20,
+    "defaultSort": "wrong count descending",
+    "recentSort": true,
+    "detailClosePreservedListAndSelection": true,
+    "clearSelection": true,
+    "actualBlur": true,
+    "audioResources": [
+      "https://media.merriam-webster.com/audio/prons/en/us/mp3/c/convey01.mp3",
+      "https://media.merriam-webster.com/audio/prons/en/us/mp3/a/analyz02.mp3"
+    ],
+    "humanListening": false,
+    "productionMobileRecheck": "Tool viewport override remained 1280x720; not counted as mobile pass."
+  },
+  "localEvidence": {
+    "priorWholeSuite": {
+      "passed": 4341,
+      "failed": 0,
+      "skipped": 1
+    },
+    "finalDatabaseRegression": {
+      "passed": 33,
+      "failed": 0,
+      "skipped": 0
+    },
+    "mobileLayout": "APP11: 320-1440px; detail breakpoint 680/681; APP13:390px synthetic assignment/player/result flow",
+    "completionInputCount": 388,
+    "completionFingerprint": "b62b63885b5bd2646e8cc6b17dce87836c2ed5c28642542d2a11640ed8718dca"
+  },
+  "studentMutationsForTesting": 0,
+  "productionTeacherSaveOrStudentAnswerTested": false,
+  "boundaries": [
+    "Read SQL succeeded in 6369ms under the unchanged 8s role limit; not a performance guarantee for every student.",
+    "Production authenticated notebook reads and UI were checked; teacher saves and student practice/answer submission were tested with synthetic local data only.",
+    "Initial production timeout was recorded and repaired; post-fix zero errors refers only to stated observation windows."
+  ]
+}
