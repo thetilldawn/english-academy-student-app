@@ -27,7 +27,7 @@ import {
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 
-export async function loadPronunciationAudioCorrections(): Promise<PronunciationAudioCorrection[]> {
+export async function loadPronunciationAudioCorrections(strict = false): Promise<PronunciationAudioCorrection[]> {
   try {
     const { data, error } = await getServiceSupabaseClient().rpc("list_pronunciation_audio_corrections_v1");
     if (error || !Array.isArray(data) || data.length > 500) throw new Error("audio_corrections_unavailable");
@@ -41,27 +41,28 @@ export async function loadPronunciationAudioCorrections(): Promise<Pronunciation
     }
     return rows as PronunciationAudioCorrection[];
   } catch {
+    if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
     console.warn("[quiz-pronunciation] audio correction unavailable");
     return [];
   }
 }
 
-export function loadEntrySourcePronunciationRegistry(ids: readonly number[]) {
-  return readMappedEntryResources(ids, readEntrySourcePronunciationRegistry, (rows, targetId) => rows.map(row => ({ ...row, entryId: targetId })));
+export function loadEntrySourcePronunciationRegistry(ids: readonly number[], strict = false) {
+  return readMappedEntryResources(ids, values => readEntrySourcePronunciationRegistry(values, strict), (rows, targetId) => rows.map(row => ({ ...row, entryId: targetId })));
 }
-export function loadEntryApprovedKoreanPronunciationRegistry(ids: readonly number[]) {
-  return readMappedEntryResources(ids, readEntryApprovedKoreanPronunciationRegistry);
+export function loadEntryApprovedKoreanPronunciationRegistry(ids: readonly number[], strict = false) {
+  return readMappedEntryResources(ids, values => readEntryApprovedKoreanPronunciationRegistry(values, strict));
 }
-export function loadVocabPronunciationRegistry(ids: readonly number[]) {
-  return readMappedEntryResources(ids, readVocabPronunciationRegistry);
+export function loadVocabPronunciationRegistry(ids: readonly number[], strict = false) {
+  return readMappedEntryResources(ids, values => readVocabPronunciationRegistry(values, strict));
 }
-export function loadActiveVocabPronunciationReleaseRegistry(ids: readonly number[]) {
-  return readMappedEntryResources(ids, readActiveVocabPronunciationReleaseRegistry);
+export function loadActiveVocabPronunciationReleaseRegistry(ids: readonly number[], strict = false) {
+  return readMappedEntryResources(ids, values => readActiveVocabPronunciationReleaseRegistry(values, strict));
 }
 export function loadVocabPronunciationDisplayRegistry(ids: readonly number[]) {
   return readMappedEntryResources(ids, readVocabPronunciationDisplayRegistry);
 }
-export async function loadSyntheticPronunciationRegistry(bindings: readonly { releaseId: string; vocabEntryId: number }[]) {
+export async function loadSyntheticPronunciationRegistry(bindings: readonly { releaseId: string; vocabEntryId: number }[], strict = false) {
   if (!bindings.length) return new Map<string, QuizPronunciation>();
   const lineage = await readCompositionLineage(bindings.map(b => b.vocabEntryId));
   const mapped = bindings.map(binding => {
@@ -69,7 +70,7 @@ export async function loadSyntheticPronunciationRegistry(bindings: readonly { re
     return source && source.compositionReleaseId === binding.releaseId
       ? { releaseId: source.sourceReleaseId, vocabEntryId: source.sourceEntryId } : binding;
   });
-  const original = await readSyntheticPronunciationRegistry(mapped);
+  const original = await readSyntheticPronunciationRegistry(mapped, strict);
   const result = new Map<string, QuizPronunciation>();
   for (let i = 0; i < bindings.length; i++) {
     const resource = original.get(syntheticPronunciationBindingKey(mapped[i]!.releaseId, mapped[i]!.vocabEntryId));
@@ -80,6 +81,7 @@ export async function loadSyntheticPronunciationRegistry(bindings: readonly { re
 
 async function readEntrySourcePronunciationRegistry(
   vocabEntryIds: readonly number[],
+  strict = false,
 ): Promise<Map<number, EntrySourcePronunciation[]>> {
   const result = new Map<number, EntrySourcePronunciation[]>();
   const ids = [...new Set(vocabEntryIds.filter(id => Number.isSafeInteger(id) && id > 0))];
@@ -101,6 +103,7 @@ async function readEntrySourcePronunciationRegistry(
     }
     return result;
   } catch {
+    if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
     console.warn("[quiz-pronunciation] source display unavailable");
     return new Map();
   }
@@ -108,6 +111,7 @@ async function readEntrySourcePronunciationRegistry(
 
 async function readEntryApprovedKoreanPronunciationRegistry(
   vocabEntryIds: readonly number[],
+  strict = false,
 ): Promise<Map<number, EntryApprovedKoreanPronunciation>> {
   const result = new Map<number, EntryApprovedKoreanPronunciation>();
   const ids = [...new Set(vocabEntryIds.filter((id) => Number.isSafeInteger(id) && id > 0))];
@@ -140,6 +144,7 @@ async function readEntryApprovedKoreanPronunciationRegistry(
     }
     return result;
   } catch {
+    if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
     // Optional display correction failing must not erase known audio or fail a
     // running exam. Do not log payloads, student identifiers, or raw SQL errors.
     console.warn("[quiz-pronunciation] entry approved display unavailable");
@@ -150,6 +155,7 @@ async function readEntryApprovedKoreanPronunciationRegistry(
 
 async function readVocabPronunciationRegistry(
   vocabEntryIds: readonly number[],
+  strict = false,
 ) {
   const result = new Map<number, QuizPronunciation>();
   if (vocabEntryIds.length === 0) return result;
@@ -165,6 +171,7 @@ async function readVocabPronunciationRegistry(
       )
       .in("vocab_entry_id", chunk);
     if (error) {
+      if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
       console.warn("[quiz-pronunciation] registry lookup failed", {
         code: error.code,
       });
@@ -182,6 +189,7 @@ async function readVocabPronunciationRegistry(
 
 async function readActiveVocabPronunciationReleaseRegistry(
   vocabEntryIds: readonly number[],
+  strict = false,
 ) {
   const result = new Map<number, QuizPronunciation>();
   if (vocabEntryIds.length === 0) return result;
@@ -197,6 +205,7 @@ async function readActiveVocabPronunciationReleaseRegistry(
     const chunk = uniqueIds.slice(offset, offset + 400);
     const { data, error } = await supabase.rpc("list_active_vocab_pronunciation_bindings_v3", { p_vocab_entry_ids: chunk });
     if (error) {
+      if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
       console.warn("[quiz-pronunciation] active VOCA binding lookup failed", {
         code: error.code,
       });
@@ -232,6 +241,7 @@ async function readActiveVocabPronunciationReleaseRegistry(
       .eq("playback_enabled", true)
       .eq("display_enabled", true);
     if (error) {
+      if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
       console.warn("[quiz-pronunciation] active VOCA identity lookup failed", {
         code: error.code,
       });
@@ -286,6 +296,7 @@ async function readVocabPronunciationDisplayRegistry(
 
 async function readSyntheticPronunciationRegistry(
   bindings: readonly { releaseId: string; vocabEntryId: number }[],
+  strict = false,
 ) {
   const result = new Map<string, QuizPronunciation>();
   if (bindings.length === 0) return result;
@@ -317,6 +328,7 @@ async function readSyntheticPronunciationRegistry(
         .eq("release_id", releaseId)
         .in("vocab_entry_id", chunk);
       if (bindingError) {
+        if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
         console.warn("[quiz-pronunciation] synthetic binding lookup failed", {
           code: bindingError.code,
         });
@@ -354,6 +366,7 @@ async function readSyntheticPronunciationRegistry(
       .in("asset_id", chunk)
       .eq("playback_enabled", true);
     if (assetError) {
+      if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
       console.warn("[quiz-pronunciation] synthetic asset lookup failed", {
         code: assetError.code,
       });
@@ -394,6 +407,7 @@ async function readSyntheticPronunciationRegistry(
 
 export async function loadApprovedKoreanPronunciationRegistry(
   dictionaryIds: readonly string[],
+  strict = false,
 ) {
   const approvedResult = new Map<string, QuizPronunciation>();
   if (dictionaryIds.length === 0) return approvedResult;
@@ -410,6 +424,7 @@ export async function loadApprovedKoreanPronunciationRegistry(
       .in("dictionary_id", chunk)
       .eq("review_status", "approved");
     if (error) {
+      if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
       console.warn("[quiz-pronunciation] approved display lookup failed", {
         code: error.code,
       });
@@ -445,6 +460,7 @@ export async function loadApprovedKoreanPronunciationRegistry(
       .in("dictionary_id", chunk)
       .eq("display_enabled", true);
     if (error) {
+      if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
       console.warn("[quiz-pronunciation] rule-derived display lookup failed", {
         code: error.code,
       });

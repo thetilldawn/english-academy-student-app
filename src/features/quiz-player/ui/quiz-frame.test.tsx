@@ -10,6 +10,8 @@ import { studentAppText } from "@/content/ko/student-app";
 
 import type { QuizQuestion } from "../model";
 import { QuizFrame } from "./quiz-frame";
+import frameStyles from "./quiz-frame.module.css";
+import choiceStyles from "./quiz-choice.module.css";
 
 const availablePronunciation = {
   audioUrl: "https://example.com/audio.mp3",
@@ -96,6 +98,29 @@ function renderFrame(
 afterEach(cleanup);
 
 describe("QuizFrame", () => {
+  it("표제어는 글자 수로 먼저 줄이지 않고 실제 폭에 맞추는 부품에 맡긴다", () => {
+    renderFrame(question("english_to_korean"), { promptDensity: "very-long" });
+    const prompt = screen.getByRole("heading", { level: 1 });
+    expect(prompt).not.toHaveClass(frameStyles["prompt-very-long"]);
+    expect(prompt.querySelector("[data-fit-text]")).toHaveTextContent("outstanding");
+    cleanup();
+    renderFrame(question("korean_to_english"), { choiceDensity: "very-long" });
+    for (const word of ["alpha", "beta", "gamma", "delta"]) {
+      const button = screen.getByRole("button", { name: new RegExp(`^[1-4]\\s*${word}`) });
+      expect(button).not.toHaveClass(choiceStyles["very-long"]);
+      expect(button.querySelector("[data-fit-text]")).toHaveTextContent(word);
+    }
+  });
+
+  it("영영풀이 같은 문장은 자동 한줄축소 대신 기존 줄바꿈 표시를 유지한다", () => {
+    const current = question("korean_to_english");
+    current.prompt = "A person who watches an event carefully.";
+    renderFrame(current, { quizContentMode: "canonical_definition_to_headword", promptDensity: "very-long" });
+    const prompt = screen.getByRole("heading", { level: 1 });
+    expect(prompt).toHaveClass(frameStyles["prompt-very-long"]);
+    expect(prompt.querySelector("[data-fit-text]")).toBeNull();
+  });
+
   it.each([
     [
       "영영풀이 → 영어",
@@ -264,7 +289,7 @@ describe("QuizFrame", () => {
     ).toHaveLength(0);
   });
 
-  it("applies the same longest-choice density to all four answers", () => {
+  it("긴 영어 보기도 네 항목 모두 실제 폭 조절 부품으로 표시한다", () => {
     const currentQuestion = question("korean_to_english");
     currentQuestion.choices[1] = "x".repeat(60);
     renderFrame(currentQuestion, { choiceDensity: "very-long" });
@@ -274,7 +299,8 @@ describe("QuizFrame", () => {
       .querySelectorAll("button:first-child");
     expect(answerButtons).toHaveLength(4);
     for (const button of answerButtons) {
-      expect(button.className).toContain("very-long");
+      expect(button).not.toHaveClass(choiceStyles["very-long"]);
+      expect(button.querySelector("[data-fit-text]")).not.toBeNull();
     }
   });
 

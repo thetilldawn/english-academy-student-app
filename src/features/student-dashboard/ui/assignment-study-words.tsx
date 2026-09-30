@@ -1,4 +1,5 @@
 import { PronunciationText } from "@/components/pronunciation-text";
+import { FitText } from "@/design-system/primitives/fit-text/fit-text";
 import { studentAppText } from "@/content/ko/student-app";
 import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
 import type { AssignmentStudy } from "../contracts/assignment-study";
@@ -36,12 +37,12 @@ export function AssignmentStudyWords({ study, englishHidden, meaningHidden, fail
               <div className={study.mode === "book_meaning_choice" ? styles.columns : styles.englishOnly}>
                 <StudyBlur block concealed={englishHidden} label={text.englishHidden}>
                   <div className={styles.wordTop}>
-                    <h3 className={styles.headword} lang="en">{word.headword}</h3>
+                    <h3 className={styles.headword} lang="en"><FitText>{word.headword}</FitText></h3>
                     <AudioButton disabled={!audioUrl || englishHidden}
                       label={`${word.headword} ${text.pronunciationLabel}`}
                       onClick={() => { if (audioUrl && !englishHidden) void onPlay(word.key, audioUrl); }} variant="compact" />
                   </div>
-                  <PronunciationText className={styles.pronunciation} pronunciation={word.pronunciation} />
+                  <FitText className={styles.pronunciation}><PronunciationText pronunciation={word.pronunciation} /></FitText>
                   {!word.pronunciation.displayKo && !audioUrl ? <p className={styles.notice}>{text.audioUnavailable}</p> : null}
                   {!audioUrl && word.pronunciation.displayKo ? <p className={styles.notice}>{text.soundUnavailable}</p> : null}
                 </StudyBlur>

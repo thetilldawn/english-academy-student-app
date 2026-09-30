@@ -75,15 +75,19 @@
   word-break: keep-all;
 }
 
+.text[data-fit-text] {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .pronunciation {
   min-height: var(--pronunciation-line-height);
-  overflow: hidden;
+  overflow-x: auto;
   color: var(--ink);
   font-family: var(--font-kr);
   font-size: 12px;
   font-weight: 400;
   line-height: var(--pronunciation-line-height);
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

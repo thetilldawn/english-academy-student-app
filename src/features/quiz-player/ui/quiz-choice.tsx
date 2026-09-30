@@ -1,6 +1,7 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { PronunciationText } from "@/components/pronunciation-text";
+import { FitText } from "@/design-system/primitives/fit-text/fit-text";
 
 import type { QuizChoiceLength, QuizChoicePresentation } from "../domain/quiz-session";
 import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
@@ -42,7 +43,7 @@ export function QuizChoice({
         className={[
           styles.choice,
           isEnglish ? styles.english : styles.korean,
-          styles[density],
+          content.kind === "english-word" ? "" : styles[density],
           feedback === "selected" ? styles.selected : "",
           feedback === "correct" ? styles.correct : "",
           feedback === "wrong" ? styles.wrong : "",
@@ -56,12 +57,9 @@ export function QuizChoice({
       >
         <span className={styles.number}>{index + 1}</span>
         <span className={styles.copy}>
-          <span className={styles.text}>{choice}</span>
+          {content.kind === "english-word" ? <FitText className={styles.text} group="choices">{choice}</FitText> : <span className={styles.text}>{choice}</span>}
           {pronunciation?.displayKo ? (
-            <PronunciationText
-              className={styles.pronunciation}
-              pronunciation={pronunciation}
-            />
+            <FitText className={styles.pronunciation} group="pronunciations"><PronunciationText pronunciation={pronunciation} /></FitText>
           ) : null}
         </span>
         <span aria-hidden="true" className={styles.mark}>

@@ -5,6 +5,7 @@
 html {
   min-width: 0;
   background: var(--paper);
+  scrollbar-gutter: stable;
 }
 
 body {
