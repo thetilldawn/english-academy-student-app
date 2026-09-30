@@ -1,4 +1,7 @@
 import { z } from "zod";
+import type { WrongWordPageFilters } from "./wrong-word-filters";
+export { wrongWordFiltersSchema } from "./wrong-word-filters";
+export type { WrongWordPageFilters } from "./wrong-word-filters";
 
 const count = z.number().int().nonnegative();
 const timestamp = z.iso.datetime({ offset: true });
@@ -16,7 +19,7 @@ export const wrongWordItemSchema = z.object({
   occurrences: z.array(z.object({
     datasetId: z.uuid(), vocabEntryId: z.number().int().positive(), latestQuestionId: z.uuid(), datasetLabel: z.string(),
     headword: z.string(), primaryMeaning: z.string(),
-    provenanceStatus: z.enum(["legacy_backfill", "verified_v2", "reviewed_for_preview_v1", "preview_verified_v1", "exam_reviewed_v1", "composition_verified_v1"]),
+    provenanceStatus: z.enum(["legacy_backfill", "verified_v2", "reviewed_for_preview_v1", "preview_verified_v1", "exam_reviewed_v1", "composition_verified_v1", "notebook_snapshot_v1"]),
     wrongCount: count, lastWrongAt: timestamp, resolution, scheduling, activeAssignment,
   })).min(1),
 });
@@ -24,12 +27,6 @@ export const wrongWordSummarySchema = z.object({
   wrongEventCount: count, uniqueWordCount: count, onceWrongWordCount: count,
   repeatedWrongWordCount: count, pendingReviewCount: count,
 });
-export const wrongWordFiltersSchema = z.object({
-  datasetId: z.union([z.uuid(), z.literal("")]).default(""),
-  level: z.enum(["all", "once", "repeated"]).default("all"),
-  query: z.string().trim().max(200).default(""),
-}).strict();
-export type WrongWordPageFilters = z.infer<typeof wrongWordFiltersSchema>;
 export const wrongWordPageSchema = z.object({
   items: z.array(wrongWordItemSchema).max(10), nextCursor: z.string().nullable(),
   totalCount: count.nullable(), summary: wrongWordSummarySchema.nullable(),

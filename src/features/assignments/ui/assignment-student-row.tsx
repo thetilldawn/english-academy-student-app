@@ -18,6 +18,7 @@ export function AssignmentStudentRow({
   checked,
   selectionLoading,
   onAssign,
+  onNotebook,
   onToggle,
   student,
 }: {
@@ -25,6 +26,7 @@ export function AssignmentStudentRow({
   checked: boolean;
   selectionLoading: boolean;
   onAssign: (studentId: string) => void;
+  onNotebook?: (student: StudentDirectoryListItem) => void;
   onToggle: (student: StudentDirectoryListItem) => void;
   student: StudentDirectoryListItem;
 }) {
@@ -35,7 +37,7 @@ export function AssignmentStudentRow({
     <SelectableRow
       actions={
         assignmentMode === "single" ? (
-          <ActionWithReason reason={assignmentBlockedReason}>
+          <><ActionWithReason reason={assignmentBlockedReason}>
             <Button
               disabled={assignmentBlockedReason !== null}
               onClick={() => onAssign(student.id)}
@@ -44,7 +46,7 @@ export function AssignmentStudentRow({
             >
               {adminLearningText.page.studentCard.newAssignment}
             </Button>
-          </ActionWithReason>
+          </ActionWithReason>{onNotebook ? <Button disabled={assignmentBlockedReason !== null} size="small" onClick={() => onNotebook(student)}>개인 오답</Button> : null}</>
         ) : null
       }
       checked={checked}

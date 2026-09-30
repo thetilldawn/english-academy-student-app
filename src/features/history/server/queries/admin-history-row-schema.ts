@@ -67,6 +67,8 @@ const rawDatasetSchema = z.object({
 });
 
 export const adminHistoryListItemSchema = z.object({
+  sourceKind: z.enum(["book", "notebook"]).optional(),
+  sourceDatasets: z.array(z.object({ datasetId: z.uuid(), title: z.string() })).optional(),
   _dataset: rawDatasetSchema,
   activityAt: timestampSchema,
   assignedAt: timestampSchema,
@@ -168,7 +170,7 @@ export function mapAdminHistoryListItem(
   const { _dataset, ...item } = raw;
   return {
     ...item,
-    datasetTitle: displayDatasetTitle(_dataset),
+    datasetTitle: item.sourceKind === "notebook" ? "개인 오답" : displayDatasetTitle(_dataset),
   };
 }
 
@@ -183,7 +185,7 @@ export function mapAdminHistoryDetailItem(
   } = raw;
   return {
     ...item,
-    datasetTitle: displayDatasetTitle(_dataset),
+    datasetTitle: item.sourceKind === "notebook" ? "개인 오답" : displayDatasetTitle(_dataset),
     ...(primaryUnitSortIndexes ? { primaryUnitSortIndexes } : {}),
     ...(unitSortIndexes ? { unitSortIndexes } : {}),
   };
@@ -194,6 +196,7 @@ export function projectAdminHistoryListItem(
 ): AdminHistoryListItem {
   return {
     activityAt: item.activityAt,
+    ...(item.sourceKind ? { sourceKind: item.sourceKind, sourceDatasets: item.sourceDatasets } : {}),
     assignedAt: item.assignedAt,
     assignmentId: item.assignmentId,
     assignmentPurpose: item.assignmentPurpose,

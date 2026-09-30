@@ -49,6 +49,8 @@ const rawDatasetSchema = z.object({
 });
 
 export const studentDashboardRawItemSchema = z.object({
+  sourceKind: z.enum(["book", "notebook"]).optional(),
+  sourceDatasets: z.array(z.object({ datasetId: z.uuid(), title: z.string() })).optional(),
   release: assignmentReleaseSchema.optional(),
   _dataset: rawDatasetSchema,
   assignedAt: timestampSchema,
@@ -156,7 +158,7 @@ export function mapStudentDashboardItem(
     unitSortIndexes,
     ...item
   } = raw;
-  const datasetTitle = displayDatasetTitle(_dataset);
+  const datasetTitle = item.sourceKind === "notebook" ? "개인 오답" : displayDatasetTitle(_dataset);
   return {
     ...item,
     datasetTitle,

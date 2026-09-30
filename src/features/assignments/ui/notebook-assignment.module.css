@@ -1,0 +1,15 @@
+.content { display: grid; gap: 1.25rem; min-width: 0; }
+.summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; border: 0; padding: 0; margin: 0; }
+.fields label { display: grid; gap: .5rem; min-width: 0; }
+.fields input,.fields select { min-width: 0; width: 100%; padding: .65rem; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-small); }
+.conditions { display: grid; gap: 1rem; border: 0; padding: 0; margin: 0; }
+.students { display: grid; gap: 1rem; }
+.student { display: grid; gap: .65rem; padding-block: 1rem; border-top: 1px solid var(--line); min-width: 0; }
+.student p { margin: 0; }
+.student summary { cursor: pointer; padding-block: .35rem; }
+.grade { display: flex; align-items: center; gap: .6rem; }
+.grade span { min-width: 0; overflow-wrap: anywhere; }
+.words { list-style: none; padding: 0; display: grid; gap: .5rem; }
+.words li { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .75rem; overflow-wrap: anywhere; }
+@media(max-width: 480px) { .fields { grid-template-columns: minmax(0,1fr); } }

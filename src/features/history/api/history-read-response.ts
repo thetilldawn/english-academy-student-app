@@ -16,6 +16,8 @@ const nullableTimestamp = timestamp.nullable();
 // The public list projection, not the server-only DB row or question detail.
 // z.object strips extra fields, including accidental question/answer payloads.
 const itemSchema = z.object({
+  sourceKind: z.enum(["book", "notebook"]).optional(),
+  sourceDatasets: z.array(z.object({ datasetId: z.uuid(), title: z.string() })).optional(),
   activityAt: timestamp,
   assignedAt: timestamp,
   assignmentId: z.uuid(),

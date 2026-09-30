@@ -169,6 +169,7 @@ export function lockedAssignmentEditChangeKeys(
 }
 
 export type AssignmentEditAvailabilityInput = {
+  sourceKind?: "book" | "notebook";
   status: string;
   attemptId: string | null;
   attemptCount?: number;
@@ -183,6 +184,7 @@ export type AssignmentEditAvailabilityInput = {
 };
 
 export type AssignmentEditUnavailableReason =
+  | "notebook"
   | "blocked"
   | "started"
   | "completed"
@@ -196,6 +198,7 @@ export function assignmentEditUnavailableReason(
   item: AssignmentEditAvailabilityInput,
   nowMilliseconds: number,
 ): AssignmentEditUnavailableReason | null {
+  if (item.sourceKind === "notebook") return "notebook";
   if (item.assignmentDeleted || item.studentDeleted) return "deleted";
   if (item.studentStatus !== "active") return "blocked";
   if (item.cancelled || item.status === "cancelled") return "cancelled";

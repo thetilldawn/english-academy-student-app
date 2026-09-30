@@ -94,10 +94,11 @@ export function StudentAssignmentCard({
 
       <div className={styles.scopeBlock}>
         <p className={styles.scope} title={scope}>{scope}</p>
-        {scope.length > 40 ? (
+        {assignment.sourceKind === "notebook" ? <p>포인트 제외</p> : null}
+        {scope.length > 40 || assignment.sourceKind === "notebook" ? (
           <details className={styles.scopeDetails}>
             <summary>전체 범위 보기</summary>
-            <p>{scope}</p>
+            <p>{assignment.sourceKind === "notebook" ? assignment.sourceDatasets?.map(d => d.title).join(" · ") : scope}</p>
           </details>
         ) : null}
       </div>

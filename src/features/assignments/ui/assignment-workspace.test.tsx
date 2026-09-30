@@ -93,6 +93,24 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
+  it.each([false,true])("개인 오답 모달은 접속 재확인 뒤 입력과 저장 요청을 보존한다(저장 유실=%s)", async lost => {
+    const original=fetchMock.getMockImplementation()!,saves:string[]=[];
+    fetchMock.mockImplementation(async(url:string,init?:RequestInit)=>{
+      if(url==='/api/admin/notebook-assignments/preview')return Response.json({confirmation:'a'.repeat(64),students:[{studentId:uid(1),displayName:'가짜 학생 1',totalCount:1,availableCount:1,words:[{key:'fake',headword:'collect',primaryMeaning:'모으다'}],excludedCount:0,excluded:[],sources:[],mismatchingSources:[],error:null}]});
+      if(url==='/api/admin/notebook-assignments'){saves.push(String(init?.body));return Response.json({error:'일시 장애'},{status:503});}
+      return original(url,init);
+    });
+    const view=render(<AssignmentWorkspace initial={{directory}} interactionAllowed/>);
+    fireEvent.click(screen.getAllByRole('button',{name:'개인 오답'})[0]);
+    const count=await screen.findByLabelText('학생당 문항 수');fireEvent.change(count,{target:{value:'1'}});
+    fireEvent.click(screen.getByRole('button',{name:'출제 단어 확인'}));await screen.findByText('1문항 · 출제 가능 1개 / 전체 1개');
+    if(lost){fireEvent.click(screen.getByRole('button',{name:'배정'}));await screen.findByText('일시 장애');}
+    view.rerender(<AssignmentWorkspace initial={{directory}} interactionAllowed={false}/>);
+    expect(screen.getByText('접속을 확인하고 있습니다.')).toBeVisible();expect(screen.queryByText('1문항 · 출제 가능 1개 / 전체 1개')).not.toBeInTheDocument();
+    view.rerender(<AssignmentWorkspace initial={{directory}} interactionAllowed/>);
+    expect(screen.getByLabelText('학생당 문항 수')).toHaveValue('1');expect(screen.getByText('1문항 · 출제 가능 1개 / 전체 1개')).toBeVisible();
+    if(lost){fireEvent.click(screen.getByRole('button',{name:'배정 결과 확인'}));await waitFor(()=>expect(saves).toHaveLength(2));expect(saves[1]).toBe(saves[0]);expect(screen.getByRole('link',{name:'배정 내역 보기'})).toHaveAttribute('target','_blank');}
+  });
   it("shows original/generated roles and protects a hidden library draft when closing the parent", async () => {
     const original=fetchMock.getMockImplementation()!;
     fetchMock.mockImplementation(async (url:string,init?:RequestInit)=>{

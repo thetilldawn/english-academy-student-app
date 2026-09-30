@@ -1,4 +1,5 @@
 export type AssignmentReplacementFailureReason =
+  | "notebook"
   | "forbidden"
   | "not_found"
   | "blocked"
@@ -18,6 +19,7 @@ const failureMessages: Record<
   AssignmentReplacementFailureReason,
   string
 > = {
+  notebook: "개인 오답 시험은 새로 배정해 주세요.",
   forbidden: "관리자 권한을 다시 확인해 주세요.",
   not_found: "수정할 학생 배정을 찾지 못했습니다.",
   blocked: "이용이 중지된 학생의 배정은 수정할 수 없습니다.",
@@ -51,6 +53,7 @@ export function mapAssignmentReplacementDatabaseFailure(error: {
   message?: string;
 }): AssignmentReplacementError {
   const message = error.message ?? "";
+  if (/notebook_assignment_edit_unsupported/.test(message)) return new AssignmentReplacementError("notebook");
   if (error.code === "42501" || /forbidden/.test(message)) {
     return new AssignmentReplacementError("forbidden");
   }

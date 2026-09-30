@@ -37,6 +37,8 @@ export type AdminHistoryListItem = Pick<
   | "assignedAt"
   | "assignmentId"
   | "assignmentPurpose"
+  | "sourceKind"
+  | "sourceDatasets"
   | "assignmentTitle"
   | "attemptId"
   | "availableUntil"

@@ -7,6 +7,9 @@ import { Transform } from "node:stream";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { APP_ORIGIN, DATA_ORIGIN, NEXT_ORIGIN, PUBLIC_KEY, ACCOUNT, fixtureResponse } from "./local-admin-baseline-data.mjs";
 import { STUDY_TOKEN } from "./local-student-study-data.mjs";
+import { localNotebookFixture, notebookDisplaySamples } from "./local-notebook-data.mjs";
+import { prepareLocalPractice, closeLocalPractice, localPracticeFixture, isLocalPracticeRequest } from "./local-practice-data.mjs";
+import { prepareLocalNotebookAssignment, localNotebookAssignmentFixture, isLocalNotebookAssignmentRequest } from "./local-notebook-assignment-data.mjs";
 import { SCHOOL_FAKE_KEY } from "./local-school-search-data.mjs";
 import { vocabularyLibraryFixture } from "./local-vocabulary-library-data.mjs";
 import { isLocalQuizRequest, localQuizSummary, localQuizWave, resetLocalQuizzes } from "./local-quiz-feedback-data.mjs";
@@ -14,6 +17,9 @@ import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwn
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const quizFeedback = process.argv.includes("--quiz-feedback");
+const notebook = process.argv.includes("--notebook");
+const notebookAssignment = process.argv.includes("--notebook-assignment");
+const practice = process.argv.includes("--practice") || notebookAssignment;
 const studentProfile = process.argv.includes("--student-profile");
 const schoolSchedules = process.argv.includes("--school-schedules");
 const mockWordbooks = process.argv.includes("--mock-wordbooks");
@@ -85,7 +91,8 @@ const dataServer = http.createServer(async (req, res) => {
   try {
     const request = { url: DATA_ORIGIN + req.url, method: req.method,
       headers: new Headers(req.headers), body: await readBody(req), quizFeedback, studentProfile, schoolSchedules, mockWordbooks };
-    const result = (vocabularyLibrary ? vocabularyLibraryFixture(request) : null) ?? fixtureResponse(request);
+    const source = (notebookAssignment ? await localNotebookAssignmentFixture(request) : null) ?? (practice ? await localPracticeFixture(request) : null) ?? (notebook ? localNotebookFixture(request) : null) ?? (vocabularyLibrary ? vocabularyLibraryFixture(request) : null) ?? fixtureResponse(request);
+    const result = notebook ? notebookDisplaySamples(request, source) : source;
     metrics.data.push({ path: new URL(DATA_ORIGIN + req.url).pathname, method: req.method,
       category: result.category, status: result.status, at: Date.now() });
     if (Number.isSafeInteger(result.count) && result.count >= 0) res.setHeader("Content-Range", "*/" + result.count);
@@ -100,18 +107,19 @@ const allowedApi = new Set(["/api/admin/session", "/api/admin/students/directory
   "/api/admin/assignment-workspace/previous-exam", "/api/admin/assignment-workspace/selection"]);
 if (mockWordbooks) allowedApi.add("/api/admin/wordbook-compositions");
 if (vocabularyLibrary) allowedApi.add("/api/admin/wordbook-library");
+if (notebook) allowedApi.add("/api/student/notebook");
 const proxy = http.createServer(async (req, res) => {
   if (req.headers.host !== new URL(APP_ORIGIN).host) return json(res, { error: "Local host required" }, 403);
   const url = new URL(req.url, APP_ORIGIN);
   if (url.pathname === "/__baseline/student" && req.method === "GET") {
     // The real app still validates this token against the isolated fixture backend.
-    res.writeHead(303, { location: "/student", "cache-control": "no-store",
+    res.writeHead(303, { location: notebook ? "/student/wordbook" : "/student", "cache-control": "no-store",
       "set-cookie": "__Host-ea_student_session=" + STUDY_TOKEN + "; Path=/; HttpOnly; SameSite=Lax; Secure" });
     return res.end();
   }
   if (url.pathname === "/__baseline/metrics" && req.method === "GET") return json(res,
-    quizFeedback ? { ...metrics, audio: audioMetrics, quizzes: localQuizSummary() } : metrics);
-  if (quizFeedback && url.pathname === "/__baseline/quiz-observer.js" && req.method === "GET") {
+    quizFeedback || notebook ? { ...metrics, audio: audioMetrics, quizzes: localQuizSummary() } : metrics);
+  if ((quizFeedback || notebook) && url.pathname === "/__baseline/quiz-observer.js" && req.method === "GET") {
     res.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" });
     return res.end(fs.readFileSync(path.join(root, "scripts/local-quiz-feedback-observer.js")));
   }
@@ -120,7 +128,7 @@ const proxy = http.createServer(async (req, res) => {
     res.writeHead(200, { "Content-Type": "audio/wav", "Content-Length": wave.length, "Cache-Control": "no-store" });
     return res.end(wave);
   }
-  if (quizFeedback && url.pathname === "/__baseline/quiz-observe" && req.method === "POST") {
+  if ((quizFeedback || notebook) && url.pathname === "/__baseline/quiz-observe" && req.method === "POST") {
     if (req.headers.origin !== APP_ORIGIN) return json(res, {}, 403);
     try {
       const value = JSON.parse(await readBody(req));
@@ -161,6 +169,8 @@ const proxy = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/api/") && (!allowedApi.has(url.pathname) &&
       !(quizFeedback && isLocalQuizRequest(url.pathname, req.method)) &&
+      !(practice && isLocalPracticeRequest(url.pathname, req.method)) &&
+      !(notebookAssignment && isLocalNotebookAssignmentRequest(url.pathname, req.method)) &&
       !(mockWordbooks && url.pathname === "/api/admin/assignment-workspace/datasets/00000000-0000-4000-8000-000000000012/units") &&
       !(vocabularyLibrary && url.pathname === "/api/admin/assignment-workspace/datasets/00000000-0000-4000-8000-000000000013/units") &&
       !/^\/api\/admin\/assignment-workspace\/datasets\/00000000-0000-4000-8000-00000000001[01]\/units$/.test(url.pathname))) {
@@ -183,7 +193,7 @@ const proxy = http.createServer(async (req, res) => {
     if (isHtml) delete headers["content-length"];
     res.writeHead(response.statusCode, {
       ...headers,
-      "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; form-action 'self'; frame-src 'none'; base-uri 'self'",
+      "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; form-action 'self'; frame-src 'none'; base-uri 'self'" + (notebook ? "; media-src 'self' https://media.merriam-webster.com" : ""),
     });
     let bytes = 0;
     response.on("data", chunk => { bytes += chunk.length; });
@@ -199,7 +209,8 @@ const proxy = http.createServer(async (req, res) => {
         if (headAt < 0) return prefix.length > 16384 ? callback(new Error("Expected initial HTML head")) : callback();
         injected = true;
         callback(null, Buffer.concat([prefix.subarray(0, headAt + 6),
-          Buffer.from((quizFeedback ? '<script src="/__baseline/quiz-observer.js"></script>' : '') +
+          Buffer.from((quizFeedback || notebook ? '<script src="/__baseline/quiz-observer.js"></script>' : '') +
+            (notebook && url.searchParams.get('localDisplayScale') === '2' ? '<style data-local-display-scale>html { zoom: 2; }</style>' : '') +
             '<script src="/__baseline/observer.js" defer></script>'), prefix.subarray(headAt + 6)]));
       } })).on("error", () => res.destroy()).pipe(res);
     } else response.pipe(res);
@@ -236,12 +247,15 @@ function stop() {
       server.close(resolve); server.closeAllConnections();
     })));
     restoreBuildDirectory();
+    if (practice) await closeLocalPractice();
   })();
 }
 const stopSafely = () => { void stop().catch(error => { console.error(error.message); process.exitCode = 1; }); };
 process.on("SIGINT", stopSafely);
 process.on("SIGTERM", stopSafely);
 try {
+  if (practice) await prepareLocalPractice();
+  if (notebookAssignment) await prepareLocalNotebookAssignment();
   await listen(dataServer, 3038);
   assertMayStart(stopRequested);
   preserveBuildDirectory();
@@ -257,5 +271,5 @@ try {
   await listen(proxy, 3037);
   assertMayStart(stopRequested);
   console.log(JSON.stringify({ url: APP_ORIGIN + "/admin/login", account: ACCOUNT,
-    note: studentProfile ? "가짜 로그인. 지정된 가짜 학생 프로필만 메모리 안에서 수정 가능. 외부·실제 DB 요청은 차단됩니다." : "가짜 로그인/읽기 전용. 실제 인증·DB 비용 검증 아님. 등록/배정/수정/삭제 금지." }));
+    note: notebookAssignment ? "가짜 학생 배정·응시만 격리 메모리 DB에 저장. 외부·실제 DB 요청은 차단됩니다." : practice ? "가짜 학생 연습만 격리 메모리 DB에 저장. 외부·실제 DB 요청은 차단됩니다." : studentProfile ? "가짜 로그인. 지정된 가짜 학생 프로필만 메모리 안에서 수정 가능. 외부·실제 DB 요청은 차단됩니다." : "가짜 로그인/읽기 전용. 실제 인증·DB 비용 검증 아님. 등록/배정/수정/삭제 금지." }));
 } catch (error) { await stop(); throw error; }

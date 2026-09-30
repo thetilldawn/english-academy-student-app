@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ACCOUNT, ACCESS_TOKEN, APP_ORIGIN, DATA_ORIGIN, PUBLIC_KEY, fixtureResponse, summarizeSamples, uid } from "../../scripts/local-admin-baseline-data.mjs";
 import { assertLocalBaselineEnvironment, assertLocalFetchTarget, assertNestedPath, guardedFetch, waitForChild, stopOwnedChild, isRestorationSafe, assertMayStart, shouldSimulateCapacityFailure } from "../../scripts/local-admin-baseline-guard.mjs";
 import { SCHOOL_FAKE_KEY, schoolSearchFixtureResponse } from "../../scripts/local-school-search-data.mjs";
+import { notebookDisplaySamples } from "../../scripts/local-notebook-data.mjs";
 
 const roots = [];
 afterEach(() => { for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true }); });
@@ -17,6 +18,12 @@ const read = (pathname, init = {}) => fixtureResponse({ url: DATA_ORIGIN + pathn
   headers: new Headers({ apikey: PUBLIC_KEY, authorization: "Bearer " + ACCESS_TOKEN }), ...init });
 
 describe("로컬 학생 학습 가짜 자료 보호", () => {
+  it("통합 SQL의 실제 생성 문항은 긴 문장 화면 샘플로 덮어쓰지 않는다", () => {
+    const result = { status: 200, category: "notebook-regular-sql", body: [
+      { prompt: "collect", choices: ["모으다", "여행하다", "참다", "크다"], assignment_question: { exam_use_snapshot: null } },
+    ] };
+    expect(notebookDisplaySamples({ url: DATA_ORIGIN + "/rest/v1/quiz_questions" }, result)).toBe(result);
+  });
   const studyRead = (pathname, init = {}) => read(pathname, {
     headers: new Headers({ apikey: STUDY_SECRET, authorization: "Bearer " + STUDY_SECRET }), ...init,
   });

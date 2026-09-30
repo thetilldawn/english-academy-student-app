@@ -18,6 +18,8 @@ export type AssignmentActivityStatus =
 export type AssignmentPurpose = "regular" | "review" | "mixed";
 
 export type AssignmentHistorySource = {
+  sourceKind?: "book" | "notebook";
+  sourceDatasets?: { datasetId: string; title: string }[];
   assignmentId: string;
   assignmentTitle: string;
   assignmentDeleted: boolean;

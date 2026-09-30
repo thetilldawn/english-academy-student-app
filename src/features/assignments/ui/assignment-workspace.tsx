@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 
@@ -15,6 +15,8 @@ import {
 } from "../controller/use-assignment-workspace";
 import { AssignmentPlannerLoadDialog } from "./assignment-planner-load-dialog";
 import { AssignmentStudentBrowser } from "./assignment-student-browser";
+
+const NotebookAssignmentDialog = dynamic(() => import("./notebook-assignment-dialog").then(module => module.NotebookAssignmentDialog), { ssr: false });
 
 const VocabAssignmentPlanner = dynamic(
   () => import("./vocab-assignment-planner").then(
@@ -52,6 +54,7 @@ export function AssignmentWorkspace({
     interactionAllowed,
   });
   const planner = controller.planner;
+  const [notebook, setNotebook] = useState<{ students: { id: string; displayName: string }[]; audienceMode: "single" | "bulk" } | null>(null);
 
   useEffect(() => {
     if (planner.status === "loading") {
@@ -61,7 +64,13 @@ export function AssignmentWorkspace({
 
   return (
     <>
-      <AssignmentStudentBrowser controller={controller} />
+      <AssignmentStudentBrowser controller={controller} onNotebook={(students, audienceMode) => { if (interactionAllowed) setNotebook({ students, audienceMode }); }} />
+      {notebook ? <NotebookAssignmentDialog {...notebook} interactionAllowed={interactionAllowed} onClose={() => setNotebook(null)} onSuccess={count => {
+        announceStudentDirectoryRefresh();
+        if (notebook.audienceMode === "bulk") controller.actions.clearBulkStudents();
+        setNotebook(null); toast.success(`${count}명에게 개인 오답 시험을 배정했습니다.`);
+        if (!cacheEnabled) controller.actions.refreshDirectory();
+      }} /> : null}
 
       {planner.status === "loading" ? (
         <AssignmentPlannerLoadDialog onClose={planner.actions.close} />

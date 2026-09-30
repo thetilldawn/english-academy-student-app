@@ -89,11 +89,11 @@ export function AdminHistoryDetailContent({
         <dl className={styles.metadata}>
           <div>
             <dt>{adminHistoryText.detailModal.dataset}</dt>
-            <dd>{summary.datasetTitle}</dd>
+            <dd>{summary.datasetTitle}{summary.sourceKind === "notebook" ? " · 포인트 제외" : ""}</dd>
           </div>
           <div>
             <dt>{adminHistoryText.detailModal.range}</dt>
-            <dd>{assignmentScopeLabel(summary)}</dd>
+            <dd>{summary.sourceKind === "notebook" ? summary.sourceDatasets?.map(d => d.title).join(" · ") : assignmentScopeLabel(summary)}</dd>
           </div>
           <div>
             <dt>{adminHistoryText.detailModal.conditions}</dt>

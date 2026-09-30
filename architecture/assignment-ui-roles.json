@@ -201,7 +201,7 @@
     {
       "path": "assignment-student-browser.tsx",
       "role": "deferred",
-      "reason": "APP-20260908-03: 행·바구니는 좁은 값과 콜백으로 분리. 진입 방식 선택은 여전히 전체 제어기에 의존하므로 후속 분리 유지",
+      "reason": "APP13 기존 전체 제어기 의존은 후속 분리로 남긴다. 개인 오답은 선택 학생의 id/이름과 audienceMode 콜백만 추가. 새 계산·전송 의존 없음.",
       "allowedImports": [
         "../controller/use-assignment-workspace",
         "./assignment-student-row",
@@ -216,7 +216,7 @@
         "@/design-system/primitives/tabs/tabs",
         "@/content/ko/admin-students"
       ],
-      "legacySourceSha256": "11b385f66e5b8643c15779b20617e801658b1ccf65bd26ef47c0591fa80a3e58"
+      "legacySourceSha256": "1ea9a994562f3660421105b2266cbd037769fee3bcfdbf1bc302808e84011dc7"
     },
     {
       "path": "assignment-student-row.tsx",
@@ -312,7 +312,7 @@
     {
       "path": "assignment-workspace.tsx",
       "role": "assembly",
-      "reason": "학생 선택·준비 요청·모달·완료 갱신 연결, APP08 학생 공개 무효화 알림",
+      "reason": "학생 선택/기존 배정 및 개인 오답 모달 연결. APP13 접속 재확인 시 모달 유지·성공 갱신만 수행.",
       "allowedImports": [
         "@/features/students/public-client",
         "../contracts/assignment-workspace-read-model",
@@ -324,7 +324,8 @@
         "next/dynamic",
         "react",
         "sonner",
-        "./vocab-assignment-planner"
+        "./vocab-assignment-planner",
+        "./notebook-assignment-dialog"
       ]
     },
     {
@@ -772,6 +773,20 @@
         "@/lib/format",
         "../presentation/assignment-release-view",
         "@/design-system/patterns/activity-timeline/activity-timeline"
+      ]
+    },
+    {
+      "path": "notebook-assignment-dialog.tsx",
+      "role": "assembly",
+      "reason": "APP13 개인 오답 controller와 기존 조건 부품을 연결. 부품에는 좁은 exam 값/콜백만 전달하며 네트워크·저장 계산 없음.",
+      "allowedImports": [
+        "react",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/dialog/dialog",
+        "@/design-system/primitives/form/numeric-input",
+        "../controller/use-notebook-assignment",
+        "./exam-condition-fields",
+        "./notebook-assignment.module.css"
       ]
     }
   ]

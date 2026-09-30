@@ -68,6 +68,7 @@ export type ExamUseQuestionSnapshot = {
 };
 
 export type AssignmentQuestionSnapshot = {
+  notebook_pronunciation_snapshot?: unknown;
   composition_pronunciation_snapshot?: unknown;
   vocab_entry_id?: number;
   choice_vocab_entry_ids?: number[] | null;
@@ -81,6 +82,12 @@ export type AssignmentQuestionSnapshot = {
 };
 
 export function compositionQuestionPronunciation(question: AssignmentQuestionSnapshot | null, choiceCount = 4) {
+  if (question?.provenance_status === "notebook_snapshot_v1") {
+    const parsed = frozenQuestionPronunciationSchema.safeParse(question.notebook_pronunciation_snapshot);
+    if (!parsed.success || parsed.data.choices.length !== choiceCount || question.composition_pronunciation_snapshot != null) throw new Error("오답 시험의 학습정보를 확인하지 못했습니다.");
+    return parsed.data;
+  }
+  if (question?.notebook_pronunciation_snapshot != null) throw new Error("오답 시험의 학습정보를 확인하지 못했습니다.");
   if (question?.provenance_status !== "composition_verified_v1") {
     if (question?.composition_pronunciation_snapshot != null) throw new Error("단어장의 고정 학습정보를 확인하지 못했습니다.");
     return null;

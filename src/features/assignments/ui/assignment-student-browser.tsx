@@ -14,8 +14,10 @@ import styles from "./assignment-workspace.module.css";
 
 export function AssignmentStudentBrowser({
   controller,
+  onNotebook,
 }: {
   controller: AssignmentWorkspaceController;
+  onNotebook?: (students: { id: string; displayName: string }[], audienceMode: "single" | "bulk") => void;
 }) {
   const directory = controller.directory;
   const students = directory.snapshot.page.items;
@@ -77,6 +79,7 @@ export function AssignmentStudentBrowser({
               </Button>
             </div>
             <div className={styles.bulkActions}>
+              {onNotebook ? <Button disabled={controller.selectionLoading || controller.selectedBulkStudents.length === 0} onClick={() => onNotebook(controller.selectedBulkStudents, "bulk")} size="small">개인 오답 배정</Button> : null}
               <Button
                 disabled={!controller.canPrepareBulk}
                 onClick={controller.actions.prepareBulkAssignment}
@@ -116,6 +119,7 @@ export function AssignmentStudentBrowser({
                 checked={controller.selectedBulkStudentIds.includes(student.id)}
                 key={student.id}
                 onAssign={controller.actions.openSingleAssignment}
+                onNotebook={onNotebook ? student => onNotebook([student], "single") : undefined}
                 onToggle={controller.actions.toggleBulkStudent}
                 selectionLoading={controller.selectionLoading}
                 student={student}

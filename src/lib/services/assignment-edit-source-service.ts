@@ -32,6 +32,7 @@ type AssignmentUnitRelation = {
 };
 
 type AssignmentRelation = {
+  source_kind?: "book" | "notebook";
   id: string;
   title: string;
   status: "draft" | "active" | "closed";
@@ -263,6 +264,7 @@ export async function requireEditableSourceContext(
               status,
               deleted_at,
               assignment_purpose,
+              source_kind,
               quiz_content_mode,
               provenance_status,
               dataset_id,
@@ -328,6 +330,7 @@ export async function requireEditableSourceContext(
     {
       assignmentDeleted: assignment.deleted_at !== null,
       assignmentStatus: assignment.status,
+      sourceKind: assignment.source_kind,
       attemptCount: attempts.length,
       attemptId: attempts.length > 0 ? "started" : null,
       availableUntil: assignment.available_until,

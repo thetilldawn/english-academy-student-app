@@ -489,6 +489,38 @@
     {
       "path": "src/app/admin/(protected)/@detail/(.)school-schedules/edit/page.tsx",
       "owner": "school-schedules"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/[id]/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/(.)[id]/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/[...catchAll]/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/practice/page.tsx",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/student/(protected)/practice/[id]/page.tsx",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/student/(protected)/practice/[id]/result/page.tsx",
+      "owner": "quiz-player"
     }
   ],
   "nextSpecialEntrypointOwners": [
@@ -611,6 +643,50 @@
     {
       "path": "src/app/student/(protected)/@detail/default.tsx",
       "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/layout.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/loading.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/error.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/default.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/(.)[id]/loading.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/(.)[id]/error.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/(.)[id]/not-found.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/[id]/not-found.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/practice/not-found.tsx",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/student/(protected)/practice/loading.tsx",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/student/(protected)/practice/error.tsx",
+      "owner": "quiz-player"
     }
   ],
   "nextConfigOwners": [
@@ -775,6 +851,18 @@
     {
       "path": "src/app/api/student/dashboard/sections/route.test.ts",
       "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/api/student/wrong-words/route.test.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/route.test.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/student/notebook/route.test.ts",
+      "owner": "students"
     }
   ],
   "routeOwners": [
@@ -993,6 +1081,38 @@
     {
       "path": "src/app/api/student/dashboard/sections/route.ts",
       "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/api/student/wrong-words/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/student/notebook/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/student/practice/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/practice/[id]/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/practice/[id]/[command]/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/practice/preview/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/admin/notebook-assignments/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/notebook-assignments/preview/route.ts",
+      "owner": "assignments"
     }
   ],
   "serviceOwners": [
@@ -1684,6 +1804,14 @@
     {
       "path": "src/design-system/primitives/tooltip/help-tip.tsx",
       "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/fit-text/fit-text.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/fit-text/fit-text.module.css",
+      "owner": "shared-ui"
     }
   ],
   "architectureGuardOwners": [
@@ -1922,8 +2050,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 120,
-      "pathSetSha256": "436d296c9c1a4900a4b5f7d6d961edc86c4c569d55849204b6487babc182b7be"
+      "fileCount": 124,
+      "pathSetSha256": "ab6b962a3f88c85bcfad26cd03c4c9308232103a54f19233af0cc1df395ec8c0"
     },
     {
       "path": "src/lib/deploy",
@@ -2255,6 +2383,58 @@
     {
       "path": "src/features/student-dashboard/server/student-dashboard-section-cursor.ts",
       "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/students/server/queries/own-wrong-word-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/notebook-study-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/notebook-cursor.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/notebook-content.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-rpc.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-source.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-service.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-http.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/quiz-player/server/components/practice-content.tsx",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/notebook-assignment.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/assignments/server/persistence/notebook-assignment.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/assignments/server/notebook-assignment-http.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/assignments/server/planning/notebook-assignment.ts",
+      "owner": "assignments"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2640,6 +2820,26 @@
       "path": "supabase/migrations/20260929110037_paginate_student_dashboard_sections.sql",
       "owner": "student-dashboard",
       "flow": "student-dashboard-read"
+    },
+    {
+      "path": "supabase/migrations/20260929140225_share_wrong_word_notebook_reads.sql",
+      "owner": "students",
+      "flow": "student-wrong-word-read"
+    },
+    {
+      "path": "supabase/migrations/20260929165150_expand_student_word_notebook.sql",
+      "owner": "students",
+      "flow": "student-wrong-word-read"
+    },
+    {
+      "path": "supabase/migrations/20260930034455_add_student_word_practice.sql",
+      "owner": "quiz-player",
+      "flow": "student-word-practice"
+    },
+    {
+      "path": "supabase/migrations/20260930050611_add_personal_notebook_assignments.sql",
+      "owner": "assignments",
+      "flow": "assignment-notebook-create"
     }
   ],
   "features": [
@@ -2667,7 +2867,9 @@
         "src/app/api/admin/assignment-workspace/preparation/route.ts",
         "src/app/api/admin/assignment-workspace/datasets/route.ts",
         "src/app/api/admin/assignment-workspace/datasets/[datasetId]/units/route.ts",
-        "src/app/api/admin/assignment-workspace/previous-exam/route.ts"
+        "src/app/api/admin/assignment-workspace/previous-exam/route.ts",
+        "src/app/api/admin/notebook-assignments/route.ts",
+        "src/app/api/admin/notebook-assignments/preview/route.ts"
       ]
     },
     {
@@ -2711,7 +2913,14 @@
       "localGuide": "src/features/quiz-player/AGENTS.md",
       "entrypoints": [
         "src/app/student/(protected)/attempt/[id]/page.tsx",
-        "src/app/api/student/attempts/[id]/answers/route.ts"
+        "src/app/api/student/attempts/[id]/answers/route.ts",
+        "src/app/api/student/practice/route.ts",
+        "src/app/api/student/practice/[id]/route.ts",
+        "src/app/api/student/practice/[id]/[command]/route.ts",
+        "src/app/api/student/practice/preview/route.ts",
+        "src/app/student/(protected)/practice/page.tsx",
+        "src/app/student/(protected)/practice/[id]/page.tsx",
+        "src/app/student/(protected)/practice/[id]/result/page.tsx"
       ]
     },
     {
@@ -2740,7 +2949,9 @@
       "entrypoints": [
         "src/app/student/(protected)/page.tsx",
         "src/app/student/(protected)/assignments/[id]/words/page.tsx",
-        "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx"
+        "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx",
+        "src/app/student/(protected)/wordbook/page.tsx",
+        "src/app/student/(protected)/wordbook/[id]/page.tsx"
       ]
     },
     {
@@ -3204,6 +3415,108 @@
       "to": "src/features/students/public-client.ts",
       "reason": "학생 프로필 저장 응답을 열린 배정에 반영해 범위 입력을 보존",
       "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/student-dashboard/client/components/notebook-reader.tsx",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/student-dashboard/client/controllers/use-notebook.ts",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/student-dashboard/client/transport/notebook-transport.ts",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/student-dashboard/server/components/notebook-content.tsx",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/student-dashboard/server/components/notebook-content.tsx",
+      "to": "src/features/students/public-server.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/students/server/queries/notebook-study-query.ts",
+      "to": "src/features/wordbook-compositions/public-contracts.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/quiz-player/client/practice-launcher.tsx",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "본인 누적 오답의 공통 계약/검증된 발음 재사용 및 연습 진입",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/quiz-player/contracts/practice.ts",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "본인 누적 오답의 공통 계약/검증된 발음 재사용 및 연습 진입",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/quiz-player/server/practice-source.ts",
+      "to": "src/features/students/public-server.ts",
+      "reason": "본인 누적 오답의 공통 계약/검증된 발음 재사용 및 연습 진입",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/client/components/notebook-reader.tsx",
+      "to": "src/features/quiz-player/public-ui.ts",
+      "reason": "본인 누적 오답의 공통 계약/검증된 발음 재사용 및 연습 진입",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/assignments/contracts/notebook-assignment.ts",
+      "to": "src/features/quiz-player/public-contracts.ts",
+      "reason": "기존 공개 계약/출제/발음과 계정 변경 신호 재사용",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/assignments/contracts/notebook-assignment.ts",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "기존 공개 계약/출제/발음과 계정 변경 신호 재사용",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/assignments/server/planning/notebook-assignment.ts",
+      "to": "src/features/quiz-player/public-server.ts",
+      "reason": "기존 공개 계약/출제/발음과 계정 변경 신호 재사용",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/assignments/server/use-cases/notebook-assignment.ts",
+      "to": "src/features/quiz-player/public-server.ts",
+      "reason": "기존 공개 계약/출제/발음과 계정 변경 신호 재사용",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/assignments/controller/use-notebook-assignment.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "기존 공개 계약/출제/발음과 계정 변경 신호 재사용",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/assignments/controller/use-notebook-assignment.ts",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "기존 공개 계약/출제/발음과 계정 변경 신호 재사용",
+      "removeIn": "공개 경계를 사용하는 동안 유지"
     }
   ],
   "currentLibToFeatureImports": [
@@ -3274,6 +3587,12 @@
       "to": "src/lib/services/quiz/pronunciation-registry.ts",
       "reason": "검토된 모의고사 범위와 원출처 정보의 공개 경계 연결",
       "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/students/server/queries/notebook-study-query.ts",
+      "to": "src/lib/services/quiz/pronunciation-registry.ts",
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
     }
   ],
   "currentFeatureViaLibToFeatureImports": [
@@ -3333,6 +3652,15 @@
       ],
       "reason": "기존 내역 조회도 동일한 고정 문항 계약으로 발음과 표시값 검증",
       "removeIn": "내역 조회의 시험 공개 진입점 이동 때 재검토"
+    },
+    {
+      "from": "src/features/students/server/queries/notebook-study-query.ts",
+      "to": "src/features/wordbook-compositions/public-server.ts",
+      "via": [
+        "src/lib/services/quiz/pronunciation-registry.ts"
+      ],
+      "reason": "본인 오답 학습 화면에서 검증된 공개 계약과 발음 조회를 재사용",
+      "removeIn": "해당 공개 경계를 유지하는 동안 보존"
     }
   ],
   "crossLayerFlows": [
@@ -3344,7 +3672,8 @@
       "participants": [
         "assignments",
         "students",
-        "wordbook-compositions"
+        "wordbook-compositions",
+        "quiz-player"
       ],
       "dataClass": "private",
       "cachePolicy": "학생 명단과 reviewDraft 초안은 관리자별 private no-store로 읽고 공유 캐시에 저장하지 않음",
@@ -3361,11 +3690,16 @@
         "ui": [
           "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
           "src/features/assignments/ui/assignment-workspace.tsx",
-          "src/features/assignments/ui/legacy-review-recovery.tsx"
+          "src/features/assignments/ui/legacy-review-recovery.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [],
         "application": [],
-        "domain": [],
+        "domain": [
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
+          "src/lib/quiz/entry-source-pronunciation.ts"
+        ],
         "presentation": [],
         "contract": [
           "src/features/students/public-contracts.ts"
@@ -3417,7 +3751,6 @@
       "notApplicable": {
         "clientState": "이 흐름은 서버에서 첫 자료를 준비하고 Client 상태는 선택 흐름이 소유한다.",
         "application": "읽기 전용 초기 구성으로 별도 응용 조정 계층이 없다.",
-        "domain": "초기 구성 자체의 별도 계산 규칙이 없다.",
         "presentation": "표시 계산은 선택 흐름이 소유한다.",
         "transport": "Server Component가 공개 서버 진입점을 직접 호출한다."
       },
@@ -3462,7 +3795,8 @@
           "src/features/assignments/ui/assignment-student-browser.tsx",
           "src/features/assignments/ui/assignment-student-row.tsx",
           "src/features/assignments/ui/assignment-workspace-filters.tsx",
-          "src/features/assignments/ui/selected-student-basket.tsx"
+          "src/features/assignments/ui/selected-student-basket.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/assignments/controller/use-assignment-workspace.ts",
@@ -3605,7 +3939,8 @@
           "src/features/assignments/ui/vocab-schedule-fields.tsx",
           "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
           "src/features/assignments/ui/exam-condition-fields.tsx",
-          "src/features/assignments/ui/vocab-question-fields.tsx"
+          "src/features/assignments/ui/vocab-question-fields.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/assignments/controller/use-vocab-assignment-screen.ts",
@@ -4008,7 +4343,8 @@
           "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
           "src/features/assignment-queue/ui/assignment-queue-history.tsx",
           "src/features/assignments/ui/exam-condition-fields.tsx",
-          "src/features/assignments/ui/vocab-question-fields.tsx"
+          "src/features/assignments/ui/vocab-question-fields.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/assignments/controller/vocab-assignment-planner-state.ts",
@@ -4307,7 +4643,8 @@
           "src/features/assignments/ui/exam-condition-fields.tsx",
           "src/features/assignments/ui/exam-timing-fields.tsx",
           "src/features/assignments/ui/direct-review-range-fields.tsx",
-          "src/features/assignments/ui/direct-review-preview.tsx"
+          "src/features/assignments/ui/direct-review-preview.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
@@ -4589,7 +4926,8 @@
           "src/features/history/ui/cached-admin-history-list.tsx",
           "src/features/history/ui/history-section-groups.tsx",
           "src/features/history/ui/overview-action-groups.tsx",
-          "src/features/school-schedules/public-ui.ts"
+          "src/features/school-schedules/public-ui.ts",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/history/controller/admin-history-mutation-events.ts",
@@ -4820,7 +5158,8 @@
           "src/features/student-dashboard/ui/student-assignment-card.tsx",
           "src/features/student-dashboard/ui/student-dashboard-skeleton.tsx",
           "src/features/school-schedules/public-ui.ts",
-          "src/features/student-dashboard/ui/student-current-assignments.tsx"
+          "src/features/student-dashboard/ui/student-current-assignments.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/student-dashboard/controller/use-student-completed-assignments.ts",
@@ -5033,7 +5372,8 @@
           "src/features/results/ui/attempt-question-card.tsx",
           "src/features/learning-points/ui/point-summary.tsx",
           "src/features/assignments/ui/assignment-editor-fields.tsx",
-          "src/features/assignments/ui/assignment-editor-shell.tsx"
+          "src/features/assignments/ui/assignment-editor-shell.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/components/use-route-exit-guard.ts",
@@ -5385,7 +5725,8 @@
           "src/components/routed-detail-dialog.tsx",
           "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx",
           "src/features/students/ui/cached-student-directory.tsx",
-          "src/features/school-schedules/public-ui.ts"
+          "src/features/school-schedules/public-ui.ts",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/students/controller/student-directory-events.ts",
@@ -5422,7 +5763,8 @@
           "src/features/assignments/contracts/assignment-dataset-directory-schema.ts",
           "src/features/assignments/contracts/assignment-workspace-read-error.ts",
           "src/features/students/contracts/student-directory-cache-contract.ts",
-          "src/features/students/contracts/wrong-word-page.ts"
+          "src/features/students/contracts/wrong-word-page.ts",
+          "src/features/students/contracts/wrong-word-filters.ts"
         ],
         "transport": [
           "src/features/students/actions/update-student-profile.ts",
@@ -5470,7 +5812,8 @@
           "supabase/migrations/20260831101000_add_student_profile_version_command.sql",
           "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql",
           "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
-          "supabase/migrations/20260921020000_page_student_wrong_words.sql"
+          "supabase/migrations/20260921020000_page_student_wrong_words.sql",
+          "supabase/migrations/20260929140225_share_wrong_word_notebook_reads.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/students/page.tsx",
@@ -5526,7 +5869,10 @@
           "src/features/students/api/wrong-word-transport.test.ts",
           "src/features/students/server/queries/wrong-word-page-query.test.ts",
           "src/features/students/server/wrong-word-cursor.test.ts",
-          "src/lib/database/wrong-word-page.integration.test.ts"
+          "src/lib/database/wrong-word-page.integration.test.ts",
+          "src/features/students/contracts/wrong-word-filters.test.ts",
+          "src/app/api/admin/students/[id]/wrong-words/route.test.ts",
+          "src/lib/database/wrong-word-notebook.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5839,7 +6185,8 @@
           "src/features/students/ui/panels/student-history-panel.tsx",
           "src/features/students/ui/student-detail-content.tsx",
           "src/features/assignments/ui/exam-condition-fields.tsx",
-          "src/features/assignments/ui/vocab-question-fields.tsx"
+          "src/features/assignments/ui/vocab-question-fields.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/assignments/controller/use-vocab-assignment-screen.ts",
@@ -6233,7 +6580,20 @@
           "src/design-system/patterns/audio-button/audio-button.tsx",
           "src/features/quiz-player/ui/quiz-timeout-overlay.tsx",
           "src/features/quiz-player/ui/quiz-synchronization-error.tsx",
-          "src/components/pronunciation-text.tsx"
+          "src/components/pronunciation-text.tsx",
+          "src/design-system/primitives/fit-text/fit-text.tsx",
+          "src/design-system/primitives/fit-text/fit-text.module.css",
+          "src/features/quiz-player/ui/quiz-choice.module.css",
+          "src/lib/services/quiz/pronunciation-registry.ts",
+          "src/lib/quiz/entry-source-pronunciation.ts",
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
+          "src/styles/reset.css",
+          "src/lib/quiz/choice-policy.ts",
+          "src/lib/quiz/choice-safety.ts",
+          "src/lib/quiz/question-content-mode.ts",
+          "src/lib/quiz/question-generator.ts",
+          "src/lib/quiz/question-semantics.ts"
         ],
         "clientState": [
           "src/features/quiz-player/controller/use-quiz-player-controller.ts",
@@ -6276,7 +6636,8 @@
           "src/lib/assignment/assignment-release.ts"
         ],
         "transport": [
-          "src/features/quiz-player/api/quiz-attempt.ts"
+          "src/features/quiz-player/api/quiz-attempt.ts",
+          "src/features/quiz-player/api/quiz-transport.ts"
         ],
         "server": [
           "src/app/api/student/assignments/[id]/attempts/route.ts",
@@ -6363,7 +6724,11 @@
           "src/lib/database/reviewed-pronunciation-assets.integration.test.ts",
           "src/lib/database/pronunciation-audio-corrections.integration.test.ts",
           "src/lib/services/quiz-rpc-compatibility.test.ts",
-          "src/lib/database/quiz-feedback-protocol.integration.test.ts"
+          "src/lib/database/quiz-feedback-protocol.integration.test.ts",
+          "src/design-system/primitives/fit-text/fit-text.test.tsx",
+          "src/lib/quiz/pronunciation-storage.test.ts",
+          "src/lib/quiz/choice-safety.test.ts",
+          "src/lib/quiz/question-semantics.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -6454,7 +6819,8 @@
           "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/assignment-dataset-picker.tsx",
           "src/features/assignments/ui/assignment-dataset-trigger.tsx",
-          "src/features/assignments/ui/assignment-dataset-picker.module.css"
+          "src/features/assignments/ui/assignment-dataset-picker.module.css",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/assignments/controller/use-assignment-planner-preparation.ts",
@@ -6582,7 +6948,13 @@
           "src/features/student-dashboard/ui/assignment-study-error.tsx",
           "src/features/student-dashboard/ui/study-blur.tsx",
           "src/features/student-dashboard/ui/study-visibility-controls.tsx",
-          "src/features/student-dashboard/ui/assignment-study.module.css"
+          "src/features/student-dashboard/ui/assignment-study.module.css",
+          "src/design-system/primitives/fit-text/fit-text.tsx",
+          "src/design-system/primitives/fit-text/fit-text.module.css",
+          "src/lib/quiz/entry-source-pronunciation.ts",
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/student-dashboard/controller/use-study-audio.ts",
@@ -6650,7 +7022,10 @@
           "src/lib/database/school-handout-reviewed.integration.test.ts",
           "src/lib/database/reviewed-entry-resources.integration.test.ts",
           "src/lib/database/reviewed-pronunciation-assets.integration.test.ts",
-          "src/lib/database/pronunciation-audio-corrections.integration.test.ts"
+          "src/lib/database/pronunciation-audio-corrections.integration.test.ts",
+          "src/design-system/primitives/fit-text/fit-text.test.tsx",
+          "src/lib/quiz/pronunciation-snapshot.test.ts",
+          "src/lib/quiz/pronunciation-storage.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -6718,7 +7093,8 @@
           "src/features/school-schedules/client/components/live-school-schedule.tsx",
           "src/features/school-schedules/client/components/schedule-retry.tsx",
           "src/styles/tokens.css",
-          "src/styles/theme.css"
+          "src/styles/theme.css",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/school-schedules/client/components/live-school-schedule.tsx",
@@ -6805,7 +7181,8 @@
         ],
         "ui": [
           "src/features/school-schedules/client/components/school-schedule-editor.tsx",
-          "src/features/school-schedules/ui/school-schedule-editor.module.css"
+          "src/features/school-schedules/ui/school-schedule-editor.module.css",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/school-schedules/client/use-school-schedule-editor.ts"
@@ -6901,7 +7278,8 @@
           "src/features/wordbook-compositions/ui/wordbook-library.module.css",
           "src/features/assignments/ui/vocab-range-fields.tsx",
           "src/features/wordbook-compositions/ui/library-editor-fields.tsx",
-          "src/features/wordbook-compositions/ui/library-query-panels.tsx"
+          "src/features/wordbook-compositions/ui/library-query-panels.tsx",
+          "src/styles/reset.css"
         ],
         "clientState": [
           "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
@@ -7011,6 +7389,375 @@
         "serverComponent": "별도 계층 없이 해당 기능의 입력·표시·서버 경계를 사용한다.",
         "application": "별도 계층 없이 해당 기능의 입력·표시·서버 경계를 사용한다.",
         "presentation": "별도 계층 없이 해당 기능의 입력·표시·서버 경계를 사용한다."
+      },
+      "serverImportExceptions": {},
+      "flowImportExceptions": {}
+    },
+    {
+      "id": "student-wrong-word-read",
+      "name": "학생 본인 누적 오답장 읽기",
+      "status": "active",
+      "owner": "students",
+      "participants": [
+        "students",
+        "student-dashboard",
+        "quiz-player",
+        "wordbook-compositions"
+      ],
+      "dataClass": "private",
+      "cachePolicy": "본인 세션의 최소 학습 자료만 private,no-store. 공유 캐시 없음. 커서는 학생과 모든 조건에 고정.",
+      "streamingPolicy": "학생 세션 확인 뒤 최초 RSC, 조건 변경/10개 더보기만 no-store 조회. 상세 가로채기 왕복은 목록 유지.",
+      "closedLocalLayers": [],
+      "touchpoints": {
+        "route": [
+          "src/app/api/student/wrong-words/route.ts",
+          "src/app/api/student/notebook/route.ts",
+          "src/app/student/(protected)/wordbook/page.tsx",
+          "src/app/student/(protected)/wordbook/[id]/page.tsx",
+          "src/app/student/(protected)/wordbook/@detail/(.)[id]/page.tsx",
+          "src/app/student/(protected)/wordbook/@detail/page.tsx",
+          "src/app/student/(protected)/wordbook/@detail/[...catchAll]/page.tsx"
+        ],
+        "serverComponent": [
+          "src/features/student-dashboard/server/components/notebook-content.tsx"
+        ],
+        "ui": [
+          "src/features/student-dashboard/client/components/notebook-reader.tsx",
+          "src/features/student-dashboard/client/components/notebook-detail.tsx",
+          "src/features/student-dashboard/ui/notebook.module.css",
+          "src/design-system/primitives/fit-text/fit-text.tsx",
+          "src/design-system/primitives/fit-text/fit-text.module.css",
+          "src/components/student-shell.tsx",
+          "src/components/use-student-history-refresh.ts",
+          "src/lib/ui/student-routes.ts",
+          "scripts/local-admin-baseline.mjs",
+          "scripts/local-notebook-data.mjs",
+          "src/lib/quiz/entry-source-pronunciation.ts",
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
+          "src/styles/reset.css",
+          "src/app/student/(protected)/wordbook/layout.tsx",
+          "src/app/student/(protected)/wordbook/loading.tsx",
+          "src/app/student/(protected)/wordbook/error.tsx",
+          "src/app/student/(protected)/wordbook/@detail/default.tsx",
+          "src/app/student/(protected)/wordbook/@detail/(.)[id]/loading.tsx",
+          "src/app/student/(protected)/wordbook/@detail/(.)[id]/error.tsx",
+          "src/app/student/(protected)/wordbook/@detail/(.)[id]/not-found.tsx",
+          "src/app/student/(protected)/wordbook/[id]/not-found.tsx"
+        ],
+        "clientState": [
+          "src/features/student-dashboard/client/controllers/use-notebook.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
+          "src/lib/quiz/entry-source-pronunciation.ts"
+        ],
+        "presentation": [],
+        "contract": [
+          "src/features/students/public-contracts.ts",
+          "src/features/students/contracts/wrong-word-filters.ts",
+          "src/features/students/contracts/wrong-word-page.ts",
+          "src/features/students/contracts/wrong-word-notebook.ts",
+          "src/features/students/contracts/notebook-study.ts"
+        ],
+        "transport": [
+          "src/features/student-dashboard/client/transport/notebook-transport.ts"
+        ],
+        "server": [
+          "src/features/students/public-server.ts",
+          "src/features/students/server/queries/own-wrong-word-query.ts",
+          "src/features/students/server/wrong-word-cursor.ts",
+          "src/features/students/server/queries/notebook-study-query.ts",
+          "src/features/students/server/notebook-cursor.ts",
+          "src/features/student-dashboard/server/components/notebook-content.tsx"
+        ],
+        "database": [
+          "supabase/migrations/20260929140225_share_wrong_word_notebook_reads.sql",
+          "supabase/migrations/20260921020000_page_student_wrong_words.sql",
+          "supabase/migrations/20260929165150_expand_student_word_notebook.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/api/student/wrong-words/route.ts"
+        ],
+        "tests": [
+          "src/app/api/student/wrong-words/route.test.ts",
+          "src/features/students/contracts/wrong-word-filters.test.ts",
+          "src/features/students/server/queries/own-wrong-word-query.test.ts",
+          "src/features/students/server/wrong-word-cursor.test.ts",
+          "src/lib/database/wrong-word-notebook.integration.test.ts",
+          "src/lib/database/notebook-study.integration.test.ts",
+          "src/features/student-dashboard/client/components/notebook-reader.test.tsx",
+          "src/design-system/primitives/fit-text/fit-text.test.tsx",
+          "src/features/students/server/notebook-cursor.test.ts",
+          "src/features/students/server/queries/notebook-study-query.test.ts",
+          "src/app/api/student/notebook/route.test.ts",
+          "src/components/use-student-history-refresh.test.tsx",
+          "src/features/students/server/queries/notebook-pronunciation.test.ts",
+          "src/components/student-shell.test.tsx",
+          "src/lib/quiz/entry-source-pronunciation.test.ts",
+          "src/lib/quiz/pronunciation-snapshot.test.ts",
+          "src/lib/quiz/pronunciation-storage.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/app/api/student/wrong-words/route.ts",
+          "to": "src/features/students/public-server.ts",
+          "reason": "HTTP는 본인 인증을 포함하는 서버 공개 경계를 호출"
+        },
+        {
+          "from": "src/features/students/public-server.ts",
+          "to": "src/features/students/server/queries/own-wrong-word-query.ts",
+          "reason": "학생 본인 최소 조회 공개"
+        },
+        {
+          "from": "src/features/students/server/queries/own-wrong-word-query.ts",
+          "to": "src/features/students/server/wrong-word-cursor.ts",
+          "reason": "기존 집계와 동일한 학생·조건 페이지 경계"
+        }
+      ],
+      "notApplicable": {
+        "application": "읽기 기반 단계. 실제 화면/입력은 APP11에서 연결하며 저장·배정 없음.",
+        "presentation": "읽기 기반 단계. 실제 화면/입력은 APP11에서 연결하며 저장·배정 없음."
+      },
+      "serverImportExceptions": {},
+      "flowImportExceptions": {}
+    },
+    {
+      "id": "student-word-practice",
+      "name": "학생 내 단어장 자율연습",
+      "status": "active",
+      "owner": "quiz-player",
+      "participants": [
+        "quiz-player",
+        "students",
+        "student-dashboard",
+        "wordbook-compositions"
+      ],
+      "dataClass": "mutation",
+      "cachePolicy": "본인 세션. 연습 자료 private,no-store. 정규 시험/포인트/오답 기록은 읽기만 하고 private 연습 표만 변경.",
+      "streamingPolicy": "최초 내역/회차는 인증 뒤 RSC. 후속10개 조회와 미리보기/시작/답/전환/만료는 Route Handler. 동일 요청 결과 우선 확인.",
+      "closedLocalLayers": [],
+      "touchpoints": {
+        "route": [
+          "src/app/api/student/practice/route.ts",
+          "src/app/api/student/practice/[id]/route.ts",
+          "src/app/api/student/practice/[id]/[command]/route.ts",
+          "src/app/api/student/practice/preview/route.ts",
+          "src/app/student/(protected)/practice/page.tsx",
+          "src/app/student/(protected)/practice/[id]/page.tsx",
+          "src/app/student/(protected)/practice/[id]/result/page.tsx"
+        ],
+        "serverComponent": [
+          "src/features/quiz-player/server/components/practice-content.tsx"
+        ],
+        "ui": [
+          "scripts/local-notebook-data.mjs",
+          "scripts/local-practice-data.mjs",
+          "scripts/local-admin-baseline.mjs",
+          "src/app/student/(protected)/practice/not-found.tsx",
+          "src/components/use-student-history-refresh.ts",
+          "src/features/quiz-player/client/practice-launcher.tsx",
+          "src/features/quiz-player/client/practice-player.tsx",
+          "src/features/quiz-player/client/practice-history.tsx",
+          "src/features/quiz-player/ui/practice.module.css",
+          "src/features/quiz-player/public-ui.ts",
+          "src/features/quiz-player/ui/quiz-player.tsx",
+          "src/features/quiz-player/ui/quiz-frame.tsx",
+          "src/features/student-dashboard/client/components/notebook-reader.tsx",
+          "src/app/student/(protected)/practice/loading.tsx",
+          "src/app/student/(protected)/practice/error.tsx",
+          "src/components/student-shell.tsx",
+          "src/lib/ui/student-routes.ts",
+          "src/lib/quiz/choice-policy.ts",
+          "src/lib/quiz/choice-safety.ts",
+          "src/lib/quiz/entry-source-pronunciation.ts",
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
+          "src/lib/quiz/question-content-mode.ts",
+          "src/lib/quiz/question-generator.ts",
+          "src/lib/quiz/question-semantics.ts",
+          "src/lib/services/quiz/pronunciation-registry.ts"
+        ],
+        "clientState": [
+          "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+          "src/features/quiz-player/controller/use-quiz-recovery.ts",
+          "src/features/quiz-player/controller/use-quiz-submission.ts",
+          "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/quiz-player/domain/practice-plan.ts"
+        ],
+        "presentation": [],
+        "contract": [
+          "src/features/quiz-player/contracts/practice.ts",
+          "src/features/quiz-player/public-contracts.ts"
+        ],
+        "transport": [
+          "src/features/quiz-player/api/practice-transport.ts",
+          "src/features/quiz-player/api/quiz-attempt.ts",
+          "src/features/quiz-player/api/quiz-transport.ts"
+        ],
+        "server": [
+          "src/features/quiz-player/server/practice-rpc.ts",
+          "src/features/quiz-player/server/practice-source.ts",
+          "src/features/quiz-player/server/practice-service.ts",
+          "src/features/quiz-player/server/practice-http.ts",
+          "src/features/quiz-player/server/components/practice-content.tsx",
+          "src/features/quiz-player/public-server.ts",
+          "src/features/students/server/queries/notebook-study-query.ts",
+          "src/features/students/public-server.ts",
+          "src/features/students/server/notebook-cursor.ts",
+          "src/features/students/server/queries/own-wrong-word-query.ts",
+          "src/features/students/server/queries/student-directory-entry-query.ts",
+          "src/features/students/server/queries/student-directory-query.ts",
+          "src/features/students/server/queries/student-directory-row-schema.ts",
+          "src/features/students/server/student-directory-cache-identity.ts",
+          "src/features/students/server/wrong-word-cursor.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260930034455_add_student_word_practice.sql"
+        ],
+        "cacheStreaming": [
+          "src/features/quiz-player/server/practice-http.ts",
+          "src/features/quiz-player/server/practice-service.ts"
+        ],
+        "tests": [
+          "src/features/quiz-player/server/practice-service.test.ts",
+          "src/features/quiz-player/client/practice-launcher.test.tsx",
+          "src/features/quiz-player/domain/practice-plan.test.ts",
+          "src/features/quiz-player/api/practice-transport.test.ts",
+          "src/lib/database/student-word-practice.integration.test.ts",
+          "src/features/quiz-player/server/practice-http.test.ts",
+          "src/lib/quiz/cached-flow-contract.test.ts",
+          "src/components/student-shell.test.tsx",
+          "src/features/quiz-player/api/quiz-attempt.test.ts",
+          "src/features/quiz-player/client/practice-history.test.tsx",
+          "src/features/quiz-player/ui/quiz-frame.test.tsx",
+          "src/features/quiz-player/ui/quiz-player.test.tsx",
+          "src/features/student-dashboard/client/components/notebook-reader.test.tsx",
+          "src/features/students/server/notebook-cursor.test.ts",
+          "src/features/students/server/queries/notebook-study-query.test.ts",
+          "src/features/students/server/queries/own-wrong-word-query.test.ts",
+          "src/features/students/server/queries/student-directory-entry-query.test.ts",
+          "src/features/students/server/wrong-word-cursor.test.ts",
+          "src/lib/quiz/choice-safety.test.ts",
+          "src/lib/quiz/entry-source-pronunciation.test.ts",
+          "src/lib/quiz/pronunciation-snapshot.test.ts",
+          "src/lib/quiz/pronunciation-storage.test.ts",
+          "src/lib/quiz/question-semantics.test.ts",
+          "src/lib/services/quiz/pronunciation-registry.test.ts"
+        ]
+      },
+      "requiredImportEdges": [],
+      "notApplicable": {
+        "application": "독립 계층을 새로 만들지 않고 quiz-player 기존 계산과 서버 명령을 재사용한다.",
+        "presentation": "독립 계층을 새로 만들지 않고 quiz-player 기존 계산과 서버 명령을 재사용한다."
+      },
+      "serverImportExceptions": {},
+      "flowImportExceptions": {}
+    },
+    {
+      "id": "assignment-notebook-create",
+      "name": "교사 개인별 누적 오답 배정",
+      "status": "active",
+      "owner": "assignments",
+      "participants": [
+        "assignments",
+        "quiz-player",
+        "students",
+        "student-dashboard",
+        "history",
+        "results",
+        "learning-points"
+      ],
+      "dataClass": "mutation",
+      "cachePolicy": "관리자 인증 후 private/no-store. 입력 변경은 미리보기 폐기, 저장 유실은 같은 요청 유지. 성공 시 학생/성적 읽기 무효화.",
+      "streamingPolicy": "기존 학생 선택 RSC와 동적 모달. 인증 재확인 동안 모달 유지/개인 자료 숨김. 최종 생성은 서버+DB 거래.",
+      "closedLocalLayers": [],
+      "touchpoints": {
+        "route": [
+          "src/app/api/admin/notebook-assignments/route.ts",
+          "src/app/api/admin/notebook-assignments/preview/route.ts"
+        ],
+        "serverComponent": [],
+        "ui": [
+          "src/features/assignments/ui/notebook-assignment-dialog.tsx",
+          "src/features/assignments/ui/notebook-assignment.module.css",
+          "src/features/assignments/ui/assignment-workspace.tsx",
+          "src/features/assignments/ui/assignment-student-browser.tsx",
+          "src/lib/admin/history.ts",
+          "src/lib/quiz/question-provenance.ts",
+          "scripts/local-admin-baseline.mjs",
+          "src/lib/admin/assignment-edit-policy.ts",
+          "src/features/history/api/history-read-response.ts",
+          "src/features/history/ui/admin-history-detail.tsx",
+          "src/features/student-dashboard/ui/student-assignment-card.tsx",
+          "src/features/assignments/ui/assignment-student-row.tsx",
+          "scripts/local-notebook-assignment-data.mjs",
+          "scripts/local-practice-data.mjs"
+        ],
+        "clientState": [
+          "src/features/assignments/controller/use-notebook-assignment.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/lib/quiz/question-provenance.ts"
+        ],
+        "presentation": [],
+        "contract": [
+          "src/features/assignments/contracts/notebook-assignment.ts",
+          "src/features/history/contracts/admin-history-read-model.ts",
+          "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
+          "src/features/quiz-player/public-contracts.ts",
+          "src/features/students/contracts/wrong-word-page.ts"
+        ],
+        "transport": [
+          "src/features/assignments/transport/notebook-assignment.ts"
+        ],
+        "server": [
+          "src/features/assignments/server/use-cases/notebook-assignment.ts",
+          "src/features/assignments/server/persistence/notebook-assignment.ts",
+          "src/features/assignments/server/notebook-assignment-http.ts",
+          "src/features/quiz-player/server/practice-source.ts",
+          "src/features/quiz-player/public-server.ts",
+          "src/lib/services/quiz/question-snapshot.ts",
+          "src/lib/services/quiz/attempt-query.ts",
+          "src/lib/services/quiz/attempt-result-query.ts",
+          "src/lib/services/assignment-edit-source-service.ts",
+          "src/features/history/server/queries/admin-history-row-schema.ts",
+          "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
+          "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+          "src/features/students/server/queries/notebook-study-query.ts",
+          "src/features/assignments/server/planning/notebook-assignment.ts",
+          "src/lib/services/assignment-replacement-errors.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260930050611_add_personal_notebook_assignments.sql"
+        ],
+        "cacheStreaming": [
+          "src/features/assignments/controller/use-notebook-assignment.ts",
+          "src/features/assignments/server/notebook-assignment-http.ts"
+        ],
+        "tests": [
+          "src/features/assignments/server/use-cases/notebook-assignment.test.ts",
+          "src/features/assignments/server/notebook-assignment-http.test.ts",
+          "src/features/assignments/ui/notebook-assignment-dialog.test.tsx",
+          "src/lib/database/notebook-assignment.integration.test.ts",
+          "src/lib/services/quiz/question-snapshot.test.ts",
+          "src/features/assignments/ui/assignment-workspace.test.tsx",
+          "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/lib/database/review-assignment-final-schema.integration.test.ts"
+        ]
+      },
+      "requiredImportEdges": [],
+      "notApplicable": {
+        "serverComponent": "기존 공개 출제 계산과 인증된 Route Handler를 재사용하며 별도 계층을 추가하지 않는다.",
+        "application": "기존 공개 출제 계산과 인증된 Route Handler를 재사용하며 별도 계층을 추가하지 않는다.",
+        "presentation": "기존 공개 출제 계산과 인증된 Route Handler를 재사용하며 별도 계층을 추가하지 않는다."
       },
       "serverImportExceptions": {},
       "flowImportExceptions": {}

@@ -27,6 +27,7 @@ import { studyExampleRanges } from "../../domain/study-example-ranges";
 import { getStudyExamplePrompts } from "./assignment-study-example-query";
 
 const wordSchema = z.object({
+  notebookPronunciation: frozenPronunciationSchema.nullable().optional(),
   compositionPronunciation: frozenPronunciationSchema.nullable().optional(),
   entryId: z.number().int().positive(),
   headword: z.string().trim().min(1),
@@ -84,7 +85,7 @@ export async function getAssignmentStudy(
   if (rows.some((word) => word.example && /_{2,}/u.test(word.example))) {
     throw new Error("assignment_study_example_incomplete");
   }
-  const legacyRows = rows.filter(word => !word.compositionPronunciation);
+  const legacyRows = rows.filter(word => !word.compositionPronunciation && !word.notebookPronunciation);
   const ids = [...new Set(legacyRows.map((word) => word.entryId))];
   const bindings = legacyRows.flatMap((word) => word.releaseId
     ? [{ releaseId: word.releaseId, vocabEntryId: word.entryId }]
@@ -112,7 +113,7 @@ export async function getAssignmentStudy(
       example: mode === "canonical_example_to_headword" ? word.example : null,
       exampleRanges: mode === "canonical_example_to_headword" && word.example
         ? studyExampleRanges(word.example, word.headword, examplePrompts.get(word.entryId) ?? []) : null,
-      pronunciation: withCorrectedPronunciationAudio(word.compositionPronunciation ?? preferredPronunciationWithActiveVocaRelease(
+      pronunciation: withCorrectedPronunciationAudio(word.notebookPronunciation ?? word.compositionPronunciation ?? preferredPronunciationWithActiveVocaRelease(
         word.dictionaryId,
         withPronunciationDisplay(parseTargetPronunciation(word.pronunciationSnapshot, word.displayKo), word.displayKo),
         active.get(word.entryId),

@@ -17,6 +17,8 @@ export type StudentDashboardCurrentSectionKey = Exclude<
 >;
 
 export type StudentAssignmentSummary = {
+  sourceKind?: "book" | "notebook";
+  sourceDatasets?: { datasetId: string; title: string }[];
   release?: AssignmentRelease;
   id: string;
   assignmentStatus: "draft" | "active" | "closed";
