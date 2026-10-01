@@ -54,13 +54,8 @@ export function useQuizPlayerController(input: {
     ? quizAudioPresentation(currentQuestion, state.attempt.quizContentMode)
     : { promptAudioUrl: null, choiceAudioEnabled: false };
   const {
-    canInterruptFeedbackAudio,
-    cancelPendingPromptAudio,
-    captureActivePromptAudio,
-    playAnswerAudio,
     playAudio,
-    primeChoiceAudio,
-    stopFeedbackAudio,
+    stopAudio,
   } = useQuizAudio({
     attemptId: state.attempt.id,
     autoPlayEnabled:
@@ -174,23 +169,18 @@ export function useQuizPlayerController(input: {
     state.timerSynchronized,
   ]);
 
-  const { canInterruptFeedback, hasPendingChoice, interruptFeedback, submitChoice } = useQuizSubmission({
+  const { hasPendingChoice, submitChoice } = useQuizSubmission({
     transport,
-    canInterruptFeedbackAudio,
-    cancelPendingPromptAudio,
-    captureActivePromptAudio,
     currentQuestion,
     deadlineSubmissionNotBeforeRef: deadlineSubmissionNotBefore,
     dispatch,
     inFlightRequestRef: inFlightRequest,
     mountedRef: mounted,
     onResult: (attemptId) => router.replace(transport.resultHref(attemptId)),
-    playAnswerAudio,
-    primeChoiceAudio,
     recoverFromServer,
     resetClock,
     state,
-    stopFeedbackAudio,
+    stopAudio,
     timeWarningAnnouncedRef: timeWarningAnnounced,
   });
   const attemptUsesDeadlineClock = quizAttemptUsesDeadlineClock(state.attempt);
@@ -247,10 +237,8 @@ export function useQuizPlayerController(input: {
   return {
     answerAnnouncement,
     audioPresentation,
-    canInterruptFeedback,
     completedInPhase: phaseSnapshot.completed,
     currentQuestion,
-    interruptFeedback,
     phaseQuestionCount: phaseSnapshot.questions.length,
     playAudio,
     priorWrongIndicator,

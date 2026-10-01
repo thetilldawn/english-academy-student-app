@@ -8,8 +8,9 @@ import { submitQuizAnswer } from "../api/quiz-attempt";
 import type { QuizTransport } from "../api/quiz-transport";
 import {
   ANSWER_SELECTION_DELAY_MS,
+  ANSWER_RESULT_VISIBLE_MS,
   applyQuizAnswerTransition,
-  quizAnswerAudioUrl,
+  recoveredQuizAnswerFeedback,
   quizAnswerDisposition,
   quizAttemptUsesDeadlineClock,
 } from "../domain/quiz-session";
@@ -18,23 +19,17 @@ import type {
   QuizPlayerState,
 } from "../domain/quiz-player-state";
 import type { QuizAttempt, QuizQuestion } from "../model";
-import type {
-  QuizAudioCompletion,
-  TimedQuizAudioCompletion,
-} from "./quiz-audio-element";
+import type { BeforeQuizRestore } from "./use-quiz-recovery";
 import {
   activeNextQuestionMilliseconds,
   previewNextQuestionMilliseconds,
 } from "./quiz-transition-timer";
 import { resolveQuizFeedbackTransition } from "./resolve-quiz-feedback-transition";
-import { useQuizFeedbackInterruption } from "./use-quiz-feedback-interruption";
 
 type PendingSubmission = {
   attemptId: string;
   choiceIndex: number | null;
   phase: "initial" | "retry";
-  primed: boolean;
-  promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   questionId: string;
   selectionVersion: number;
   notBefore: number;
@@ -43,10 +38,7 @@ type PendingSubmission = {
 type RunSubmissionInput = {
   attempt: QuizAttempt;
   choiceIndex: number | null;
-  promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   question: QuizQuestion;
-  primed?: boolean;
-  submittedAt: number;
 };
 
 function wait(milliseconds: number) {
@@ -57,21 +49,16 @@ function wait(milliseconds: number) {
 
 export function useQuizSubmission(input: {
   transport?: QuizTransport;
-  canInterruptFeedbackAudio: () => boolean;
-  cancelPendingPromptAudio: () => void;
-  captureActivePromptAudio: () => Promise<TimedQuizAudioCompletion> | null;
   currentQuestion: QuizQuestion | null;
   deadlineSubmissionNotBeforeRef: { current: number };
   dispatch: Dispatch<QuizPlayerAction>;
   inFlightRequestRef: { current: string | null };
   mountedRef: { current: boolean };
   onResult: (attemptId: string) => void;
-  playAnswerAudio: (audioUrl: string) => Promise<QuizAudioCompletion>;
-  primeChoiceAudio: (audioUrl: string | null) => void;
-  recoverFromServer: () => Promise<boolean>;
+  recoverFromServer: (beforeRestore?: BeforeQuizRestore) => Promise<boolean>;
   resetClock: (remainingMilliseconds: number) => void;
   state: QuizPlayerState;
-  stopFeedbackAudio: () => void;
+  stopAudio: () => void;
   timeWarningAnnouncedRef: { current: boolean };
 }) {
   const { inFlightRequestRef, deadlineSubmissionNotBeforeRef, timeWarningAnnouncedRef } = input;
@@ -133,19 +120,9 @@ export function useQuizSubmission(input: {
         attempt: current.state.attempt,
         question: current.currentQuestion,
         choiceIndex: pending.choiceIndex,
-        primed: pending.primed,
-        promptAudioCompletion: current.captureActivePromptAudio() ?? pending.promptAudioCompletion,
-        submittedAt: performance.now(),
       });
     }, Math.max(0, Math.ceil(pending.notBefore - performance.now())));
   }, [cancelPending, clearPendingTimer, hasPendingChoice]);
-  const feedbackInterruption = useQuizFeedbackInterruption({
-    canInterruptAudio: input.canInterruptFeedbackAudio,
-    inFlightRequestRef: inFlightRequestRef,
-    mountedRef: input.mountedRef,
-    stopAudio: input.stopFeedbackAudio,
-  });
-  const { waitForAudio } = feedbackInterruption;
 
   useEffect(() => cancelPending, [cancelPending]);
   useEffect(() => {
@@ -171,13 +148,7 @@ export function useQuizSubmission(input: {
       const answeredPhase = submission.attempt.phase;
       if (answeredPhase !== "initial" && answeredPhase !== "retry") return;
 
-      input.cancelPendingPromptAudio();
-      const answerAudioUrl = quizAnswerAudioUrl(
-        submission.question,
-        submission.choiceIndex,
-        submission.attempt.quizContentMode,
-      );
-      if (!submission.primed) input.primeChoiceAudio(answerAudioUrl);
+      input.stopAudio();
       const requestKey = [
         submission.attempt.id,
         answeredPhase,
@@ -190,12 +161,29 @@ export function useQuizSubmission(input: {
         choiceIndex: submission.choiceIndex,
       });
       let recoveryAttempted = false;
+      let answerReceived = false;
       const tryRecover = async () => {
         if (recoveryAttempted) return false;
         recoveryAttempted = true;
         cancelPending();
         input.dispatch({ type: "choice-pending", choiceIndex: null });
-        return input.recoverFromServer();
+        return input.recoverFromServer(async (attempt) => {
+          const isActive = () => input.mountedRef.current &&
+            inFlightRequestRef.current === requestKey;
+          if (!isActive()) return false;
+          if (!answerReceived && attempt.id === submission.attempt.id) {
+            const feedback = recoveredQuizAnswerFeedback({
+              attempt, questionId: submission.question.id,
+              phase: answeredPhase, choiceIndex: submission.choiceIndex,
+            });
+            if (feedback) {
+              answerReceived = true;
+              input.dispatch({ type: "answer-received", payload: feedback });
+              await wait(ANSWER_RESULT_VISIBLE_MS);
+            }
+          }
+          return isActive();
+        });
       };
 
       try {
@@ -222,21 +210,19 @@ export function useQuizSubmission(input: {
         }
 
         input.dispatch({ type: "answer-received", payload });
+        answerReceived = true;
         const disposition = quizAnswerDisposition(payload, answeredPhase);
         const transition = await resolveQuizFeedbackTransition({
           resume: input.transport?.feedback,
-          answerAudioUrl,
           attemptId: submission.attempt.id,
           disposition,
           isActive: () =>
             input.mountedRef.current &&
             inFlightRequestRef.current === requestKey,
           payload,
-          playAnswerAudio: input.playAnswerAudio,
-          promptAudioCompletion: submission.promptAudioCompletion,
           receivedAt,
-          submittedAt: submission.submittedAt,
-          waitForAudio: (play) => waitForAudio(requestKey, play),
+          questionTimeLimitSeconds: submission.attempt.timingMode === "per_question"
+            ? submission.attempt.questionTimeLimitSeconds : null,
         });
         if (
           !input.mountedRef.current ||
@@ -341,7 +327,7 @@ export function useQuizSubmission(input: {
         });
       }
     },
-    [cancelPending, deadlineSubmissionNotBeforeRef, inFlightRequestRef, input, timeWarningAnnouncedRef, waitForAudio],
+    [cancelPending, deadlineSubmissionNotBeforeRef, inFlightRequestRef, input, timeWarningAnnouncedRef],
   );
 
   useLayoutEffect(() => {
@@ -377,28 +363,18 @@ export function useQuizSubmission(input: {
         void runSubmission({
           attempt: input.state.attempt,
           choiceIndex,
-          promptAudioCompletion: input.captureActivePromptAudio(),
           question,
-          submittedAt: performance.now(),
         });
         return;
       }
 
-      const previous = hasPendingChoice() ? pendingSubmissionRef.current : null;
-      const promptAudioCompletion = previous
-        ? previous.promptAudioCompletion
-        : input.captureActivePromptAudio();
-      input.cancelPendingPromptAudio();
-      const answerAudioUrl = quizAnswerAudioUrl(question, choiceIndex, input.state.attempt.quizContentMode);
-      input.primeChoiceAudio(answerAudioUrl);
+      input.stopAudio();
       pendingSubmissionRef.current = {
         attemptId: input.state.attempt.id,
         questionId: question.id,
         phase,
         selectionVersion: input.state.selectionVersion,
         choiceIndex,
-        primed: Boolean(answerAudioUrl),
-        promptAudioCompletion,
         notBefore: performance.now() + (choiceIndex === null ? 0 : ANSWER_SELECTION_DELAY_MS),
       };
       input.dispatch({ type: "choice-pending", choiceIndex });
@@ -407,9 +383,7 @@ export function useQuizSubmission(input: {
     [hasPendingChoice, inFlightRequestRef, input, runSubmission, schedulePending],
   );
   return {
-    canInterruptFeedback: feedbackInterruption.canInterrupt,
     hasPendingChoice,
-    interruptFeedback: feedbackInterruption.interrupt,
     submitChoice,
   };
 }

@@ -7,13 +7,7 @@ import {
   ANSWER_AUDIO_START_TIMEOUT_MS,
   PROMPT_AUDIO_AUTOPLAY_DELAY_MS,
 } from "../domain/quiz-session";
-import type { TimedQuizAudioCompletion } from "./quiz-audio-element";
 import { QuizAudioPlayer } from "./quiz-audio-player";
-
-type ActivePromptAudio = {
-  completion: Promise<TimedQuizAudioCompletion>;
-  playKey: string;
-};
 
 export function useQuizAudioRuntime(input: {
   attemptId: string;
@@ -27,7 +21,6 @@ export function useQuizAudioRuntime(input: {
   const playerRef = useRef<QuizAudioPlayer | null>(null);
   const autoPlayedQuestions = useRef(new Set<string>());
   const autoPlayTimer = useRef<number | null>(null);
-  const activePromptAudio = useRef<ActivePromptAudio | null>(null);
   const player = useCallback(() => {
     playerRef.current ??= new QuizAudioPlayer();
     return playerRef.current;
@@ -42,10 +35,8 @@ export function useQuizAudioRuntime(input: {
     : null;
   const preloadKey = input.preloadAudioUrls.join("\u0000");
   const playPromptUntilEnded = useCallback(
-    (audioUrl: string, promptPlayKey: string) => {
-      const active: ActivePromptAudio = {
-        playKey: promptPlayKey,
-        completion: player()
+    (audioUrl: string) =>
+      player()
           .playUntilEnded(
             audioUrl,
             "prompt",
@@ -56,15 +47,6 @@ export function useQuizAudioRuntime(input: {
             completedAt: performance.now(),
             outcome,
           })),
-      };
-      activePromptAudio.current = active;
-      void active.completion.then(() => {
-        if (activePromptAudio.current === active) {
-          activePromptAudio.current = null;
-        }
-      });
-      return active.completion;
-    },
     [player],
   );
 
@@ -102,7 +84,7 @@ export function useQuizAudioRuntime(input: {
       const promptAudioUrl = input.promptAudioUrl;
       if (!promptAudioUrl) return;
       autoPlayedQuestions.current.add(playKey);
-      void playPromptUntilEnded(promptAudioUrl, playKey).then(({ outcome }) => {
+      void playPromptUntilEnded(promptAudioUrl).then(({ outcome }) => {
         if (current && ["blocked", "failed"].includes(outcome)) {
           autoPlayedQuestions.current.delete(playKey);
         }
@@ -127,7 +109,7 @@ export function useQuizAudioRuntime(input: {
     if (purpose === "prompt") clearAutoPlayTimer();
     if (purpose === "prompt" && playKey) {
       autoPlayedQuestions.current.add(playKey);
-      void playPromptUntilEnded(audioUrl, playKey).then(({ outcome }) => {
+      void playPromptUntilEnded(audioUrl).then(({ outcome }) => {
         if (["blocked", "failed"].includes(outcome)) {
           autoPlayedQuestions.current.delete(playKey);
         }
@@ -137,45 +119,13 @@ export function useQuizAudioRuntime(input: {
     void player().play(audioUrl, purpose);
   }, [clearAutoPlayTimer, input.promptAudioUrl, playKey, playPromptUntilEnded, player]);
 
-  const captureActivePromptAudio = useCallback(() => {
-    const active = activePromptAudio.current;
-    return active && active.playKey === playKey ? active.completion : null;
-  }, [playKey]);
-
-  const playAnswerAudio = useCallback(
-    (audioUrl: string) =>
-      player().playUntilEnded(
-        audioUrl,
-        "choice",
-        ANSWER_AUDIO_END_TIMEOUT_MS,
-        ANSWER_AUDIO_START_TIMEOUT_MS,
-      ),
-    [player],
-  );
-
-  const primeChoiceAudio = useCallback((audioUrl: string | null) => {
-    if (!audioUrl) return;
-    clearAutoPlayTimer();
-    player().primeChoice(audioUrl);
-  }, [clearAutoPlayTimer, player]);
-
-  const stopFeedbackAudio = useCallback(() => {
+  const stopAudio = useCallback(() => {
     clearAutoPlayTimer();
     playerRef.current?.stop();
-    activePromptAudio.current = null;
   }, [clearAutoPlayTimer]);
-  const canInterruptFeedbackAudio = useCallback(
-    () => playerRef.current?.canInterrupt() ?? false,
-    [],
-  );
 
   return {
-    cancelPendingPromptAudio: clearAutoPlayTimer,
-    captureActivePromptAudio,
-    playAnswerAudio,
     playAudio,
-    primeChoiceAudio,
-    stopFeedbackAudio,
-    canInterruptFeedbackAudio,
+    stopAudio,
   };
 }

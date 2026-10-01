@@ -5,10 +5,8 @@ import { unavailablePronunciation } from "@/lib/quiz/pronunciation-snapshot";
 import type { QuizAttempt, QuizQuestion } from "../model";
 import { createQuizPlayerState, quizPlayerReducer } from "./quiz-player-state";
 import {
-  ANSWER_AUDIO_END_GRACE_MS,
   ANSWER_AUDIO_END_TIMEOUT_MS,
   ANSWER_AUDIO_START_TIMEOUT_MS,
-  ANSWER_FEEDBACK_DELAY_MS,
   ANSWER_SELECTION_DELAY_MS,
   ANSWER_RESULT_VISIBLE_MS,
   ANSWER_SERVER_FEEDBACK_RESERVATION_MS,
@@ -244,9 +242,7 @@ describe("quiz session domain", () => {
         "initial",
       ),
     ).toBe("next-question");
-    expect(ANSWER_FEEDBACK_DELAY_MS).toBe(750);
-    expect(ANSWER_SELECTION_DELAY_MS).toBe(100);
-    expect(ANSWER_AUDIO_END_GRACE_MS).toBe(150);
+    expect(ANSWER_SELECTION_DELAY_MS).toBe(20);
     expect(ANSWER_AUDIO_END_TIMEOUT_MS).toBe(3_000);
     expect(ANSWER_AUDIO_START_TIMEOUT_MS).toBe(1_000);
     expect(QUIZ_REQUEST_TIMEOUT_MS).toBe(2_000);
@@ -254,10 +250,9 @@ describe("quiz session domain", () => {
     expect(ANSWER_SERVER_FEEDBACK_RESERVATION_MS).toBeGreaterThanOrEqual(
       QUIZ_REQUEST_TIMEOUT_MS +
         ANSWER_AUDIO_START_TIMEOUT_MS +
-        ANSWER_AUDIO_END_TIMEOUT_MS +
-        ANSWER_AUDIO_END_GRACE_MS,
+        ANSWER_AUDIO_END_TIMEOUT_MS,
     );
-    expect(ANSWER_RESULT_VISIBLE_MS).toBe(250);
+    expect(ANSWER_RESULT_VISIBLE_MS).toBe(200);
     expect(PROMPT_AUDIO_AUTOPLAY_DELAY_MS).toBe(250);
   });
 

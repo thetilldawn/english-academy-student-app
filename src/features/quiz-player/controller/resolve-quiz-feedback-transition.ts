@@ -1,7 +1,5 @@
 import { resumeQuizAfterFeedback } from "../api/quiz-attempt";
 import {
-  ANSWER_AUDIO_END_GRACE_MS,
-  ANSWER_FEEDBACK_DELAY_MS,
   ANSWER_RESULT_VISIBLE_MS,
   type QuizAnswerDisposition,
 } from "../domain/quiz-session";
@@ -9,11 +7,6 @@ import type {
   QuizAnswerResponse,
   QuizFeedbackResumeResponse,
 } from "../model";
-import type {
-  QuizAudioCompletion,
-  TimedQuizAudioCompletion,
-} from "./quiz-audio-element";
-import type { WaitForFeedbackAudio } from "./use-quiz-feedback-interruption";
 
 export type QuizFeedbackSynchronization = {
   payload: QuizAnswerResponse &
@@ -35,35 +28,25 @@ function wait(milliseconds: number) {
   });
 }
 
-function fixedFeedbackReadyAt(input: {
-  receivedAt: number;
-  submittedAt: number;
-  timedOut: boolean;
-}) {
-  const totalReadyAt = input.submittedAt + ANSWER_FEEDBACK_DELAY_MS;
-  const resultVisibleReadyAt = input.timedOut
-    ? input.receivedAt
-    : input.receivedAt + ANSWER_RESULT_VISIBLE_MS;
-  return Math.max(totalReadyAt, resultVisibleReadyAt);
-}
-
 async function synchronizeNextQuestion(input: {
   resume?: typeof resumeQuizAfterFeedback;
   attemptId: string;
-  delayMilliseconds: number;
+  readyAt: number;
+  isActive: () => boolean;
   nextPhase: "initial" | "retry";
   nextQuestionId: string;
   payload: QuizAnswerResponse;
   receivedAt: number;
 }): Promise<QuizFeedbackSynchronization> {
   for (let request = 0; request < 2; request += 1) {
+    if (!input.isActive()) break;
     try {
       const resumed = await (input.resume ?? resumeQuizAfterFeedback)({
         attemptId: input.attemptId,
         nextPhase: input.nextPhase,
         nextQuestionId: input.nextQuestionId,
         transitionRemainingMilliseconds: Math.ceil(
-          input.delayMilliseconds,
+          Math.max(0, input.readyAt - performance.now()),
         ),
       });
       if (!resumed.ok) continue;
@@ -96,58 +79,15 @@ async function synchronizeNextQuestion(input: {
 
 export async function resolveQuizFeedbackTransition(input: {
   resume?: typeof resumeQuizAfterFeedback;
-  answerAudioUrl: string | null;
   attemptId: string;
   disposition: QuizAnswerDisposition;
   isActive: () => boolean;
   payload: QuizAnswerResponse;
-  playAnswerAudio: (audioUrl: string) => Promise<QuizAudioCompletion>;
-  promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   receivedAt: number;
-  submittedAt: number;
-  waitForAudio: WaitForFeedbackAudio;
+  questionTimeLimitSeconds?: number | null;
 }): Promise<ResolvedQuizFeedbackTransition> {
-  const fixedReadyAt = fixedFeedbackReadyAt({
-    receivedAt: input.receivedAt,
-    submittedAt: input.submittedAt,
-    timedOut: Boolean(input.payload.timedOut),
-  });
-  let readyAt = fixedReadyAt;
-  if (input.payload.feedbackProtocol === "legacy") {
-    readyAt = fixedReadyAt;
-  } else if (
-    input.payload.timedOut !== true &&
-    input.answerAudioUrl
-  ) {
-    const audioUrl = input.answerAudioUrl;
-    const result = await input.waitForAudio(() => input.playAnswerAudio(audioUrl));
-    if (result.skipped) {
-      readyAt = performance.now();
-    } else if (result.playback === "ended") {
-      // Keep the established answer-audio contract: once the selected English
-      // answer finishes, move on after the short grace instead of forcing the
-      // silent 750 ms fallback as well.
-      readyAt = performance.now() + ANSWER_AUDIO_END_GRACE_MS;
-    }
-  } else if (
-    input.payload.timedOut !== true &&
-    input.promptAudioCompletion
-  ) {
-    const completion = input.promptAudioCompletion;
-    const result = await input.waitForAudio(() => completion);
-    if (result.skipped) {
-      readyAt = performance.now();
-    } else if (result.playback.outcome === "ended") {
-      readyAt = Math.max(
-        fixedReadyAt,
-        result.playback.completedAt + ANSWER_AUDIO_END_GRACE_MS,
-      );
-    }
-  }
-  const delayMilliseconds = Math.max(
-    0,
-    readyAt - performance.now(),
-  );
+  // Start with the acknowledged result, not the click or an audio event.
+  const readyAt = performance.now() + ANSWER_RESULT_VISIBLE_MS;
   if (!input.isActive()) {
     return { synchronization: null };
   }
@@ -161,20 +101,27 @@ export async function resolveQuizFeedbackTransition(input: {
             payload: {
               ...input.payload,
               questionStartsAt: "",
-              transitionRemainingMilliseconds: 0,
+              // Older servers reserve up to 750ms before a timed question.
+              // Show it after 200ms, but keep queued input until it can start.
+              transitionRemainingMilliseconds: input.questionTimeLimitSeconds
+                ? Math.max(0, Math.min(750,
+                    (input.payload.timerRemainingMilliseconds ?? 0) -
+                    input.questionTimeLimitSeconds * 1_000))
+                : 0,
             },
             receivedAt: input.receivedAt,
           })
         : synchronizeNextQuestion({
             resume: input.resume,
             attemptId: input.attemptId,
-            delayMilliseconds,
+            readyAt,
+            isActive: input.isActive,
             nextPhase: input.payload.nextPhase,
             nextQuestionId: input.payload.nextQuestionId,
             payload: input.payload,
             receivedAt: input.receivedAt,
           })
       : null;
-  await wait(delayMilliseconds);
+  await wait(Math.max(0, readyAt - performance.now()));
   return { synchronization };
 }

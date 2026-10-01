@@ -9,15 +9,34 @@ import type {
   QuizPronunciation,
 } from "../model";
 
-export const ANSWER_SELECTION_DELAY_MS = 100;
-export const ANSWER_FEEDBACK_DELAY_MS = 750;
-export const ANSWER_AUDIO_END_GRACE_MS = 150;
+export const ANSWER_SELECTION_DELAY_MS = 20;
 export const ANSWER_AUDIO_END_TIMEOUT_MS = 3_000;
 export const ANSWER_AUDIO_START_TIMEOUT_MS = 1_000;
 export const QUIZ_REQUEST_TIMEOUT_MS = 2_000;
 export const ANSWER_SERVER_FEEDBACK_RESERVATION_MS = 7_000;
-export const ANSWER_RESULT_VISIBLE_MS = 250;
+export const ANSWER_RESULT_VISIBLE_MS = 200;
 export const PROMPT_AUDIO_AUTOPLAY_DELAY_MS = 250;
+
+/** Only a saved server judgement may restore feedback after a lost response. */
+export function recoveredQuizAnswerFeedback(input: {
+  attempt: QuizAttempt;
+  questionId: string;
+  phase: "initial" | "retry";
+  choiceIndex: number | null;
+}): QuizAnswerResponse | null {
+  const question = input.attempt.questions.find((item) => item.id === input.questionId);
+  if (!question) return null;
+  const retry = input.phase === "retry";
+  const correct = retry ? question.retryIsCorrect : question.initialIsCorrect;
+  const savedChoice = retry ? question.retryChoiceIndex : question.initialChoiceIndex;
+  const timedOut = retry ? question.retryTimedOut : question.initialTimedOut;
+  const correctChoiceIndex = question.revealedCorrectChoiceIndex;
+  if (typeof correct !== "boolean" || correctChoiceIndex === null ||
+      !Number.isInteger(correctChoiceIndex) || correctChoiceIndex < 0 ||
+      correctChoiceIndex >= question.choices.length ||
+      (!timedOut && savedChoice !== input.choiceIndex)) return null;
+  return { correct, correctChoiceIndex, timedOut };
+}
 
 export function quizAttemptUsesDeadlineClock(
   attempt: Pick<QuizAttempt, "timingMode" | "timerDeadlineAt">,

@@ -6,6 +6,9 @@ import { useCallback, type Dispatch } from "react";
 import { regularQuizTransport, type QuizTransport } from "../api/quiz-transport";
 import { quizAttemptUsesDeadlineClock } from "../domain/quiz-session";
 import type { QuizPlayerAction } from "../domain/quiz-player-state";
+import type { QuizAttempt } from "../model";
+
+export type BeforeQuizRestore = (attempt: QuizAttempt) => Promise<boolean>;
 
 type MutableValue<T> = { current: T };
 
@@ -33,7 +36,7 @@ export function useQuizRecovery(input: {
   } = input;
   const transport = input.transport ?? regularQuizTransport;
 
-  return useCallback(async () => {
+  return useCallback(async (beforeRestore?: BeforeQuizRestore) => {
     try {
       const { ok, payload, receivedAt, roundTripMilliseconds } =
         await transport.read(attemptId);
@@ -44,6 +47,9 @@ export function useQuizRecovery(input: {
         !Number.isFinite(payload.timerRemainingMilliseconds)
       ) {
         return false;
+      }
+      if (beforeRestore) {
+        if (!await beforeRestore(payload.attempt) || !mountedRef.current) return true;
       }
       if (
         payload.attempt.status !== "in_progress" ||

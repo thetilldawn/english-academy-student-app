@@ -6587,7 +6587,6 @@
         ],
         "ui": [
           "src/features/quiz-player/ui/quiz-player.tsx",
-          "src/features/quiz-player/ui/quiz-feedback-skip.tsx",
           "src/features/quiz-player/ui/quiz-frame.tsx",
           "src/features/quiz-player/ui/quiz-choice.tsx",
           "src/design-system/patterns/audio-button/audio-button.tsx",
@@ -6611,7 +6610,6 @@
         "clientState": [
           "src/features/quiz-player/controller/use-quiz-player-controller.ts",
           "src/features/quiz-player/controller/use-quiz-submission.ts",
-          "src/features/quiz-player/controller/use-quiz-feedback-interruption.ts",
           "src/features/quiz-player/controller/use-quiz-clock.ts",
           "src/features/quiz-player/controller/use-quiz-clock-lifecycle.ts",
           "src/features/quiz-player/controller/use-quiz-recovery.ts",
