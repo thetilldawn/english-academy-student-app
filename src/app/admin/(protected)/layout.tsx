@@ -1,6 +1,8 @@
 import { Suspense } from "react";
+import { Button } from "@/design-system/primitives/button/button";
 
 import { AdminNavigation } from "@/components/admin-navigation";
+import { AdminPendingContent } from "@/components/admin-pending-content";
 import { AdminRouteScreenReaderTitle } from "@/components/admin-route-screen-reader-title";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { GuardedLink } from "@/components/guarded-link";
@@ -8,7 +10,6 @@ import { NavigationExitGuardProvider } from "@/components/navigation-exit-guard"
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { adminShellText } from "@/content/ko/admin-shell";
-import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getAdminListCachePolicy } from "@/lib/env";
 import { StudentDirectoryCacheProvider } from "@/features/students/public-client";
@@ -27,10 +28,9 @@ export default function AdminProtectedLayout({
   return (
     <Suspense
       fallback={(
-        <RouteLoadingState
-          label={adminShellText.loading}
-          variant="shell"
-        />
+        <AdminShellFrame pending>
+          <AdminPendingContent />
+        </AdminShellFrame>
       )}
     >
       <AdminProtectedShell detail={detail}>{children}</AdminProtectedShell>
@@ -49,13 +49,30 @@ async function AdminProtectedShell({
   const cachePolicy = getAdminListCachePolicy();
 
   const content = (
+    <AdminShellFrame displayName={admin.displayName} detail={detail}>{children}</AdminShellFrame>
+  );
+  const directoryContent = cachePolicy.students
+    ? <StudentDirectoryCacheProvider key={admin.userId} userId={admin.userId}>{content}</StudentDirectoryCacheProvider>
+    : content;
+  const protectedContent = cachePolicy.history
+    ? <HistoryListCacheProvider key={admin.userId} userId={admin.userId}>{directoryContent}</HistoryListCacheProvider>
+    : directoryContent;
+  return <SessionLogoutBoundary key={admin.userId} role="admin">{protectedContent}</SessionLogoutBoundary>;
+}
+
+function AdminShellFrame({ children, detail, displayName, pending = false }: {
+  children: React.ReactNode; detail?: React.ReactNode; displayName?: string; pending?: boolean;
+}) {
+  const logout = pending ? <Button disabled size="small" variant="quiet">로그아웃</Button> : <AdminLogoutButton />;
+  return (
     <NavigationExitGuardProvider>
       <div className={shellStyles.adminAppShell}>
-      <NotificationBootstrap role="admin" />
+      {!pending ? <NotificationBootstrap role="admin" /> : null}
       <aside className={shellStyles.adminSidebar}>
         <GuardedLink
           className={[shellStyles.brand, shellStyles.adminSidebarBrand].join(" ")}
           href="/admin"
+          prefetch={false}
         >
           <span className={shellStyles.brandMark} aria-hidden="true">
             E
@@ -65,10 +82,11 @@ async function AdminProtectedShell({
         <AdminNavigation
           label={adminShellText.navigation.pcAriaLabel}
           variant="sidebar"
+          pending={pending}
         />
         <div className={shellStyles.adminSidebarFooter}>
-          <span className={shellStyles.userLabel}>{admin.displayName}</span>
-          <AdminLogoutButton />
+          <span className={shellStyles.userLabel}>{displayName ?? "　"}</span>
+          {logout}
         </div>
       </aside>
 
@@ -79,6 +97,7 @@ async function AdminProtectedShell({
             <AdminNavigation
               label={adminShellText.navigation.tabletAriaLabel}
               variant="tablet"
+              pending={pending}
             />
             <div className={shellStyles.topbarActions}>
               <ThemeToggle />
@@ -86,9 +105,9 @@ async function AdminProtectedShell({
                 <span
                   className={[shellStyles.userLabel, shellStyles.adminTopbarUser].join(" ")}
                 >
-                  {admin.displayName}
+                  {displayName ?? "　"}
                 </span>
-                <AdminLogoutButton />
+                {logout}
               </div>
             </div>
           </div>
@@ -103,17 +122,11 @@ async function AdminProtectedShell({
         <AdminNavigation
           label={adminShellText.navigation.mobileAriaLabel}
           variant="mobile"
+          pending={pending}
         />
       </div>
         {detail}
       </div>
     </NavigationExitGuardProvider>
   );
-  const directoryContent = cachePolicy.students
-    ? <StudentDirectoryCacheProvider key={admin.userId} userId={admin.userId}>{content}</StudentDirectoryCacheProvider>
-    : content;
-  const protectedContent = cachePolicy.history
-    ? <HistoryListCacheProvider key={admin.userId} userId={admin.userId}>{directoryContent}</HistoryListCacheProvider>
-    : directoryContent;
-  return <SessionLogoutBoundary key={admin.userId} role="admin">{protectedContent}</SessionLogoutBoundary>;
 }

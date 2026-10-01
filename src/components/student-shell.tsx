@@ -1,7 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ButtonLink } from "@/design-system/primitives/button/button";
+import { Button, ButtonLink } from "@/design-system/primitives/button/button";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
+import { studentAppText } from "@/content/ko/student-app";
+import { HeaderPointSummary } from "@/features/learning-points/public-ui";
 import { useEffect, useRef } from "react";
 
 import { StudentLogoutButton } from "@/components/student-logout-button";
@@ -12,27 +15,42 @@ import { useStudentHistoryRefresh } from "./use-student-history-refresh";
 
 import styles from "./shell/app-shell.module.css";
 
-export function StudentShell({
-  children,
-  displayName,
-  gradeLabel,
-  schoolName,
-  points,
-  identity,
-}: {
+type StudentShellProps = {
   children: React.ReactNode;
   displayName: string;
   gradeLabel: string | null;
   schoolName?: string | null;
   points: React.ReactNode;
   identity?: React.ReactNode;
-}) {
+};
+
+export function StudentShell(props: StudentShellProps) {
+  useStudentHistoryRefresh(usePathname());
+  return <StudentShellFrame {...props} />;
+}
+
+export function StudentShellPending() {
+  const pathname = usePathname();
+  const focused = pathname.startsWith("/student/attempt/") || /^\/student\/practice\/[^/]+\/?$/u.test(pathname);
+  return <StudentShellFrame displayName="　" gradeLabel={null} points={<HeaderPointSummary state="loading" />} pending>
+    <RouteLoadingState label={focused ? "시험 준비 중" : "화면을 불러오는 중입니다."} />
+  </StudentShellFrame>;
+}
+
+function StudentShellFrame({
+  children,
+  displayName,
+  gradeLabel,
+  schoolName,
+  points,
+  identity,
+  pending = false,
+}: StudentShellProps & { pending?: boolean }) {
   const pathname = usePathname();
   const focusedAttempt = pathname.startsWith("/student/attempt/") || /^\/student\/practice\/[^/]+\/?$/u.test(pathname);
   const pageTitle = studentPageTitleForPathname(pathname);
   const shellRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
-  useStudentHistoryRefresh(pathname);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -53,13 +71,13 @@ export function StudentShell({
   }, [focusedAttempt]);
 
   useEffect(() => {
-    if (!window.location.hash) return;
+    if (pending || !window.location.hash) return;
     window.history.replaceState(
       window.history.state,
       "",
       `${window.location.pathname}${window.location.search}`,
     );
-  }, []);
+  }, [pending]);
 
   return (
     <div
@@ -86,9 +104,9 @@ export function StudentShell({
               {points}
             </div>
             <div className={[styles.topbarActions, styles.studentControls].join(" ")}>
-              <ButtonLink href="/student/wordbook" prefetch={false} size="small" variant="quiet">내 단어장</ButtonLink>
+              {pending ? <Button disabled size="small" variant="quiet">내 단어장</Button> : <ButtonLink href="/student/wordbook" prefetch={false} size="small" variant="quiet">내 단어장</ButtonLink>}
               <ThemeToggle />
-              <StudentLogoutButton />
+              {pending ? <Button disabled size="small" variant="quiet">{studentAppText.shell.logout}</Button> : <StudentLogoutButton />}
             </div>
           </div>
         </header>

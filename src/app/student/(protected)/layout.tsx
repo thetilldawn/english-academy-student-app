@@ -1,9 +1,7 @@
 import { Suspense } from "react";
 
-import { StudentShell } from "@/components/student-shell";
+import { StudentShell, StudentShellPending } from "@/components/student-shell";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
-import { studentAppText } from "@/content/ko/student-app";
-import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { StudentSessionRenewal } from "@/features/session/ui/student-session-renewal";
 import { SessionLogoutBoundary } from "@/features/session/public-client";
 import {
@@ -20,12 +18,7 @@ export default function StudentProtectedLayout({
 }: Readonly<{ children: React.ReactNode; detail: React.ReactNode; summary: React.ReactNode }>) {
   return (
     <Suspense
-      fallback={(
-        <RouteLoadingState
-          label={studentAppText.login.loading}
-          variant="shell"
-        />
-      )}
+      fallback={<StudentShellPending />}
     >
       <StudentProtectedShell detail={detail} summary={summary}>{children}</StudentProtectedShell>
     </Suspense>
@@ -55,7 +48,7 @@ async function StudentProtectedShell({
         gradeLabel={student.gradeLabel}
         schoolName={student.schoolName}
         points={summary}
-        identity={<Suspense fallback={<span>{student.displayName}</span>}><StudentSchoolIdentity>
+        identity={<Suspense fallback={<span>{[student.displayName, student.schoolName, student.gradeLabel].filter(Boolean).join(" · ")}</span>}><StudentSchoolIdentity>
           <span>{[student.displayName, student.schoolName, student.gradeLabel].filter(Boolean).join(" · ")}</span>
         </StudentSchoolIdentity></Suspense>}
       >

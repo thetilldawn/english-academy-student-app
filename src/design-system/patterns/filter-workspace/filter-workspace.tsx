@@ -19,6 +19,7 @@ export function FilterWorkspace({
   searchAriaLabel,
   searchPlaceholder,
   summaryActions,
+  disabled = false,
 }: {
   activeFilterCount: number;
   activeTags?: ReactNode;
@@ -31,9 +32,10 @@ export function FilterWorkspace({
   searchAriaLabel: string;
   searchPlaceholder: string;
   summaryActions: ReactNode;
+  disabled?: boolean;
 }) {
   return (
-    <div className={[styles.workspace, className].filter(Boolean).join(" ")}>
+    <div inert={disabled || undefined} className={[styles.workspace, className].filter(Boolean).join(" ")}>
       <label className={styles.searchField}>
         <span aria-hidden="true" className={styles.searchIcon}>
           <svg viewBox="0 0 24 24">
@@ -43,6 +45,7 @@ export function FilterWorkspace({
         </span>
         <span className="sr-only">{searchAriaLabel}</span>
         <Input
+          disabled={disabled}
           leadingAdornment
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder={searchPlaceholder}

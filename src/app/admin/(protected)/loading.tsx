@@ -1,6 +1,5 @@
-import { adminShellText } from "@/content/ko/admin-shell";
-import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
+import { AdminPendingContent } from "@/components/admin-pending-content";
 
 export default function AdminLoading() {
-  return <RouteLoadingState label={adminShellText.loading} role="status" />;
+  return <AdminPendingContent />;
 }

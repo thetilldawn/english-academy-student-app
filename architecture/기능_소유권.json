@@ -1556,6 +1556,10 @@
       "owner": "app-shell"
     },
     {
+      "path": "src/components/admin-pending-content.tsx",
+      "owner": "app-shell"
+    },
+    {
       "path": "src/components/admin-route-screen-reader-title.tsx",
       "owner": "app-shell"
     },
@@ -1816,9 +1820,17 @@
     {
       "path": "src/design-system/primitives/fit-text/fit-text.module.css",
       "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/route-state/stable-data-region.tsx",
+      "owner": "shared-ui"
     }
   ],
   "architectureGuardOwners": [
+    {
+      "path": "src/components/admin-navigation.contract.test.ts",
+      "owner": "app-shell"
+    },
     {
       "path": "src/lib/quiz/choice-safety.test.ts",
       "owner": "shared-quiz-domain"
@@ -3013,6 +3025,12 @@
     }
   ],
   "currentCrossFeatureImports": [
+    {
+      "from": "src/features/assignments/ui/assignment-workspace.tsx",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "APP-20261001-04: 개인정보 없는 최초 표시판에 기존 공개 필터 계약만 사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
     {
       "from": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
       "to": "src/features/session/public-client.ts",

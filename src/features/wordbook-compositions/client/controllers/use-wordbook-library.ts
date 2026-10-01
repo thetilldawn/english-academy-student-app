@@ -12,7 +12,7 @@ import { useLibraryCommand } from "./use-library-command";
 const emptyMetadata = (): TemplateMetadata => ({ title: "", tags: [], school: null, targetGrade: null, schoolYear: null, semester: null, assessment: null, purpose: null });
 type Mode = "create" | "metadata" | "version" | "copy" | "use";
 export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: unknown) => void, onSaved?: (book: CreatedLibraryBook) => void,
-  initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">) {
+  initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">, enabled = true) {
   const [viewerId, setViewerId] = useState<string>();
   const actor = useRef<string | undefined>(undefined), openRequest = useRef<AbortController | null>(null);
   const [authenticationFailed, setAuthenticationFailed] = useState(false);
@@ -29,6 +29,8 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const [changeConfirmed, setChangeConfirmed] = useState<string | null>(null), [editorRevision, setEditorRevision] = useState(0);
   const [conflictingDetail, setConflictingDetail] = useState<LibraryDetail | null>(null);
   useEffect(() => () => openRequest.current?.abort(), []);
+  useEffect(() => { if (!enabled) openRequest.current?.abort(); }, [enabled]);
+  if (!enabled && opening) setOpening(false);
   if (JSON.stringify(previousTarget) !== JSON.stringify(initialTarget)) {
     const previous = previousTarget; setPreviousTarget(initialTarget);
     if (editor.mode === "create") setMetadata(current => {
@@ -48,7 +50,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     if (actor.current && actor.current !== id) { authGate.current = { failed: true, recovering: false }; setAuthenticationFailed(true); setAuthRecovering(false); return; }
     actor.current = id; authGate.current = { failed: false, recovering: false }; setViewerId(id); setAuthenticationFailed(false); setAuthRecovering(false);
   }, []);
-  const templates = useLibraryPage(!authenticationFailed || authRecovering ? { kind: "templates", search, cursor: null, limit: 20 } : null, undefined, reportError, acceptViewer);
+  const templates = useLibraryPage(!authenticationFailed || authRecovering ? { kind: "templates", search, cursor: null, limit: 20 } : null, undefined, reportError, acceptViewer, enabled);
   const activeGroup = criteria.groups.find(g => g.id === activeGroupId) ?? null;
   const valid = validLibraryCriteria(criteria);
   const [lastValid, setLastValid] = useState(criteria);
@@ -56,7 +58,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const rangeEditable = editor.mode !== "metadata" && editor.mode !== "copy";
   const normalizedMetadata = { ...metadataInput, school: metadataInput.school?.trim() || null, assessment: metadataInput.assessment?.trim() || null, purpose: metadataInput.purpose?.trim() || null };
   const preview = useLibraryPage(tab === "sources" && viewerId && rangeEditable && !authenticationFailed ? { kind: "preview", selection: { mode: "criteria", criteria: lastValid },
-    compareVersionId: editor.detail?.version.id ?? null, metadata: { ...normalizedMetadata, title: metadataInput.title.slice(0, 100) } } : null, viewerId, reportError);
+    compareVersionId: editor.detail?.version.id ?? null, metadata: { ...normalizedMetadata, title: metadataInput.title.slice(0, 100) } } : null, viewerId, reportError, undefined, enabled);
   const shown = preview.data;
   const [lastSuggestedTitle, setLastSuggestedTitle] = useState({ revision: -1, title: "" });
   if (shown && (lastSuggestedTitle.revision !== editorRevision || lastSuggestedTitle.title !== shown.suggestedTitle)) setLastSuggestedTitle({ revision: editorRevision, title: shown.suggestedTitle });
@@ -86,7 +88,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
         ? "단어장을 만들었습니다. 시험 범위와 문항 수를 설정해 주세요." : "단어장은 저장됐지만 현재 출제 가능한 문제가 부족해 배정할 수 없습니다. 범위를 추가한 뒤 다시 만들어 주세요."
       : "템플릿을 저장했습니다.");
   }, reportError, onSaved);
-  const locked = mutations.locked || opening, scopesLocked = locked || !rangeEditable;
+  const locked = !enabled || mutations.locked || opening, scopesLocked = locked || !rangeEditable;
   const canSave = !!viewerId && !authenticationFailed && !conflictingDetail && !Object.keys(errors).length && (!rangeEditable || valid && preview.status === "ready")
     && (editor.mode !== "use" || !shown?.difference?.changed || changeConfirmed === shown.contentHash);
   function edit(change: () => void) {
@@ -111,6 +113,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     finally { if (!request.signal.aborted) setOpening(false); }
   }
   function save() {
+    if (!enabled) return;
     if (mutations.state.uncertain) { void mutations.run(); return; }
     if (!canSave) return;
     const requestId = crypto.randomUUID(), t = editor.detail?.template, v = editor.detail?.version;
@@ -127,18 +130,18 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     }
     void mutations.run(command, editor.mode === "use");
   }
-  return { viewerId, reportError, templates, tab, search, editor, editorRevision, metadata, criteria, activeGroup, preview, dirty, errors, canSave,
+  return { enabled, viewerId, reportError, templates, tab, search, editor, editorRevision, metadata, criteria, activeGroup, preview, dirty, errors, canSave,
     authenticationFailed, opening, openError, notice, locked, scopesLocked, saveState: mutations.state, changeConfirmed, conflictingDetail,
     actions: {
       setSearch, setTab: (value: "saved" | "sources") => { if (!locked) setTab(value); }, open, save,
-      reload: () => { templates.reload(); preview.reload();
+      reload: () => { if (!enabled) return; templates.reload(); preview.reload();
         if (editor.detail && viewerId && !locked) {
           openRequest.current?.abort(); const request = new AbortController(); openRequest.current = request;
           void readLibraryPage({ kind: "detail", templateId: editor.detail.template.id }, request.signal, viewerId).then(detail => {
             if (!request.signal.aborted && detail.template.revision !== editor.detail?.template.revision) setConflictingDetail(detail);
           }).catch(error => { if (!request.signal.aborted) reportError(error); });
         }
-      }, reauthenticate: () => { authGate.current.recovering = true; setAuthRecovering(true); templates.reload(); },
+      }, reauthenticate: () => { if (!enabled) return; authGate.current.recovering = true; setAuthRecovering(true); templates.reload(); },
       rebase: () => { if (conflictingDetail && editor.mode !== "create" && conflictingDetail.template.id === editor.detail?.template.id) edit(() => { setEditor(e => ({ ...e, detail: conflictingDetail })); setConflictingDetail(null); setNotice("최신 버전을 기준으로 변경 내용을 다시 확인해 주세요."); }); },
       setMetadata: (value: TemplateMetadata) => edit(() => { if (value.title !== metadata.title) setTitleEdited(true); setMetadata(value); }),
       suggestTitle: () => edit(() => setTitleEdited(false)),

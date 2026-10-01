@@ -14,8 +14,10 @@ const entryModes = [
 
 export function VocabAssignmentEntrySelector({
   controller,
+  privateDataVisible = true,
 }: {
   controller: AssignmentWorkspaceController;
+  privateDataVisible?: boolean;
 }) {
   return (
     <nav aria-label="배정 시작 방식" className={styles.entryModes}>
@@ -36,10 +38,10 @@ export function VocabAssignmentEntrySelector({
             onChange={(event) =>
               controller.actions.setFilter("school", event.target.value)
             }
-            value={controller.filters.school}
+            value={privateDataVisible ? controller.filters.school : ""}
           >
             <option value="">학교 선택</option>
-            {controller.schoolOptions.map((school) => (
+            {(privateDataVisible ? controller.schoolOptions : []).map((school) => (
               <option key={school} value={school}>{school}</option>
             ))}
           </Select>
@@ -47,7 +49,7 @@ export function VocabAssignmentEntrySelector({
       ) : null}
       {controller.entryMode === "dataset" ? (
         <div className={styles.entryChoice}>
-          {["idle", "loading"].includes(controller.datasetDirectory.status) ? (
+          {!privateDataVisible ? <Field as="label"><FieldLabel as="span">단어장</FieldLabel><Select disabled value="" onChange={() => undefined}><option value="">단어장 선택</option></Select></Field> : ["idle", "loading"].includes(controller.datasetDirectory.status) ? (
             <p aria-live="polite" className={styles.entryStatus}>단어장 불러오는 중…</p>
           ) : controller.datasetDirectory.status === "error" ? (
             <Notice role="alert" tone="danger">

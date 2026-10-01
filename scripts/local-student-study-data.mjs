@@ -52,11 +52,11 @@ export function studentStudyFixture({ target, method, headers, input }) {
     const index = [21, 22, 23].findIndex(n => uid(n) === input.p_assignment_id);
     return ok(index < 0 ? null : { assignmentId: input.p_assignment_id, title: "로컬 단어장 · " + labels[index], mode: modes[index], words: studyWords });
   }
-  if (table === "rpc/get_student_dashboard_initial_v2") return ok([{
+  if (["rpc/get_student_dashboard_initial_v2", "rpc/get_student_dashboard_initial_v3"].includes(table)) return ok([{
     completed_count: 0, completed_items: [], deadline_closed_count: 0, needs_attention_count: 0,
     open_count: 3, scheduled_count: 0, snapshot_at: stamp,
     current_items: [21, 22, 23].map((n, i) => ({
-      assignmentId: uid(n), effectiveAt: stamp, dashboardSection: "open",
+      assignmentId: uid(n), effectiveAt: stamp, dashboardSection: "open", sortBucket: 0, sortAt: stamp, secondarySortAt: stamp,
       item: { _dataset: { catalog: null, edition: null, title: "로컬 단어장 · " + labels[i] },
         id: uid(n), title: "로컬 단어장 · " + labels[i], assignedAt: stamp, assignmentPurpose: "regular", assignmentStatus: "active",
         availableFrom: null, availableUntil: null, lastAttemptId: null, lastCompletedAt: null,

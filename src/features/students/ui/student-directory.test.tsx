@@ -13,6 +13,7 @@ import {
   type StudentDirectorySnapshot,
 } from "../contracts/student-directory-read-model";
 import { StudentDirectory } from "./student-directory";
+import { StudentDirectorySkeleton } from "./student-directory-skeleton";
 
 afterEach(cleanup);
 
@@ -51,6 +52,33 @@ function snapshot(
 }
 
 describe("StudentDirectory", () => {
+  it("최초 서버 대기판도 같은 검색 틀을 사용하고 0명을 표시하지 않는다", () => {
+    render(<StudentDirectorySkeleton />);
+    expect(screen.getByRole("searchbox")).toBeDisabled();
+    expect(screen.getByText("—명")).toBeInTheDocument();
+    expect(screen.queryByText(adminStudentsText.page.noMatches)).not.toBeInTheDocument();
+  });
+  it("같은 검색 DOM을 유지하면서 확인 중 개인행·옵션·검색값을 제거하고 복원한다", () => {
+    const initial = snapshot([item(1, "확인할 학생")]);
+    initial.filters = { ...initial.filters, query: "보관한 검색", school: "미리보기고" };
+    const { rerender, container } = render(<StudentDirectory initialSnapshot={initial} syncInitialSnapshot />);
+    const input = screen.getByRole("searchbox");
+    expect(input).toHaveValue("보관한 검색");
+    rerender(<StudentDirectory initialSnapshot={initial} privateDataVisible={false} pendingContent={<p role="status">확인 중</p>} syncInitialSnapshot />);
+    expect(screen.getByRole("searchbox")).toBe(input); expect(input).toBeDisabled(); expect(input).toHaveValue("");
+    expect(container).not.toHaveTextContent("확인할 학생"); expect(container).not.toHaveTextContent("미리보기고");
+    expect(container).not.toHaveTextContent("[2025]"); expect(screen.getByText("—명")).toBeInTheDocument();
+    rerender(<StudentDirectory initialSnapshot={initial} syncInitialSnapshot />);
+    expect(screen.getByRole("searchbox")).toBe(input); expect(input).toHaveValue("보관한 검색");
+    expect(screen.getByText("확인할 학생")).toBeVisible();
+  });
+  it("최초 대기에는 가짜0건을 표시하지 않고 첫 서버 필터를 같은 입력에 적용한다", () => {
+    const { rerender } = render(<StudentDirectory privateDataVisible={false} pendingContent={<p>준비 중</p>} syncInitialSnapshot />);
+    const input = screen.getByRole("searchbox"); expect(screen.queryByText(adminStudentsText.page.noMatches)).not.toBeInTheDocument();
+    const initial = snapshot([item(1, "첫 학생")]); initial.filters = { ...initial.filters, query: "첫 검색" };
+    rerender(<StudentDirectory initialSnapshot={initial} syncInitialSnapshot />);
+    expect(screen.getByRole("searchbox")).toBe(input); expect(input).toHaveValue("첫 검색"); expect(screen.getByText("첫 학생")).toBeVisible();
+  });
   it("빈 결과를 명시한다", () => {
     render(<StudentDirectory initialSnapshot={snapshot([])} />);
     expect(screen.getByText(adminStudentsText.page.noMatches)).toBeVisible();

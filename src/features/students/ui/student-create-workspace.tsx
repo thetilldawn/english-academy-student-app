@@ -39,6 +39,12 @@ import type { SchoolSearchItem } from "../contracts/school-search-contract";
 import styles from "./student-directory.module.css";
 import detailStyles from "./student-detail.module.css";
 
+export function StudentCreatePending() {
+  return <details className={styles.createDisclosure} inert aria-busy="true">
+    <summary className={buttonRecipe({ variant: "primary" })}>{adminStudentsText.createStudent.open}</summary>
+  </details>;
+}
+
 export function StudentCreateWorkspace({
   appOrigin,
 }: {

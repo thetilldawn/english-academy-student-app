@@ -48,7 +48,7 @@ export function useAssignmentWorkspace({
   cacheEnabled?: boolean;
   interactionAllowed?: boolean;
 }) {
-  const directory = useAssignmentStudentDirectory(initial.directory, cacheEnabled);
+  const directory = useAssignmentStudentDirectory(initial.directory, cacheEnabled, interactionAllowed);
   const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const basket = useAssignmentSelectionBasket();
   const datasetDirectory = useAssignmentDatasetDirectory();
@@ -229,8 +229,8 @@ export function useAssignmentWorkspace({
   }
 
   useEffect(() => {
-    if (entryMode === "dataset") void ensureDatasetDirectory();
-  }, [ensureDatasetDirectory, entryMode]);
+    if (interactionAllowed && entryMode === "dataset") void ensureDatasetDirectory();
+  }, [ensureDatasetDirectory, entryMode, interactionAllowed]);
 
   useEffect(() => {
     if (!interactionAllowed) return;

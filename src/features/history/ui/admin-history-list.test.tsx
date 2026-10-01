@@ -11,7 +11,7 @@ import type {
   AdminHistorySnapshot,
 } from "@/features/history/contracts/admin-history-read-model";
 
-import { AdminHistoryList } from "./admin-history-list";
+import { AdminHistoryList, AdminHistoryListPending } from "./admin-history-list";
 import { AdminHistoryRequestError } from "../contracts/admin-history-request-error";
 
 const loadAdminHistorySnapshot = vi.fn();
@@ -25,6 +25,13 @@ vi.mock("@/features/history/transport/history-pages", () => ({
 afterEach(() => {
   cleanup();
   vi.resetAllMocks();
+});
+
+it("최초 서버 대기판은 검색과 상태 필터를 유지하고 별도 조회를 하지 않는다", async () => {
+  render(<AdminHistoryListPending />);
+  expect(screen.getByRole("searchbox")).toBeDisabled();
+  expect(screen.getByRole("combobox")).toBeDisabled();
+  await act(async () => {}); expect(loadAdminHistorySnapshot).not.toHaveBeenCalled();
 });
 
 function historyItem(id: string): AdminHistoryListItem {

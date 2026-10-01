@@ -26,15 +26,16 @@ function toggleValue(current: string, next: string) {
 }
 
 export function AssignmentWorkspaceFilters({
-  classGroupOptions,
-  filters,
-  gradeOptions,
+  classGroupOptions: inputClassGroupOptions,
+  filters: inputFilters,
+  gradeOptions: inputGradeOptions,
   onClearSearch,
   onResetFilters,
   onSetFilter,
-  schoolOptions,
+  schoolOptions: inputSchoolOptions,
   totalCount,
-  wordbookOptions,
+  wordbookOptions: inputWordbookOptions,
+  privateDataVisible = true,
 }: {
   classGroupOptions: readonly { label: string; value: string }[];
   filters: StudentDirectoryFilters;
@@ -48,7 +49,13 @@ export function AssignmentWorkspaceFilters({
   schoolOptions: readonly string[];
   totalCount: number;
   wordbookOptions: readonly string[];
+  privateDataVisible?: boolean;
 }) {
+  const filters: StudentDirectoryFilters = privateDataVisible ? inputFilters : { query: "", classGroupId: "", school: "", grade: "", wordbook: "", status: "active", wrong: "all" };
+  const classGroupOptions = privateDataVisible ? inputClassGroupOptions : [];
+  const gradeOptions = privateDataVisible ? inputGradeOptions : [];
+  const schoolOptions = privateDataVisible ? inputSchoolOptions : [];
+  const wordbookOptions = privateDataVisible ? inputWordbookOptions : [];
   const activeCount = [
     filters.school,
     filters.grade,
@@ -60,6 +67,7 @@ export function AssignmentWorkspaceFilters({
 
   return (
     <FilterWorkspace
+      disabled={!privateDataVisible}
       activeFilterCount={activeCount}
       activeTags={(
         <MetaTagList>
@@ -96,7 +104,7 @@ export function AssignmentWorkspaceFilters({
         <>
           <strong>
             {formatContentText(commonText.filters.studentCount, {
-              count: totalCount,
+              count: privateDataVisible ? totalCount : "—",
             })}
           </strong>
           <Button

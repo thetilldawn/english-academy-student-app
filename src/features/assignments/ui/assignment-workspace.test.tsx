@@ -11,7 +11,7 @@ import { assignmentQuestionModes } from "../domain/model";
 import { bulkAssignmentPreviewSchema, type BulkAssignmentPreviewInput } from "../contracts/bulk-assignment-request";
 import { resolveVocabQuestionCycleAllocation } from "../domain/vocab-question-allocation";
 import { resolveUndatedVocabUnitCycleAllocation } from "../domain/vocab-unit-allocation";
-import { AssignmentWorkspace } from "./assignment-workspace";
+import { AssignmentWorkspace, AssignmentWorkspacePending } from "./assignment-workspace";
 import { StudentDirectoryCacheProvider, announceStudentDirectoryRefresh } from "@/features/students/public-client";
 import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 import { CachedAssignmentWorkspace } from "./cached-assignment-workspace";
@@ -93,6 +93,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
+  it("서버 최초 대기판에도 검색과 탭은 있으며 자료 조회나 빈 목록 안내는 없다", async () => {
+    render(<AssignmentWorkspacePending />);
+    expect(screen.getByRole("searchbox")).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "단일 배정" })).toBeInTheDocument();
+    expect(screen.queryByText("가짜 학생 1")).not.toBeInTheDocument();
+    await act(async () => {}); expect(fetchMock).not.toHaveBeenCalled();
+  });
   it.each([false,true])("개인 오답 모달은 접속 재확인 뒤 입력과 저장 요청을 보존한다(저장 유실=%s)", async lost => {
     const original=fetchMock.getMockImplementation()!,saves:string[]=[];
     fetchMock.mockImplementation(async(url:string,init?:RequestInit)=>{

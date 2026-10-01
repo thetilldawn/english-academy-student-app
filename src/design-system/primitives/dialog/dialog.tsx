@@ -7,9 +7,11 @@ import {
   useContext,
   useLayoutEffect,
   useRef,
+  useState,
   type ComponentPropsWithoutRef,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { Button, IconButton } from "../button/button";
 
@@ -30,8 +32,30 @@ const DialogVisibilityContext = createContext(true);
 
 /** Presentation only: the owning feature decides whether its content may be shown. */
 export function DialogVisibilityBoundary({ visible, children }: { visible: boolean; children: ReactNode }) {
+  const [host, setHost] = useState<HTMLDivElement | null>(null);
+  const pausedFocus = useRef<HTMLElement | null>(null);
+  const attachHost = useCallback((anchor: HTMLDivElement | null) => {
+    if (!anchor) return;
+    if (!host) {
+      const element = document.createElement("div");
+      element.style.display = "contents";
+      setHost(element);
+      return;
+    }
+    // The anchor precedes the portal, so attach before dialog layout effects.
+    // Detach private DOM without throwing away the nested editor's state.
+    if (visible) anchor.appendChild(host);
+    return () => {
+      if (document.activeElement instanceof HTMLElement && host.contains(document.activeElement)) pausedFocus.current = document.activeElement;
+      host.remove();
+    };
+  }, [host, visible]);
+  useLayoutEffect(() => {
+    if (visible && pausedFocus.current?.isConnected) pausedFocus.current.focus({ preventScroll: true });
+  }, [host, visible]);
   return <DialogVisibilityContext.Provider value={visible}>
-    <div hidden={!visible} inert={!visible} style={{ display: visible ? "contents" : "none" }}>{children}</div>
+    <div ref={attachHost} style={{ display: "contents" }} />
+    {host ? createPortal(children, host) : null}
   </DialogVisibilityContext.Provider>;
 }
 

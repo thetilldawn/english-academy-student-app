@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StudentDirectoryRequestError } from "../contracts/student-directory-cache-contract";
 import { useStudentDirectoryCache } from "./student-directory-cache-provider";
 
@@ -50,6 +50,7 @@ function appendUniqueStudents(
 export function useStudentDirectoryPage(
   initialSnapshot: StudentDirectorySnapshot,
   syncInitialSnapshot = false,
+  enabled = true,
 ) {
   const cache = useStudentDirectoryCache()?.cache;
   const readSnapshot = useCallback(async (filters: StudentDirectoryFilters, signal: AbortSignal, force = false) =>
@@ -82,11 +83,14 @@ export function useStudentDirectoryPage(
     [stopCurrentRequest],
   );
 
-  useEffect(() => {
-    if (!syncInitialSnapshot || incomingSnapshotRef.current === initialSnapshot) return;
+  useEffect(() => { if (!enabled) stopCurrentRequest(); }, [enabled, stopCurrentRequest]);
+
+  useLayoutEffect(() => {
+    if (!enabled || !syncInitialSnapshot || incomingSnapshotRef.current === initialSnapshot) return;
+    const wasPending = incomingSnapshotRef.current.snapshotAt === "pending";
     incomingSnapshotRef.current = initialSnapshot;
     // A later search wins over a refresh started with an older filter.
-    if (studentDirectoryFilterKey(initialSnapshot.filters) !== studentDirectoryFilterKey(requestedFiltersRef.current)) return;
+    if (!wasPending && studentDirectoryFilterKey(initialSnapshot.filters) !== studentDirectoryFilterKey(requestedFiltersRef.current)) return;
     stopCurrentRequest();
     const next = withoutRemovedStudents(initialSnapshot, removedIdsRef.current);
     acceptedFiltersRef.current = next.filters;
@@ -97,9 +101,10 @@ export function useStudentDirectoryPage(
     setError("");
     setFiltering(false);
     setLoadingMore(false);
-  }, [initialSnapshot, syncInitialSnapshot, stopCurrentRequest]);
+  }, [initialSnapshot, syncInitialSnapshot, stopCurrentRequest, enabled]);
 
   const reloadCurrent = useCallback(async () => {
+    if (!enabled) return;
     const requestedFilters = requestedFiltersRef.current;
     stopCurrentRequest();
     filterRequestRef.current = { key: studentDirectoryFilterKey(requestedFilters), status: "pending" };
@@ -138,7 +143,7 @@ export function useStudentDirectoryPage(
         abortRef.current = null;
       }
     }
-  }, [stopCurrentRequest, readSnapshot]);
+  }, [stopCurrentRequest, readSnapshot, enabled]);
 
   useEffect(() => cache ? undefined : subscribeStudentRemoved((studentId) => {
     removedIdsRef.current.add(studentId);
@@ -158,6 +163,7 @@ export function useStudentDirectoryPage(
     nextFilters: StudentDirectoryFilters,
     delay = 0,
   ) => {
+    if (!enabled) return;
     const next = normalizeStudentDirectoryFilters(nextFilters);
     cache?.rememberFilters(next);
     const key = studentDirectoryFilterKey(next);
@@ -202,9 +208,10 @@ export function useStudentDirectoryPage(
         }
       }
     }, delay);
-  }, [stopCurrentRequest, readSnapshot, cache]);
+  }, [stopCurrentRequest, readSnapshot, cache, enabled]);
 
   const loadMore = useCallback(async () => {
+    if (!enabled) return;
     const cursor = snapshot.page.nextCursor;
     if (!cursor || filtering || loadingMore) return;
     setLoadingMore(true);
@@ -247,7 +254,7 @@ export function useStudentDirectoryPage(
         abortRef.current = null;
       }
     }
-  }, [filtering, loadingMore, snapshot, cache]);
+  }, [filtering, loadingMore, snapshot, cache, enabled]);
 
   return {
     error,

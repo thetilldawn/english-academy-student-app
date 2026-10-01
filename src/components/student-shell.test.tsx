@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HeaderPointSummary } from "@/features/learning-points/public-ui";
 
@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({ path: "/student", router: { refresh: vi.fn() }
 vi.mock("next/navigation", () => ({ usePathname: () => mocks.path, useRouter: () => mocks.router }));
 vi.mock("@/components/student-logout-button", () => ({ StudentLogoutButton: () => <button>접속 종료</button> }));
 vi.mock("@/components/theme-toggle", () => ({ ThemeToggle: () => <button>테마 전환</button> }));
-import { StudentShell } from "./student-shell";
+import { StudentShell, StudentShellPending } from "./student-shell";
 
 beforeEach(() => {
   mocks.path = "/student";
@@ -23,6 +23,21 @@ function shell(points = 12, gradeLabel: string | null = "고1") {
 }
 
 describe("StudentShell header", () => {
+  it("로그인 확인 중에도 메뉴 틀만 유지하고 개인정보와 조회효과는 마운트하지 않는다", () => {
+    render(<StudentShellPending />);
+    expect(screen.getByRole("banner")).toBeVisible();
+    expect(screen.getByRole("button", { name: "내 단어장" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "접속 종료" })).toBeDisabled();
+    expect(within(screen.getByRole("banner")).getByRole("status")).toHaveAttribute("data-header-points", "loading");
+    expect(screen.queryByText(/가상 검증 학생/)).not.toBeInTheDocument();
+    act(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
+    expect(mocks.router.refresh).not.toHaveBeenCalled();
+  });
+  it("시험 주소 대기에는 학생 머리글 없이 시험 준비만 표시한다", () => {
+    mocks.path = "/student/attempt/fake"; render(<StudentShellPending />);
+    expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+    expect(screen.getByText("시험 준비 중")).toBeVisible();
+  });
   it("학교와 학년을 학생 정보 옆에 함께 표시한다", () => {
     render(<StudentShell displayName="가짜 학생" schoolName="검사 고등학교" gradeLabel="고2" points={<span>포인트 0</span>}><main>목록</main></StudentShell>);
     expect(screen.getByRole("banner")).toHaveTextContent("가짜 학생 · 검사 고등학교 · 고2");

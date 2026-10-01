@@ -4,8 +4,7 @@ import { z } from "zod";
 
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { adminLearningText } from "@/content/ko/admin-learning";
-import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
-import { AssignmentWorkspace } from "@/features/assignments/ui/assignment-workspace";
+import { AssignmentWorkspace, AssignmentWorkspacePending } from "@/features/assignments/ui/assignment-workspace";
 import { CachedAssignmentWorkspace } from "@/features/assignments/ui/cached-assignment-workspace";
 import { LegacyReviewRecovery } from "@/features/assignments/ui/legacy-review-recovery";
 import { getStudentDirectoryInitial, getStudentDirectoryCacheSeed } from "@/features/students/public-server";
@@ -28,7 +27,7 @@ export default function AssignmentsPage({
 }) {
   return (
     <Suspense
-      fallback={<RouteLoadingState label={adminLearningText.page.loading} />}
+      fallback={<AssignmentWorkspacePending />}
     >
       <AssignmentsPageContent searchParams={searchParams} />
     </Suspense>

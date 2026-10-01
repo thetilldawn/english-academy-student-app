@@ -18,9 +18,9 @@ export function LibraryPageStatus({ page }: { page: { status: string; error: str
 export function LibraryRangePanel({ c }: { c: Controller }) {
   const group = c.activeGroup!;
   const [bookSearch, setBookSearch] = useState(""), [expanded, setExpanded] = useState(false);
-  const facets = useLibraryPage(group.mode === "filter" ? { kind: "facets", sourceKind: group.kind, datasetId: group.datasetId, bookSearch, cursor: null, limit: 30 } : null, c.viewerId, c.reportError);
+  const facets = useLibraryPage(group.mode === "filter" ? { kind: "facets", sourceKind: group.kind, datasetId: group.datasetId, bookSearch, cursor: null, limit: 30 } : null, c.viewerId, c.reportError, undefined, c.enabled);
   const ready = libraryFiltersSchema.safeParse(group.filters).success && (group.mode === "fixed" || !needsBook(group.kind) || !!group.datasetId);
-  const scopes = useLibraryPage(expanded && ready ? { kind: "scopes", filters: group.filters, datasetId: group.datasetId, ...(group.mode === "fixed" ? { refs: group.scopes } : {}), cursor: null, limit: 30 } : null, c.viewerId, c.reportError);
+  const scopes = useLibraryPage(expanded && ready ? { kind: "scopes", filters: group.filters, datasetId: group.datasetId, ...(group.mode === "fixed" ? { refs: group.scopes } : {}), cursor: null, limit: 30 } : null, c.viewerId, c.reportError, undefined, c.enabled);
   const selected = c.preview.data?.groups.find(g => g.id === group.id)?.scopes ?? group.scopes;
   const rows = scopes.data?.items ?? [];
   const includes = (scope: (typeof rows)[number]) => group.mode === "fixed" ? group.scopes.some(r => r.id === scope.id) : scope.availability === "available" && !group.excludedScopeKeys.includes(scope.scopeKey);
@@ -52,8 +52,8 @@ export function LibrarySelectedDetails({ c }: { c: Controller }) {
   const recipe = frozen ? c.editor.detail?.recipe : preview?.recipe;
   const wordsQuery: Extract<LibraryQuery, { kind: "words" }> | null = wordsOpen && (frozen || c.preview.status === "ready") && recipe
     ? { kind: "words", ...(frozen && c.editor.detail ? { versionId: c.editor.detail.version.id, contentHash: c.editor.detail.version.contentHash } : { selection: { mode: "recipe", recipe }, contentHash: preview!.contentHash }), search, cursor: null, limit: 50 } : null;
-  const words = useLibraryPage(wordsQuery, c.viewerId, c.reportError);
-  const ranges = useLibraryPage(rangesOpen && recipe ? { kind: "scopes", refs: recipe.scopes, filters: EMPTY_LIBRARY_FILTERS, datasetId: null, cursor: null, limit: 30 } : null, c.viewerId, c.reportError);
+  const words = useLibraryPage(wordsQuery, c.viewerId, c.reportError, undefined, c.enabled);
+  const ranges = useLibraryPage(rangesOpen && recipe ? { kind: "scopes", refs: recipe.scopes, filters: EMPTY_LIBRARY_FILTERS, datasetId: null, cursor: null, limit: 30 } : null, c.viewerId, c.reportError, undefined, c.enabled);
   return <>
     <details open={rangesOpen} onToggle={e => setRangesOpen(e.currentTarget.open)}><summary>담은 범위와 순서 확인</summary>
       <LibraryPageStatus page={ranges} />
@@ -80,7 +80,7 @@ export function LibrarySelectedDetails({ c }: { c: Controller }) {
 
 export function LibraryTemplateCard({ template: t, c, navigate, onDelete }: { template: LibraryTemplateSummary; c: Controller; navigate: (action: () => void) => void; onDelete: () => void }) {
   const [expanded, setExpanded] = useState(false), [selectedVersion, setSelectedVersion] = useState<LibraryVersionSummary | null>(null);
-  const versions = useLibraryPage(expanded ? { kind: "versions", templateId: t.id, cursor: null, limit: 20 } : null, c.viewerId, c.reportError);
+  const versions = useLibraryPage(expanded ? { kind: "versions", templateId: t.id, cursor: null, limit: 20 } : null, c.viewerId, c.reportError, undefined, c.enabled);
   const v = selectedVersion ?? t.latestVersion;
   const empty = v.scopeStatus === "confirmed" && v.includedCount === 0;
   return <article className={styles.card}>

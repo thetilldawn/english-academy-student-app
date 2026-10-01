@@ -4,6 +4,8 @@ import { adminStudentsText } from "@/content/ko/admin-students";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { Button } from "@/design-system/primitives/button/button";
 import { Tabs } from "@/design-system/primitives/tabs/tabs";
+import { StableDataRegion } from "@/design-system/patterns/route-state/stable-data-region";
+import type { ReactNode } from "react";
 
 import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
 import { AssignmentStudentRow } from "./assignment-student-row";
@@ -15,14 +17,19 @@ import styles from "./assignment-workspace.module.css";
 export function AssignmentStudentBrowser({
   controller,
   onNotebook,
+  privateDataVisible = true,
+  pendingContent,
 }: {
   controller: AssignmentWorkspaceController;
   onNotebook?: (students: { id: string; displayName: string }[], audienceMode: "single" | "bulk") => void;
+  privateDataVisible?: boolean;
+  pendingContent?: ReactNode;
 }) {
   const directory = controller.directory;
   const students = directory.snapshot.page.items;
   return (
     <section aria-label="단어 시험 대상 선택" className={styles.browser}>
+      <div inert={!privateDataVisible || undefined}>
       <Tabs
         ariaLabel="단어 배정 방식"
         className={styles.tabs}
@@ -35,7 +42,7 @@ export function AssignmentStudentBrowser({
       />
       <div className={styles.browserModePanel} key={controller.assignmentMode}>
         {controller.assignmentMode === "bulk" ? (
-          <VocabAssignmentEntrySelector controller={controller} />
+          <VocabAssignmentEntrySelector controller={controller} privateDataVisible={privateDataVisible} />
         ) : null}
         <AssignmentWorkspaceFilters
           classGroupOptions={controller.classGroupOptions}
@@ -47,9 +54,10 @@ export function AssignmentStudentBrowser({
           schoolOptions={controller.schoolOptions}
           totalCount={controller.directory.snapshot.totalCount}
           wordbookOptions={controller.wordbookOptions}
+          privateDataVisible={privateDataVisible}
         />
         {controller.assignmentMode === "bulk" ? (
-          <SelectedStudentBasket students={controller.selectedBulkStudents} busy={controller.selectionLoading} onClear={controller.actions.clearBulkStudents} onToggle={controller.actions.toggleBulkStudent} />
+          <SelectedStudentBasket students={privateDataVisible ? controller.selectedBulkStudents : []} busy={controller.selectionLoading} onClear={controller.actions.clearBulkStudents} onToggle={controller.actions.toggleBulkStudent} />
         ) : null}
 
         {controller.assignmentMode === "bulk" ? (
@@ -57,7 +65,7 @@ export function AssignmentStudentBrowser({
             <div className={styles.bulkSummary}>
               <strong>
                 {formatContentText(adminLearningText.page.bulk.selectedCount, {
-                  count: controller.selectedBulkStudentIds.length,
+                  count: privateDataVisible ? controller.selectedBulkStudentIds.length : "—",
                 })}
               </strong>
               <Button
@@ -71,7 +79,7 @@ export function AssignmentStudentBrowser({
                 size="small"
                 variant="quiet"
               >
-                {controller.selectionLoading
+                {!privateDataVisible ? "필터 결과 선택" : controller.selectionLoading
                   ? "학생 확인 중…"
                   : controller.allFilteredStudentsSelected
                     ? "필터 결과 선택 해제"
@@ -91,7 +99,10 @@ export function AssignmentStudentBrowser({
             </div>
           </div>
         ) : null}
-
+        </div>
+      </div>
+      <StableDataRegion pending={!privateDataVisible} fallback={pendingContent ?? <p role="status">접속을 확인하고 있습니다.</p>}>
+        {pendingContent}
         {controller.selectionError ? (
           <Notice role="alert" tone="danger">{controller.selectionError}</Notice>
         ) : null}
@@ -138,7 +149,7 @@ export function AssignmentStudentBrowser({
             </Button>
           </div>
         ) : null}
-      </div>
+      </StableDataRegion>
     </section>
   );
 }

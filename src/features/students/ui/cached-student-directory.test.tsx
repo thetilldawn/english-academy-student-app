@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ state: { blocked: false, snapshot: undefined as unknown, error: undefined as string | undefined, retry: vi.fn() } }));
 vi.mock("../controller/use-cached-student-directory", () => ({ useCachedStudentDirectory: () => mocks.state }));
-vi.mock("./student-directory", () => ({ StudentDirectory: () => <p>승인된 목록</p> }));
+vi.mock("./student-directory", () => ({ StudentDirectory: ({ privateDataVisible, pendingContent }: { privateDataVisible: boolean; pendingContent: React.ReactNode }) => <><input aria-label="고정 검색" disabled={!privateDataVisible}/>{privateDataVisible ? <p>승인된 목록</p> : null}{pendingContent}</> }));
 import { CachedStudentDirectory } from "./cached-student-directory";
 afterEach(() => { cleanup(); mocks.state = { blocked: false, snapshot: undefined, error: undefined, retry: vi.fn() }; });
 describe("개인 목록 상태 안내", () => {

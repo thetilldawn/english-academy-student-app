@@ -30,3 +30,23 @@ it("keeps failed pagination distinct from empty data and reloads the first page 
   expect(result.current.status).toBe("error");expect(result.current.data).not.toBeNull();expect(result.current.error).toBe("다시 확인");act(()=>result.current.reload());expect(result.current.data).toBeNull();await tick();
   expect(mocks.read.mock.calls[2]![0].cursor).toBeNull();expect(result.current.status).toBe("ready");
 });
+it("pauses reads without clearing completed pages or appending the same page again",async()=>{
+  const first={...page(true),items:[{id:"first"}]},second={...page(),items:[{id:"second"}]};
+  mocks.read.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
+  const {result,rerender}=renderHook(({enabled})=>useLibraryPage(query(),"actor",onError,onViewer,enabled),{initialProps:{enabled:false}});
+  await tick();expect(mocks.read).not.toHaveBeenCalled();
+  rerender({enabled:true});await tick();act(()=>result.current.more());await tick();
+  expect(result.current.data?.items.map(item=>item.id)).toEqual(["first","second"]);
+  rerender({enabled:false});expect(result.current.data?.items).toHaveLength(2);await tick();
+  rerender({enabled:true});await tick();expect(mocks.read).toHaveBeenCalledTimes(2);
+  expect(result.current.data?.items.map(item=>item.id)).toEqual(["first","second"]);
+});
+it("cancels a pending read on pause and resumes it once without accepting its late response",async()=>{
+  let finish:(value:ReturnType<typeof page>)=>void=()=>undefined;
+  mocks.read.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;})).mockResolvedValue(page());
+  const {result,rerender}=renderHook(({enabled})=>useLibraryPage(query(),"actor",onError,onViewer,enabled),{initialProps:{enabled:true}});
+  await tick();const signal=mocks.read.mock.calls[0]![1] as AbortSignal;
+  rerender({enabled:false});expect(signal.aborted).toBe(true);
+  await act(async()=>finish({...page(),viewerId:"stale"}));expect(onViewer).not.toHaveBeenCalled();
+  rerender({enabled:true});await tick();expect(mocks.read).toHaveBeenCalledTimes(2);expect(result.current.data?.viewerId).toBe("actor");
+});

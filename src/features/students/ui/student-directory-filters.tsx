@@ -19,11 +19,12 @@ import styles from "./student-directory.module.css";
 
 export function StudentDirectoryFilters({
   filtering,
-  filters,
+  filters: inputFilters,
   onChange,
   onQueryChange,
-  options,
+  options: inputOptions,
   resultCount,
+  privateDataVisible = true,
 }: {
   filtering: boolean;
   filters: StudentDirectoryFilters;
@@ -31,7 +32,10 @@ export function StudentDirectoryFilters({
   onQueryChange: (query: string) => void;
   options: StudentDirectoryFilterOptions;
   resultCount: number;
+  privateDataVisible?: boolean;
 }) {
+  const filters = privateDataVisible ? inputFilters : emptyStudentDirectoryFilters;
+  const options = privateDataVisible ? inputOptions : { classGroups: [], grades: [], schools: [], wordbooks: [] };
   const filterCount = [
     filters.school,
     filters.grade,
@@ -51,6 +55,7 @@ export function StudentDirectoryFilters({
 
   return (
     <FilterWorkspace
+      disabled={!privateDataVisible}
       activeFilterCount={filterCount}
       activeTags={(
         <MetaTagList>
@@ -81,7 +86,7 @@ export function StudentDirectoryFilters({
         <>
           <strong>
             {formatContentText(commonText.filters.studentCount, {
-              count: resultCount,
+              count: privateDataVisible ? resultCount : "—",
             })}
           </strong>
           <Button

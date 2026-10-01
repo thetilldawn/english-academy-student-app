@@ -201,7 +201,7 @@
     {
       "path": "assignment-student-browser.tsx",
       "role": "deferred",
-      "reason": "APP13 기존 전체 제어기 의존은 후속 분리로 남긴다. 개인 오답은 선택 학생의 id/이름과 audienceMode 콜백만 추가. 새 계산·전송 의존 없음.",
+      "reason": "APP13 기존 전체 제어기 의존은 후속 분리로 남긴다. 개인 오답은 선택 학생의 id/이름과 audienceMode 콜백만 추가. 새 계산·전송 의존 없음. APP-20261001-04: 기존 제어기 의존을 확대하지 않고 개인 표시만 차단, 자료영역 분리. 계산·저장 재사용 경계 유지.",
       "allowedImports": [
         "../controller/use-assignment-workspace",
         "./assignment-student-row",
@@ -214,9 +214,11 @@
         "@/design-system/patterns/feedback/feedback",
         "@/design-system/primitives/button/button",
         "@/design-system/primitives/tabs/tabs",
-        "@/content/ko/admin-students"
+        "@/content/ko/admin-students",
+        "@/design-system/patterns/route-state/stable-data-region",
+        "react"
       ],
-      "legacySourceSha256": "1ea9a994562f3660421105b2266cbd037769fee3bcfdbf1bc302808e84011dc7"
+      "legacySourceSha256": "7590bbb3acb2ab299a7fe412856109a905db0e5b53c9dd0845676affb4443cff"
     },
     {
       "path": "assignment-student-row.tsx",
@@ -325,7 +327,10 @@
         "react",
         "sonner",
         "./vocab-assignment-planner",
-        "./notebook-assignment-dialog"
+        "./notebook-assignment-dialog",
+        "@/features/students/public-contracts",
+        "@/design-system/patterns/route-state/route-state",
+        "@/design-system/primitives/dialog/dialog"
       ]
     },
     {
@@ -567,7 +572,7 @@
     {
       "path": "vocab-assignment-entry-selector.tsx",
       "role": "deferred",
-      "reason": "전체 제어기→진입 방식·목록 상태·선택 동작 분리 필요",
+      "reason": "전체 제어기→진입 방식·목록 상태·선택 동작 분리 필요 APP-20261001-04: 기존 제어기 의존을 확대하지 않고 개인 표시만 차단, 자료영역 분리. 계산·저장 재사용 경계 유지.",
       "allowedImports": [
         "../controller/use-assignment-workspace",
         "./assignment-workspace.module.css",
@@ -576,7 +581,7 @@
         "@/design-system/primitives/form/field",
         "@/lib/admin/dataset-catalog"
       ],
-      "legacySourceSha256": "eda3d066540ede1b582486ced6a70828d58c400d56992c163afd0928f9b69d4d"
+      "legacySourceSha256": "6ad5302464e8155303d0b117d9958b1ce094c05b6c9a45f3db890cf8d3684087"
     },
     {
       "path": "assignment-grade-dialog.tsx",

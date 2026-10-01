@@ -82,14 +82,14 @@ export function VocabAssignmentPlanner({
   const controller = useVocabAssignmentScreen({
     audienceMode: selectionMode,
     data: { ...data, datasets: [...data.datasets.filter(book => !composedDatasets.some(updated => updated.id === book.id)), ...composedDatasets], units: unitCatalog.units },
-    enabled: assignmentPurpose === "range",
+    enabled: interactionAllowed && assignmentPurpose === "range",
     genericErrorMessage: "단어 시험 배정을 저장하지 못했습니다.",
     initialDatasetId,
     previewErrorMessage: "배정 후보를 계산하지 못했습니다.",
     students,
   });
   useEffect(() => {
-    if (assignmentPurpose !== "range") {
+    if (!interactionAllowed || assignmentPurpose !== "range") {
       cancelUnitRequest();
       return;
     }
@@ -99,10 +99,11 @@ export function VocabAssignmentPlanner({
     cancelUnitRequest,
     controller.planner.datasetId,
     ensureDatasetUnits,
+    interactionAllowed,
   ]);
   const reviewController = useDirectReviewAssignmentController({
     datasets: controller.readyDatasets,
-    enabled: assignmentPurpose === "review",
+    enabled: interactionAllowed && assignmentPurpose === "review",
     initialDatasetId,
     student: students[0]!,
   });
@@ -389,7 +390,7 @@ export function VocabAssignmentPlanner({
       </DialogHeader>
       <DialogBody>
         {composerStarted ? <div hidden={!composerOpen}>
-          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
+          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} enabled={interactionAllowed} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
         </div> : null}
         {datasetPicker.open && !composerOpen ? (
           <>

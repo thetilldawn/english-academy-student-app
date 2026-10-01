@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { DialogVisibilityBoundary } from "@/design-system/primitives/dialog/dialog";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { announceStudentDirectoryRefresh } from "@/features/students/public-client";
+import { emptyStudentDirectoryFilters, type StudentDirectorySnapshot } from "@/features/students/public-contracts";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 
 import type { AssignmentWorkspaceInitial } from "../contracts/assignment-workspace-read-model";
 import {
@@ -30,6 +33,16 @@ const VocabAssignmentPlanner = dynamic(
   },
 );
 
+export const pendingAssignmentDirectory: StudentDirectorySnapshot = {
+  filters: { ...emptyStudentDirectoryFilters, status: "active" }, filterOptions: { classGroups: [], grades: [], schools: [], wordbooks: [] },
+  page: { items: [], nextCursor: null }, snapshotAt: "pending", totalCount: 0,
+};
+
+export function AssignmentWorkspacePending() {
+  return <AssignmentWorkspace initial={{ directory: pendingAssignmentDirectory }} interactionAllowed={false}
+    pendingContent={<RouteLoadingState label={adminLearningText.page.loading} />} />;
+}
+
 export function AssignmentWorkspace({
   initial,
   initialDatasetId = "",
@@ -37,6 +50,7 @@ export function AssignmentWorkspace({
   initialStudentId = "",
   cacheEnabled = false,
   interactionAllowed = true,
+  pendingContent,
 }: {
   initial: AssignmentWorkspaceInitial;
   initialDatasetId?: string;
@@ -44,6 +58,7 @@ export function AssignmentWorkspace({
   initialStudentId?: string;
   cacheEnabled?: boolean;
   interactionAllowed?: boolean;
+  pendingContent?: ReactNode;
 }) {
   const controller = useAssignmentWorkspace({
     initial,
@@ -64,7 +79,8 @@ export function AssignmentWorkspace({
 
   return (
     <>
-      <AssignmentStudentBrowser controller={controller} onNotebook={(students, audienceMode) => { if (interactionAllowed) setNotebook({ students, audienceMode }); }} />
+      <AssignmentStudentBrowser controller={controller} privateDataVisible={interactionAllowed} pendingContent={pendingContent} onNotebook={(students, audienceMode) => { if (interactionAllowed) setNotebook({ students, audienceMode }); }} />
+      <DialogVisibilityBoundary visible={interactionAllowed}>
       {notebook ? <NotebookAssignmentDialog {...notebook} interactionAllowed={interactionAllowed} onClose={() => setNotebook(null)} onSuccess={count => {
         announceStudentDirectoryRefresh();
         if (notebook.audienceMode === "bulk") controller.actions.clearBulkStudents();
@@ -110,6 +126,7 @@ export function AssignmentWorkspace({
           students={planner.data.students}
         />
       ) : null}
+      </DialogVisibilityBoundary>
     </>
   );
 }

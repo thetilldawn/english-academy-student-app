@@ -21,14 +21,14 @@ function DeleteTemplateDialog({ template, onCancel, onDelete }: { template: Libr
   </DialogFrame>;
 }
 
-export function WordbookLibrary({ onBack, onLockChange, onDirtyChange, captureAuthenticationFailure, onSaved, active = true, initialTarget }: {
+export function WordbookLibrary({ onBack, onLockChange, onDirtyChange, captureAuthenticationFailure, onSaved, active = true, enabled = true, initialTarget }: {
   onBack: () => void; onLockChange?: (locked: boolean) => void; onDirtyChange?: (dirty: boolean) => void; captureAuthenticationFailure?: () => (error: unknown) => void;
-  onSaved?: (book: CreatedLibraryBook) => void; active?: boolean; initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">;
+  onSaved?: (book: CreatedLibraryBook) => void; active?: boolean; enabled?: boolean; initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">;
 }) {
-  const c = useWordbookLibrary(captureAuthenticationFailure, onSaved, initialTarget);
+  const c = useWordbookLibrary(captureAuthenticationFailure, onSaved, initialTarget, enabled);
   const heading = useRef<HTMLHeadingElement>(null), form = useRef<HTMLDivElement>(null), transition = useRef<(() => void) | null>(null);
   const [discard, setDiscard] = useState(false), [deleting, setDeleting] = useState<LibraryTemplateSummary | null>(null);
-  useEffect(() => { if (active) heading.current?.focus(); }, [active]);
+  useEffect(() => { if (active && enabled) heading.current?.focus(); }, [active, enabled]);
   useEffect(() => { onLockChange?.(c.locked); }, [c.locked, onLockChange]);
   useEffect(() => { onDirtyChange?.(c.dirty); }, [c.dirty, onDirtyChange]);
   const navigate = (action: () => void) => { if (c.dirty) { transition.current = action; setDiscard(true); } else action(); };

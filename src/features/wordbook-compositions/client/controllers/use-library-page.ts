@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { type LibraryQuery, type LibraryQueryResultOf } from "../../contracts/library-query";
 import { readLibraryPage } from "../transport/library-transport";
 
 type State<K extends LibraryQuery["kind"]> = { key: string; status: "loading" | "ready" | "error"; data: LibraryQueryResultOf<K> | null; error: string };
 /** A page belongs to one exact query and viewer. Late results never replace another range. */
 export function useLibraryPage<K extends LibraryQuery["kind"]>(query: Extract<LibraryQuery, { kind: K }> | null, viewerId: string | undefined,
-  onError: (error: unknown) => void, onViewer?: (id: string) => void) {
+  onError: (error: unknown) => void, onViewer?: (id: string) => void, enabled = true) {
   const json = JSON.stringify(query);
   const stableQuery = useMemo(() => JSON.parse(json) as typeof query, [json]);
   const [revision, reload] = useReducer((n: number) => n + 1, 0);
@@ -14,13 +14,17 @@ export function useLibraryPage<K extends LibraryQuery["kind"]>(query: Extract<Li
   const key = JSON.stringify([json, viewerId, revision]);
   const [state, setState] = useState<State<K>>({ key: "", status: "loading", data: null, error: "" });
   const currentCursor = cursor?.key === key ? cursor.value : null;
+  const completedRequest = useRef<string | null>(null);
   useEffect(() => {
-    if (!stableQuery) return;
+    if (!stableQuery || !enabled) return;
+    const requestKey = JSON.stringify([key, currentCursor]);
+    if (completedRequest.current === requestKey) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       const input = "cursor" in stableQuery ? { ...stableQuery, cursor: currentCursor } : stableQuery;
       void readLibraryPage(input as typeof stableQuery, controller.signal, viewerId).then(data => {
         if (controller.signal.aborted) return;
+        completedRequest.current = requestKey;
         onViewer?.(data.viewerId);
         setState(old => {
           if (currentCursor && old.key === key && old.data && "items" in old.data && "items" in data) {
@@ -38,11 +42,11 @@ export function useLibraryPage<K extends LibraryQuery["kind"]>(query: Extract<Li
       });
     }, 250);
     return () => { clearTimeout(timeout); controller.abort(); };
-  }, [key, stableQuery, viewerId, currentCursor, onError, onViewer]);
+  }, [key, stableQuery, viewerId, currentCursor, onError, onViewer, enabled]);
   const data = stableQuery && state.key === key ? state.data : null;
   const status = !stableQuery ? "idle" : state.key === key ? state.status : "loading";
   return { data, status, error: state.key === key ? state.error : "", reload, more: () => {
-    if (data && "nextCursor" in data && data.nextCursor && status === "ready") {
+    if (enabled && data && "nextCursor" in data && data.nextCursor && status === "ready") {
       setState(s => ({ ...s, status: "loading" })); setCursor({ key, value: data.nextCursor });
     }
   } };

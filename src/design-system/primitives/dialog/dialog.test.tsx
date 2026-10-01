@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { DialogFrame, DialogHeader, DialogVisibilityBoundary } from "./dialog";
 beforeAll(() => {
-  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", ""); } });
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { if (!this.isConnected) throw new Error("Detached dialog cannot open"); this.setAttribute("open", ""); } });
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open"); } });
 });
 afterEach(cleanup);
@@ -66,7 +66,7 @@ describe("대화상자 임시 표시 경계", () => {
     fireEvent.change(input, { target: { value: "보존할 내용" } });
     const dialog = screen.getByRole("dialog", { name: "작성 창" }); expect(dialog).toHaveAttribute("open");
     rerender(view(false));
-    expect(input).not.toBeVisible(); expect(dialog).not.toHaveAttribute("open"); expect(dialog).toHaveStyle({ display: "none" });
+    expect(input).not.toBeInTheDocument(); expect(screen.queryByDisplayValue("보존할 내용")).not.toBeInTheDocument(); expect(dialog).not.toHaveAttribute("open"); expect(dialog).toHaveStyle({ display: "none" });
     expect(document.body.style.overflow).not.toBe("hidden"); expect(cleanupRequest).not.toHaveBeenCalled();
     fireEvent(dialog, new Event("close")); expect(closed).not.toHaveBeenCalled();
     rerender(view(true)); expect(input).toHaveValue("보존할 내용"); expect(input).toHaveFocus();

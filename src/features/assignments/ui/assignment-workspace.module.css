@@ -18,7 +18,7 @@
   min-width: 0;
   display: grid;
   gap: var(--space-3);
-  animation: browserModePanelIn var(--motion-standard) both;
+  /* Search and filters keep their position while the list boundary changes. */
 }
 
 @keyframes browserModePanelIn {

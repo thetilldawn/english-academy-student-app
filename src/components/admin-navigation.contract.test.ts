@@ -20,7 +20,8 @@ describe("admin navigation loading contract", () => {
     const tokens = source("src/styles/tokens.css");
     const pageLoading = source("src/app/admin/(protected)/loading.tsx");
 
-    expect(component).not.toMatch(/useLinkStatus|ButtonSpinner|pending/);
+    expect(component).not.toMatch(/useLinkStatus|ButtonSpinner/);
+    expect(component).toContain('if (pending) return <span');
     expect(css).not.toMatch(/\.pending\s*\{/);
     expect(css).toMatch(
       /\.mobile \.link\s*\{[^}]*padding:\s*6px;/,
@@ -32,7 +33,7 @@ describe("admin navigation loading contract", () => {
       /@media \(max-width: 767px\) \{\s*\.inlineFooter \{\s*bottom: calc\(var\(--admin-mobile-nav-height\) \+ env\(safe-area-inset-bottom\)\);/,
     );
     expect(assignmentCss).not.toContain("72px");
-    expect(pageLoading).toContain('role="status"');
+    expect(pageLoading).toContain('<AdminPendingContent />');
   });
 
   it("shows route-specific loading and safe recovery copy for results and assignments", () => {
@@ -55,8 +56,9 @@ describe("admin navigation loading contract", () => {
 
     expect(historyContent).toContain('loading: "내역을 불러오는 중…"');
     expect(historyContent).toContain('errorTitle: "내역을 불러오지 못했습니다"');
-    expect(resultsPage).toContain("adminHistoryText.page.loading");
-    expect(resultsLoading).toContain("adminHistoryText.page.loading");
+    expect(resultsPage).toContain("<AdminHistoryListPending />");
+    expect(resultsLoading).toContain("<AdminHistoryListPending />");
+    expect(source("src/features/history/ui/admin-history-list.tsx")).toContain("adminHistoryText.page.loading");
     expect(resultsError).toContain("adminHistoryText.page.errorDescription");
     expect(resultsError).toContain("client.admin_history_error_boundary");
 
@@ -66,8 +68,9 @@ describe("admin navigation loading contract", () => {
     expect(learningContent).toContain(
       'errorTitle: "단어 배정 화면을 불러오지 못했습니다"',
     );
-    expect(assignmentsPage).toContain("adminLearningText.page.loading");
-    expect(assignmentsLoading).toContain("adminLearningText.page.loading");
+    expect(assignmentsPage).toContain("<AssignmentWorkspacePending />");
+    expect(assignmentsLoading).toContain("<AssignmentWorkspacePending />");
+    expect(source("src/features/assignments/ui/assignment-workspace.tsx")).toContain("adminLearningText.page.loading");
     expect(assignmentsError).toContain(
       "adminLearningText.page.errorDescription",
     );

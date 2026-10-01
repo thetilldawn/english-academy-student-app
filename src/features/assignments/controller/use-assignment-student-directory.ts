@@ -30,6 +30,7 @@ function appendUnique(
 export function useAssignmentStudentDirectory(
   initialSnapshot: StudentDirectorySnapshot,
   cacheEnabled = false,
+  enabled = true,
 ) {
   const context = useStudentDirectoryCache();
   const cache = cacheEnabled ? context?.cache : undefined;
@@ -57,23 +58,25 @@ export function useAssignmentStudentDirectory(
   }, []);
 
   useEffect(() => () => stopCurrentRequest(), [stopCurrentRequest]);
+  useEffect(() => { if (!enabled) stopCurrentRequest(); }, [enabled, stopCurrentRequest]);
 
   // A currently authorized first page replaces the old pages before display,
   // without remounting the separate selection basket or editor controllers.
   useLayoutEffect(() => {
-    if (!cacheEnabled || receivedSnapshotRef.current === initialSnapshot) return;
+    if (!enabled || !cacheEnabled || receivedSnapshotRef.current === initialSnapshot) return;
     receivedSnapshotRef.current = initialSnapshot;
     stopCurrentRequest();
     acceptedFiltersRef.current = initialSnapshot.filters;
     filterRequestRef.current = { key: studentDirectoryFilterKey(initialSnapshot.filters), status: "ready" };
     setSnapshot(initialSnapshot); setFilters(initialSnapshot.filters);
     setFiltering(false); setLoadingMore(false); setError("");
-  }, [initialSnapshot, stopCurrentRequest, cacheEnabled]);
+  }, [initialSnapshot, stopCurrentRequest, cacheEnabled, enabled]);
 
   const replaceFilters = useCallback((
     nextFilters: StudentDirectoryFilters,
     delay = 0,
   ) => {
+    if (!enabled) return;
     const next = normalizeStudentDirectoryFilters(nextFilters);
     cache?.rememberFilters(next, "assignments");
     const key = studentDirectoryFilterKey(next);
@@ -112,9 +115,10 @@ export function useAssignmentStudentDirectory(
         }
       }
     }, delay);
-  }, [stopCurrentRequest, readSnapshot, cache]);
+  }, [stopCurrentRequest, readSnapshot, cache, enabled]);
 
   const loadMore = useCallback(async () => {
+    if (!enabled) return;
     const cursor = snapshot.page.nextCursor;
     if (!cursor || filtering || loadingMore) return;
     const requestVersion = requestVersionRef.current;
@@ -153,9 +157,10 @@ export function useAssignmentStudentDirectory(
         abortRef.current = null;
       }
     }
-  }, [filtering, loadingMore, snapshot, cache]);
+  }, [filtering, loadingMore, snapshot, cache, enabled]);
 
   const reloadFirstPage = useCallback(async () => {
+    if (!enabled) return;
     const nextFilters = acceptedFiltersRef.current;
     stopCurrentRequest();
     filterRequestRef.current = { key: studentDirectoryFilterKey(nextFilters), status: "pending" };
@@ -187,7 +192,7 @@ export function useAssignmentStudentDirectory(
         abortRef.current = null;
       }
     }
-  }, [stopCurrentRequest, readSnapshot]);
+  }, [stopCurrentRequest, readSnapshot, enabled]);
 
   return {
     error,

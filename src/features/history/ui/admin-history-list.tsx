@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
+import { useMemo, useState, type ReactNode } from "react";
+import { StableDataRegion } from "@/design-system/patterns/route-state/stable-data-region";
 import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
+
 import {
   Field,
   FieldLabel,
@@ -11,7 +12,7 @@ import {
 } from "@/design-system/primitives/form/field";
 import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 import { adminHistoryText } from "@/content/ko/admin-history";
-import type { AdminHistorySnapshot } from "@/features/history/contracts/admin-history-read-model";
+import { normalizeAdminHistoryQuery, type AdminHistorySnapshot } from "@/features/history/contracts/admin-history-read-model";
 import { useAdminHistoryListController } from "@/features/history/controller/use-admin-history-list-controller";
 import type { AdminHistoryStatusFilter } from "@/features/history/domain/learning-activity";
 import { isHistoryAccessFailure } from "../contracts/admin-history-request-error";
@@ -62,6 +63,8 @@ type AdminHistoryListProps = {
   showFilters?: boolean;
   cacheEnabled?: boolean;
   onCursorRejected?: () => void;
+  privateDataVisible?: boolean;
+  pendingContent?: ReactNode;
 };
 
 function AdminHistoryListContent({
@@ -69,14 +72,9 @@ function AdminHistoryListContent({
   cacheEnabled = false,
   onCursorRejected,
   query,
-  setQuery,
-  setStatusFilter,
-  showFilters = false,
   statusFilter,
 }: AdminHistoryListProps & {
   query: string;
-  setQuery: (value: string) => void;
-  setStatusFilter: (value: AdminHistoryStatusFilter) => void;
   statusFilter: AdminHistoryStatusFilter;
 }) {
   const { failure, isCurrentSnapshot, loading, reportAccessFailure, retry, snapshot } =
@@ -92,57 +90,9 @@ function AdminHistoryListContent({
 
   return (
     <>
-      {showFilters ? (
-        <div className={styles.filters}>
-          <Field as="label">
-            <FieldLabel as="span">
-              {adminHistoryText.filters.searchLabel}
-            </FieldLabel>
-            <Input
-              maxLength={80}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={adminHistoryText.filters.searchPlaceholder}
-              type="search"
-              value={query}
-            />
-          </Field>
-          <Field as="label">
-            <FieldLabel as="span">
-              {adminHistoryText.filters.statusLabel}
-            </FieldLabel>
-            <Select
-              onChange={(event) =>
-                setStatusFilter(event.target.value as AdminHistoryStatusFilter)
-              }
-              value={statusFilter}
-            >
-              <option value="all">
-                {adminHistoryText.filters.statusOptions.all}
-              </option>
-              <option value="open">
-                {adminHistoryText.filters.statusOptions.open}
-              </option>
-              <option value="needs_attention">
-                {adminHistoryText.filters.statusOptions.needsAttention}
-              </option>
-              <option value="missed">
-                {adminHistoryText.filters.statusOptions.missed}
-              </option>
-              <option value="completed">
-                {adminHistoryText.filters.statusOptions.completed}
-              </option>
-              <option value="retried">
-                {adminHistoryText.filters.statusOptions.retried}
-              </option>
-              <option value="archived">
-                {adminHistoryText.filters.statusOptions.archived}
-              </option>
-            </Select>
-          </Field>
-        </div>
-      ) : null}
 
-      {loading ? <RouteLoadingState label={adminHistoryText.read.loading} variant="compact" /> : null}
+
+      {loading ? <div role="status" className={styles.requestState}>{adminHistoryText.read.loading}</div> : null}
       {failure ? <HistoryReadFailure failure={failure} onRetry={retry} /> : null}
       {!isCurrentSnapshot && itemCount > 0 && !isHistoryAccessFailure(failure) ? (
         <p className={styles.requestState}>{adminHistoryText.read.previous}</p>
@@ -174,19 +124,83 @@ function AdminHistoryListContent({
   );
 }
 
+export const pendingHistorySnapshot: AdminHistorySnapshot = { currentOnly: false, query: "", statusFilter: "all", sections: [], snapshotAt: "pending" };
+
+export function AdminHistoryListPending() {
+  return <AdminHistoryList initialSnapshot={pendingHistorySnapshot} showFilters privateDataVisible={false}
+    pendingContent={<RouteLoadingState label={adminHistoryText.page.loading} />} />;
+}
+
 export function AdminHistoryList(props: AdminHistoryListProps) {
   const [query, setQuery] = useState(props.initialSnapshot.query);
-  const [statusFilter, setStatusFilter] =
-    useState<AdminHistoryStatusFilter>(props.initialSnapshot.statusFilter);
-
+  const [statusFilter, setStatusFilter] = useState<AdminHistoryStatusFilter>(props.initialSnapshot.statusFilter);
+  const [receivedSnapshot, setReceivedSnapshot] = useState(props.initialSnapshot);
+  if (receivedSnapshot !== props.initialSnapshot) {
+    setReceivedSnapshot(props.initialSnapshot);
+    if (receivedSnapshot.snapshotAt === "pending") {
+      setQuery(props.initialSnapshot.query); setStatusFilter(props.initialSnapshot.statusFilter);
+    } else if (normalizeAdminHistoryQuery(query) === props.initialSnapshot.query) {
+      setQuery(props.initialSnapshot.query);
+    }
+  }
+  const { showFilters = false, privateDataVisible = true } = props;
   return (
-    <AdminHistoryListContent
-      {...props}
-      key={props.initialSnapshot.snapshotAt}
-      query={query}
-      setQuery={setQuery}
-      setStatusFilter={setStatusFilter}
-      statusFilter={statusFilter}
-    />
+    <>
+      {showFilters ? (
+        <div className={styles.filters}>
+          <Field as="label">
+            <FieldLabel as="span">
+              {adminHistoryText.filters.searchLabel}
+            </FieldLabel>
+            <Input
+              maxLength={80}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={adminHistoryText.filters.searchPlaceholder}
+              type="search"
+              disabled={!privateDataVisible}
+              value={privateDataVisible ? query : ""}
+            />
+          </Field>
+          <Field as="label">
+            <FieldLabel as="span">
+              {adminHistoryText.filters.statusLabel}
+            </FieldLabel>
+            <Select
+              onChange={(event) =>
+                setStatusFilter(event.target.value as AdminHistoryStatusFilter)
+              }
+              disabled={!privateDataVisible}
+              value={privateDataVisible ? statusFilter : "all"}
+            >
+              <option value="all">
+                {adminHistoryText.filters.statusOptions.all}
+              </option>
+              <option value="open">
+                {adminHistoryText.filters.statusOptions.open}
+              </option>
+              <option value="needs_attention">
+                {adminHistoryText.filters.statusOptions.needsAttention}
+              </option>
+              <option value="missed">
+                {adminHistoryText.filters.statusOptions.missed}
+              </option>
+              <option value="completed">
+                {adminHistoryText.filters.statusOptions.completed}
+              </option>
+              <option value="retried">
+                {adminHistoryText.filters.statusOptions.retried}
+              </option>
+              <option value="archived">
+                {adminHistoryText.filters.statusOptions.archived}
+              </option>
+            </Select>
+          </Field>
+        </div>
+      ) : null}
+      <StableDataRegion pending={!privateDataVisible} fallback={props.pendingContent}>
+        <AdminHistoryListContent {...props} key={props.initialSnapshot.snapshotAt}
+          query={query} statusFilter={statusFilter} />
+      </StableDataRegion>
+    </>
   );
 }

@@ -3,6 +3,17 @@
   if (location.origin !== "http://127.0.0.1:3037") return;
   let pending = { kind: "initial", route: location.pathname, started: 0 };
   let scheduled = false;
+  let lastFrame = "";
+  function recordFrame() {
+    const search = document.querySelector('main input[type="search"]');
+    const box = search?.getBoundingClientRect();
+    const main = document.querySelector("main");
+    const frame = { route: location.pathname, search: !!search, disabled: search?.disabled ?? null,
+      x: box?.x ?? null, y: box?.y ?? null, width: box?.width ?? null,
+      pending: !!main?.querySelector('[aria-busy="true"]'), dialog: !!document.querySelector("dialog[open]") };
+    const key = JSON.stringify(frame);
+    if (key !== lastFrame) { lastFrame = key; console.info("[local-list-frame]", performance.now(), key); }
+  }
   const listReady = () => {
     const main = document.querySelector("main");
     return main && !main.querySelector('[aria-busy="true"]') &&
@@ -24,6 +35,7 @@
     return true;
   };
   function observe() {
+    recordFrame();
     if (!pending || scheduled || !ready()) return;
     scheduled = true;
     requestAnimationFrame(() => requestAnimationFrame(() => {

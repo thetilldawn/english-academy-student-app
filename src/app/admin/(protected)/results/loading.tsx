@@ -1,6 +1,5 @@
-import { adminHistoryText } from "@/content/ko/admin-history";
-import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
+import { AdminHistoryListPending } from "@/features/history/ui/admin-history-list";
 
 export default function ResultsLoading() {
-  return <RouteLoadingState label={adminHistoryText.page.loading} />;
+  return <AdminHistoryListPending />;
 }
