@@ -2,6 +2,11 @@ import fs from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { EMPTY_LIBRARY_FILTERS, libraryCatalogSchema, libraryCommandResultSchema, type LibraryCatalog, type LibraryTemplate } from "@/features/wordbook-compositions/contracts/library";
 import { libraryImportSchema, type LibraryImport } from "@/features/wordbook-compositions/contracts/library-import";
+const selectedResource = {
+  schemaVersion: "vocabulary-resource-snapshot-v1", sourceFields: {}, proofs: {},
+  pronunciation: { displayKo: "가짜 발음", variantId: "fake-original", audioUrl: "https://media.merriam-webster.com/audio/prons/en/us/mp3/f/fake001.mp3", available: true },
+  lexicalPos: "noun", dictionary: null, senseId: null, definitionEn: "Fake definition.", exampleEn: "Fake example.", exampleKo: "가짜 예문.",
+};
 import path from "node:path";
 
 import { PGlite } from "@electric-sql/pglite";
@@ -232,7 +237,7 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
       from word_index.app_exam_use_occurrence o left join public.vocab_entries e on e.id=o.vocab_entry_id where o.release_id=$1 order by o.source_row`, [source.releaseId])).rows;
     const classification = { kind: "mock" as const, sourceGrade: "g12", exam: { executionYear: 2025, examMonth: 9, examKind: "mock" as const, academicYear: null, agency: "가짜", typeCode: "long", typeLabel: "장문독해", questionNumbers: [41, 42], sharedPassage: true }, lesson: null, day: null, publisher: null, school: null, targetGrade: null, schoolYear: null, semester: null, assessment: null, purpose: null };
     const makeScope = (key: string, ns: number[]) => ({ key, name: `가짜 ${key}`, sourceTitle: "가짜 원고", source: { datasetId: source.datasetId, unitId: unit, kind: "exam_use" as const, releaseId: source.releaseId, releaseVersion: String(pack.package_version), fileHash: "b".repeat(64), locator: key }, classification,
-      rows: rows.filter(r => ns.includes(r.source_row)).map(r => ({ sourceRow: r.source_row, rowHash: r.hash, resources: { entryHash: r.entry_hash, linkRecordHash: "c".repeat(64), selected: { audio: { sourceRef: "fake-original", value: "fake-audio" }, pos: "noun" } } })) });
+      rows: rows.filter(r => ns.includes(r.source_row)).map(r => ({ sourceRow: r.source_row, rowHash: r.hash, resources: { entryHash: r.entry_hash, linkRecordHash: "c".repeat(64), selected: selectedResource } })) });
     bundle = libraryImportSchema.parse({ schemaVersion: "vocabulary-library-import-v1", sourceCatalogHash: "a".repeat(64), linksHash: "b".repeat(64), referenceCatalogHash: "c".repeat(64),
       scopes: [makeScope("part-a", [1, 2, 5]), makeScope("part-b", [2, 3, 6]), makeScope("part-c", [4])] });
     // A repeated occurrence has two independent link-record proofs.
@@ -250,6 +255,25 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     expect(catalog.scopes[0]!.occurrences.map(r => r.state)).toEqual(["included", "included", "held"]);
     expect(catalog.scopes[1]!.occurrences.map(r => r.state)).toEqual(["included", "included", "excluded"]);
     expect(JSON.stringify(catalog)).not.toMatch(/fake-audio|primary_meaning|entry_snapshot|correct_choice/);
+  });
+  it("reuses only the exact reviewed meaning key and refuses changed approval inputs", async () => {
+    await db.exec("reset role; begin");
+    try {
+      const source = bundle.scopes[0]!.source;
+      const entry = (await db.query<{ doc: Record<string, unknown> }>("select to_jsonb(e) doc from public.vocab_entries e where dataset_id=$1 and source_row=1", [source.datasetId])).rows[0]!.doc;
+      await db.query("insert into word_index.mock_wordbook_identity_review(source_release_id,source_entry_id,source_row_sha256,reviewed_headword,reviewed_gloss,lexical_pos,sense_id,review_evidence_sha256) values($1,$2,$3,$4,$5,'noun','fake-approved-sense',repeat('c',64))", [source.releaseId, entry.id, entry.row_sha256, entry.headword, entry.primary_meaning]);
+      const resolve = (e: unknown = entry, selected: unknown = selectedResource) => db.query<{ value: { kind: string; key: string } }>("select private.vocabulary_learning_identity_v1($1::jsonb,$2::jsonb,$3::jsonb) value", [JSON.stringify(e), JSON.stringify(source), JSON.stringify(selected)]);
+      const identity = (await resolve()).rows[0]!.value;
+      const exact = (await db.query<{ value: string }>("select encode(extensions.digest(jsonb_build_array(lower(normalize($1::text,NFKC)),'noun','fake-approved-sense',$2::text)::text,'sha256'),'hex') value", [entry.headword, entry.primary_meaning])).rows[0]!.value;
+      expect(identity).toMatchObject({ kind: "reviewed-meaning-v1", key: exact });
+      const rejected = async (run: () => Promise<unknown>) => {
+        await db.exec("savepoint fake_mismatch");
+        try { await expect(run()).rejects.toThrow("composition_identity_mismatch"); }
+        finally { await db.exec("rollback to fake_mismatch; release fake_mismatch"); }
+      };
+      for (const e of [{ ...entry, row_sha256: "F".repeat(64) }, { ...entry, headword: "Changed" }, { ...entry, primary_meaning: "다른 뜻" }]) await rejected(() => resolve(e));
+      for (const selected of [{ ...selectedResource, senseId: "different-sense" }, { ...selectedResource, lexicalPos: "verb" }]) await rejected(() => resolve(entry, selected));
+    } finally { await db.exec("rollback"); await admin(); }
   });
   it("delivers existing long-reading classification only from the matching complete parent range", async () => {
     await admin();
@@ -355,9 +379,9 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     await expect(save({ action: "create", requestId: randomUUID(), metadata: meta, recipe: changed })).rejects.toThrow("library_scope_changed");
     expect((await list()).templates).toHaveLength(count);
     await db.exec("reset role");
-    const frozen = await db.query<{ audio: string; entries: number }>(`select private.expand_vocabulary_library_occurrence_v1(fixed_composition->'occurrences'->0)->'resources'->'selected'->'audio'->>'value' audio,
+    const frozen = await db.query<{ audio: string; entries: number }>(`select private.vocabulary_composition_resource_v1(private.expand_vocabulary_library_occurrence_v1(fixed_composition->'occurrences'->0)->'resources')#>>'{pronunciation,audioUrl}' audio,
       (select count(*)::integer from public.vocab_entries) entries from private.vocabulary_library_versions where id=$1`, [saved.versions[0]!.id]);
-    expect(frozen.rows[0]).toEqual({ audio: "fake-audio", entries: 4 });
+    expect(frozen.rows[0]).toEqual({ audio: selectedResource.pronunciation.audioUrl, entries: 4 });
     await expect(db.query("update private.vocabulary_library_versions set content_sha256=repeat('f',64) where id=$1", [saved.versions[0]!.id])).rejects.toThrow("immutable");
     await admin();
   });
@@ -382,7 +406,7 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     input.scopes = [{ ...input.scopes[0]!, key: "fake-day-1", name: "DAY 1", sourceTitle: "가짜 일반 단어장",
       source: { ...input.scopes[0]!.source, datasetId: d, unitId: u, kind: "legacy_vocab", releaseId: null, releaseVersion: "a".repeat(64) },
       classification: { ...input.scopes[0]!.classification, kind: "wordbook", exam: null, day: 1 },
-      rows: rows.map(r => ({ sourceRow: r.source_row, rowHash: r.hash, resources: { entryHash: r.hash, linkRecordHash: "a".repeat(64), selected: {} } })),
+      rows: rows.map(r => ({ sourceRow: r.source_row, rowHash: r.hash, resources: { entryHash: r.hash, linkRecordHash: "a".repeat(64), selected: selectedResource } })),
     }];
     const text = await approve(input);
     await db.query("select public.import_vocabulary_library_v1($1)", [text]);

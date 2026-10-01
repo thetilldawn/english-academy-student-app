@@ -1,4 +1,7 @@
 export const adminLearningText = {
+  wordbookLibrary: {
+    sourceUnavailable: "이 자료의 연결을 확인해야 합니다. 다른 자료로 바꾸거나 관리자에게 알려 주세요.",
+  },
   questionMode: {
     label: "출제 자료",
     book: "교재 뜻",

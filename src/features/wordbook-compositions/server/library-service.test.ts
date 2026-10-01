@@ -10,7 +10,9 @@ import { getLibraryCatalog } from "./queries/library-catalog";
 import { GET, POST } from "@/app/api/admin/wordbook-library/route";
 import { libraryJsonResponse } from "./library-json-response";
 import { materializeLibraryComposition } from "./commands/materialize-composition";
-import { sendLibraryCommand } from "../client/transport/library-transport";
+import { sendLibraryCommand, sendLibraryCommandV2 } from "../client/transport/library-transport";
+import { POST as commandRoute } from "@/app/api/admin/wordbook-library/commands/route";
+import { adminLearningText } from "@/content/ko/admin-learning";
 
 const request = { action: "create", requestId: "00000000-0000-4000-8000-000000000001",
   metadata: { title: "가짜 기말", tags: [], school: null, targetGrade: null, schoolYear: null, semester: null, assessment: null, purpose: null },
@@ -126,6 +128,25 @@ describe("materialized book response and recovery", () => {
     const response = await POST(new Request("http://localhost", { method: "POST", body: JSON.stringify(command) }));
     expect(response.status).toBe(409); expect(await response.text()).not.toContain("secret SQL");
     expect(mocks.rpc).not.toHaveBeenCalledWith("get_vocabulary_composition_summary_v1", expect.anything());
+  });
+  it.each([POST, commandRoute])("returns a safe repair instruction for broken shared references through both routes", async route => {
+    const viewer = "00000000-0000-4000-8000-000000000099";
+    mocks.getAdminContextOrThrow.mockResolvedValue({ userId: viewer });
+    mocks.rpc.mockReset().mockResolvedValueOnce({ data: { ...step, stage: "entries", done: 500, total: 1000 }, error: null })
+      .mockResolvedValueOnce({ data: null, error: { code: "40001", message: "vocabulary_binding_unavailable" } });
+    const response = await route(new Request("http://localhost", { method: "POST", headers: { "X-Wordbook-Viewer": viewer }, body: JSON.stringify(command) }));
+    expect(response.status).toBe(409);
+    expect(response.headers.get("X-Wordbook-Source")).toBe("unavailable");
+    expect(response.headers.get("X-Wordbook-Progress")).toBe("confirmed");
+    const text = await response.clone().text();
+    expect(text).toContain(adminLearningText.wordbookLibrary.sourceUnavailable);
+    expect(text).not.toMatch(/vocabulary_binding|selectionId|bindingId/);
+    const fetch = vi.fn().mockImplementation(async () => response.clone()); vi.stubGlobal("fetch", fetch);
+    try {
+      for (const send of [sendLibraryCommand, sendLibraryCommandV2]) await expect(send(command, viewer)).rejects.toMatchObject({ status: 409, progressConfirmed: true, message: adminLearningText.wordbookLibrary.sourceUnavailable });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(mocks.finalize).not.toHaveBeenCalled();
+    } finally { vi.unstubAllGlobals(); }
   });
   it("preserves committed progress when authorization disappears inside the first HTTP request", async () => {
     mocks.rpc.mockReset().mockResolvedValueOnce({ data: { ...step, stage: "entries", done: 500, total: 1000 }, error: null })

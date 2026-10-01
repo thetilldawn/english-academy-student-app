@@ -2070,8 +2070,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 125,
-      "pathSetSha256": "a04cbb6077ab42a618b249d8c56e8c0ad051c1023b54259d052e89e4b7d23f7c"
+      "fileCount": 127,
+      "pathSetSha256": "c4f0079eb0eabe9e8c0a37e03db4e71f101dc46dba4fa35bcccddd7be1c94c7e"
     },
     {
       "path": "src/lib/deploy",
@@ -2888,6 +2888,11 @@
       "path": "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
       "owner": "learning-points",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
     }
   ],
   "features": [
@@ -6771,7 +6776,8 @@
           "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
           "supabase/migrations/20260927080438_declare_quiz_feedback_protocol.sql",
           "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
-          "supabase/migrations/20261001014318_prepare_quiz_before_start.sql"
+          "supabase/migrations/20261001014318_prepare_quiz_before_start.sql",
+          "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -6821,7 +6827,8 @@
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/features/quiz-player/ui/prepared-quiz-player.test.tsx",
           "src/features/quiz-player/controller/resolve-quiz-feedback-transition.test.ts",
-          "src/features/quiz-player/server/attempt-preparation.integration.test.ts"
+          "src/features/quiz-player/server/attempt-preparation.integration.test.ts",
+          "src/lib/database/vocabulary-learning-values.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7088,7 +7095,8 @@
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
           "supabase/migrations/20260914125508_add_reviewed_entry_resource_links.sql",
           "supabase/migrations/20260914213654_add_reviewed_pronunciation_assets.sql",
-          "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql"
+          "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
+          "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -7118,7 +7126,8 @@
           "src/lib/database/pronunciation-audio-corrections.integration.test.ts",
           "src/design-system/primitives/fit-text/fit-text.test.tsx",
           "src/lib/quiz/pronunciation-snapshot.test.ts",
-          "src/lib/quiz/pronunciation-storage.test.ts"
+          "src/lib/quiz/pronunciation-storage.test.ts",
+          "src/lib/database/vocabulary-learning-values.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7443,7 +7452,8 @@
           "supabase/migrations/20260921000000_guard_vocabulary_library_templates.sql",
           "supabase/migrations/20260921040000_query_vocabulary_library_on_demand.sql",
           "supabase/migrations/20260921050000_save_vocabulary_filter_templates.sql",
-          "supabase/migrations/20260921060000_add_reviewed_csat_wordbooks.sql"
+          "supabase/migrations/20260921060000_add_reviewed_csat_wordbooks.sql",
+          "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -7474,7 +7484,10 @@
           "src/lib/database/vocabulary-library-on-demand.integration.test.ts",
           "src/lib/database/reviewed-csat-wordbook.integration.test.ts",
           "src/lib/database/reviewed-choice-safety.integration.test.ts",
-          "src/lib/quiz/choice-safety.test.ts"
+          "src/lib/quiz/choice-safety.test.ts",
+          "src/lib/database/vocabulary-learning-values.integration.test.ts",
+          "src/lib/database/vocabulary-learning-migration.integration.test.ts",
+          "src/features/wordbook-compositions/contracts/library-resources.test.ts"
         ]
       },
       "requiredImportEdges": [],
@@ -7570,7 +7583,8 @@
           "supabase/migrations/20260929140225_share_wrong_word_notebook_reads.sql",
           "supabase/migrations/20260921020000_page_student_wrong_words.sql",
           "supabase/migrations/20260929165150_expand_student_word_notebook.sql",
-          "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql"
+          "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql",
+          "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql"
         ],
         "cacheStreaming": [
           "src/app/api/student/wrong-words/route.ts"
@@ -7593,7 +7607,8 @@
           "src/components/student-shell.test.tsx",
           "src/lib/quiz/entry-source-pronunciation.test.ts",
           "src/lib/quiz/pronunciation-snapshot.test.ts",
-          "src/lib/quiz/pronunciation-storage.test.ts"
+          "src/lib/quiz/pronunciation-storage.test.ts",
+          "src/lib/database/vocabulary-learning-values.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

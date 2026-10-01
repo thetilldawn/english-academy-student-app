@@ -58,10 +58,12 @@ describe.sequential("bounded composition commits and publication", () => {
     await expect(db.query("select public.finalize_vocabulary_composition_summary_v1($1,$2,'[]')", [command.versionId, command.contentHash])).rejects.toThrow("composition_bounded_completion_required");
     await expect(finish([])).rejects.toThrow("composition_preparation_incomplete");
     await owner(); expect(await counts()).toMatchObject({ rows: 500, next: 501, contexts: 0, status: "pending_review", assignable: false });
+    const beforeShared = await scalar("select jsonb_build_object('values',(select count(*) from private.vocabulary_learning_value_versions),'bindings',(select count(*) from private.vocabulary_learning_value_bindings)) value");
     await db.exec(`create function public.fake_fail_last_row() returns trigger language plpgsql as $$begin if new.dataset_id='${dataset}' and new.source_row=501 then raise exception 'fake_last_row_failure'; end if; return new; end;$$;
       create trigger fake_last_row_failure after insert on public.vocab_entries for each row execute function public.fake_fail_last_row()`);
     await admin(); await expect(advance()).rejects.toThrow("fake_last_row_failure");
     await owner(); expect(await counts()).toMatchObject({ rows: 500, next: 501, contexts: 0 });
+    expect(await scalar("select jsonb_build_object('values',(select count(*) from private.vocabulary_learning_value_versions),'bindings',(select count(*) from private.vocabulary_learning_value_bindings)) value")).toEqual(beforeShared);
     await db.exec("drop trigger fake_last_row_failure on public.vocab_entries; drop function public.fake_fail_last_row()");
     await admin(); expect(await advance()).toMatchObject({ stage: "entries", done: 501 });
     expect(await advance()).toMatchObject({ stage: "prepared", done: 501 });
@@ -97,6 +99,7 @@ describe.sequential("bounded composition commits and publication", () => {
     await service(); expect(await finish()).toMatchObject({ state: "ready", stage: "complete" });
     expect(await finish()).toMatchObject({ state: "ready" });
     await owner(); expect(await counts()).toMatchObject({ rows: 501, items: 501, plans: 1, contexts: 0, status: "ready", assignable: true });
+    expect(await scalar("select bool_and(resources#>>'{selected,schemaVersion}'='vocabulary-resource-ref-v2') value from private.vocabulary_composition_entries where version_id=$1", [command.versionId])).toBe(true);
     const stored = await scalar("select jsonb_agg(jsonb_build_object('vocabEntryId',vocab_entry_id,'direction',direction,'prompt',prompt,'choices',choice_texts,'choiceVocabEntryIds',choice_vocab_entry_ids,'correctChoiceIndex',correct_choice_index) order by vocab_entry_id) value from private.vocabulary_composition_items where version_id=$1", [command.versionId]);
     expect(stored).toEqual([...questions].sort((a, b) => a.vocabEntryId - b.vocabEntryId));
     await admin(); expect(await advance()).toMatchObject({ state: "ready" });

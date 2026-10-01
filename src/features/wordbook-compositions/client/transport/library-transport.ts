@@ -2,13 +2,15 @@ import { libraryCatalogSchema, libraryCommandResultSchema, type LibraryCommand }
 import { compositionProgressSchema } from "../../contracts/library-materialization";
 import { libraryQueryResultSchema, type LibraryQuery, type LibraryQueryResultOf } from "../../contracts/library-query";
 import { libraryCommandV2ResultSchema, type LibraryCommandV2 } from "../../contracts/library-command-v2";
+import { adminLearningText } from "@/content/ko/admin-learning";
 
 export class LibraryRequestError extends Error {
   constructor(readonly status: number, message: string, readonly progressConfirmed = false) { super(message); }
 }
 const endpoint = "/api/admin/wordbook-library";
-function failure(status: number, saving: boolean, progressConfirmed = false) {
+function failure(status: number, saving: boolean, progressConfirmed = false, sourceUnavailable = false) {
   return new LibraryRequestError(status, [401, 403].includes(status) ? "관리자 로그인이 필요합니다."
+    : status === 409 && sourceUnavailable ? adminLearningText.wordbookLibrary.sourceUnavailable
     : status === 404 ? "템플릿을 찾을 수 없습니다. 목록을 다시 확인해 주세요."
     : status === 409 ? "자료가 변경되었습니다. 변경 내용을 다시 확인해 주세요."
     : status === 422 ? "이름과 선택한 범위를 확인해 주세요."
@@ -27,7 +29,7 @@ export async function sendLibraryCommand(command: LibraryCommand, viewerId: stri
   for (let attempt = 0; attempt < 160; attempt++) {
     const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json", "X-Wordbook-Viewer": viewerId },
       body: JSON.stringify(command), cache: "no-store", signal: AbortSignal.timeout(command.action === "materialize" ? 295000 : 65000) });
-    if (!response.ok) throw failure(response.status, true, Boolean(previousProgress) || response.headers.get("X-Wordbook-Progress") === "confirmed");
+    if (!response.ok) throw failure(response.status, true, Boolean(previousProgress) || response.headers.get("X-Wordbook-Progress") === "confirmed", response.headers.get("X-Wordbook-Source") === "unavailable");
     const body: unknown = await response.json();
     const progress = compositionProgressSchema.safeParse(body);
     if (progress.success) {
@@ -62,7 +64,7 @@ export async function sendLibraryCommandV2(command: LibraryCommandV2, viewerId: 
   for (let attempt = 0; attempt < 160; attempt++) {
     const response = await fetch(`${endpoint}/commands`, { method: "POST", headers: { "Content-Type": "application/json", "X-Wordbook-Viewer": viewerId },
       body: JSON.stringify(command), cache: "no-store", signal: AbortSignal.timeout(command.action === "materialize" ? 295000 : 65000) });
-    if (!response.ok) throw failure(response.status, true, Boolean(previousProgress) || response.headers.get("X-Wordbook-Progress") === "confirmed");
+    if (!response.ok) throw failure(response.status, true, Boolean(previousProgress) || response.headers.get("X-Wordbook-Progress") === "confirmed", response.headers.get("X-Wordbook-Source") === "unavailable");
     const body: unknown = await response.json();
     const progress = compositionProgressSchema.safeParse(body);
     if (progress.success) {

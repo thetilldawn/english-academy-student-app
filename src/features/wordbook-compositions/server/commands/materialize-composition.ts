@@ -6,6 +6,7 @@ import { libraryCommandSchema, libraryCommandResultSchema } from "../../contract
 import { compositionQuestionInputSchema, compositionStepSchema, compositionProgressSchema } from "../../contracts/library-materialization";
 import { planCompositionQuestions } from "../use-cases/composition-question-plan";
 import { LibraryCommandError } from "./library-command";
+import { isVocabularySourceError } from "../library-error";
 import { libraryCommandV2ResultSchema } from "../../contracts/library-command-v2";
 
 export async function materializeLibraryComposition(input: unknown, admin?: AdminContext, compact = false) {
@@ -16,7 +17,8 @@ export async function materializeLibraryComposition(input: unknown, admin?: Admi
   const client = await createServerSupabaseClient();
   let datasetId: string | undefined;
   let progressConfirmed = false;
-  const checkedStep = (response: { data: unknown; error: { code?: string } | null }) => {
+  const checkedStep = (response: { data: unknown; error: { code?: string; message?: string } | null }) => {
+    if (response.error && isVocabularySourceError(response.error)) throw new LibraryCommandError(409, progressConfirmed, true);
     if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : response.error.code === "P0002" ? 404 : response.error.code === "40001" ? 409 : response.error.code === "22023" ? 422 : 503, progressConfirmed);
     const result = compositionStepSchema.safeParse(response.data);
     if (!result.success || result.data.versionId !== command.versionId || result.data.contentHash !== command.contentHash ||
@@ -37,6 +39,7 @@ export async function materializeLibraryComposition(input: unknown, admin?: Admi
     let questions: ReturnType<typeof planCompositionQuestions> | null = null;
     if (step.needsQuestions) {
       const response = await client.rpc("prepare_vocabulary_template_question_input_v1", { p_request: command });
+      if (response.error && isVocabularySourceError(response.error)) throw new LibraryCommandError(409, progressConfirmed, true);
       if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : response.error.code === "40001" ? 409 : 503, progressConfirmed);
       const prepared = compositionQuestionInputSchema.safeParse(response.data);
       if (!prepared.success || prepared.data.versionId !== command.versionId || prepared.data.datasetId !== datasetId ||

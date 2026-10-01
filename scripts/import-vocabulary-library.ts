@@ -5,7 +5,7 @@ import { loadEnvConfig } from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { libraryImportSchema } from "../src/features/wordbook-compositions/contracts/library-import";
-import { libraryResourceSchema } from "../src/features/wordbook-compositions/contracts/library-resources";
+import { libraryResourceV1Schema } from "../src/features/wordbook-compositions/contracts/library-resources";
 import { libraryFiltersSchema, libraryHashSchema, templateMetadataSchema } from "../src/features/wordbook-compositions/contracts/library";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
@@ -77,7 +77,7 @@ async function main() {
       if (scopeByKey.has(scope.key) || scope.source.datasetId !== record.datasetId) throw new Error("범위 식별자가 중복되거나 다른 자료입니다.");
       scopeByKey.set(scope.key, scope);
       for (const row of scope.rows) {
-        const result = libraryResourceSchema.safeParse(row.resources.selected);
+        const result = libraryResourceV1Schema.safeParse(row.resources.selected);
         if (!result.success) throw new Error(`학습정보 형식 확인 필요: ${scope.key} / ${row.sourceRow} / ${result.error.issues.map(i => i.path.join(".") + ":" + i.code).join(",")}`);
         for (const proof of Object.values(result.data.proofs)) {
           if (!proof.ref) { if (proof.value !== null) throw new Error("값에 근거 참조가 없습니다."); continue; }

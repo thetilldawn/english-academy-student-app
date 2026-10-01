@@ -8,6 +8,7 @@ import { planCompositionQuestions } from "@/features/wordbook-compositions/serve
 import { planLibraryUnits } from "@/features/wordbook-compositions/domain/library-selection";
 import { reviewedExamFixture } from "@/test-support/reviewed-exam-fixtures";
 import { vocabPronunciationReleaseHeader } from "@/lib/vocab/vocab-pronunciation-release-v2-contract";
+import { buildPracticePlan, practiceSourceSchema } from "@/features/quiz-player/domain/practice-plan";
 vi.mock("server-only", () => ({}));
 
 const adminId = "00000000-0000-4000-8000-000000008001";
@@ -16,6 +17,9 @@ const hash = (value: string) => createHash("sha256").update(value).digest("hex")
 const emptyPronunciation = { displayKo: null, variantId: null, audioUrl: null, available: false };
 const resource = { schemaVersion: "vocabulary-resource-snapshot-v1", sourceFields: {}, proofs: {}, pronunciation: emptyPronunciation,
   lexicalPos: null, dictionary: null, senseId: null, definitionEn: null, exampleEn: null, exampleKo: null };
+const selectedForRow = (n: number) => ({ ...resource, lexicalPos: "noun", definitionEn: `Frozen definition ${n}`, exampleEn: `This is frozen example ${n}.`, exampleKo: `고정 예문 ${n}`,
+  pronunciation: { displayKo: `고정발음${n}`, segments: [{ text: `고정발음${n}`, stress: "primary" as const }], variantId: `fake-compose-${n}`,
+    audioUrl: `https://media.merriam-webster.com/audio/prons/en/us/mp3/a/fake${n}.mp3`, available: true } });
 describe.sequential("vocabulary compositions: source resources, questions, and real delivery", () => {
   let db: PGlite, originalDataset: string, template: LibraryTemplate, prepared: CompositionPreparation, schoolPrepared: CompositionPreparation, schoolAssignment: string;
   const scalar = async <T>(sql: string, args: unknown[] = []) => (await db.query<{ value: T }>(sql, args)).rows[0]!.value;
@@ -42,7 +46,7 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
       scopes: [[1, 2, 3], [5, 6], [2, 3, 4]].map((selection, index) => ({ key: `fake-block-${index}`, name: `가짜 범위 ${index}`, sourceTitle: "가짜 일반 자료",
         source: { datasetId: originalDataset, unitId: unit, kind: "legacy_vocab", releaseId: null, releaseVersion: "a".repeat(64), fileHash: "e".repeat(64), locator: "fake.json" }, classification,
         rows: rows.filter(r => selection.includes(r.source_row)).map(r => ({ sourceRow: r.source_row, rowHash: r.row_hash,
-          resources: { entryHash: r.row_hash, linkRecordHash: hash(`scope:${index}:row:${r.source_row}`), selected: resource } })) })) };
+          resources: { entryHash: r.row_hash, linkRecordHash: hash(`scope:${index}:row:${r.source_row}`), selected: selectedForRow(r.source_row) } })) })) };
     const input = JSON.stringify(bundle);
     const contentHash = await scalar<string>("select private.reviewed_exam_sha256_v1($1::jsonb) value", [input]);
     await db.query("insert into private.vocabulary_library_import_approvals values('wojxpruvbjzbhrpmsbuy',$1,$2,3,'fake-compose-approval')", [hash(input), contentHash]);
@@ -129,9 +133,96 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     const stored = await scalar<{ status: string; provenance: string; count: number }>(`select jsonb_build_object('status',a.status,'provenance',a.provenance_status,
       'count',(select count(*) from public.assignment_questions q where q.assignment_id=a.id)) value from public.assignments a where a.id=$1`, [assignment]);
     expect(stored).toEqual({ status: "active", provenance: "composition_verified_v1", count: 6 });
-    const resources = await scalar<unknown[]>("select jsonb_agg(composition_pronunciation_snapshot->'target') value from public.assignment_questions where assignment_id=$1", [assignment]);
-    expect(resources).toEqual(Array.from({ length: 6 }, () => emptyPronunciation));
+    const resources = await scalar<unknown[]>("select jsonb_agg(composition_pronunciation_snapshot->'target' order by base_order_index) value from public.assignment_questions where assignment_id=$1", [assignment]);
+    const expected = new Map(prepared.entries.map(e => [e.id, e.resources.pronunciation]));
+    expect(resources).toEqual(plan.questions.map(q => expected.get(q.vocab_entry_id)));
   });
+  it("preserves shared selections through real wrong answers, notebook assignment, and study reads", async () => {
+    type Study = { entryId: number; definition: string | null; example: string | null; exampleKo?: string | null; compositionPronunciation?: unknown; notebookPronunciation?: unknown };
+    type Wrong = { key: string; latestVocabEntryId: number; latestQuestionId: string; studySource: Study };
+    type Page = { items: Wrong[] };
+    const learner = randomUUID();
+    const owner = () => db.exec("reset role; select set_config('request.jwt.claim.role','service_role',true)");
+    const rpc = async <T>(name: string, args: unknown[]) => { await service(); return scalar<T>(`select public.${name}(${args.map((_, i) => `$${i + 1}`).join(",")}) value`, args); };
+    const expected = new Map(prepared.entries.map(e => [e.id, e.resources]));
+    expect(prepared.entries.every(e => e.resources.schemaVersion === "vocabulary-resource-selected-v2")).toBe(true);
+    for (const e of prepared.entries) {
+      expect(e.resources.definitionEn).not.toBeNull(); expect(e.resources.exampleEn).not.toBeNull();
+      expect(e.resources.exampleKo).not.toBeNull(); expect(e.resources.pronunciation.audioUrl).not.toBeNull();
+    }
+    await db.exec("reset role; begin");
+    try {
+      await db.query("insert into public.students(id,display_name,status,created_by,school_name,grade_label) values($1,'가짜 참조 검사 학생','active',$2,'가짜 고등학교','고2')", [learner, adminId]);
+      await admin(); const bank = await bankPlan();
+      const assignment = await scalar<string>("select public.create_assignment_with_delivery_v7('가짜 공용 참조 시험',$1::uuid,$2::uuid[],$3::int,100::smallint,300,80::smallint,false,null,'fixed',null,array[$5::uuid],'none',null,$4::jsonb) value",
+        [prepared.datasetId, bank.units, bank.questions.length, JSON.stringify(bank.questions), learner]);
+      await owner();
+      const attempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [learner, assignment]);
+      const questions = (await db.query<{ id: string; correct_choice_index: number }>("select id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index", [attempt])).rows;
+      expect(questions).toHaveLength(6);
+      for (const q of questions) {
+        await db.query("update public.quiz_attempts set current_question_started_at=clock_timestamp()-interval '20 seconds' where id=$1", [attempt]);
+        await db.query("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)", [learner, attempt, q.id, (q.correct_choice_index + 1) % 4]);
+      }
+      expect(await scalar("select count(*)::int value from public.student_vocab_wrong_events where student_id=$1 and quiz_attempt_id=$2", [learner, attempt])).toBe(6);
+      expect(await scalar("select status value from public.quiz_attempts where id=$1", [attempt])).toBe("completed");
+      const page = await scalar<Page>("select private.wrong_word_notebook_page_v3($1::uuid,p_page_size=>501) value", [learner]);
+      expect(page.items).toHaveLength(6);
+      const publicPage = await rpc<Page>("get_student_wrong_word_notebook_page_v2", [learner]);
+      expect(publicPage.items).toEqual(page.items);
+      for (const word of page.items) {
+        const value = expected.get(word.latestVocabEntryId)!;
+        expect(word.studySource).toMatchObject({ definition: value.definitionEn, example: value.exampleEn, exampleKo: value.exampleKo, compositionPronunciation: value.pronunciation });
+      }
+      const selection = { mode: "filtered", filters: { datasetId: prepared.datasetId } };
+      const source = practiceSourceSchema.parse(await rpc("prepare_notebook_assignment_source_v1", [adminId, learner, JSON.stringify(selection)]));
+      expect(source.words).toHaveLength(6);
+      const requestId = randomUUID(), practiceSettings = { questionCount: 4, englishToKoreanRatio: 100 as const, timingMode: "none" as const, timeLimitSeconds: null, questionTimeLimitSeconds: null };
+      const plan = buildPracticePlan(source, practiceSettings, requestId);
+      expect(plan.error).toBeNull(); expect(plan.questions).toHaveLength(4);
+      const byId = new Map(plan.candidates.map(e => [e.id, e])), wrongByKey = new Map(page.items.map(w => [w.key, w]));
+      const frozen = plan.questions.map(q => {
+        const target = byId.get(q.vocabEntryId)!, origin = wrongByKey.get(target.key!)!;
+        return { wordKey: target.key!, direction: q.direction, prompt: q.prompt, choices: q.choices, correctChoiceIndex: q.correctChoiceIndex,
+          pronunciation: origin.studySource.compositionPronunciation, choicePronunciations: Array.from({ length: 4 }, () => ({ ...emptyPronunciation })),
+          choiceSources: q.choiceVocabEntryIds.map(id => { const e = byId.get(id)!; return { entryId: e.entryId, headword: e.headword, primaryMeaning: e.primaryMeaning }; }) };
+      });
+      const batches = [{ studentId: learner, selection, settings: { ...practiceSettings, passingScore: 80, retryEnabled: false, retryPassingScore: null }, sourceHash: source.sourceHash, questions: frozen, audienceMode: "single", gradeConfirmed: true }];
+      const args = [adminId, requestId, hash(JSON.stringify(batches)), JSON.stringify(batches)];
+      const saved = await rpc<{ assignmentId: string; studentId: string; questionCount: number }[]>("create_notebook_assignments_v1", args);
+      expect(saved).toHaveLength(1); expect(saved[0]).toMatchObject({ studentId: learner, questionCount: 4 });
+      await owner(); await db.exec("set constraints all immediate");
+      const notebook = saved[0]!.assignmentId;
+      expect(await scalar("select jsonb_build_object('kind',source_kind,'points',points_policy_version,'count',question_count) value from public.assignments where id=$1", [notebook])).toEqual({ kind: "notebook", points: "no-points-v1", count: 4 });
+      const snapshots = (await db.query<{ vocab_entry_id: number; notebook_source_snapshot: { wordKey: string; study: Study }; notebook_pronunciation_snapshot: { target: unknown } }>("select vocab_entry_id,notebook_source_snapshot,notebook_pronunciation_snapshot from public.assignment_questions where assignment_id=$1", [notebook])).rows;
+      expect(snapshots).toHaveLength(4);
+      for (const row of snapshots) {
+        expect(row.notebook_source_snapshot.study).toEqual(wrongByKey.get(row.notebook_source_snapshot.wordKey)!.studySource);
+        expect(row.notebook_pronunciation_snapshot.target).toEqual(expected.get(row.vocab_entry_id)!.pronunciation);
+      }
+      const study = await rpc<{ words: Study[] }>("get_student_assignment_study_v1", [learner, notebook]);
+      expect(study.words).toHaveLength(4);
+      for (const word of study.words) {
+        const value = expected.get(word.entryId)!;
+        expect(word).toMatchObject({ definition: value.definitionEn, example: value.exampleEn, notebookPronunciation: value.pronunciation });
+      }
+      expect(await rpc("get_student_assignment_study_v1", [studentId, notebook])).toBeNull();
+      expect(await rpc("create_notebook_assignments_v1", args)).toEqual(saved);
+      await owner();
+      const points = await scalar("select jsonb_agg(to_jsonb(p) order by id) value from public.student_point_events p where student_id=$1", [learner]);
+      const notebookAttempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [learner, notebook]);
+      const notebookQuestions = (await db.query<{ id: string; correct_choice_index: number; vocab_entry_id: number }>("select id,correct_choice_index,vocab_entry_id from public.quiz_questions where attempt_id=$1 order by order_index", [notebookAttempt])).rows;
+      for (const [i, q] of notebookQuestions.entries()) {
+        await db.query("update public.quiz_attempts set current_question_started_at=clock_timestamp()-interval '20 seconds' where id=$1", [notebookAttempt]);
+        await db.query("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)", [learner, notebookAttempt, q.id, i ? q.correct_choice_index : (q.correct_choice_index + 1) % 4]);
+      }
+      const after = await scalar<Page>("select private.wrong_word_notebook_page_v3($1::uuid,p_page_size=>501) value", [learner]);
+      const word = after.items.find(w => w.latestQuestionId === notebookQuestions[0]!.id)!;
+      const value = expected.get(notebookQuestions[0]!.vocab_entry_id)!;
+      expect(word.studySource).toMatchObject({ definition: value.definitionEn, example: value.exampleEn, exampleKo: value.exampleKo, notebookPronunciation: value.pronunciation });
+      expect(await scalar("select jsonb_agg(to_jsonb(p) order by id) value from public.student_point_events p where student_id=$1", [learner])).toEqual(points);
+    } finally { await db.exec("rollback"); await admin(); }
+  }, 60_000);
   it("refuses missing composition proof instead of falling through to the old writer", async () => {
     const plan = await bankPlan(); const before = await scalar("select count(*)::int value from public.assignments");
     const targets = plan.questions.map(q => ({ vocab_entry_id: q.vocab_entry_id, base_order_index: q.base_order_index, direction: q.direction }));
@@ -198,6 +289,15 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
       exists(select 1 from unnest(i.choice_vocab_entry_ids)x where x not in(select vocab_entry_id from private.vocabulary_composition_entries where version_id=$1)) outside,i.pronunciation_snapshot
       from private.vocabulary_composition_items i join private.reviewed_exam_items o on o.release_id=i.source_release_id and o.item_id=i.source_item_id where i.version_id=$1`, [version.id])).rows;
     expect(items).toHaveLength(16); expect(items.every(i => i.preserved && i.pronunciation_snapshot.choices.length === 4)).toBe(true); expect(items.some(i => i.outside)).toBe(true);
+    const expectedVoices = new Map(bundle.scopes.flatMap(s => s.rows.map(r => [r.sourceRow, r.resources.selected.pronunciation] as const)));
+    const fullVoices = (await db.query<{ pronunciation_snapshot: { target: unknown; choices: unknown[] }; target_row: number; choice_rows: number[] }>(`select i.pronunciation_snapshot,te.source_row target_row,
+      (select array_agg(ce.source_row order by x.n) from unnest(o.choice_vocab_entry_ids) with ordinality x(id,n) join public.vocab_entries ce on ce.id=x.id) choice_rows
+      from private.vocabulary_composition_items i join private.reviewed_exam_items o on o.release_id=i.source_release_id and o.item_id=i.source_item_id
+      join public.vocab_entries te on te.id=o.vocab_entry_id where i.version_id=$1`, [version.id])).rows;
+    for (const item of fullVoices) {
+      expect(item.pronunciation_snapshot.target).toEqual(expectedVoices.get(item.target_row));
+      expect(item.pronunciation_snapshot.choices).toEqual(item.choice_rows.map(n => expectedVoices.get(n)));
+    }
     await db.query("update private.reviewed_exam_releases set status='retired' where release_id=$1", [original.release_id]);
     await db.query("update public.vocab_datasets set status='retired',is_active=false where id=$1", [original.dataset_id]);
     await admin();

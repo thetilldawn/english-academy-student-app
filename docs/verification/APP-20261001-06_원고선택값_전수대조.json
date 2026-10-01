@@ -1,0 +1,378 @@
+{
+  "at": "2026-10-01T14:02:23.812Z",
+  "scope": "Local reviewed import files only. No remote reads/writes. Entry rows are not present locally: this audit covers selected fields and source-proof projections, not entire live entry rows.",
+  "migrationSha256": "d680b3577d9baf9176d28d3ff61d3207769c5d266d0b49ca0691d4b2ac326f27",
+  "files": 48,
+  "rows": 19596,
+  "proofs": 289718,
+  "audio": 9317,
+  "fieldComparisons": 97980,
+  "differences": 0,
+  "kinds": {
+    "exam_use": {
+      "rows": 15812,
+      "audio": 5543,
+      "definition": 383,
+      "exampleEn": 240,
+      "exampleKo": 0
+    },
+    "reviewed_exam": {
+      "rows": 783,
+      "audio": 773,
+      "definition": 783,
+      "exampleEn": 48,
+      "exampleKo": 0
+    },
+    "legacy_vocab": {
+      "rows": 3001,
+      "audio": 3001,
+      "definition": 0,
+      "exampleEn": 0,
+      "exampleKo": 0
+    }
+  },
+  "fieldEvidenceSha256": "3be897756daa478a242d6a2f6e75abdcb1c8e532a0b90b73acedfedcdccbf4ea",
+  "originalSelectedJsonBytes": 55753299,
+  "newSelectedDtoJsonBytes": 45214665,
+  "distinctSelectedFieldBodies": 6074,
+  "uniqueSelectedFieldJsonBytes": 2344411,
+  "sizeLimit": "Selected DTO sizes only; excludes bindings/indexes/entryValues/old rows and is not a database-space savings measurement.",
+  "inputs": [
+    {
+      "file": "01_범위.json",
+      "bytes": 384834,
+      "sha256": "33454eaf21c9989a411f0cb8752df5b6be45110b478d6080ab788afc93d63614",
+      "rows": 111,
+      "fieldEvidenceSha256": "f8b32549841279d2a64459395f62fb67190af0b96f64051e2ce50216f28515eb"
+    },
+    {
+      "file": "02_범위.json",
+      "bytes": 1834079,
+      "sha256": "101c829837778fe9c93319cb10fdafaa2a6e2cd3568e7e1b98a1e198167a2f20",
+      "rows": 651,
+      "fieldEvidenceSha256": "fa5b7c197043a087015a2bfe389357064550ae8c8b4d6376ea2359886efef5ea"
+    },
+    {
+      "file": "03_범위.json",
+      "bytes": 590195,
+      "sha256": "88e40380e4f0f0cb196fa381c6e84d15bde2f85a90385b1c7145ee7cd1d8b9df",
+      "rows": 202,
+      "fieldEvidenceSha256": "6872e5910d6ae17eaa480ca111a10cf2c8e3cb814ea9d069a530f3276f188675"
+    },
+    {
+      "file": "04_범위.json",
+      "bytes": 1907280,
+      "sha256": "637af0e27ddb45e2a39d798d0233f45bca2412b492ccca18f17a1955189b859f",
+      "rows": 657,
+      "fieldEvidenceSha256": "45c7faeaebe4637febb72737b31775728c3f3ebd242641f30bed903b25fd05bf"
+    },
+    {
+      "file": "05_범위.json",
+      "bytes": 379117,
+      "sha256": "a29a50befd96a37b19b4d0bb627c1112120223f926946ad6f88f07215d059d38",
+      "rows": 125,
+      "fieldEvidenceSha256": "d14e773bd48c8f2f76e917eb6dad58911249cace6143906cc2b2ba5dffb08076"
+    },
+    {
+      "file": "06_범위.json",
+      "bytes": 2079454,
+      "sha256": "f23a88f04184b824368307471bb3363f27e63140e985753253657e2a0751d5ac",
+      "rows": 709,
+      "fieldEvidenceSha256": "f7f587a86d60b84c133e3e2b8270d18b88c5cf5861a9154bd19382e3339b7c62"
+    },
+    {
+      "file": "07_범위.json",
+      "bytes": 644197,
+      "sha256": "f916b7af2f5547382f6bc851346f6b99baadd298ca72c25879c3a23b097d3916",
+      "rows": 217,
+      "fieldEvidenceSha256": "cef9460d12c352671e6f93c58ceb9c075d08960a2bc7e1cf07b6d80585075e72"
+    },
+    {
+      "file": "08_범위.json",
+      "bytes": 1769571,
+      "sha256": "5b5234380e6da3ee35bf3e2dfd57f7ee8352ecc23f55898faf982b1c269b19fe",
+      "rows": 609,
+      "fieldEvidenceSha256": "2d4048d3360154e5d1366bdd0ebefe973f721d6f0eef9635f4a101ffeca6041d"
+    },
+    {
+      "file": "09_범위.json",
+      "bytes": 402194,
+      "sha256": "62dd03f8f008d0a2d902797ddaae07f0d598a5a2e5c7868f494813b98caa0387",
+      "rows": 137,
+      "fieldEvidenceSha256": "0f0d364034b838dd6882f313da3e5a10da7ef1f0725aa6dd6e3b1363d0d4b31c"
+    },
+    {
+      "file": "10_범위.json",
+      "bytes": 2471590,
+      "sha256": "af6d7e3abc2da12a2386ba572ef96fb962b4377b1527a9ffbb2d12e075c58cdd",
+      "rows": 696,
+      "fieldEvidenceSha256": "9f62165ceff1037c2052e96e806533be0f2220cbfc5b749ba402d112ffa1432d"
+    },
+    {
+      "file": "11_범위.json",
+      "bytes": 360745,
+      "sha256": "1bde0570818a984ea87ccf17b110732e55cce819f02c10bdd3d63e3279c53213",
+      "rows": 101,
+      "fieldEvidenceSha256": "13a137f008e2e3998bf88b76e8fcebc491ffb769f9a0703a6b30df4c57d67343"
+    },
+    {
+      "file": "12_범위.json",
+      "bytes": 386411,
+      "sha256": "1ad6b898ce5d36a24227145c16f88e0b9e4a9203a4edf5478258e13216e10235",
+      "rows": 111,
+      "fieldEvidenceSha256": "006bb452112fdbd3d94d801fc7cab38f6166dab067dad20cf73250f79347c534"
+    },
+    {
+      "file": "13_범위.json",
+      "bytes": 1113266,
+      "sha256": "ab45409f11c9d35be811a1da4ebccc090f1c9df52cf06ecb42fa61e28404cc83",
+      "rows": 320,
+      "fieldEvidenceSha256": "4f5c8a24744334047b8e07e77807662608ae4b01c6b764e54a3da37ea0888a20"
+    },
+    {
+      "file": "14_범위.json",
+      "bytes": 2343818,
+      "sha256": "b8527d37e0a0c8b68153bad87a8dfe2d4e8b3b7f6783ef09b06feade9f3fbee8",
+      "rows": 604,
+      "fieldEvidenceSha256": "eed36792e1aa7f068cc5d4ba891c7d3d19c100fb981aabc853af5f5d753557cc"
+    },
+    {
+      "file": "15_범위.json",
+      "bytes": 1684558,
+      "sha256": "5807dceaf01d976b4c7513070479ec9955341108d298cef00569fe2843631c9d",
+      "rows": 566,
+      "fieldEvidenceSha256": "eb70615dbc97d2923936ce2280c7d033b4713fee8d244cd0172010614f408ef3"
+    },
+    {
+      "file": "16_범위.json",
+      "bytes": 397371,
+      "sha256": "717fd6cbadb527c90f4f7c7dcfd982996ef2671b8ecf796a52861e523ae43b3e",
+      "rows": 134,
+      "fieldEvidenceSha256": "c604257de160e59957f36a48d2e9851ef055c3cc345ffffea82cd372b8b70a42"
+    },
+    {
+      "file": "17_범위.json",
+      "bytes": 1323104,
+      "sha256": "74b2dc7e778b84aa92b44fa0105857668dd9f977fa5ae4733642b3dd77932742",
+      "rows": 400,
+      "fieldEvidenceSha256": "5f691d6512f89f7900cf5816672f161f6c21b8e7aa1c461b0fe7986e86db5c6f"
+    },
+    {
+      "file": "18_범위.json",
+      "bytes": 329343,
+      "sha256": "8b0002024ef784b51c2aa79c4f076ee421d4106eb76163754a46f442e3a4cf36",
+      "rows": 100,
+      "fieldEvidenceSha256": "17a72e03d55e28984cb683c5bc73a608d7d5848ad2d22f2cf82ae2ceb94813d2"
+    },
+    {
+      "file": "19_범위.json",
+      "bytes": 2265188,
+      "sha256": "0f908d6222d70ed81b2e2644a10264a27faf1496b592e2d662567de44037a491",
+      "rows": 772,
+      "fieldEvidenceSha256": "c21a0d78067766e2de4f0732be34b2a21ee5af8eb7d79758b64f7eba78ece69e"
+    },
+    {
+      "file": "20_범위.json",
+      "bytes": 691833,
+      "sha256": "7f820fdc22caa00fe4462360aa23ca8f4553ea8594f90db1116eaee3dc70524c",
+      "rows": 238,
+      "fieldEvidenceSha256": "2529df4e77d44556fefbfd959a3d0b897b7331ac9845a90ff4fea844b5b6d39e"
+    },
+    {
+      "file": "21_범위.json",
+      "bytes": 1755785,
+      "sha256": "5c6cc973052daf9d3366ee2395ea568d8e9d807c20b9e3ab7d615564a33f24dd",
+      "rows": 601,
+      "fieldEvidenceSha256": "b42e7ef1b2595072d1d2c84b03188db7bf682bcabee7197777459c9fde7c9c36"
+    },
+    {
+      "file": "22_범위.json",
+      "bytes": 365903,
+      "sha256": "482d90b00b1b4a947e2e55cf509291c27b7eba35c1bb74551a5fe4be3c966898",
+      "rows": 121,
+      "fieldEvidenceSha256": "5db65429af620c2e6053aa707526557e44d1ca5990c56c507021bee4a375f7b4"
+    },
+    {
+      "file": "23_범위.json",
+      "bytes": 282977,
+      "sha256": "3fa15f138d706f843b59fff4a0b52790887f28eff8320ad697bb82ccc213ffad",
+      "rows": 73,
+      "fieldEvidenceSha256": "6c5e1ec5510d4efd770965ceb9d261a0760f42b78c1877a6512c0076c5a1a2ef"
+    },
+    {
+      "file": "24_범위.json",
+      "bytes": 2006906,
+      "sha256": "10271fc418c787e8524a6a2fb9175f656aaf77939b36ae91fa1cf1b4406d9145",
+      "rows": 345,
+      "fieldEvidenceSha256": "2a0b81eee00d7b58b29d2962583c3acf9b938a5d279ee005f009f7a8ea46b32b"
+    },
+    {
+      "file": "25_범위.json",
+      "bytes": 509916,
+      "sha256": "be6551636685e8fe0f7cb494ffa0049e232bcbb5bacbe52afc8b37cdcb1c954c",
+      "rows": 87,
+      "fieldEvidenceSha256": "b1e4ce4f08a8e007e20c49630f6aed9ee2dea1c9acfd9fbc80affb2db0f1d0ad"
+    },
+    {
+      "file": "26_범위.json",
+      "bytes": 1929718,
+      "sha256": "9a5349e2e8e3843bd67b0e389a35603ec457999ff0225eec553fe0ad5b98bc6c",
+      "rows": 656,
+      "fieldEvidenceSha256": "a0cebe34884b16c0ca8230c9b924031a87a6cc8fe2c169fd08686a0999e5b166"
+    },
+    {
+      "file": "27_범위.json",
+      "bytes": 380531,
+      "sha256": "0a0f8b7a96c2984c38cdd68ba9bf199fcec54abfef6c9f1a162d0444e5d820de",
+      "rows": 137,
+      "fieldEvidenceSha256": "18bb10a2a6efd7765b524db8f45a34bfa0de8aaf90064fd4bf4b69aeb4b195d1"
+    },
+    {
+      "file": "28_범위.json",
+      "bytes": 3194030,
+      "sha256": "27c37036d6872e75ea930fc60bc4e791a9ecc8f1011f2840f50ba779dcf9dccf",
+      "rows": 918,
+      "fieldEvidenceSha256": "3434c2a2cb9f198fd41880708cb5edd893f3229561f1e852d927badb1b51104b"
+    },
+    {
+      "file": "29_범위.json",
+      "bytes": 3343886,
+      "sha256": "a2197fed9b8db8823bf55d5b18115365f7e5e15a76498ff9231c4c787b20b07c",
+      "rows": 980,
+      "fieldEvidenceSha256": "78fef220ddc4c465e18df519ee4c2ac5e9323dca770f47edbcf95836e18f6778"
+    },
+    {
+      "file": "30_범위.json",
+      "bytes": 3176573,
+      "sha256": "e356fff2554814966fb3261ffeb7e1169bde0e07d175bd0e176853c743b8c39a",
+      "rows": 951,
+      "fieldEvidenceSha256": "ace25b5c8bc0d7e2b009a591d1386132e820b31fdd69891b1b588f4b9db57590"
+    },
+    {
+      "file": "31_범위.json",
+      "bytes": 512636,
+      "sha256": "148b558f3bb4cc85bd7f3f055d11a9c3bc74d8a21471f7af71a993aa5b778ea2",
+      "rows": 152,
+      "fieldEvidenceSha256": "a8d1d94f9243f71798aa3d01784a185f5c64b6a757cf0c3027cfbfbf93206569"
+    },
+    {
+      "file": "32_범위.json",
+      "bytes": 2094449,
+      "sha256": "6c6d0bf6bb852307c70feeba87bd19b8bfeb62005cdd4e59a582dfb53cca214c",
+      "rows": 724,
+      "fieldEvidenceSha256": "1ca9fa34c06ac2a8b88357185e75db0d3580fad128da72ed166d5cb69b536ce4"
+    },
+    {
+      "file": "33_범위.json",
+      "bytes": 467161,
+      "sha256": "b7180bf3596f2b7b918937bf01261f2f1f782fad914f77942e656fc24ae25751",
+      "rows": 164,
+      "fieldEvidenceSha256": "8865f3fba1b2cbe52583eadd742461257dbce6cdfc3a8a953b2aa01c45f53dd6"
+    },
+    {
+      "file": "34_범위.json",
+      "bytes": 1722026,
+      "sha256": "ae436a1a15eab1d165a70896b2aa74c1939cecf17d8d66d0b42f0f453267ed21",
+      "rows": 585,
+      "fieldEvidenceSha256": "bcd9a9ab8706f359053826144728c8b746da23f298d3f7dfa639d67deda008ab"
+    },
+    {
+      "file": "35_범위.json",
+      "bytes": 416954,
+      "sha256": "13ca19effd29aa5d6b39e2ea9ce0361a7c0f560aa81f3dd97ab6025b1d400eff",
+      "rows": 136,
+      "fieldEvidenceSha256": "465e04772b1bd34a6ffa590fee896e2cdccf7feeecf742b41f499bc6c59444b7"
+    },
+    {
+      "file": "36_범위.json",
+      "bytes": 1880781,
+      "sha256": "2f206820a0bfe06fe709c3d736a8a1f0b4d525af983e5e9db4680b676dff4b07",
+      "rows": 649,
+      "fieldEvidenceSha256": "060928ab7cc14df4ad7afeeb2752a8885462af646f5056937179d4bd402da21b"
+    },
+    {
+      "file": "37_범위.json",
+      "bytes": 560119,
+      "sha256": "6919d67a0630c42c6a86594177cc536ee4951e04d67a7681570867d967e5e469",
+      "rows": 200,
+      "fieldEvidenceSha256": "fd748863c866c367be874531f358371d132e486ff14677fe0e7ebc48cfb35529"
+    },
+    {
+      "file": "38_범위.json",
+      "bytes": 2454654,
+      "sha256": "a7b8aae4191ef490a0aa68d38dac9ba4e841755ac7912f965388b529e30c3226",
+      "rows": 844,
+      "fieldEvidenceSha256": "3e1ff5d51982b916ae25cb734b8c9273dc9c46bcde91e4694acc4579884c7207"
+    },
+    {
+      "file": "39_범위.json",
+      "bytes": 460026,
+      "sha256": "fcbf8c7b7f555980c25944718a9fb8c09e3e7fb8a4bf5915f4e7ec5a5ece22b1",
+      "rows": 165,
+      "fieldEvidenceSha256": "8e4a187bdde7f19987d7e9ea6d3c37509d28e1a5c05ff660cb0c5c7e22223bf2"
+    },
+    {
+      "file": "40_범위.json",
+      "bytes": 2044910,
+      "sha256": "45b8038bcc89613301a26a166b01cbda13339fca8403c9d2c3eb51451a1a26e5",
+      "rows": 698,
+      "fieldEvidenceSha256": "baaec2dc78fff219461c0984afb7415c53cc7c4abd088e068cd65ccf56ee3885"
+    },
+    {
+      "file": "41_범위.json",
+      "bytes": 533343,
+      "sha256": "c9b1d58140c2fc7c30dcc640e48d064c171670476b0deb65f32f45cc0ed9be62",
+      "rows": 178,
+      "fieldEvidenceSha256": "806b9e8eea92e8dc7d7a91d007d37012b348ab108c22384ef5febf5a5531a4c2"
+    },
+    {
+      "file": "42_범위.json",
+      "bytes": 1174489,
+      "sha256": "c9ef62730349d20c2a281c1ecbdfc756a649b09a840175b87ad8f6bf6c0edbe6",
+      "rows": 278,
+      "fieldEvidenceSha256": "3e6c2e3c1cd0dd89ca8d39488408697e3852cd90959dee2aa08a5331c763f08b"
+    },
+    {
+      "file": "43_범위.json",
+      "bytes": 2020917,
+      "sha256": "2bc6fefc6d326b5aa07bff7cf50caf4774069d504d3b455c8b8669e6f57436cc",
+      "rows": 701,
+      "fieldEvidenceSha256": "037e58b13127feb0e9fcc5f8bf9fab30016abf8e9b436ac038f9b6790161b33f"
+    },
+    {
+      "file": "44_범위.json",
+      "bytes": 643901,
+      "sha256": "e6146e7af5a7543b702df2f4991e79c29bf5a3ca8ddbe128d8f322371834fec5",
+      "rows": 225,
+      "fieldEvidenceSha256": "a02dc881cedcc5fa86d9b7b792a2cb480d2662f214eddf2aee7e0fa841959a6c"
+    },
+    {
+      "file": "45_범위.json",
+      "bytes": 1878999,
+      "sha256": "a9dd6c1078fca35e17b5511163ca87580f8c8c5ea77a912c53f00f44ae95b433",
+      "rows": 641,
+      "fieldEvidenceSha256": "adf9af732f2c0f868a31b24adea78aa5191560431f73d2e12a19b30928986780"
+    },
+    {
+      "file": "46_범위.json",
+      "bytes": 505906,
+      "sha256": "6bfda7c5e125ba8a38571afe2dd2135703627b8d453ce5148738f93b3199c8d8",
+      "rows": 175,
+      "fieldEvidenceSha256": "f00bb8df0b9fc7bda46fa76bb21e9e9d788b0ae0bbe20192f2398943e042f1e7"
+    },
+    {
+      "file": "47_범위.json",
+      "bytes": 1839150,
+      "sha256": "4c9195d8b203af00dd2f920a0c7b02d8c0d066fba83e98cef71d4b8a0a46e280",
+      "rows": 627,
+      "fieldEvidenceSha256": "44fcd4d2593efd2568b29a825e4f2e3c38e39ceb1e8423686b70ac5b8ca251bd"
+    },
+    {
+      "file": "48_범위.json",
+      "bytes": 365646,
+      "sha256": "bdbb2c8dbcc64374288ea77923836e3081ec79b1e7710aa62d1b927576249b99",
+      "rows": 125,
+      "fieldEvidenceSha256": "de0f14f76c234f56962ebe1a20d1a6282141591d70cf83856b1186b15dc1407d"
+    }
+  ]
+}

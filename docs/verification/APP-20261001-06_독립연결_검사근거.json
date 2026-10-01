@@ -1,0 +1,3982 @@
+{
+  "work": "APP-20261001-06",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "migration": {
+    "local": "20261001132340_compact_vocabulary_learning_values.sql",
+    "sha256": "d680b3577d9baf9176d28d3ff61d3207769c5d266d0b49ca0691d4b2ac326f27",
+    "remote": "20261001141842"
+  },
+  "before": [
+    {
+      "table_name": "private.vocabulary_composition_build_positions",
+      "row_count": 14329,
+      "row_hash": "a5c24976a386a40f5f22fa67ccae2f64"
+    },
+    {
+      "table_name": "private.vocabulary_composition_builds",
+      "row_count": 1,
+      "row_hash": "2e942c53b93e45ffccee76e03a09e5e2"
+    },
+    {
+      "table_name": "private.vocabulary_composition_entries",
+      "row_count": 15903,
+      "row_hash": "d5039a5499cefa1f6490e1ea1ad3a94c"
+    },
+    {
+      "table_name": "private.vocabulary_composition_items",
+      "row_count": 31806,
+      "row_hash": "8b2b73f6f555fca29ba044b00540d935"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_approvals",
+      "row_count": 5,
+      "row_hash": "ad9b901ff25cfdc15d9145cc1134568f"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_chunks",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_inputs",
+      "row_count": 5,
+      "row_hash": "c0526e3d3ea8d314daf5ef9cb949171c"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_requests",
+      "row_count": 5,
+      "row_hash": "3dd53de1135a6042542def0c396db55d"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_results",
+      "row_count": 5,
+      "row_hash": "4fb62401513df0a1aa5a233a84d18e87"
+    },
+    {
+      "table_name": "private.vocabulary_composition_question_plans",
+      "row_count": 1,
+      "row_hash": "555e4a141780dfddebadc266039f5765"
+    },
+    {
+      "table_name": "private.vocabulary_composition_write_context",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_compositions",
+      "row_count": 5,
+      "row_hash": "788b891fd721c3f1ad9a1894a0d6e7af"
+    },
+    {
+      "table_name": "private.vocabulary_library_import_approvals",
+      "row_count": 51,
+      "row_hash": "0015f0862f8c1a081162ddf7b5eaba41"
+    },
+    {
+      "table_name": "private.vocabulary_library_import_chunks",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_library_management_requests",
+      "row_count": 10,
+      "row_hash": "8b42b42f0415f067b1f0213d3d46fc96"
+    },
+    {
+      "table_name": "private.vocabulary_library_management_results",
+      "row_count": 10,
+      "row_hash": "6404de4a141980066e1f87442ed3aeca"
+    },
+    {
+      "table_name": "private.vocabulary_library_requests",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_library_row_fingerprints",
+      "row_count": 22324,
+      "row_hash": "313a2a54ff538a89b7dcd91ba505d572"
+    },
+    {
+      "table_name": "private.vocabulary_library_scope_rows",
+      "row_count": 22324,
+      "row_hash": "8caf7f8a0ba2167683227703a5400625"
+    },
+    {
+      "table_name": "private.vocabulary_library_scopes",
+      "row_count": 683,
+      "row_hash": "b0b756874329c2e3d6067c416edf6c9f"
+    },
+    {
+      "table_name": "private.vocabulary_library_template_approvals",
+      "row_count": 10,
+      "row_hash": "4aa403a4bc0ecc4f0ae492827b7fd894"
+    },
+    {
+      "table_name": "private.vocabulary_library_templates",
+      "row_count": 10,
+      "row_hash": "149b41f4361d8e32ef5a482eba140c9f"
+    },
+    {
+      "table_name": "private.vocabulary_library_versions",
+      "row_count": 10,
+      "row_hash": "17951cf443482cb436b3142385f6927e"
+    },
+    {
+      "table_name": "public.admin_profiles",
+      "row_count": 3,
+      "row_hash": "ebe5336054fe3fec13ba116f592b2176"
+    },
+    {
+      "table_name": "public.assignment_questions",
+      "row_count": 5415,
+      "row_hash": "d6c1b3145befd66adf0b3c8539fe2678"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 189,
+      "row_hash": "9ececaaf4553abde649be630116bf44a"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1504,
+      "row_hash": "b50ce6119eb0ae534a41d61d910fba91"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 190,
+      "row_hash": "229e0205734b374cb333581f5921c217"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 101,
+      "row_hash": "1f6d73b54c7fffbbf2b45cede7e4f295"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1466,
+      "row_hash": "e8d1fdde6600ec9d680b73cba62d42f1"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1033,
+      "row_hash": "5f0a9b283b554fc6daa2de009992191b"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 23,
+      "row_hash": "1632cb2910a2189478df2f57562e9b85"
+    },
+    {
+      "table_name": "public.student_sessions",
+      "row_count": 72,
+      "row_hash": "523ad8818c44b81a1661a5b8acb8b93e"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 666,
+      "row_hash": "d24babfede7114070c1b2327db884dc2"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 790,
+      "row_hash": "f075777bf750d32694563813c1fd1594"
+    },
+    {
+      "table_name": "public.students",
+      "row_count": 82,
+      "row_hash": "fae4a1578fe0c74273d397122e182aab"
+    },
+    {
+      "table_name": "public.vocab_dataset_catalog",
+      "row_count": 40,
+      "row_hash": "973bfcac03a8c6e1f21444a829c28199"
+    },
+    {
+      "table_name": "public.vocab_datasets",
+      "row_count": 45,
+      "row_hash": "5b2541da4264a01e032d97268001a3ba"
+    },
+    {
+      "table_name": "public.vocab_entries",
+      "row_count": 39377,
+      "row_hash": "67b739f36ef759987a4184db900c5b44"
+    },
+    {
+      "table_name": "public.vocab_units",
+      "row_count": 1250,
+      "row_hash": "804ac6bc2a0c75278c5c09c623bcee3e"
+    },
+    {
+      "table_name": "word_index.app_exam_use_release",
+      "row_count": 30,
+      "row_hash": "17fc928d0a5646c0e1bc2ea1d8382bde"
+    },
+    {
+      "table_name": "word_index.mock_wordbook_identity_review",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "word_index.vocab_entry_link",
+      "row_count": 3017,
+      "row_hash": "07db989a1a9da6e677fe855720c94d00"
+    }
+  ],
+  "afterDdl": [
+    {
+      "table_name": "private.vocabulary_composition_build_positions",
+      "row_count": 14329,
+      "row_hash": "a5c24976a386a40f5f22fa67ccae2f64"
+    },
+    {
+      "table_name": "private.vocabulary_composition_builds",
+      "row_count": 1,
+      "row_hash": "2e942c53b93e45ffccee76e03a09e5e2"
+    },
+    {
+      "table_name": "private.vocabulary_composition_entries",
+      "row_count": 15903,
+      "row_hash": "d5039a5499cefa1f6490e1ea1ad3a94c"
+    },
+    {
+      "table_name": "private.vocabulary_composition_items",
+      "row_count": 31806,
+      "row_hash": "8b2b73f6f555fca29ba044b00540d935"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_approvals",
+      "row_count": 5,
+      "row_hash": "ad9b901ff25cfdc15d9145cc1134568f"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_chunks",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_inputs",
+      "row_count": 5,
+      "row_hash": "c0526e3d3ea8d314daf5ef9cb949171c"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_requests",
+      "row_count": 5,
+      "row_hash": "3dd53de1135a6042542def0c396db55d"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_results",
+      "row_count": 5,
+      "row_hash": "4fb62401513df0a1aa5a233a84d18e87"
+    },
+    {
+      "table_name": "private.vocabulary_composition_question_plans",
+      "row_count": 1,
+      "row_hash": "555e4a141780dfddebadc266039f5765"
+    },
+    {
+      "table_name": "private.vocabulary_composition_write_context",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_compositions",
+      "row_count": 5,
+      "row_hash": "788b891fd721c3f1ad9a1894a0d6e7af"
+    },
+    {
+      "table_name": "private.vocabulary_library_import_approvals",
+      "row_count": 51,
+      "row_hash": "0015f0862f8c1a081162ddf7b5eaba41"
+    },
+    {
+      "table_name": "private.vocabulary_library_import_chunks",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_library_management_requests",
+      "row_count": 10,
+      "row_hash": "8b42b42f0415f067b1f0213d3d46fc96"
+    },
+    {
+      "table_name": "private.vocabulary_library_management_results",
+      "row_count": 10,
+      "row_hash": "6404de4a141980066e1f87442ed3aeca"
+    },
+    {
+      "table_name": "private.vocabulary_library_requests",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_library_row_fingerprints",
+      "row_count": 22324,
+      "row_hash": "313a2a54ff538a89b7dcd91ba505d572"
+    },
+    {
+      "table_name": "private.vocabulary_library_scope_rows",
+      "row_count": 22324,
+      "row_hash": "8caf7f8a0ba2167683227703a5400625"
+    },
+    {
+      "table_name": "private.vocabulary_library_scopes",
+      "row_count": 683,
+      "row_hash": "b0b756874329c2e3d6067c416edf6c9f"
+    },
+    {
+      "table_name": "private.vocabulary_library_template_approvals",
+      "row_count": 10,
+      "row_hash": "4aa403a4bc0ecc4f0ae492827b7fd894"
+    },
+    {
+      "table_name": "private.vocabulary_library_templates",
+      "row_count": 10,
+      "row_hash": "149b41f4361d8e32ef5a482eba140c9f"
+    },
+    {
+      "table_name": "private.vocabulary_library_versions",
+      "row_count": 10,
+      "row_hash": "17951cf443482cb436b3142385f6927e"
+    },
+    {
+      "table_name": "public.admin_profiles",
+      "row_count": 3,
+      "row_hash": "ebe5336054fe3fec13ba116f592b2176"
+    },
+    {
+      "table_name": "public.assignment_questions",
+      "row_count": 5415,
+      "row_hash": "d6c1b3145befd66adf0b3c8539fe2678"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 189,
+      "row_hash": "9ececaaf4553abde649be630116bf44a"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1504,
+      "row_hash": "b50ce6119eb0ae534a41d61d910fba91"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 190,
+      "row_hash": "229e0205734b374cb333581f5921c217"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 101,
+      "row_hash": "1f6d73b54c7fffbbf2b45cede7e4f295"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1466,
+      "row_hash": "e8d1fdde6600ec9d680b73cba62d42f1"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1033,
+      "row_hash": "5f0a9b283b554fc6daa2de009992191b"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 23,
+      "row_hash": "1632cb2910a2189478df2f57562e9b85"
+    },
+    {
+      "table_name": "public.student_sessions",
+      "row_count": 72,
+      "row_hash": "523ad8818c44b81a1661a5b8acb8b93e"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 666,
+      "row_hash": "d24babfede7114070c1b2327db884dc2"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 790,
+      "row_hash": "f075777bf750d32694563813c1fd1594"
+    },
+    {
+      "table_name": "public.students",
+      "row_count": 82,
+      "row_hash": "fae4a1578fe0c74273d397122e182aab"
+    },
+    {
+      "table_name": "public.vocab_dataset_catalog",
+      "row_count": 40,
+      "row_hash": "973bfcac03a8c6e1f21444a829c28199"
+    },
+    {
+      "table_name": "public.vocab_datasets",
+      "row_count": 45,
+      "row_hash": "5b2541da4264a01e032d97268001a3ba"
+    },
+    {
+      "table_name": "public.vocab_entries",
+      "row_count": 39377,
+      "row_hash": "67b739f36ef759987a4184db900c5b44"
+    },
+    {
+      "table_name": "public.vocab_units",
+      "row_count": 1250,
+      "row_hash": "804ac6bc2a0c75278c5c09c623bcee3e"
+    },
+    {
+      "table_name": "word_index.app_exam_use_release",
+      "row_count": 30,
+      "row_hash": "17fc928d0a5646c0e1bc2ea1d8382bde"
+    },
+    {
+      "table_name": "word_index.mock_wordbook_identity_review",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "word_index.vocab_entry_link",
+      "row_count": 3017,
+      "row_hash": "07db989a1a9da6e677fe855720c94d00"
+    }
+  ],
+  "existing44AfterDdlUnchanged": true,
+  "schema": [
+    {
+      "relname": "vocabulary_learning_value_versions",
+      "relrowsecurity": true,
+      "relacl": "{postgres=arwdDxtm/postgres}",
+      "triggers": [
+        {
+          "name": "vocabulary_learning_value_versions_immutable",
+          "enabled": "O"
+        }
+      ]
+    },
+    {
+      "relname": "vocabulary_learning_value_bindings",
+      "relrowsecurity": true,
+      "relacl": "{postgres=arwdDxtm/postgres}",
+      "triggers": [
+        {
+          "name": "vocabulary_learning_value_bindings_immutable",
+          "enabled": "O"
+        }
+      ]
+    },
+    {
+      "relname": "vocabulary_composition_storage_formats",
+      "relrowsecurity": true,
+      "relacl": "{postgres=arwdDxtm/postgres}",
+      "triggers": [
+        {
+          "name": "vocabulary_composition_storage_formats_immutable",
+          "enabled": "O"
+        }
+      ]
+    }
+  ],
+  "readback": [
+    {
+      "readback": {
+        "functions": [
+          {
+            "oid": "394583",
+            "config": [
+              "search_path=\"\""
+            ],
+            "grants": "{postgres=X/postgres}",
+            "signature": "private.register_vocabulary_learning_resources_v1(jsonb,jsonb,jsonb,jsonb)",
+            "volatility": "v",
+            "securityDefiner": false
+          },
+          {
+            "oid": "394582",
+            "config": [
+              "search_path=\"\""
+            ],
+            "grants": "{postgres=X/postgres}",
+            "signature": "private.resolve_vocabulary_learning_binding_v1(jsonb)",
+            "volatility": "s",
+            "securityDefiner": false
+          },
+          {
+            "oid": "394581",
+            "config": [
+              "search_path=\"\""
+            ],
+            "grants": "{postgres=X/postgres}",
+            "signature": "private.resolve_vocabulary_learning_value_v1(jsonb)",
+            "volatility": "s",
+            "securityDefiner": false
+          },
+          {
+            "oid": "60775",
+            "config": [
+              "search_path=\"\""
+            ],
+            "grants": "{postgres=X/postgres}",
+            "signature": "private.vocabulary_composition_resource_v1(jsonb)",
+            "volatility": "s",
+            "securityDefiner": false
+          }
+        ],
+        "migrations": [
+          {
+            "name": "compact_vocabulary_learning_values",
+            "version": "20261001141842"
+          },
+          {
+            "name": "prepare_quiz_before_start",
+            "version": "20261001040337"
+          }
+        ]
+      }
+    }
+  ],
+  "shapePreview": [
+    {
+      "rows": 22324,
+      "v1_rows": 22324,
+      "missing_required_v1_keys": 0,
+      "other_format": 0
+    }
+  ],
+  "shapeProduction": {
+    "verified": false,
+    "attempts": 2,
+    "reason": "connection timeout",
+    "mutations": 0
+  },
+  "firstAttempt": {
+    "passed": false,
+    "nodeError": "TypeError: fetch failed",
+    "httpStatus": 0,
+    "aError": "m01_actual_lock_not_observed",
+    "scopeValueBindingRowsAfter": 0,
+    "reason": "sandboxed Node network unavailable; approved network execution used for next run"
+  },
+  "cases": [
+    {
+      "case": 1,
+      "matched": true,
+      "connectionA": {
+        "observation": [
+          {
+            "pidA": 1103774,
+            "pidB": 1103778,
+            "locksA": [
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_selection_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_imported_by_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_imported_by_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_dataset_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_dataset_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_latest_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_scope_key_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "virtualxid",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_locks",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_release_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "transactionid",
+                "granted": true,
+                "relation": null,
+                "transactionId": "1226806"
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database_datname_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_stat_activity",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_exam_use_release_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_sort_index_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_sort_index_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_release_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_entry_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid_rolname_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_rows_entry",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_rows_entry",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_status_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_row_fingerprints",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_normalized_label_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_normalized_label_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_content_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "advisory",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows_scope_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows_scope_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_source_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_selection_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_latest_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_latest_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_one_active_release",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_binding_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_binding_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid_oid_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_release_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_package_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_one_active_exam_use_release_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_release_id_provenance_kind_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_seq",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_scope_key_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_scope_key_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database_oid_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_pkey",
+                "transactionId": null
+              }
+            ],
+            "locksB": [
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "virtualxid",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessExclusiveLock",
+                "type": "tuple",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals",
+                "transactionId": null
+              },
+              {
+                "mode": "ShareLock",
+                "type": "transactionid",
+                "granted": false,
+                "relation": null,
+                "transactionId": "1226806"
+              }
+            ],
+            "waitEvent": "transactionid",
+            "observedAt": "2026-10-01T14:27:11.45572+00:00",
+            "blockingPids": [
+              1103774
+            ],
+            "waitEventType": "Lock",
+            "queryStartedAt": "2026-10-01T14:27:11.405258+00:00"
+          }
+        ],
+        "a_result": {
+          "scopes": [
+            {
+              "id": "c0fde1df-0b14-4f55-a7d4-b66e7e0f8829",
+              "key": "m01-qa-c1011001-import",
+              "version": "b6f14108eba587bc70dd1b4c960461f511a74ad360339b65a90931bfe72125e2"
+            }
+          ]
+        },
+        "before_commit_at": "2026-10-01 14:27:11.460563+00"
+      },
+      "connectionB": {
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "case": 1,
+        "inputSha256": "e7f3b42ab34ba08cefb0de23ffef0aa4f844fc9e7b206043cefaeaeccb126c0c",
+        "sentAt": "2026-10-01T14:27:10.059Z",
+        "finishedAt": "2026-10-01T14:27:10.751Z",
+        "durationMs": 692,
+        "status": 200,
+        "error": null,
+        "data": {
+          "scopes": [
+            {
+              "id": "c0fde1df-0b14-4f55-a7d4-b66e7e0f8829",
+              "key": "m01-qa-c1011001-import",
+              "version": "b6f14108eba587bc70dd1b4c960461f511a74ad360339b65a90931bfe72125e2"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case": 2,
+      "matched": true,
+      "connectionA": {
+        "observation": [
+          {
+            "pidA": 1103780,
+            "pidB": 1103782,
+            "locksA": [
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_source_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_status_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "virtualxid",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid_oid_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_binding_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_binding_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database_oid_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_stat_activity",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_locks",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database_datname_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "transactionid",
+                "granted": true,
+                "relation": null,
+                "transactionId": "1226824"
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_entry_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid_rolname_index",
+                "transactionId": null
+              }
+            ],
+            "locksB": [
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_selection_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_imported_by_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_imported_by_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_dataset_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_dataset_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_latest_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_scope_key_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "virtualxid",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_scope_key_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_seq",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_release_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_package_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_one_active_exam_use_release_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_release_id_provenance_kind_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_source_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_selection_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_latest_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_one_active_release",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "advisory",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "transactionid",
+                "granted": true,
+                "relation": null,
+                "transactionId": "1226825"
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_content_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_status_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_normalized_label_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_normalized_label_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "ShareLock",
+                "type": "transactionid",
+                "granted": false,
+                "relation": null,
+                "transactionId": "1226824"
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_release_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_entry_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_sort_index_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_sort_index_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_exam_use_release_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_release_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              }
+            ],
+            "waitEvent": "transactionid",
+            "observedAt": "2026-10-01T14:27:47.171625+00:00",
+            "blockingPids": [
+              1103780
+            ],
+            "waitEventType": "Lock",
+            "queryStartedAt": "2026-10-01T14:27:47.062834+00:00"
+          }
+        ],
+        "a_result": {
+          "selected": {
+            "selectionId": "80b0d21f-fdfd-48a7-933e-01f2888415c8",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "45291c9e54dd74fa0056d351daa8cf7b3e3ec9d89e1301d0e0e91b932e0c59e8"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "adfe747c-fce5-4240-9043-5ce94b2d1a6e",
+            "bindingHash": "79740be64af7fb55000c7ec64ff5b42962186faf05d244ce7e244221226fda02",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "before_commit_at": "2026-10-01 14:27:47.17476+00"
+      },
+      "connectionB": {
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "case": 2,
+        "inputSha256": "d26045c55878a2f83a57250e977a71105ca0b55ae830f848fce79353ce98561e",
+        "sentAt": "2026-10-01T14:27:46.153Z",
+        "finishedAt": "2026-10-01T14:27:46.454Z",
+        "durationMs": 301,
+        "status": 200,
+        "error": null,
+        "data": {
+          "scopes": [
+            {
+              "id": "4a2dddf1-88de-4184-8cf5-ef314dc51ad8",
+              "key": "m01-qa-c1011001-value",
+              "version": "4ef95a0017c98cabdf8085a9df6fd88c162dbc8b712bf2c4241fa2babfbaafee"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case": 3,
+      "matched": true,
+      "connectionA": {
+        "observation": [
+          {
+            "pidA": 1103801,
+            "pidB": 1103802,
+            "locksA": [
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_source_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_status_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "virtualxid",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "transactionid",
+                "granted": true,
+                "relation": null,
+                "transactionId": "1226849"
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_locks",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database_datname_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_stat_activity",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid_rolname_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_entry_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_database_oid_index",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_binding_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_binding_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "pg_authid_oid_index",
+                "transactionId": null
+              }
+            ],
+            "locksB": [
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_selection_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_imported_by_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_imported_by_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_dataset_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_dataset_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_datasets",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_latest_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_scope_key_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_import_approvals",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "virtualxid",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_source_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_binding_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_release_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_package_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_one_active_exam_use_release_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_position_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_release_id_provenance_kind_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_source_row_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scope_rows",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_seq",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "transactionid",
+                "granted": true,
+                "relation": null,
+                "transactionId": "1226850"
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_bindings",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_scope_key_version_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_unit_order_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_revision_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_content_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_versions",
+                "transactionId": null
+              },
+              {
+                "mode": "ExclusiveLock",
+                "type": "advisory",
+                "granted": true,
+                "relation": null,
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.vocab_entry_link_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes_latest_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_one_active_release",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_source_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog_selection_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_range_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_lexeme_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_release_id_dataset_id_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_entry_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_dataset_catalog",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_normalized_label_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_normalized_label_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_dataset_status_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_learning_value_ver_selection_id_selection_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release_release_key_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_dataset_id_row_sha256_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.reviewed_exam_releases_pkey",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_exam_use_release_dataset_idx",
+                "transactionId": null
+              },
+              {
+                "mode": "RowExclusiveLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "private.vocabulary_library_scopes",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units",
+                "transactionId": null
+              },
+              {
+                "mode": "ShareLock",
+                "type": "transactionid",
+                "granted": false,
+                "relation": null,
+                "transactionId": "1226849"
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.word_index_vocab_entry_link_occurrence_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_sort_index_key",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_units_dataset_id_sort_index_key",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "RowShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "vocab_entries_id_dataset_unique",
+                "transactionId": null
+              },
+              {
+                "mode": "AccessShareLock",
+                "type": "relation",
+                "granted": true,
+                "relation": "word_index.app_exam_use_release",
+                "transactionId": null
+              }
+            ],
+            "waitEvent": "transactionid",
+            "observedAt": "2026-10-01T14:28:26.938311+00:00",
+            "blockingPids": [
+              1103801
+            ],
+            "waitEventType": "Lock",
+            "queryStartedAt": "2026-10-01T14:28:26.889215+00:00"
+          }
+        ],
+        "a_result": {
+          "selected": {
+            "selectionId": "80b0d21f-fdfd-48a7-933e-01f2888415c8",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "45291c9e54dd74fa0056d351daa8cf7b3e3ec9d89e1301d0e0e91b932e0c59e8"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "3fce4d93-a926-4830-9815-7d74aa84b673",
+            "bindingHash": "1c763a7cc89496a5ba47fdf7a02a6a37698171ddd884ac05ad15b83c47fc0684",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "before_commit_at": "2026-10-01 14:28:26.941685+00"
+      },
+      "connectionB": {
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "case": 3,
+        "inputSha256": "d73119de707c93f364cadaf8a9d6294b2f8f434b98c252f9d71d2f2da1c75d97",
+        "sentAt": "2026-10-01T14:28:25.563Z",
+        "finishedAt": "2026-10-01T14:28:26.223Z",
+        "durationMs": 660,
+        "status": 200,
+        "error": null,
+        "data": {
+          "scopes": [
+            {
+              "id": "5b32b1c1-434d-46bd-a8f7-b24e4e1ec6e1",
+              "key": "m01-qa-c1011001-binding",
+              "version": "fc54e827f5aaeabe32d2e079ec35d52a94800c572d9775f013090ec844707aed"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "afterRaces": {
+    "counts": {
+      "rows": 3,
+      "scopes": 3,
+      "values": 2,
+      "bindings": 3,
+      "fingerprints": 3
+    },
+    "hashes": {
+      "values": "7cedd000362acfa69f4ea640678deae1",
+      "bindings": "9edd45f313af28cdd5fd863360e8b124",
+      "scopeRows": "65dace7420e55c406bfe55adce6ee026"
+    },
+    "scopes": [
+      {
+        "id": "5b32b1c1-434d-46bd-a8f7-b24e4e1ec6e1",
+        "key": "m01-qa-c1011001-binding",
+        "version": "fc54e827f5aaeabe32d2e079ec35d52a94800c572d9775f013090ec844707aed",
+        "resources": {
+          "selected": {
+            "selectionId": "80b0d21f-fdfd-48a7-933e-01f2888415c8",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "45291c9e54dd74fa0056d351daa8cf7b3e3ec9d89e1301d0e0e91b932e0c59e8"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "3fce4d93-a926-4830-9815-7d74aa84b673",
+            "bindingHash": "1c763a7cc89496a5ba47fdf7a02a6a37698171ddd884ac05ad15b83c47fc0684",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "valueBytes": 676,
+        "bindingBytes": 1664,
+        "bindingMatches": true,
+        "sourceHashMatches": true
+      },
+      {
+        "id": "c0fde1df-0b14-4f55-a7d4-b66e7e0f8829",
+        "key": "m01-qa-c1011001-import",
+        "version": "b6f14108eba587bc70dd1b4c960461f511a74ad360339b65a90931bfe72125e2",
+        "resources": {
+          "selected": {
+            "selectionId": "82e03012-1157-4fda-8662-962255e1add1",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "916dee8f14610918b437d074c9f628721ec12a304b5db317c3fb020c00a17a2b"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "dd10198a-8e9d-4574-a0c2-8347870cb726",
+            "bindingHash": "900fd5786081bb3dae7ab3d4837e87a86b3f72aa8b6c6e698b57521e2f59c760",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "valueBytes": 676,
+        "bindingBytes": 1660,
+        "bindingMatches": true,
+        "sourceHashMatches": true
+      },
+      {
+        "id": "4a2dddf1-88de-4184-8cf5-ef314dc51ad8",
+        "key": "m01-qa-c1011001-value",
+        "version": "4ef95a0017c98cabdf8085a9df6fd88c162dbc8b712bf2c4241fa2babfbaafee",
+        "resources": {
+          "selected": {
+            "selectionId": "80b0d21f-fdfd-48a7-933e-01f2888415c8",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "45291c9e54dd74fa0056d351daa8cf7b3e3ec9d89e1301d0e0e91b932e0c59e8"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "adfe747c-fce5-4240-9043-5ce94b2d1a6e",
+            "bindingHash": "79740be64af7fb55000c7ec64ff5b42962186faf05d244ce7e244221226fda02",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "valueBytes": 676,
+        "bindingBytes": 1660,
+        "bindingMatches": true,
+        "sourceHashMatches": true
+      }
+    ]
+  },
+  "afterReplay": {
+    "counts": {
+      "rows": 3,
+      "scopes": 3,
+      "values": 2,
+      "bindings": 3,
+      "fingerprints": 3
+    },
+    "hashes": {
+      "values": "7cedd000362acfa69f4ea640678deae1",
+      "bindings": "9edd45f313af28cdd5fd863360e8b124",
+      "scopeRows": "65dace7420e55c406bfe55adce6ee026"
+    },
+    "scopes": [
+      {
+        "id": "5b32b1c1-434d-46bd-a8f7-b24e4e1ec6e1",
+        "key": "m01-qa-c1011001-binding",
+        "version": "fc54e827f5aaeabe32d2e079ec35d52a94800c572d9775f013090ec844707aed",
+        "resources": {
+          "selected": {
+            "selectionId": "80b0d21f-fdfd-48a7-933e-01f2888415c8",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "45291c9e54dd74fa0056d351daa8cf7b3e3ec9d89e1301d0e0e91b932e0c59e8"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "3fce4d93-a926-4830-9815-7d74aa84b673",
+            "bindingHash": "1c763a7cc89496a5ba47fdf7a02a6a37698171ddd884ac05ad15b83c47fc0684",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "valueBytes": 676,
+        "bindingBytes": 1664,
+        "bindingMatches": true,
+        "sourceHashMatches": true
+      },
+      {
+        "id": "c0fde1df-0b14-4f55-a7d4-b66e7e0f8829",
+        "key": "m01-qa-c1011001-import",
+        "version": "b6f14108eba587bc70dd1b4c960461f511a74ad360339b65a90931bfe72125e2",
+        "resources": {
+          "selected": {
+            "selectionId": "82e03012-1157-4fda-8662-962255e1add1",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "916dee8f14610918b437d074c9f628721ec12a304b5db317c3fb020c00a17a2b"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "dd10198a-8e9d-4574-a0c2-8347870cb726",
+            "bindingHash": "900fd5786081bb3dae7ab3d4837e87a86b3f72aa8b6c6e698b57521e2f59c760",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "valueBytes": 676,
+        "bindingBytes": 1660,
+        "bindingMatches": true,
+        "sourceHashMatches": true
+      },
+      {
+        "id": "4a2dddf1-88de-4184-8cf5-ef314dc51ad8",
+        "key": "m01-qa-c1011001-value",
+        "version": "4ef95a0017c98cabdf8085a9df6fd88c162dbc8b712bf2c4241fa2babfbaafee",
+        "resources": {
+          "selected": {
+            "selectionId": "80b0d21f-fdfd-48a7-933e-01f2888415c8",
+            "schemaVersion": "vocabulary-resource-ref-v2",
+            "selectionHash": "45291c9e54dd74fa0056d351daa8cf7b3e3ec9d89e1301d0e0e91b932e0c59e8"
+          },
+          "entryHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "linkRecordHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "selectionBinding": {
+            "bindingId": "adfe747c-fce5-4240-9043-5ce94b2d1a6e",
+            "bindingHash": "79740be64af7fb55000c7ec64ff5b42962186faf05d244ce7e244221226fda02",
+            "schemaVersion": "vocabulary-source-binding-ref-v1"
+          }
+        },
+        "valueBytes": 676,
+        "bindingBytes": 1660,
+        "bindingMatches": true,
+        "sourceHashMatches": true
+      }
+    ]
+  },
+  "replayUnchanged": true,
+  "afterCleanup": [
+    {
+      "table_name": "private.vocabulary_composition_build_positions",
+      "row_count": 14329,
+      "row_hash": "a5c24976a386a40f5f22fa67ccae2f64"
+    },
+    {
+      "table_name": "private.vocabulary_composition_builds",
+      "row_count": 1,
+      "row_hash": "2e942c53b93e45ffccee76e03a09e5e2"
+    },
+    {
+      "table_name": "private.vocabulary_composition_entries",
+      "row_count": 15903,
+      "row_hash": "d5039a5499cefa1f6490e1ea1ad3a94c"
+    },
+    {
+      "table_name": "private.vocabulary_composition_items",
+      "row_count": 31806,
+      "row_hash": "8b2b73f6f555fca29ba044b00540d935"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_approvals",
+      "row_count": 5,
+      "row_hash": "ad9b901ff25cfdc15d9145cc1134568f"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_chunks",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_inputs",
+      "row_count": 5,
+      "row_hash": "c0526e3d3ea8d314daf5ef9cb949171c"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_requests",
+      "row_count": 5,
+      "row_hash": "3dd53de1135a6042542def0c396db55d"
+    },
+    {
+      "table_name": "private.vocabulary_composition_management_results",
+      "row_count": 5,
+      "row_hash": "4fb62401513df0a1aa5a233a84d18e87"
+    },
+    {
+      "table_name": "private.vocabulary_composition_question_plans",
+      "row_count": 1,
+      "row_hash": "555e4a141780dfddebadc266039f5765"
+    },
+    {
+      "table_name": "private.vocabulary_composition_write_context",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_compositions",
+      "row_count": 5,
+      "row_hash": "788b891fd721c3f1ad9a1894a0d6e7af"
+    },
+    {
+      "table_name": "private.vocabulary_library_import_approvals",
+      "row_count": 51,
+      "row_hash": "0015f0862f8c1a081162ddf7b5eaba41"
+    },
+    {
+      "table_name": "private.vocabulary_library_import_chunks",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_library_management_requests",
+      "row_count": 10,
+      "row_hash": "8b42b42f0415f067b1f0213d3d46fc96"
+    },
+    {
+      "table_name": "private.vocabulary_library_management_results",
+      "row_count": 10,
+      "row_hash": "6404de4a141980066e1f87442ed3aeca"
+    },
+    {
+      "table_name": "private.vocabulary_library_requests",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "private.vocabulary_library_row_fingerprints",
+      "row_count": 22324,
+      "row_hash": "313a2a54ff538a89b7dcd91ba505d572"
+    },
+    {
+      "table_name": "private.vocabulary_library_scope_rows",
+      "row_count": 22324,
+      "row_hash": "8caf7f8a0ba2167683227703a5400625"
+    },
+    {
+      "table_name": "private.vocabulary_library_scopes",
+      "row_count": 683,
+      "row_hash": "b0b756874329c2e3d6067c416edf6c9f"
+    },
+    {
+      "table_name": "private.vocabulary_library_template_approvals",
+      "row_count": 10,
+      "row_hash": "4aa403a4bc0ecc4f0ae492827b7fd894"
+    },
+    {
+      "table_name": "private.vocabulary_library_templates",
+      "row_count": 10,
+      "row_hash": "149b41f4361d8e32ef5a482eba140c9f"
+    },
+    {
+      "table_name": "private.vocabulary_library_versions",
+      "row_count": 10,
+      "row_hash": "17951cf443482cb436b3142385f6927e"
+    },
+    {
+      "table_name": "public.admin_profiles",
+      "row_count": 3,
+      "row_hash": "ebe5336054fe3fec13ba116f592b2176"
+    },
+    {
+      "table_name": "public.assignment_questions",
+      "row_count": 5415,
+      "row_hash": "d6c1b3145befd66adf0b3c8539fe2678"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 189,
+      "row_hash": "9ececaaf4553abde649be630116bf44a"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1504,
+      "row_hash": "b50ce6119eb0ae534a41d61d910fba91"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 190,
+      "row_hash": "229e0205734b374cb333581f5921c217"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 101,
+      "row_hash": "1f6d73b54c7fffbbf2b45cede7e4f295"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1466,
+      "row_hash": "e8d1fdde6600ec9d680b73cba62d42f1"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1033,
+      "row_hash": "5f0a9b283b554fc6daa2de009992191b"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 23,
+      "row_hash": "1632cb2910a2189478df2f57562e9b85"
+    },
+    {
+      "table_name": "public.student_sessions",
+      "row_count": 72,
+      "row_hash": "523ad8818c44b81a1661a5b8acb8b93e"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 666,
+      "row_hash": "d24babfede7114070c1b2327db884dc2"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 790,
+      "row_hash": "f075777bf750d32694563813c1fd1594"
+    },
+    {
+      "table_name": "public.students",
+      "row_count": 82,
+      "row_hash": "fae4a1578fe0c74273d397122e182aab"
+    },
+    {
+      "table_name": "public.vocab_dataset_catalog",
+      "row_count": 40,
+      "row_hash": "973bfcac03a8c6e1f21444a829c28199"
+    },
+    {
+      "table_name": "public.vocab_datasets",
+      "row_count": 45,
+      "row_hash": "5b2541da4264a01e032d97268001a3ba"
+    },
+    {
+      "table_name": "public.vocab_entries",
+      "row_count": 39377,
+      "row_hash": "67b739f36ef759987a4184db900c5b44"
+    },
+    {
+      "table_name": "public.vocab_units",
+      "row_count": 1250,
+      "row_hash": "804ac6bc2a0c75278c5c09c623bcee3e"
+    },
+    {
+      "table_name": "word_index.app_exam_use_release",
+      "row_count": 30,
+      "row_hash": "17fc928d0a5646c0e1bc2ea1d8382bde"
+    },
+    {
+      "table_name": "word_index.mock_wordbook_identity_review",
+      "row_count": 0,
+      "row_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "word_index.vocab_entry_link",
+      "row_count": 3017,
+      "row_hash": "07db989a1a9da6e677fe855720c94d00"
+    }
+  ],
+  "existing44AfterCleanupUnchanged": true,
+  "cleanup": {
+    "scopeAvailability": [
+      {
+        "id": "5b32b1c1-434d-46bd-a8f7-b24e4e1ec6e1",
+        "key": "m01-qa-c1011001-binding",
+        "state": "retired"
+      },
+      {
+        "id": "c0fde1df-0b14-4f55-a7d4-b66e7e0f8829",
+        "key": "m01-qa-c1011001-import",
+        "state": "retired"
+      },
+      {
+        "id": "4a2dddf1-88de-4184-8cf5-ef314dc51ad8",
+        "key": "m01-qa-c1011001-value",
+        "state": "retired"
+      }
+    ],
+    "newTableAllocation": [
+      {
+        "bytes": 65536,
+        "table": "private.vocabulary_learning_value_versions"
+      },
+      {
+        "bytes": 49152,
+        "table": "private.vocabulary_learning_value_bindings"
+      },
+      {
+        "bytes": 16384,
+        "table": "private.vocabulary_composition_storage_formats"
+      }
+    ],
+    "studentAssignments": 0,
+    "activeQaTransactions": 0,
+    "activeFixtureDatasets": 0,
+    "assignableFixtureDatasets": 0
+  }
+}
