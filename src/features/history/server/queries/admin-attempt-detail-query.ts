@@ -11,20 +11,16 @@ export async function getAdminAttemptDetail(
   attemptId: string,
   authenticatedAdmin?: AdminContext,
 ): Promise<AdminAttemptDetail | null> {
-  if (!authenticatedAdmin) {
-    await requireAdmin();
-  }
+  const admin = authenticatedAdmin ?? await requireAdmin();
   const supabase = getServiceSupabaseClient();
-  const [{ data, error }, questions] = await Promise.all([
+  const { data, error } = await
     supabase
       .from("quiz_attempts")
       .select(
         "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, students(display_name, deleted_at), assignments(title, deleted_at, quiz_content_mode)",
       )
       .eq("id", attemptId)
-      .maybeSingle(),
-    getAttemptQuestionResults(attemptId),
-  ]);
+      .maybeSingle();
 
   if (error) {
     throw new Error("응시 상세를 불러오지 못했습니다.");
@@ -33,6 +29,7 @@ export async function getAdminAttemptDetail(
     return null;
   }
 
+  const questions = await getAttemptQuestionResults(attemptId, { kind: "admin", adminId: admin.userId });
   const student = Array.isArray(data.students)
     ? data.students[0]
     : data.students;

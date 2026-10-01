@@ -105,6 +105,15 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     await expect(db.query("update private.vocabulary_composition_items set prompt='변경' where version_id=$1", [v.id])).rejects.toThrow("immutable");
     await admin();
   });
+  async function restored<T>(query: string, args: unknown[] = []) {
+    await db.exec("reset role");
+    try { return await scalar<T>(query, args); } finally { await admin(); }
+  }
+  async function startAttempt(learner: string, assignment: string) {
+    await service();
+    try { return await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [learner, assignment]); }
+    finally { await db.exec("reset role; select set_config('request.jwt.claim.role','authenticated',false)"); }
+  }
   async function bankPlan() {
     const units = await scalar<string[]>("select jsonb_agg(id order by sort_index) value from public.vocab_units where dataset_id=$1", [prepared.datasetId]);
     const rows = (await db.query<{ vocab_entry_id: number; question_item_id: string; question_item_sha256: string; direction: string }>(
@@ -133,7 +142,7 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     const stored = await scalar<{ status: string; provenance: string; count: number }>(`select jsonb_build_object('status',a.status,'provenance',a.provenance_status,
       'count',(select count(*) from public.assignment_questions q where q.assignment_id=a.id)) value from public.assignments a where a.id=$1`, [assignment]);
     expect(stored).toEqual({ status: "active", provenance: "composition_verified_v1", count: 6 });
-    const resources = await scalar<unknown[]>("select jsonb_agg(composition_pronunciation_snapshot->'target' order by base_order_index) value from public.assignment_questions where assignment_id=$1", [assignment]);
+    const resources = await restored<unknown[]>("select jsonb_agg(composition_pronunciation_snapshot->'target' order by base_order_index) value from private.assignment_question_contents_v1 where assignment_id=$1", [assignment]);
     const expected = new Map(prepared.entries.map(e => [e.id, e.resources.pronunciation]));
     expect(resources).toEqual(plan.questions.map(q => expected.get(q.vocab_entry_id)));
   });
@@ -194,7 +203,7 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
       await owner(); await db.exec("set constraints all immediate");
       const notebook = saved[0]!.assignmentId;
       expect(await scalar("select jsonb_build_object('kind',source_kind,'points',points_policy_version,'count',question_count) value from public.assignments where id=$1", [notebook])).toEqual({ kind: "notebook", points: "no-points-v1", count: 4 });
-      const snapshots = (await db.query<{ vocab_entry_id: number; notebook_source_snapshot: { wordKey: string; study: Study }; notebook_pronunciation_snapshot: { target: unknown } }>("select vocab_entry_id,notebook_source_snapshot,notebook_pronunciation_snapshot from public.assignment_questions where assignment_id=$1", [notebook])).rows;
+      const snapshots = (await db.query<{ vocab_entry_id: number; notebook_source_snapshot: { wordKey: string; study: Study }; notebook_pronunciation_snapshot: { target: unknown } }>("select vocab_entry_id,notebook_source_snapshot,notebook_pronunciation_snapshot from private.assignment_question_contents_v1 where assignment_id=$1", [notebook])).rows;
       expect(snapshots).toHaveLength(4);
       for (const row of snapshots) {
         expect(row.notebook_source_snapshot.study).toEqual(wrongByKey.get(row.notebook_source_snapshot.wordKey)!.studySource);
@@ -237,7 +246,7 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
       const assignment = await scalar<string>(`select public.create_assignment_with_delivery_v7('가짜 순서 확인',$1::uuid,$2::uuid[],$3::int,100::smallint,300,80::smallint,false,null,$5::public.question_order_mode,null,array['${studentId}']::uuid[],'none',null,$4::jsonb) value`,
         [prepared.datasetId, plan.units, plan.questions.length, JSON.stringify(plan.questions), mode]);
       await db.exec("reset role");
-      const attempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [studentId, assignment]);
+      const attempt = await startAttempt(studentId, assignment);
       const delivered = await scalar<number[]>("select jsonb_agg(vocab_entry_id order by order_index) value from public.quiz_questions where attempt_id=$1", [attempt]);
       const expected = plan.questions.map(q => q.vocab_entry_id);
       if (mode === "random") expect([...delivered].sort((a,b)=>a-b)).toEqual([...expected].sort((a,b)=>a-b));
@@ -312,11 +321,15 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     await admin();
   });
   it("keeps the exact mode, text, outside choices, and voice after a regular settings edit", async () => {
-    const snapshot = async (assignment: string) => (await db.query<{ vocab_entry_id: number; base_order_index: number; direction: string; choice_vocab_entry_ids: number[] }>("select vocab_entry_id,base_order_index,direction,prompt,choices,choice_vocab_entry_ids,correct_choice_index,composition_pronunciation_snapshot from public.assignment_questions where assignment_id=$1 order by base_order_index", [assignment])).rows;
+    const snapshot = async (assignment: string) => (await db.query<{ vocab_entry_id: number; base_order_index: number; direction: string; choice_vocab_entry_ids: number[] }>("select vocab_entry_id,base_order_index,direction,prompt,choices,choice_vocab_entry_ids,correct_choice_index,composition_pronunciation_snapshot from private.assignment_question_contents_v1 where assignment_id=$1 order by base_order_index", [assignment])).rows;
+    await db.exec("reset role");
     const before = await snapshot(schoolAssignment);
+    await admin();
     const plan = before.map(({ vocab_entry_id, base_order_index, direction, choice_vocab_entry_ids }) => ({ vocab_entry_id, base_order_index, direction, choice_vocab_entry_ids }));
     const changed = await scalar<{ replacementAssignmentId: string }>(`select public.replace_student_assignment_v7($1::uuid,'${studentId}',$2::uuid,$3,'regular','none','가짜 수정',$4::uuid,$5::uuid[],4,100::smallint,300,85::smallint,false,null,'fixed',null,null,'none',null,'{}'::smallint[],'dataset','{}'::uuid[],$6::jsonb) value`, [schoolAssignment, randomUUID(), hash("regular-frozen-edit"), schoolPrepared.datasetId, [...new Set(schoolPrepared.entries.map(e => e.unitId))], JSON.stringify(plan)]);
+    await db.exec("reset role");
     expect(await snapshot(changed.replacementAssignmentId)).toEqual(before);
+    await admin();
     expect(await scalar("select quiz_content_mode value from public.assignments where id=$1", [changed.replacementAssignmentId])).toBe("canonical_headword_to_definition");
     schoolAssignment = changed.replacementAssignmentId;
   });
@@ -328,13 +341,13 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     expect(choices).toHaveLength(4);
     const plan = choices.slice(0, count).map((q, index) => ({ ...q, base_order_index: index + 1 }));
     const source = await scalar<string>(`select private.create_exact_review_assignment_with_delivery_v1('가짜 오답 출처',$1::uuid,$2::uuid[],4,100::smallint,300,80::smallint,'fixed',null,array['${studentId}']::uuid[],'none',null,$3::jsonb) value`, [schoolPrepared.datasetId, [...new Set(schoolPrepared.entries.map(e => e.unitId))], JSON.stringify(choices.map((q, i) => ({ ...q, base_order_index: i + 1 })))]);
-    const attempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [studentId, source]);
+    const attempt = await startAttempt(studentId, source);
     const queueIds: string[] = [];
     for (const q of plan) queueIds.push(await scalar<string>(`insert into public.student_vocab_review_queue(student_id,dataset_id,vocab_entry_id,source_attempt_id,source_question_id,reason_level,status,queued_by)
       select $1,$2,$3,$4,qq.id,1,'pending',$5 from public.quiz_questions qq where qq.attempt_id=$4 and qq.vocab_entry_id=$3 returning id value`, [studentId, schoolPrepared.datasetId, q.vocab_entry_id, attempt, adminId]));
     await db.query("update public.assignments set status='closed' where id=$1", [source]);
     const original = await scalar<string>(`select private.create_exact_review_assignment_v5($1::uuid,$2::uuid,$3::uuid[],'가짜 오답',100::smallint,300,80::smallint,'fixed',null,'none',null,$4::jsonb) value`, [studentId, schoolPrepared.datasetId, queueIds, JSON.stringify(plan)]);
-    const snapshot = async (id: string) => (await db.query("select vocab_entry_id,base_order_index,direction,prompt,choices,choice_vocab_entry_ids,correct_choice_index,composition_pronunciation_snapshot from public.assignment_questions where assignment_id=$1 order by base_order_index", [id])).rows;
+    const snapshot = async (id: string) => (await db.query("select vocab_entry_id,base_order_index,direction,prompt,choices,choice_vocab_entry_ids,correct_choice_index,composition_pronunciation_snapshot from private.assignment_question_contents_v1 where assignment_id=$1 order by base_order_index", [id])).rows;
     const before = await snapshot(original);
     const sql = `select public.replace_student_assignment_v7($1::uuid,$2::uuid,$3::uuid,$4::text,'review','preserve','가짜 오답 수정',$5::uuid,'{}'::uuid[],$6::int,100::smallint,300,85::smallint,false,null,'fixed',null,null,'none',null,array[1]::smallint[],'dataset',$7::uuid[],$8::jsonb) value`;
     const altered = structuredClone(plan); [altered[0]!.choice_vocab_entry_ids[0], altered[0]!.choice_vocab_entry_ids[1]] = [altered[0]!.choice_vocab_entry_ids[1]!, altered[0]!.choice_vocab_entry_ids[0]!];

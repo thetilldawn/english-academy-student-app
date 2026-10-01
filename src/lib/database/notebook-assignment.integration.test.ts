@@ -48,10 +48,10 @@ describe.sequential('교사 개인 오답 배정: 최종 SQL',()=>{
      insert into assignment_students(assignment_id,student_id,assigned_by) values('${id(10+book)}','${who}','${admin}');
      insert into quiz_attempts(id,student_id,assignment_id,attempt_number,started_at,deadline_at,current_question_started_at,question_count_snapshot,time_limit_seconds_snapshot,passing_score_snapshot,passing_basis_snapshot)
       values('${run}','${who}','${id(10+book)}',1,clock_timestamp()-interval '1 day',clock_timestamp()+interval '1 day',clock_timestamp()-interval '1 day',4,240,80,'initial');
-     insert into quiz_questions(id,attempt_id,vocab_entry_id,order_index,direction,prompt,choices,correct_choice_index)
+     insert into quiz_questions(id,attempt_id,vocab_entry_id,order_index,direction,prompt,choices,correct_choice_index,assignment_question_id)
       select ('92000000-0000-4000-8000-'||lpad((${book*1000+index*100}+e.source_row)::text,12,'0'))::uuid,'${run}',e.id,e.source_row,'english_to_korean',e.headword,
-        (select jsonb_agg(v.primary_meaning order by v.source_row) from vocab_entries v where v.dataset_id=e.dataset_id),(e.source_row-1)::smallint from vocab_entries e where e.dataset_id='${id(book)}';
-     update quiz_questions q set assignment_question_id=aq.id from assignment_questions aq where aq.assignment_id='${id(10+book)}' and aq.vocab_entry_id=q.vocab_entry_id and q.attempt_id='${run}';
+        (select jsonb_agg(v.primary_meaning order by v.source_row) from vocab_entries v where v.dataset_id=e.dataset_id),(e.source_row-1)::smallint,aq.id
+        from vocab_entries e left join assignment_questions aq on aq.assignment_id='${id(10+book)}' and aq.vocab_entry_id=e.id where e.dataset_id='${id(book)}';
      insert into student_vocab_wrong_events(student_id,dataset_id,vocab_entry_id,quiz_attempt_id,quiz_question_id,wrong_stage,wrong_at)
       select '${who}','${id(book)}',vocab_entry_id,attempt_id,id,'initial',clock_timestamp() from quiz_questions where attempt_id='${run}' and order_index between ${index?3:1} and ${index?4:2};
     `);
@@ -127,7 +127,7 @@ describe.sequential('교사 개인 오답 배정: 최종 SQL',()=>{
   const before=await owner('select * from student_point_events');
   // Local test owner invokes the same normal start RPC; service-role grants in
   // Supabase are not emulated by the minimal PGlite bootstrap.
-  const [started]=await owner<{run:string}>('select create_quiz_attempt_from_bank($1,$2) run',[student,saved.assignmentId]);
+  const started={run:await rpc<string>('create_quiz_attempt_from_bank',[student,saved.assignmentId])};
   const [run]=await owner('select point_rule_version_snapshot from quiz_attempts where id=$1',[started.run]);expect(run.point_rule_version_snapshot).toBe('no-points-v1');
   const questions=await owner<{id:string;correct_choice_index:number}>('select id,correct_choice_index from quiz_questions where attempt_id=$1 order by order_index',[started.run]);expect(questions).toHaveLength(4);
   for(const [n,q] of questions.entries()){
@@ -152,7 +152,7 @@ describe.sequential('교사 개인 오답 배정: 최종 SQL',()=>{
   // isolated database while still checking the new view's service-role grant.
   await owner('alter role service_role bypassrls');
   expect(await rpc('get_student_wrong_word_notebook_page_v1',[student])).toBeTruthy();
-  const [started]=await owner<{run:string}>('select create_quiz_attempt_from_bank($1,$2) run',[student,saved.assignmentId]);
+  const started={run:await rpc<string>('create_quiz_attempt_from_bank',[student,saved.assignmentId])};
   const questions=await owner<{id:string;correct_choice_index:number;dictionary_id:string|null}>('select q.id,q.correct_choice_index,i.dictionary_id from quiz_questions q join private.assignment_question_word_identity_v1 i on i.assignment_question_id=q.assignment_question_id where q.attempt_id=$1 order by q.order_index',[started.run]);
   for(const q of questions){await owner("update quiz_attempts set current_question_started_at=clock_timestamp()-interval '20 seconds' where id=$1",[started.run]);await owner('select answer_quiz_question_v4($1,$2,$3,$4,$5::smallint,false)',[student,started.run,q.id,'initial',q.dictionary_id==='word:notebook-fake-1'?(q.correct_choice_index+1)%4:q.correct_choice_index]);}
   const [event]=await owner('select canonical_dictionary_id_snapshot,exam_use_release_id_snapshot,occurrence_id_snapshot from student_vocab_wrong_events where quiz_attempt_id=$1',[started.run]);

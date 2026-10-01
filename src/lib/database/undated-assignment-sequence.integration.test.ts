@@ -118,8 +118,10 @@ describe.sequential("무날짜 계획부터 실제 저장·첫 시험·다음 �
     const assigned = (await db.query<{ vocab_entry_id: number }>("select vocab_entry_id from public.assignment_questions where assignment_id=any($1)", [ids])).rows;
     expect(assigned).toHaveLength(12); expect(new Set(assigned.map(r => r.vocab_entry_id)).size).toBe(12);
     expect((await Promise.all(ids.map(release))).map(r => r.state)).toEqual(["unrestricted", "waiting_initial", "waiting_initial"]);
+    await db.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',true)");
     await reject(() => db.query("select public.create_quiz_attempt_from_bank($1,$2)", [id(2), ids[1]]), /not_open|not_available|locked|release/);
     const attempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [id(2), ids[0]]);
+    await db.exec("reset role; select set_config('request.jwt.claim.role','authenticated',true)");
     const questions = (await db.query<{ id: string; correct_choice_index: number }>("select id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index", [attempt])).rows;
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
@@ -129,7 +131,9 @@ describe.sequential("무날짜 계획부터 실제 저장·첫 시험·다음 �
     const first = await scalar<{ phase: string; initial_score: number; initial_completed_at: string }>("select to_jsonb(a) value from public.quiz_attempts a where id=$1", [attempt]);
     expect(first).toMatchObject({ phase: "review", initial_score: 50 }); expect(first.initial_completed_at).toBeTruthy();
     expect((await Promise.all(ids.map(release))).map(r => r.state)).toEqual(["unrestricted", "open", "waiting_initial"]);
+    await db.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',true)");
     const next = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [id(2), ids[1]]);
+    await db.exec("reset role; select set_config('request.jwt.claim.role','authenticated',true)");
     const nextSources = (await db.query<{ assignment_id: string }>("select aq.assignment_id from public.quiz_questions q join public.assignment_questions aq on aq.id=q.assignment_question_id where q.attempt_id=$1", [next])).rows;
     expect(nextSources).toHaveLength(4); expect(nextSources.every(r => r.assignment_id === ids[1])).toBe(true);
     expect(await createBulkAssignments(input, admin)).toEqual(result);

@@ -107,6 +107,59 @@ describe.sequential("별도 자율연습과 정규 자료 보존",()=>{
     await fails(()=>rpc("begin_prepared_practice_v1",[student,prepared]),"practice_source_changed");
     expect((await owner("select count(*)::integer n from private.student_word_practice_runs")).rows[0].n).toBe(0);
   });
+  it("공용 참조 준비를 정확히 복원하고 새 요청의 같은 연습도 본문 한 벌을 쓴다",async()=>{
+    const raw=await source(),config=settings(),input=questions(raw,config);
+    const prepared=await rpc<string>("prepare_word_practice_start_v1",[student,id(710),hash,selection,config,raw.sourceHash,input]);
+    const saved=(await owner("select plan from private.quiz_attempt_preparations where id=$1",[prepared])).rows[0].plan as {contentStorageVersion:number;questions:Record<string,unknown>[]};
+    expect(saved.contentStorageVersion).toBe(2);
+    expect(saved.questions.every(q=>Object.keys(q).sort().join(',')==='content_version_id,correctChoiceIndex,direction,wordKey')).toBe(true);
+    const read=await rpc<{plan:{questions:Record<string,unknown>[]}}>("get_quiz_preparation_v1",[student,prepared]);
+    const displayFields=['wordKey','direction','correctChoiceIndex','prompt','choices','pronunciation','choicePronunciations','choiceSources'];
+    expect(read.plan.questions).toEqual(input.map(q=>Object.fromEntries(displayFields.map(key=>[key,q[key as keyof typeof q]]))));
+    const first=await rpc<QuizAttemptResponse>("begin_prepared_practice_v1",[student,prepared]);
+    const second=await start(config,id(711),raw);
+    const physical=async(run:string)=>(await owner("select content_version_id,body from private.student_word_practice_questions where run_id=$1 order by ordinal",[run])).rows;
+    const a=await physical(first.attempt.id),b=await physical(second.attempt.id);
+    expect(a).toEqual(b);
+    expect(a.map(q=>q.content_version_id)).toEqual(saved.questions.map(q=>q.content_version_id));
+    expect(a.every(q=>Object.keys(q.body as object).sort().join(',')==='correctChoiceIndex,direction,wordKey')).toBe(true);
+    expect((await owner("select count(*)::int n from private.vocabulary_question_content_versions where kind='practice'")).rows[0].n).toBe(4);
+    for(const column of ['body','content_version_id','ordinal','run_id']){
+      const replacement={body:"jsonb_set(body,'{wordKey}','\"changed\"')",content_version_id:"gen_random_uuid()",ordinal:"ordinal+10",run_id:`'${second.attempt.id}'::uuid`}[column];
+      await fails(()=>owner(`update private.student_word_practice_questions set ${column}=${replacement} where run_id=$1`,[first.attempt.id]),'practice_content_reference_immutable');
+    }
+    await fails(()=>owner("update private.quiz_attempt_preparations set plan='{}' where id=$1",[prepared]),'question_preparation_immutable');
+  });
+  it("깨진 연습 참조와 새 형식의 참조 누락은 조회와 시작 모두 원자적으로 거부한다",async()=>{
+    const raw=await source(),config=settings();
+    const prepared=await rpc<string>("prepare_word_practice_start_v1",[student,id(720),hash,selection,config,raw.sourceHash,questions(raw,config)]);
+    const plan=(await owner("select plan from private.quiz_attempt_preparations where id=$1",[prepared])).rows[0].plan as {questions:Record<string,unknown>[]};
+    const cases:Array<[string,Record<string,unknown>]>=[];
+    for(const reference of [null,'','bad-uuid',id(999)])cases.push([reference===id(999)?'practice_content_binding_mismatch':reference==='bad-uuid'?'invalid input syntax':'practice_content_reference_invalid',{...plan.questions[0],content_version_id:reference}]);
+    cases.push(['practice_content_binding_mismatch',{...plan.questions[0],correctChoiceIndex:9}]);
+    cases.push(['practice_content_body_mismatch',{...plan.questions[0],prompt:'tampered'}]);
+    const missing={...plan.questions[0]};delete missing.content_version_id;
+    cases.push(['practice_content_reference_invalid',missing]);
+    const privateState=async()=>(await owner(`select jsonb_build_object(
+      'runs',(select jsonb_agg(to_jsonb(r) order by id) from private.student_word_practice_runs r),
+      'questions',(select jsonb_agg(to_jsonb(q) order by id) from private.student_word_practice_questions q),
+      'preparations',(select jsonb_agg(to_jsonb(p) order by id) from private.quiz_attempt_preparations p),
+      'content',(select jsonb_agg(to_jsonb(c) order by id) from private.vocabulary_question_content_versions c)) state`)).rows;
+    for(const [index,[error,first]] of cases.entries()){
+      const invalid=(await owner(`insert into private.quiz_attempt_preparations(student_id,kind,request_key,request_hash,fingerprint,plan)
+        select student_id,kind,$2::uuid::text,request_hash,fingerprint,
+          jsonb_set(jsonb_set(plan,'{requestKey}',to_jsonb($2::uuid)),'{questions}',$3::jsonb)
+        from private.quiz_attempt_preparations where id=$1 returning id`,[prepared,id(730+index),JSON.stringify([first,...plan.questions.slice(1)])])).rows[0].id;
+      const before=await privateState();
+      await fails(()=>rpc('get_quiz_preparation_v1',[student,invalid]),error);
+      await fails(()=>rpc('begin_prepared_practice_v1',[student,invalid]),error);
+      expect(await privateState()).toEqual(before);
+    }
+    for(const role of ['anon','authenticated','service_role'])for(const sql of [
+      'select * from private.practice_question_contents_v2',
+      "select private.resolve_practice_questions_v2('[]')",
+    ])await fails(async()=>{await db.exec(`reset role;set local role ${role}`);return db.query(sql);},'permission denied');
+  });
   it("미응답 정답과 방향별 정답 추측 음원/원천을 응답에서 제거한다",async()=>{
     const run=await start();
     for(const q of run.attempt.questions){expect(q.revealedCorrectChoiceIndex).toBeNull();expect(q).not.toHaveProperty("wordKey");expect(q).not.toHaveProperty("choiceSources");

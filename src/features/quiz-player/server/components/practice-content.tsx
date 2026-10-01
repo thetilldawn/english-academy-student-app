@@ -4,12 +4,13 @@ import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import { ButtonLink } from "@/design-system/primitives/button/button";
-import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
+import { PanelLoadFailure, RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
+import { studentAppText } from "@/content/ko/student-app";
 import { getPractice, getPracticeHistory } from "../practice-service";
 import { PracticeHistory } from "../../client/practice-history";
 import { PracticePlayer } from "../../client/practice-player";
 import { PreparedQuizPlayer } from "../../ui/prepared-quiz-player";
-import { getQuizPreparation } from "../attempt-preparation";
+import { getQuizPreparation, QuizPreparationChangedError } from "../attempt-preparation";
 import { quizResultIsConfirmed } from "../../domain/quiz-session";
 import styles from "../../ui/practice.module.css";
 
@@ -26,7 +27,12 @@ async function Content({ params, result }: { params?: Promise<{ id: string }>; r
   if (!z.uuid().safeParse(id).success) notFound();
   const initial = await getPractice(session.studentId, id);
   if (!initial) {
-    const prepared = !result ? await getQuizPreparation(session.studentId,id) : null;
+    let prepared: Awaited<ReturnType<typeof getQuizPreparation>>;
+    try { prepared = !result ? await getQuizPreparation(session.studentId,id) : null; }
+    catch (error) {
+      if (!(error instanceof QuizPreparationChangedError)) throw error;
+      return <main id="main-content" className={styles.page}><PanelLoadFailure message={studentAppText.attempt.preparationChanged} retryHref="/student/wordbook" retryLabel={studentAppText.attempt.backToWordbook} /></main>;
+    }
     if (!prepared || prepared.kind !== "practice") notFound();
     if ("resumeId" in prepared) redirect(`/student/practice/${prepared.resumeId}`);
     return <PreparedQuizPlayer key={prepared.id} preparation={prepared} />;

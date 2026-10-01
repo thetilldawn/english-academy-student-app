@@ -423,7 +423,7 @@ describe.sequential("exam-use dictionary projection", () => {
           from public.assignment_questions as question
           where question.assignment_id = assignment.id) as question_count,
         (select count(*)::integer
-          from public.assignment_question_exam_use_snapshot as snapshot
+          from private.exam_use_question_contents_v1 as snapshot
           where snapshot.assignment_id = assignment.id
             and snapshot.provenance_status = 'reviewed_for_preview_v1'
             and snapshot.release_id = '${releaseId}'
@@ -451,12 +451,14 @@ describe.sequential("exam-use dictionary projection", () => {
       release_snapshot_count: 1,
     });
 
+    await database.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',false)");
     const attempt = await database.query<{ id: string }>(`
       select public.create_quiz_attempt_from_bank(
         '${ids.student}',
         '${assignmentId}'
       ) as id;
     `);
+    await database.exec("reset role; select set_config('request.jwt.claim.role','authenticated',false)");
     attemptId = attempt.rows[0]!.id;
     const attemptState = await database.query<{
       status: string;
@@ -474,7 +476,7 @@ describe.sequential("exam-use dictionary projection", () => {
           from public.quiz_questions as question
           join public.assignment_questions as bank
             on bank.id = question.assignment_question_id
-          join public.assignment_question_exam_use_snapshot as snapshot
+          join private.exam_use_question_contents_v1 as snapshot
             on snapshot.assignment_question_id = bank.id
           where question.attempt_id = attempt.id
             and bank.provenance_status = 'legacy_backfill'
@@ -1173,12 +1175,14 @@ describe.sequential("exam-use dictionary projection", () => {
       replacementState.rows[0]!.source_question_hash,
     );
 
+    await database.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',false)");
     const attempt = await database.query<{ attempt_id: string }>(`
       select public.create_quiz_attempt_from_bank(
         '${ids.student}',
         '${oneAssignmentId}'
       ) as attempt_id;
     `);
+    await database.exec("reset role; select set_config('request.jwt.claim.role','authenticated',false)");
     const attemptId = attempt.rows[0]!.attempt_id;
     const attemptState = await database.query<{
       phase: string;
@@ -1940,11 +1944,13 @@ describe.sequential("exam-use dictionary projection", () => {
     expect(created.rows[0]!.result[1]!.assignment_id).toBeNull();
     const firstAssignmentId = created.rows[0]!.result[0]!.assignment_id!;
 
+    await database.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',false)");
     const attempt = await database.query<{ id: string }>(`
       select public.create_quiz_attempt_from_bank(
         '${ids.student}', '${firstAssignmentId}'
       ) as id;
     `);
+    await database.exec("reset role; select set_config('request.jwt.claim.role','authenticated',false)");
     const quizQuestions = await database.query<{
       id: string;
       correct_choice_index: number;
@@ -2125,11 +2131,13 @@ describe.sequential("exam-use dictionary projection", () => {
           available_until = clock_timestamp() + interval '1 hour'
       where id = '${secondAssignmentId}';
     `);
+    await database.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',false)");
     const expiredAttempt = await database.query<{ id: string }>(`
       select public.create_quiz_attempt_from_bank(
         '${ids.student}', '${secondAssignmentId}'
       ) as id;
     `);
+    await database.exec("reset role; select set_config('request.jwt.claim.role','authenticated',false)");
     await database.exec(`
       update public.quiz_attempts
       set started_at = clock_timestamp() - interval '2 hours',

@@ -86,7 +86,7 @@ describe("배정 단어장 서버 조회", () => {
     expect(result?.words?.[0]?.definition).toBe(mode.includes("definition") ? word.definition : null);
     expect(result?.words?.[0]?.example).toBe(mode.includes("example") ? "She collected the letters." : null);
     if (mode.includes("example")) {
-      expect(mocks.prompts).toHaveBeenCalledExactlyOnceWith(id, [7]);
+      expect(mocks.prompts).toHaveBeenCalledExactlyOnceWith(student.studentId, id, [7]);
       expect(mocks.rpc.mock.invocationCallOrder[0]).toBeLessThan(mocks.prompts.mock.invocationCallOrder[0]!);
       expect(result?.words?.[0]?.exampleRanges).toEqual([{ start: 4, end: 13 }]);
     } else expect(mocks.prompts).not.toHaveBeenCalled();

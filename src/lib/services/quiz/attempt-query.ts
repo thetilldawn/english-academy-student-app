@@ -1,4 +1,5 @@
 import "server-only";
+import { getAttemptQuestionContents } from "@/features/quiz-player/public-server-queries";
 
 import type { TimingMode } from "@/lib/admin/assignment-settings";
 import { normalizeQuizContentMode, type QuizContentMode } from "@/lib/quiz/question-content-mode";
@@ -83,7 +84,7 @@ export async function getStudentAttempt(
       supabase
         .from("quiz_questions")
         .select(
-          "id, vocab_entry_id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, composition_pronunciation_snapshot, notebook_pronunciation_snapshot, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(release_id, occurrence_id, dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
+          "id, vocab_entry_id, order_index, direction, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out",
         )
         .eq("attempt_id", attemptId)
         .order("order_index"),
@@ -99,7 +100,12 @@ export async function getStudentAttempt(
   const questionData = questionResult.data;
   const quizContentMode = normalizeQuizContentMode(assignmentData.quiz_content_mode);
 
-  const rows = (questionData ?? []) as QuestionRow[];
+  const stored = (questionData ?? []) as Omit<QuestionRow, "prompt" | "choices" | "assignment_question">[];
+  const contents = await getAttemptQuestionContents({ kind: "student", studentId }, attemptId, stored.map(row => row.id));
+  const rows: QuestionRow[] = stored.map(row => {
+    const body = contents.get(row.id)!;
+    return { ...row, prompt: body.prompt, choices: body.choices, assignment_question: body.assignment_question };
+  });
   const initialCurrent = rows.find(
     (question) => question.initial_choice_index === null,
   );

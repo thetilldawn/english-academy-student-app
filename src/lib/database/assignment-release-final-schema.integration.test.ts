@@ -128,6 +128,7 @@ describe.sequential("APP0704 첫 시험·자체 예약·보류 전체 스키마"
     [id(request),id(1),id(from),id(2),id(to)]);
   }
   async function protectedFingerprint(database: PGlite) {
+    expect((await database.query<{n:number}>("select count(*)::int n from quiz_questions q where to_jsonb(q)->>'content_version_id' is not null")).rows[0].n).toBe(0);
     // APP13 adds default-valued policy columns; preserve every original field
     // and separately assert the exact legacy defaults before excluding only the
     // new keys from a before/after-migration fingerprint.
@@ -153,7 +154,7 @@ describe.sequential("APP0704 첫 시험·자체 예약·보류 전체 스키마"
       (select jsonb_agg(to_jsonb(a)-array['reviewed_exam_release_id_snapshot','reviewed_exam_file_sha256_snapshot','composition_version_id_snapshot','composition_content_sha256_snapshot','source_kind','points_policy_version'] order by id) from assignments a) assignments,
       (select jsonb_agg(to_jsonb(r) order by assignment_id,student_id) from assignment_students r) recipients,
       (select jsonb_agg(to_jsonb(a) order by id) from quiz_attempts a) attempts,
-      (select jsonb_agg(to_jsonb(q) order by id) from quiz_questions q) questions,
+      (select jsonb_agg(to_jsonb(q)-'content_version_id' order by id) from quiz_questions q) questions,
       (select jsonb_agg(to_jsonb(r) order by idempotency_key) from private.bulk_vocab_series_requests r) receipts`);
     return createHash("sha256").update(JSON.stringify(snapshot.rows)).digest("hex");
   }

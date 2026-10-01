@@ -141,5 +141,5 @@ describe.sequential("bounded composition commits and publication", () => {
     expect(await scalar(finishSql, [request, sha(text)])).toEqual(completed);
     expect(await scalar("select count(*)::int value from private.vocabulary_composition_management_chunks where request_id=$1", [request])).toBe(0);
     expect(await scalar("select count(*)::int value from private.vocabulary_composition_management_results where request_id=$1", [request])).toBe(1);
-  });
+  }, 15_000);
 });

@@ -77,7 +77,7 @@ describe("DAY 문제은행 응시 계약", () => {
       'assignment.range_basis === "units"',
     );
     expect(attemptQuery).toContain(
-      "assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey",
+      'getAttemptQuestionContents({ kind: "student", studentId }, attemptId,',
     );
   });
 

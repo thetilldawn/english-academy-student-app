@@ -140,15 +140,18 @@ describe.sequential("reviewed choice safety across original, composed and delive
       composition_bank: { mode: "book_meaning_choice", version_id: prep.versionId, content_sha256: prep.contentHash, question_item_id: q.question_item_id, question_item_sha256: q.question_item_sha256 } }));
     expect(questions).toHaveLength(8);
     const assignment = await scalar<string>(`select public.create_assignment_with_delivery_v7('가짜 검토 시험',$1::uuid,$2::uuid[],8,100::smallint,300,80::smallint,false,null,'fixed',null,array['${studentId}']::uuid[],'none',null,$3::jsonb) value`, [prep.datasetId, units, JSON.stringify(questions)]);
-    await owner();
+    await service();
     const attempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [studentId, assignment]);
-    expect(await scalar("select choices value from public.quiz_questions where attempt_id=$1 and vocab_entry_id=$2", [attempt, prep.entries[0]!.id])).not.toContain("가짜 뜻 2");
-    for (const change of ["prompt='변조'", "correct_choice_index=(correct_choice_index+1)%4", "choices=jsonb_set(choices,array[((correct_choice_index+1)%4)::text],'\"가짜 뜻 2\"'::jsonb)"]) {
-      await expect(db.query(`update public.assignment_questions set ${change} where assignment_id=$1 and vocab_entry_id=$2`, [assignment, prep.entries[0]!.id])).rejects.toThrow(/reviewed_choice_(prompt_mismatch|answer_mismatch|ambiguous)/);
+    await owner();
+    const delivered=await scalar<string[]>("select choices value from private.quiz_question_contents_v1 where attempt_id=$1 and vocab_entry_id=$2", [attempt, prep.entries[0]!.id]);
+    expect(delivered).toHaveLength(4);expect(delivered).not.toContain("가짜 뜻 2");
+    for (const change of ["prompt='변조'", "correct_choice_index=(correct_choice_index+1)%4", "choices=jsonb_set((select r.choices from private.assignment_question_contents_v1 r where r.id=target.id),array[((correct_choice_index+1)%4)::text],'\"가짜 뜻 2\"'::jsonb)"]) {
+      await expect(db.query(`update public.assignment_questions target set ${change} where assignment_id=$1 and vocab_entry_id=$2`, [assignment, prep.entries[0]!.id])).rejects.toThrow(/reviewed_choice_(prompt_mismatch|answer_mismatch|ambiguous)|question_content_(binding|body)_mismatch|question_content_reference_immutable/);
     }
     const exact = plan.filter(q => q.direction === "english_to_korean").map((q, i) => ({ vocab_entry_id: q.vocabEntryId, base_order_index: i + 1, direction: q.direction, choice_vocab_entry_ids: q.choiceVocabEntryIds }));
     const review = await scalar<string>(`select private.create_exact_review_assignment_with_delivery_v1('가짜 오답 재출제',$1::uuid,$2::uuid[],8,100::smallint,300,80::smallint,'fixed',null,array['${studentId}']::uuid[],'none',null,$3::jsonb) value`, [prep.datasetId, units, JSON.stringify(exact)]);
-    expect(await scalar("select choices value from public.assignment_questions where assignment_id=$1 and vocab_entry_id=$2", [review, prep.entries[0]!.id])).not.toContain("가짜 뜻 2");
+    const reviewed=await scalar<string[]>("select choices value from private.assignment_question_contents_v1 where assignment_id=$1 and vocab_entry_id=$2", [review, prep.entries[0]!.id]);
+    expect(reviewed).toHaveLength(4);expect(reviewed).not.toContain("가짜 뜻 2");
     expect(await sourceSnapshot()).toEqual(original);
   });
 });

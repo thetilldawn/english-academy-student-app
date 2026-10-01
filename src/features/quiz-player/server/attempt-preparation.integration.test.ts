@@ -64,12 +64,17 @@ describe.sequential("preparation before the first exam clock",()=>{
     await owner("update assignments set question_time_limit_seconds=$1 where id=$2",[seconds,assignment]);
     const p=await prepare();
     await owner("update private.quiz_attempt_preparations set created_at=clock_timestamp()-interval '5 minutes' where id=$1",[p]);
-    const plan=(await owner("select plan from private.quiz_attempt_preparations where id=$1",[p])).rows[0].plan as Array<{id:string;prompt:string}>;
+    const stored=(await owner("select plan from private.quiz_attempt_preparations where id=$1",[p])).rows[0].plan as {contentStorageVersion:number;questions:Array<{id:string;content_version_id:string}>};
+    expect(stored.contentStorageVersion).toBe(2);
+    expect(stored.questions).toHaveLength(4);
+    expect(JSON.stringify(stored)).not.toMatch(/\"prompt\"|\"choices\"/);
+    const plan=(await rpc<{plan:Array<{id:string;prompt:string}>}>("get_quiz_preparation_v1",[student,p])).plan;
     const before=Date.now();expect(await begin(p)).toBe(p);
     const state=(await owner("select * from quiz_attempts where id=$1",[p])).rows[0];
     expect(Date.parse(String(state.started_at))).toBeGreaterThanOrEqual(before-1000);
-    const rows=(await owner("select id,prompt from quiz_questions where attempt_id=$1 order by order_index",[p])).rows;
+    const rows=(await owner("select id,prompt from private.quiz_question_contents_v1 where attempt_id=$1 order by order_index",[p])).rows;
     expect(rows).toEqual(plan.map(q=>({id:q.id,prompt:q.prompt})));
+    expect((await owner("select count(*)::int n from public.quiz_questions where attempt_id=$1 and content_version_id is not null and prompt is null and choices is null",[p])).rows[0].n).toBe(4);
     expect(await begin(p)).toBe(p);
     expect((await owner("select started_at,current_question_started_at,deadline_at from quiz_attempts where id=$1",[p])).rows[0])
       .toEqual({started_at:state.started_at,current_question_started_at:state.current_question_started_at,deadline_at:state.deadline_at});
@@ -105,7 +110,7 @@ describe.sequential("preparation before the first exam clock",()=>{
       from vocab_entries where dataset_id=$2`,[assignment,id(4)]);
     const p=await rpc<string>("prepare_quiz_attempt_v1",[student,assignment]);
     await begin(p);
-    expect((await owner("select prompt from quiz_questions where attempt_id=$1 order by order_index",[p])).rows.map(q=>q.prompt))
+    expect((await owner("select prompt from private.quiz_question_contents_v1 where attempt_id=$1 order by order_index",[p])).rows.map(q=>q.prompt))
       .toEqual(["fake4","fake3","fake2","fake1"]);
   });
   it("does not expose preparatory tables or RPCs to browser roles, and rejects another student at begin",async()=>{

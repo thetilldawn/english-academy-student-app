@@ -125,6 +125,9 @@ export const studentAppText = {
   // 학생 시험 응시 화면 > 문제 도움말
   attempt: {
     metadataTitle: "단어 시험",
+    preparationChanged: "시험 준비가 만료되었거나 자료가 바뀌었습니다. 목록에서 다시 시작해 주세요.",
+    backToList: "시험 목록으로",
+    backToWordbook: "내 단어장으로",
     keyboardShortcutHelp: "키보드 1~4로도 빠르게 선택할 수 있습니다.",
     keyboardShortcutAria: "답 선택 단축키 도움말",
     timeWarning: "남은 시간이 30초입니다.",

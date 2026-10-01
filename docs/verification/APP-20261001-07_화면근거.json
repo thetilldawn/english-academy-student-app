@@ -1,0 +1,927 @@
+{
+  "environment": "local-fake-only",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "contentWidth": 375
+  },
+  "quizzes": [
+    {
+      "id": "00000000-0000-4000-8000-000000000207",
+      "mode": "book_meaning_choice",
+      "phase": "initial",
+      "answered": 1,
+      "resumed": 1,
+      "expirations": 0,
+      "startedAt": "2026-10-01T16:45:23.225Z",
+      "currentQuestionId": "00000000-0000-4000-8000-000000002071"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000212",
+      "mode": "book_meaning_choice",
+      "phase": "initial",
+      "answered": 0,
+      "resumed": 0,
+      "expirations": 0,
+      "startedAt": null,
+      "currentQuestionId": "00000000-0000-4000-8000-000000002120"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000210",
+      "mode": "book_meaning_choice",
+      "phase": "initial",
+      "answered": 1,
+      "resumed": 1,
+      "expirations": 0,
+      "startedAt": "2026-10-01T16:55:31.606Z",
+      "currentQuestionId": "00000000-0000-4000-8000-000000210001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000203",
+      "mode": "canonical_definition_to_headword",
+      "phase": "initial",
+      "answered": 0,
+      "resumed": 0,
+      "expirations": 0,
+      "startedAt": "2026-10-01T16:56:10.34Z",
+      "currentQuestionId": "00000000-0000-4000-8000-000000002030"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000206",
+      "mode": "canonical_example_to_headword",
+      "phase": "retry",
+      "answered": 0,
+      "resumed": 0,
+      "expirations": 0,
+      "startedAt": "2026-10-01T16:56:18.506Z",
+      "currentQuestionId": "00000000-0000-4000-8000-000000002060"
+    }
+  ],
+  "http": [
+    {
+      "path": "/student",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/webpack-2e3f684b311e3179.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/6030-1df192c91aeccda9.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/393-fec8bcf009251566.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/5405-852c7ddfafa6dc76.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/app/student/(protected)/layout-d1378a77e74427b3.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/app/student/(protected)/page-535d469baa74d1e1.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000207",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/2069-fc2d231554708ae0.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/app/student/(protected)/attempt/%5Bid%5D/page-4b356020059286ec.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/ready",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/answers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/feedback",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000207",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/icon.svg",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000212",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/student",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/student",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/student",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000210",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000210/ready",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000210",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000210/feedback",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000210/answers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000203",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000203",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000206",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000206",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "data": [
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873122804
+    },
+    {
+      "path": "/rest/v1/rpc/get_quiz_preparation_v1",
+      "method": "POST",
+      "category": "quiz-preparation",
+      "status": 200,
+      "at": 1790873122810
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873122816
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873122830
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873122831
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873122832
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873122833
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873122833
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873122833
+    },
+    {
+      "path": "/rest/v1/rpc/begin_prepared_quiz_v1",
+      "method": "POST",
+      "category": "quiz-ready",
+      "status": 200,
+      "at": 1790873123225
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873123240
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873123256
+    },
+    {
+      "path": "/rest/v1/rpc/answer_quiz_question_v4",
+      "method": "POST",
+      "category": "quiz-answer",
+      "status": 200,
+      "at": 1790873147129
+    },
+    {
+      "path": "/rest/v1/rpc/resume_quiz_after_feedback_v2",
+      "method": "POST",
+      "category": "quiz-resume",
+      "status": 200,
+      "at": 1790873147144
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155588
+    },
+    {
+      "path": "/rest/v1/assignments",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155595
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155595
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873155609
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155616
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155616
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155616
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155617
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155618
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155618
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155983
+    },
+    {
+      "path": "/rest/v1/assignments",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155999
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873155999
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873156014
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873156030
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873156030
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873156030
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873156031
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873156031
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873156031
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873253388
+    },
+    {
+      "path": "/rest/v1/rpc/get_quiz_preparation_v1",
+      "method": "POST",
+      "category": "quiz-preparation",
+      "status": 200,
+      "at": 1790873253394
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-changed",
+      "status": 409,
+      "at": 1790873253402
+    },
+    {
+      "path": "/rest/v1/rpc/get_quiz_preparation_v1",
+      "method": "POST",
+      "category": "quiz-preparation-expired",
+      "status": 200,
+      "at": 1790873253417
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731171
+    },
+    {
+      "path": "/rest/v1/rpc/get_quiz_preparation_v1",
+      "method": "POST",
+      "category": "quiz-preparation",
+      "status": 200,
+      "at": 1790873731176
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873731189
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731204
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731205
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731205
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731206
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731206
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731206
+    },
+    {
+      "path": "/rest/v1/rpc/begin_prepared_quiz_v1",
+      "method": "POST",
+      "category": "quiz-ready",
+      "status": 200,
+      "at": 1790873731606
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731621
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873731637
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739266
+    },
+    {
+      "path": "/rest/v1/assignments",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739267
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739268
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873739279
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739288
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739289
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739289
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739289
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739290
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873739290
+    },
+    {
+      "path": "/rest/v1/rpc/resume_quiz_after_feedback_v2",
+      "method": "POST",
+      "category": "quiz-resume",
+      "status": 200,
+      "at": 1790873739340
+    },
+    {
+      "path": "/rest/v1/rpc/answer_quiz_question_v4",
+      "method": "POST",
+      "category": "quiz-answer",
+      "status": 200,
+      "at": 1790873741259
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770340
+    },
+    {
+      "path": "/rest/v1/assignments",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770345
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770345
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873770348
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770354
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770354
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770355
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770356
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770356
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770356
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770503
+    },
+    {
+      "path": "/rest/v1/assignments",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770505
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770506
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873770519
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770524
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770524
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770524
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770525
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770525
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873770525
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778507
+    },
+    {
+      "path": "/rest/v1/assignments",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778513
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778513
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873778520
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778525
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778526
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778526
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778527
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778527
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778527
+    },
+    {
+      "path": "/rest/v1/quiz_attempts",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778611
+    },
+    {
+      "path": "/rest/v1/assignments",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778627
+    },
+    {
+      "path": "/rest/v1/quiz_questions",
+      "method": "GET",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778627
+    },
+    {
+      "path": "/rest/v1/rpc/read_question_contents_v1",
+      "method": "POST",
+      "category": "quiz-content-read",
+      "status": 200,
+      "at": 1790873778642
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778646
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778646
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778647
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778647
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778647
+    },
+    {
+      "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+      "method": "POST",
+      "category": "quiz-read",
+      "status": 200,
+      "at": 1790873778647
+    }
+  ],
+  "assumptions": [
+    "추가 발음 조회의 가짜 서버 미지원 경고는 실제 서비스 장애로 해석하지 않음",
+    "실제 학생·원격 앱·실기기·음원 품질·최종 상세 화면 확인과 구별"
+  ]
+}

@@ -1,4 +1,5 @@
 import "server-only";
+import { getAdminWrongHistoryQuestionContents } from "@/features/quiz-player/public-server-queries";
 
 import {
   isTrustedQuestionSnapshot,
@@ -123,9 +124,7 @@ export async function getStudentWrongWordHistory(
   studentId: string,
   authenticatedAdmin?: AdminContext,
 ): Promise<StudentWrongWordHistory | null> {
-  if (!authenticatedAdmin) {
-    await requireAdmin();
-  }
+  const admin = authenticatedAdmin ?? await requireAdmin();
   const supabase = getServiceSupabaseClient();
   const authenticatedSupabase = await createServerSupabaseClient();
   const { data: student, error: studentError } = await supabase
@@ -210,11 +209,13 @@ export async function getStudentWrongWordHistory(
     const { data, error } = await supabase
       .from("quiz_questions")
       .select(
-        "id, vocab_entry_id, initial_is_correct, retry_is_correct, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status))",
+        "id, vocab_entry_id, initial_is_correct, retry_is_correct",
       )
       .in("id", idChunk);
     if (error) throw new Error("오답 문항 이력을 불러오지 못했습니다.");
-    questionRows.push(...((data ?? []) as QuestionRow[]));
+    const stored = (data ?? []) as Omit<QuestionRow, "assignment_question">[];
+    const contents = await getAdminWrongHistoryQuestionContents(admin.userId, studentId, idChunk);
+    questionRows.push(...stored.map(row => ({ ...row, assignment_question: contents.get(row.id)!.assignment_question })));
   }
 
   for (const idChunk of chunks(vocabEntryIds)) {

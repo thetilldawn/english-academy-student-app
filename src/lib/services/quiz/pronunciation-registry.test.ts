@@ -25,6 +25,12 @@ function row(id = 7) {
       identity_content_sha256: "A".repeat(64) },
   };
 }
+// These tests isolate pronunciation precedence. The owned SQL reader has its own
+// integration and malformed-response checks; return only its body fields here.
+vi.mock("@/features/quiz-player/public-server-queries", () => ({
+  getAttemptQuestionContents: async () => new Map((tables.quiz_questions as Array<{id: string; prompt: string; choices: string[]; assignment_question: unknown}> ?? [])
+    .map(q => [q.id, { id: q.id, prompt: q.prompt, choices: q.choices, assignment_question: q.assignment_question }])),
+}));
 let tables: Record<string, unknown> = {};
 beforeEach(() => {
   vi.clearAllMocks();
@@ -95,14 +101,14 @@ describe("audio corrections at final read boundaries", () => {
         expect(quiz.revealedCorrectChoiceIndex).toBeNull();
         if (direction === "korean_to_english") expect(quiz.choicePronunciations[0]).toEqual(changed);
         else expect(quiz.choicePronunciations.every(p => !p.available && !p.audioUrl)).toBe(true);
-        expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(changed);
+        expect((await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" }))[0].pronunciation).toEqual(changed);
         expect(JSON.stringify(quiz)).not.toMatch(/identity_id|prior_variant|sha256|approval_reason|correct_choice_index/);
         expect(JSON.stringify(question)).toBe(before);
 
         // The historical English text, not today's vocabulary label, is authoritative.
         if (direction === "english_to_korean") question.prompt = "pastword";
         else question.choices[0] = "pastword";
-        expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(oldVoice);
+        expect((await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" }))[0].pronunciation).toEqual(oldVoice);
         const historical = (await getStudentAttempt("fake-student", "attempt"))!.questions[0];
         expect(direction === "english_to_korean" ? historical.pronunciation : historical.choicePronunciations[0]).toEqual(oldVoice);
 
@@ -112,7 +118,7 @@ describe("audio corrections at final read boundaries", () => {
         tables.quiz_questions = [question, { ...question, id: "next", order_index: 2, initial_choice_index: null, initial_is_correct: null }];
         expect((await getStudentAttempt("fake-student", "attempt"))!.questions[0].pronunciation).toEqual(changed);
         failCorrection = true;
-        expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(oldVoice);
+        expect((await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" }))[0].pronunciation).toEqual(oldVoice);
         expect((await getStudentAttempt("fake-student", "attempt"))!.questions[0].pronunciation).toEqual(oldVoice);
         expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain("private token");
       });
@@ -148,15 +154,15 @@ describe("exact entry pronunciation corrections", () => {
     expect(quiz.revealedCorrectChoiceIndex).toBeNull();
     expect(quiz.pronunciation).toEqual(direction === "english_to_korean" ? frozen : empty);
     if (direction === "korean_to_english") expect(quiz.choicePronunciations).toEqual([frozen, empty, empty, empty]);
-    expect((await getAttemptQuestionResults("attempt"))[0]).toMatchObject({ headword: "savedword", primaryMeaning: "저장 뜻", pronunciation: frozen });
+    expect((await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" }))[0]).toMatchObject({ headword: "savedword", primaryMeaning: "저장 뜻", pronunciation: frozen });
     expect(mocks.rpc.mock.calls.every(([name]) => name === "list_pronunciation_audio_corrections_v1")).toBe(true);
     expect(mocks.lineage).not.toHaveBeenCalled();
     expect(mocks.from.mock.calls.map(([name]) => name)).not.toContain("vocab_pronunciation_identities_v2");
     assignmentQuestion.composition_pronunciation_snapshot.target = empty;
-    expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(empty);
+    expect((await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" }))[0].pronunciation).toEqual(empty);
     Reflect.deleteProperty(assignmentQuestion, "composition_pronunciation_snapshot");
     await expect(getStudentAttempt("fake-student", "attempt")).rejects.toThrow("고정 학습정보");
-    await expect(getAttemptQuestionResults("attempt")).rejects.toThrow("고정 학습정보");
+    await expect(getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" })).rejects.toThrow("고정 학습정보");
   });
   it("source lookup chunks at 400 and refuses malformed/partial/duplicate proofs", async () => {
     const source={vocab_entry_id:7,headword:"sample",entry_row_sha256:"a".repeat(64),variant_id:variant,audio_key:url,display_ko:"복원",
@@ -188,7 +194,7 @@ describe("exact entry pronunciation corrections", () => {
     expect(result?.questions[0].choicePronunciations[0]).toMatchObject({displayKo:"복원",audioUrl:url});
     expect(result?.questions[0].pronunciation.available).toBe(false);
     expect(result?.questions[0].revealedCorrectChoiceIndex).toBeNull();
-    expect((await getAttemptQuestionResults("attempt"))[0].pronunciation.displayKo).toBe("복원");
+    expect((await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" }))[0].pronunciation.displayKo).toBe("복원");
     expect(JSON.stringify(result)).not.toMatch(/sha256|entryId|manifest|source_file/);
   });
   it.each(["english_to_korean", "korean_to_english"] as const)("does not restore another headword into a historical %s question", async (direction) => {
@@ -205,7 +211,7 @@ describe("exact entry pronunciation corrections", () => {
         prompt: direction === "english_to_korean" ? "pastword" : "가짜", choices: ["pastword", "other", "another", "last"],
         correct_choice_index: 0, initial_choice_index: null, initial_is_correct: null, retry_choice_index: null, retry_is_correct: null, prior_wrong_count: 0,
         assignment_question: assignmentQuestion, vocab_entries: { headword: "sample", primary_meaning: "현재", pronunciation_ko: "현재" } }];
-      expect((await getAttemptQuestionResults("attempt"))[0].pronunciation.displayKo).toBe("자동");
+      expect((await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" }))[0].pronunciation.displayKo).toBe("자동");
       expect((await getStudentAttempt("test-student", "attempt"))?.questions[0].pronunciation.displayKo).not.toBe("복원");
     }
   });
@@ -292,7 +298,7 @@ describe("exact entry pronunciation corrections", () => {
     expect(result?.questions[0].choicePronunciations[0].displayKo).toBe("승인");
     expect(result?.questions[0].revealedCorrectChoiceIndex).toBeNull();
     expect(JSON.stringify(result)).not.toMatch(/source_content|source_review|identity_content|dictionaryId/);
-    const results = await getAttemptQuestionResults("attempt");
+    const results = await getAttemptQuestionResults("attempt", { kind: "student", studentId: "fake-student" });
     expect(results[0].pronunciation.displayKo).toBe("승인");
     expect(results[0].pronunciation.audioUrl).toBe(url);
     tables.assignments = { title: "Fake", timing_mode: "none", quiz_content_mode: "canonical_headword_to_definition" };

@@ -25,6 +25,27 @@ describe("격리된 실제 플레이어 검사 자료", () => {
     expect(rpc("answer_quiz_question_v4", answer, { quizFeedback: false }).status).toBe(403);
     expect(localQuizSummary()).toEqual([]);
   });
+  it("참조 본문은 준비와 응시 권한을 구분하고 다른 학생과 문항을 거절한다", () => {
+    const input = { p_actor_id: uid(1), p_context: "student_preparation", p_context_id: uid(207), p_question_ids: [uid(2070)] };
+    const prepared = rpc("read_question_contents_v1", input);
+    expect(prepared.status).toBe(200);
+    expect(prepared.body.items[0].assignment_question.headword_snapshot).toBe("collect");
+    expect(prepared.body.items[0]).not.toHaveProperty("correct_choice_index");
+    for (const change of [{ p_actor_id: uid(2) }, { p_question_ids: [uid(999)] }, { p_question_ids: [uid(2070), uid(2070)] }, { p_context: "student_attempt" }]) {
+      expect(rpc("read_question_contents_v1", { ...input, ...change }).status).toBe(403);
+    }
+    rpc("begin_prepared_quiz_v1", { p_student_id: uid(1), p_preparation_id: uid(207) });
+    expect(rpc("read_question_contents_v1", input).status).toBe(409);
+    expect(rpc("read_question_contents_v1", { ...input, p_context: "student_attempt" }).body.items[0]).toMatchObject({ prompt: "collect", choices: ["모으다", "닫다", "빠른", "낮은"] });
+    expect(request("quiz_questions?attempt_id=eq." + uid(207) + "&select=id,prompt,choices").body[0]).toMatchObject({ prompt: null, choices: null });
+  });
+  it("본문 조회 중 준비 만료를 재현해도 시험 시각과 답을 만들지 않는다", () => {
+    const preparation = { p_student_id: uid(1), p_preparation_id: uid(212) };
+    expect(rpc("get_quiz_preparation_v1", preparation).body.kind).toBe("initial");
+    expect(rpc("read_question_contents_v1", { p_actor_id: uid(1), p_context: "student_preparation", p_context_id: uid(212), p_question_ids: [uid(2120)] })).toMatchObject({ status: 409, body: { code: "40001" } });
+    expect(rpc("get_quiz_preparation_v1", preparation).body).toBeNull();
+    expect(localQuizSummary()[0]).toMatchObject({ startedAt: null, answered: 0 });
+  });
   it.each([
     { p_student_id: uid(2) }, { p_attempt_id: uid(999) }, { p_question_id: uid(2011) },
     { p_phase: "retry" }, { p_choice_index: -1 }, { p_force_timeout: true },

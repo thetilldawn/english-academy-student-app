@@ -1,7 +1,7 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
-import { reviewedExamFixture, reviewedFixtureId as id, reviewedFixtureModes } from "@/test-support/reviewed-exam-fixtures";
+import { reviewedExamFixture, reviewedFixtureId as id, reviewedFixtureModes, reviewedHash, sha256Text } from "@/test-support/reviewed-exam-fixtures";
 import { vocabPronunciationReleaseHeader } from "@/lib/vocab/vocab-pronunciation-release-v2-contract";
 
 describe.sequential("reviewed exam bank final schema", () => {
@@ -126,12 +126,39 @@ describe.sequential("reviewed exam bank final schema", () => {
       expect((await db.query("select * from public.list_entry_source_pronunciations_v1($1::bigint[])",[[entry]])).rows).toHaveLength(Number(expected));
     } finally { await db.exec("rollback"); }
   });
-  async function targets(mode:string,direction:string,unitLimit=1) {
+  // Published items are immutable. Invalid-source tests insert a separate fake
+  // release instead of rewriting an item already used by earlier assignments.
+  async function variantRelease(change: (questions: typeof fixture.bundle.questions) => void) {
+    const bundle=structuredClone(fixture.bundle);
+    change(bundle.questions);
+    bundle.questions=bundle.questions.map(question=>{
+      const {item_sha256: previousHash, ...body}=question;
+      void previousHash;
+      return {...body,item_sha256:reviewedHash(body)};
+    });
+    bundle.content_sha256=reviewedHash({dataset:bundle.dataset,inputs:bundle.inputs,units:bundle.units,entries:bundle.entries,questions:bundle.questions});
+    bundle.reviews=bundle.reviews.map(review=>({...review,input_content_sha256:bundle.content_sha256}));
+    const fileHash=sha256Text(JSON.stringify(bundle));
+    await db.query("insert into private.reviewed_exam_import_approvals values('wojxpruvbjzbhrpmsbuy',$1,$2,$3,278,1112,'fake-variant-approval')",[fileHash,bundle.content_sha256,bundle.dataset.key]);
+    const variantId=await scalar<string>(`insert into private.reviewed_exam_releases(dataset_id,content_sha256,file_sha256,status,reviews,source_inputs,approval_id)
+      values($1,$2,$3,'staged',$4,$5,'fake-variant-approval') returning release_id value`,[datasetId,bundle.content_sha256,fileHash,JSON.stringify(bundle.reviews),JSON.stringify(bundle.inputs)]);
+    await db.query(`insert into private.reviewed_exam_entries(release_id,dataset_id,vocab_entry_id,source_row,predecessor_entry_id,pronunciation_identity_id,entry_sha256,payload)
+      select $1,dataset_id,vocab_entry_id,source_row,predecessor_entry_id,pronunciation_identity_id,entry_sha256,payload
+      from private.reviewed_exam_entries where release_id=$2`,[variantId,releaseId]);
+    await db.query(`insert into private.reviewed_exam_items(release_id,dataset_id,vocab_entry_id,item_id,item_sha256,quiz_mode,direction,prompt_role,choice_role,prompt,choice_texts,choice_vocab_entry_ids,correct_choice_index,payload)
+      select $1,i.dataset_id,i.vocab_entry_id,i.item_id,q->>'item_sha256',i.quiz_mode,i.direction,i.prompt_role,i.choice_role,q->>'prompt',
+        array(select jsonb_array_elements_text(q->'choice_texts')),i.choice_vocab_entry_ids,i.correct_choice_index,q
+      from private.reviewed_exam_items i join jsonb_array_elements($3::jsonb) q on q->>'item_id'=i.item_id where i.release_id=$2`,[variantId,releaseId,JSON.stringify(bundle.questions)]);
+    await db.query("update private.reviewed_exam_releases set status='retired' where release_id=$1",[releaseId]);
+    await db.query("select private.activate_reviewed_exam_release_v1($1,$2)",[variantId,bundle.content_sha256]);
+    return {releaseId:variantId,fileHash};
+  }
+  async function targets(mode:string,direction:string,unitLimit=1,source={releaseId,fileHash:fixture.fileHash}) {
     const units=(await db.query<{id:string}>("select id from public.vocab_units where dataset_id=$1 order by sort_index limit $2",[datasetId,unitLimit])).rows.map(r=>r.id);
     const rows=(await db.query<{vocab_entry_id:number;item_id:string;item_sha256:string}>(`select i.vocab_entry_id,i.item_id,i.item_sha256 from private.reviewed_exam_items i join public.vocab_entries e on e.id=i.vocab_entry_id
-      where i.release_id=$1 and i.quiz_mode=$2 and i.direction::text=$3 and e.unit_id=any($4) order by e.source_row`,[releaseId,mode,direction,units])).rows;
+      where i.release_id=$1 and i.quiz_mode=$2 and i.direction::text=$3 and e.unit_id=any($4) order by e.source_row`,[source.releaseId,mode,direction,units])).rows;
     return {units,questions:rows.map((r,i)=>({vocab_entry_id:r.vocab_entry_id,base_order_index:i+1,direction,
-      reviewed_bank:{source:"reviewed_exam_v1",mode,release_id:releaseId,package_sha256:fixture.fileHash,question_item_id:r.item_id,question_item_sha256:r.item_sha256}}))};
+      reviewed_bank:{source:"reviewed_exam_v1",mode,release_id:source.releaseId,package_sha256:source.fileHash,question_item_id:r.item_id,question_item_sha256:r.item_sha256}}))};
   }
   async function create(mode:string,direction:string,questions:unknown[],units:string[]){
     return scalar<string>(`select private.create_assignment_with_delivery_v7('가짜 시험',$1::uuid,$2::uuid[],$3::integer,$4::smallint,300,80::smallint,'fixed'::public.question_order_mode,null,array['${id(2)}']::uuid[],'none',null,$5::jsonb) value`,
@@ -195,7 +222,10 @@ describe.sequential("reviewed exam bank final schema", () => {
   it.each(reviewedFixtureModes)("%s %s starts and grades through the actual student RPCs",async(mode,direction)=>{
     const {units,questions}=await targets(mode,direction);
     const assignment=await create(mode,direction,questions,units);
-    const attempt=await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value",[id(2),assignment]);
+    await db.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',false)");
+    let attempt: string;
+    try { attempt=await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value",[id(2),assignment]); }
+    finally { await db.exec("reset role; select set_config('request.jwt.claim.role','authenticated',false)"); }
     const first=(await db.query<{id:string;correct_choice_index:number}>("select id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index limit 1",[attempt])).rows[0];
     const answer=await scalar<Record<string,unknown>>("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4,false) value",[id(2),attempt,first.id,first.correct_choice_index]);
     expect(answer.correct).toBe(true);
@@ -215,30 +245,35 @@ describe.sequential("reviewed exam bank final schema", () => {
     expect(await scalar("select provenance_status value from public.assignments where id=$1",[created[0].assignment_id])).toBe("exam_reviewed_v1");
   });
   it.each([true,false])("blocks a second correct choice even when its own question is not selected (%s)",async includeOther=>{
-    const {units,questions}=await targets("canonical_definition_to_headword","korean_to_english");
     await db.exec("begin");
     try {
-      await db.query("update private.reviewed_exam_items set prompt=(select prompt from private.reviewed_exam_items where release_id=$1 and item_id=$2) where release_id=$1 and item_id=$3",[releaseId,questions[0].reviewed_bank.question_item_id,questions[1].reviewed_bank.question_item_id]);
+      const source=await variantRelease(items=>{
+        items.find(q=>q.item_id==='fake-2-2')!.prompt=items.find(q=>q.item_id==='fake-1-2')!.prompt;
+      });
+      const {units,questions}=await targets("canonical_definition_to_headword","korean_to_english",1,source);
       const selected=includeOther?questions:[questions[0],...questions.slice(2,5)].map((q,i)=>({...q,base_order_index:i+1}));
       await expect(create("canonical_definition_to_headword","korean_to_english",selected,units)).rejects.toMatchObject({code:"22023",message:"assignment_target_prompt_ambiguous"});
     } finally {await db.exec("rollback");}
   });
   it("preserves a genuine shared gloss when each reviewed question has only one matching choice",async()=>{
-    const {units,questions}=await targets("book_meaning_choice","korean_to_english");
     await db.exec("begin");
     try {
-      for(const [index,choices] of [[0,["alpha","fake-one","fake-two","fake-three"]],[1,["fake-four","beta","fake-five","fake-six"]]] as const){
-        await db.query("update private.reviewed_exam_items set prompt='shared fake gloss',choice_texts=$3 where release_id=$1 and item_id=$2",[releaseId,questions[index].reviewed_bank.question_item_id,choices]);
-      }
+      const source=await variantRelease(items=>{
+        for(const [row,choices] of [[1,["alpha","fake-one","fake-two","fake-three"]],[2,["fake-four","beta","fake-five","fake-six"]]] as const){
+          const item=items.find(q=>q.item_id===`fake-${row}-1`)!;
+          item.prompt='shared fake gloss';item.choice_texts=[...choices];
+        }
+      });
+      const {units,questions}=await targets("book_meaning_choice","korean_to_english",1,source);
       const assignment=await create("book_meaning_choice","korean_to_english",questions,units);
-      expect(await scalar("select count(*)::int value from public.assignment_questions where assignment_id=$1 and prompt='shared fake gloss'",[assignment])).toBe(2);
+      expect(await scalar("select count(*)::int value from private.assignment_question_contents_v1 where assignment_id=$1 and prompt='shared fake gloss'",[assignment])).toBe(2);
     } finally {await db.exec("rollback");}
   });
   it.each([" ALPHA ","ａｌｐｈａ","alpha"])("rejects choices differing only by case, width or spaces (%s)",async duplicate=>{
-    const {units,questions}=await targets("book_meaning_choice","korean_to_english");
     await db.exec("begin");
     try {
-      await db.query("update private.reviewed_exam_items set choice_texts=$3 where release_id=$1 and item_id=$2",[releaseId,questions[0].reviewed_bank.question_item_id,["alpha",duplicate,"beta","gamma"]]);
+      const source=await variantRelease(items=>{items.find(q=>q.item_id==='fake-1-1')!.choice_texts=["alpha",duplicate,"beta","gamma"];});
+      const {units,questions}=await targets("book_meaning_choice","korean_to_english",1,source);
       await expect(create("book_meaning_choice","korean_to_english",questions,units)).rejects.toMatchObject({code:"22023",message:"assignment_target_choices_duplicate"});
     } finally {await db.exec("rollback");}
   });

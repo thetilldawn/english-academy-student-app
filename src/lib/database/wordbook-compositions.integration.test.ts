@@ -279,7 +279,7 @@ describe.sequential("saved mock wordbooks", () => {
         and s.pronunciation_snapshot->>'audioUrl'=l.source_occurrence_snapshot->>'audio_url'
         and s.pronunciation_snapshot->>'rawResponseSha256'=l.source_occurrence_snapshot->>'raw_response_sha256'
         and jsonb_array_length(s.choice_dictionary_snapshots)=4) frozen_matches
-      from public.assignment_questions q join public.assignment_question_exam_use_snapshot s on s.assignment_question_id=q.id
+      from private.assignment_question_contents_v1 q join private.exam_use_question_contents_v1 s on s.assignment_question_id=q.id
       join word_index.mock_wordbook_lineage l on l.vocab_entry_id=q.vocab_entry_id where q.assignment_id=$1`,[created.rows[0]!.id]);
     expect(snapshot.rows[0]).toEqual({question_count:4,identity_count:4,frozen_matches:true});
     await admin();

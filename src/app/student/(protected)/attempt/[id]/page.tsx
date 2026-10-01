@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
-import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
+import { PanelLoadFailure, RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { QuizPlayer } from "@/features/quiz-player/ui/quiz-player";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import {
@@ -11,7 +11,7 @@ import {
   millisecondsUntil,
 } from "@/lib/deadline";
 import { getStudentAttempt } from "@/lib/services/quiz/attempt-query";
-import { getQuizPreparation, getRetryPreparation } from "@/features/quiz-player/public-server";
+import { getQuizPreparation, getRetryPreparation, QuizPreparationChangedError } from "@/features/quiz-player/public-server";
 import { PreparedQuizPlayer } from "@/features/quiz-player/ui/prepared-quiz-player";
 
 export const metadata: Metadata = {
@@ -46,7 +46,12 @@ async function AttemptContent({
   const attempt = await getStudentAttempt(session.studentId, id);
 
   if (!attempt) {
-    const prepared = await getQuizPreparation(session.studentId,id);
+    let prepared: Awaited<ReturnType<typeof getQuizPreparation>>;
+    try { prepared = await getQuizPreparation(session.studentId,id); }
+    catch (error) {
+      if (!(error instanceof QuizPreparationChangedError)) throw error;
+      return <main id="main-content"><PanelLoadFailure message={studentAppText.attempt.preparationChanged} retryHref="/student" retryLabel={studentAppText.attempt.backToList} /></main>;
+    }
     if (!prepared || prepared.kind !== "initial") notFound();
     if ("resumeId" in prepared) redirect(`/student/attempt/${prepared.resumeId}`);
     return <PreparedQuizPlayer key={prepared.id} preparation={prepared} />;

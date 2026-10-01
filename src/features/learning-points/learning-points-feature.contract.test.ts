@@ -39,7 +39,7 @@ describe("learning point screen wiring", () => {
     const query = source("src/lib/services/quiz/attempt-result-query.ts");
     expect(query).toContain(".eq(\"student_id\", studentId)");
     expect(query).toContain("const [questions, pointSummary] = await Promise.all([");
-    expect(query).toContain("getAttemptQuestionResults(attemptId)");
+    expect(query).toContain('getAttemptQuestionResults(attemptId, { kind: "student", studentId })');
     expect(query).toContain(
       "getStudentAttemptPointSummary(studentId, attemptId)",
     );

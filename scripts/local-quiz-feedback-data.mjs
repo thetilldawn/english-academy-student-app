@@ -9,7 +9,8 @@ export const localQuizCases = ["book_meaning_choice", "canonical_definition_to_h
   // while the original seven-second server reservation remains outstanding.
   .concat([{id:uid(209),mode:"book_meaning_choice",phase:"initial",prepared:true,answerLoss:true}])
   .concat([{id:uid(210),mode:"book_meaning_choice",phase:"initial",prepared:true,answerLoss:true,answerDelayMs:4000},
-    {id:uid(211),mode:"book_meaning_choice",phase:"initial",prepared:true,expiryFailure:true}]);
+    {id:uid(211),mode:"book_meaning_choice",phase:"initial",prepared:true,expiryFailure:true},
+    {id:uid(212),mode:"book_meaning_choice",phase:"initial",prepared:true,preparationExpiresOnContent:true}]);
 const states = new Map();
 export const resetLocalQuizzes = () => states.clear();
 const deny = { status: 403, body: { error: "Local quiz fixture rejected" }, category: "rejected" };
@@ -33,9 +34,11 @@ function stateFor(id) {
         choices, correct_choice_index: sample.answerLoss && i===0?2:0, initial_choice_index: sample.phase === "retry" ? 1 : null,
         initial_is_correct: sample.phase === "retry" ? false : null, retry_choice_index: null, retry_is_correct: null,
         initial_timed_out: false, retry_timed_out: false, prior_wrong_count: 0,
-        assignment_question: { headword_snapshot: word, primary_meaning_snapshot: meanings[i],
+        assignment_question: { vocab_entry_id:Number(id.slice(-3))*1000+i+1,headword_snapshot: word, primary_meaning_snapshot: meanings[i],
           provenance_status: "reviewed_for_preview_v1", choice_vocab_entry_ids: null,
+          composition_pronunciation_snapshot:null,notebook_pronunciation_snapshot:null,
           exam_use_snapshot: { headword_snapshot: word, primary_meaning_snapshot: meanings[i],
+            release_id:uid(400),occurrence_id:`occ:fake-${id}-${i}`,dictionary_id:`word:fake-${word}`,pronunciation_variant_id:'local:fixture',
             provenance_status: "reviewed_for_preview_v1", display_pronunciation_ko_snapshot: "로컬",
             pronunciation_snapshot: pronunciation,
             choice_dictionary_snapshots: choices.map((displayHeadword, choiceIndex) => ({ displayHeadword, choiceIndex, ...pronunciation })) } },
@@ -59,6 +62,21 @@ export function studentQuizFixture({ target, method, headers, input }) {
     headers.get("apikey") !== STUDY_SECRET || headers.get("authorization") !== "Bearer " + STUDY_SECRET) return deny;
   const table = target.pathname.replace("/rest/v1/", "");
   const query = target.searchParams;
+  if(table==='rpc/list_mock_composition_lineage_v1'){
+    const allowed=new Set([...states.values()].flatMap(s=>s.questions.map(q=>q.assignment_question.vocab_entry_id)));
+    return method==='POST'&&Array.isArray(input?.p_entry_ids)&&input.p_entry_ids.every(id=>allowed.has(id))?ok([]):deny;
+  }
+  if(table==='rpc/read_question_contents_v1'){
+    const s=stateFor(input?.p_context_id),ids=input?.p_question_ids,context=input?.p_context;
+    if(method!=='POST'||input?.p_actor_id!==uid(1)||!s||!Array.isArray(ids)||ids.length<1||ids.length>200||new Set(ids).size!==ids.length||
+      !['student_attempt','student_preparation'].includes(context))return deny;
+    if(context==='student_preparation'&&s.preparationExpiresOnContent){s.preparationExpired=true;return {status:409,body:{code:'40001',message:'preparation_unavailable'},category:'quiz-content-changed'};}
+    if(context==='student_preparation'&&(!s.prepared||s.startedAt))return {status:409,body:{code:'40001',message:'preparation_unavailable'},category:'quiz-content-changed'};
+    if(context==='student_attempt'&&!s.startedAt)return deny;
+    const items=ids.map(id=>s.questions.find(q=>q.id===id));if(items.some(q=>!q))return deny;
+    return ok({schemaVersion:'question-content-read-v1',context,items:items.map(q=>({id:q.id,assignment_question:q.assignment_question,
+      ...(context==='student_attempt'?{prompt:q.prompt,choices:q.choices}:{})}))},'quiz-content-read');
+  }
   if(table === "assignment_questions"){
     const s=stateFor(query.get("assignment_id")?.slice(3));
     if(method!=="GET" || !s?.prepared) return deny;
@@ -67,6 +85,7 @@ export function studentQuizFixture({ target, method, headers, input }) {
   if(["rpc/get_quiz_preparation_v1","rpc/begin_prepared_quiz_v1"].includes(table)){
     const s=stateFor(input?.p_preparation_id);
     if(method!=="POST" || input?.p_student_id!==uid(1) || !s?.prepared) return deny;
+    if(table.endsWith('get_quiz_preparation_v1')&&s.preparationExpired)return ok(null,'quiz-preparation-expired');
     if(table.endsWith("get_quiz_preparation_v1"))return ok(s.startedAt?{id:s.id,kind:"initial",begunId:s.id}:{
       id:s.id,kind:"initial",begunId:null,assignment:{id:s.id,title:"로컬 준비 검사",quiz_content_mode:s.mode,timing_mode:s.expiryFailure?"total":"per_question",question_time_limit_seconds:s.expiryFailure?null:180},
       plan:s.questions.map(q=>({...q,assignment_question_id:q.id})),
@@ -89,7 +108,7 @@ export function studentQuizFixture({ target, method, headers, input }) {
     }
     if (table === "assignments") return ok({ title: "로컬 음성 검사 · " + s.mode + " · " + s.phase,
       timing_mode: s.expiryFailure?"total":s.prepared?"per_question":"none", question_time_limit_seconds: s.prepared&&!s.expiryFailure?180:null, quiz_content_mode: s.mode });
-    return ok(s.questions);
+    return ok(query.has('select')?s.questions.map(q=>({...q,prompt:null,choices:null,assignment_question:undefined})):s.questions);
   }
   if (!["rpc/answer_quiz_question_v4", "rpc/resume_quiz_after_feedback_v2", "rpc/materialize_ready_vocab_assignment_queue_v1", "rpc/expire_quiz_attempt"].includes(table)) return null;
   if (method !== "POST" || input?.p_student_id !== uid(1)) return deny;

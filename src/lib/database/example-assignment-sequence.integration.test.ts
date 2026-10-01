@@ -117,17 +117,21 @@ it.each(["per_session", "word_count"] as const)("%s 예문3회 실제 저장·�
   expect(stored.every(s => s.question_count === 4 && s.quiz_content_mode === mode && s.available_from === null && s.available_until === null)).toBe(true);
   const release = (assignment: string) => scalar<{ state: string }>("select private.student_assignment_release_v1($1,$2,clock_timestamp()) value", [id(2), assignment]);
   expect((await Promise.all(ids.map(release))).map(r => r.state)).toEqual(["unrestricted", "waiting_initial", "waiting_initial"]);
+  await db.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',true)");
   await rejected(() => db.query("select public.create_quiz_attempt_from_bank($1,$2)", [id(2), ids[1]]), /not_open|not_available|locked|release/);
   const attempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [id(2), ids[0]]);
+  await db.exec("reset role; select set_config('request.jwt.claim.role','authenticated',true)");
   const questions = (await db.query<{ id: string; correct_choice_index: number }>("select id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index", [attempt])).rows;
   for (let i = 0; i < questions.length; i++) {
     if (i > 0) await db.query("select public.resume_quiz_after_feedback_v2($1,$2,$3,'initial',0)", [id(2), attempt, questions[i]!.id]);
     await db.query("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4,false)", [id(2), attempt, questions[i]!.id, questions[i]!.correct_choice_index]);
   }
   expect((await release(ids[1]!)).state).toBe("open"); expect((await release(ids[2]!)).state).toBe("waiting_initial");
+  await db.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',true)");
   const next = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [id(2), ids[1]]);
+  await db.exec("reset role; select set_config('request.jwt.claim.role','authenticated',true)");
   const rows = (await db.query<{ source_row: number; same_snapshot: boolean }>(`select e.source_row,(q.prompt=a.prompt and q.choices=a.choices and q.correct_choice_index=a.correct_choice_index) same_snapshot
-    from public.quiz_questions q join public.assignment_questions a on a.id=q.assignment_question_id join public.vocab_entries e on e.id=a.vocab_entry_id where q.attempt_id=$1 order by q.order_index`, [next])).rows;
+    from private.quiz_question_contents_v1 q join private.assignment_question_contents_v1 a on a.id=q.assignment_question_id join public.vocab_entries e on e.id=a.vocab_entry_id where q.attempt_id=$1 order by q.order_index`, [next])).rows;
   expect(rows.map(r => r.source_row)).toEqual([5, 6, 7, 8]); expect(rows.every(r => r.same_snapshot)).toBe(true);
   expect(await createBulkAssignments(input, admin)).toEqual(result);
   const forged = JSON.parse(JSON.stringify(savedBatches)); forged[2].questions[0].reviewed_bank.question_item_sha256 = hash("forged");
@@ -146,7 +150,17 @@ it.each(["per_session", "word_count"] as const)("%s 날짜있는 예문은 첫�
 }, 60_000);
 it("예문 버전이 미리보기 뒤 바뀌면 저장 전 충돌로 거절한다", async () => {
   const input = await inputFor("word_count");
-  await db.query("update word_index.app_canonical_question_preview_item set question_item_sha256=$1 where question_item_id='a4-example-0'", [hash("changed")]);
+  await db.query(`insert into word_index.app_canonical_question_preview_release
+    select (jsonb_populate_record(null::word_index.app_canonical_question_preview_release,
+      to_jsonb(r)||jsonb_build_object('release_id',$1::uuid,'release_key','a4-changed-fake','package_file_sha256',$2::text,'status','loading'))).*
+    from word_index.app_canonical_question_preview_release r where release_id=$3`,[id(31),hash('changed'),id(30)]);
+  await db.query(`insert into word_index.app_canonical_question_preview_item
+    select (jsonb_populate_record(null::word_index.app_canonical_question_preview_item,
+      to_jsonb(i)||jsonb_build_object('release_id',$1::uuid))).*
+    from word_index.app_canonical_question_preview_item i where release_id=$2`,[id(31),id(30)]);
+  await db.query("update word_index.app_canonical_question_preview_release set status='retired' where release_id=$1",[id(30)]);
+  await db.query("update word_index.app_canonical_question_preview_release set status='active' where release_id=$1",[id(31)]);
+  expect(await scalar("select count(*)::int value from word_index.app_canonical_question_preview_item where release_id=$1",[id(31)])).toBe(12);
   await expect(createBulkAssignments(input, admin)).rejects.toMatchObject({ reason: "conflict" });
   expect(await scalar("select count(*)::int value from public.assignments")).toBe(0);
 });

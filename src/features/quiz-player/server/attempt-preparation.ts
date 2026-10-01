@@ -1,4 +1,5 @@
 import "server-only";
+import { getPreparationQuestionContents, QuestionContentPreparationChangedError } from "./queries/question-content-query";
 import { z } from "zod";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { getStudentAttempt, hydrateQuizQuestions, type QuestionRow } from "@/lib/services/quiz/attempt-query";
@@ -65,17 +66,20 @@ export async function getQuizPreparation(studentId: string, id: string): Promise
     timing_mode: z.enum(["none","total","per_question"]), question_time_limit_seconds: z.number().nullable() }).parse(base.assignment);
   const plan = z.array(rawQuestion).parse(base.plan);
   const bankIds = plan.flatMap(q => q.assignment_question_id ? [q.assignment_question_id] : []);
-  const banks = new Map<string, QuestionRow["assignment_question"]>();
-  const supabase = getServiceSupabaseClient();
-  for (let offset=0; offset<bankIds.length; offset+=200) {
-    const { data, error } = await supabase.from("assignment_questions").select("id, vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, composition_pronunciation_snapshot, notebook_pronunciation_snapshot, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(release_id, occurrence_id, dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)")
-      .eq("assignment_id", a.id).in("id", bankIds.slice(offset,offset+200));
-    if (error) throw error;
-    for (const item of data ?? []) banks.set(item.id, item as QuestionRow["assignment_question"]);
+  let banks: Awaited<ReturnType<typeof getPreparationQuestionContents>>;
+  try { banks = await getPreparationQuestionContents(studentId, id, bankIds); }
+  catch (error) {
+    if (!(error instanceof QuestionContentPreparationChangedError)) throw error;
+    // Another tab may have begun between the prepared header and its content
+    // read. Follow the existing receipt without issuing another start command.
+    const refreshedRaw = await rpc("get_quiz_preparation_v1", { p_student_id: studentId, p_preparation_id: id });
+    if (!refreshedRaw) throw new QuizPreparationChangedError("시험 준비가 만료되었거나 자료가 바뀌었습니다. 목록에서 다시 시작해 주세요.");
+    const refreshed = z.object({ kind: z.enum(["initial", "practice"]), begunId: z.uuid().nullable().optional() }).parse(refreshedRaw);
+    if (refreshed.begunId) return { resumeId: refreshed.begunId, kind: refreshed.kind };
+    throw new QuizPreparationChangedError("시험 준비가 만료되었거나 자료가 바뀌었습니다. 목록에서 다시 시작해 주세요.");
   }
-  if (banks.size !== bankIds.length) throw new Error("preparation_changed");
   const rows: QuestionRow[] = plan.map(q => ({ ...q, initial_choice_index: null, initial_is_correct: null,
-    retry_choice_index: null, retry_is_correct: null, prior_wrong_count: 0, assignment_question: q.assignment_question_id ? banks.get(q.assignment_question_id)! : null }));
+    retry_choice_index: null, retry_is_correct: null, prior_wrong_count: 0, assignment_question: q.assignment_question_id ? banks.get(q.assignment_question_id)!.assignment_question : null }));
   const quizContentMode = normalizeQuizContentMode(a.quiz_content_mode);
   return preparedQuizSchema.parse({ id, kind: "initial", assignmentTitle: a.title, quizContentMode, phase: "initial",
     timingMode: a.timing_mode, questionTimeLimitSeconds: a.question_time_limit_seconds, currentQuestionId: plan[0]?.id ?? null,

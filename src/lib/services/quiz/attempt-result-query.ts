@@ -1,4 +1,5 @@
 import "server-only";
+import { getAttemptQuestionContents, type AttemptContentActor } from "@/features/quiz-player/public-server-queries";
 
 import type { StudentAttemptResult } from "@/features/results/model";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
@@ -29,12 +30,13 @@ import {
 
 export async function getAttemptQuestionResults(
   attemptId: string,
+  actor: AttemptContentActor,
 ): Promise<AttemptQuestionResult[]> {
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase
     .from("quiz_questions")
     .select(
-      "id, vocab_entry_id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, headword_snapshot, primary_meaning_snapshot, provenance_status, composition_pronunciation_snapshot, notebook_pronunciation_snapshot, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(release_id, occurrence_id, dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning, pronunciation_ko)",
+      "id, vocab_entry_id, order_index, direction, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, vocab_entries(headword, primary_meaning, pronunciation_ko)",
     )
     .eq("attempt_id", attemptId)
     .order("order_index");
@@ -43,7 +45,12 @@ export async function getAttemptQuestionResults(
     throw new Error("문항 결과를 불러오지 못했습니다.");
   }
 
-  const rows = (data ?? []) as ResultQuestionRow[];
+  const stored = (data ?? []) as Omit<ResultQuestionRow, "prompt" | "choices" | "assignment_question">[];
+  const contents = await getAttemptQuestionContents(actor, attemptId, stored.map(row => row.id));
+  const rows: ResultQuestionRow[] = stored.map(row => {
+    const body = contents.get(row.id)!;
+    return { ...row, prompt: body.prompt, choices: body.choices, assignment_question: body.assignment_question };
+  });
   const registryIds = rows.flatMap((row) => {
     const bankQuestion = oneRelation(row.assignment_question);
     if (compositionQuestionPronunciation(bankQuestion, Array.isArray(row.choices) ? row.choices.length : 0)) return [];
@@ -127,7 +134,7 @@ export async function getAttemptResult(
     return null;
   }
   const [questions, pointSummary] = await Promise.all([
-    getAttemptQuestionResults(attemptId),
+    getAttemptQuestionResults(attemptId, { kind: "student", studentId }),
     getStudentAttemptPointSummary(studentId, attemptId),
   ]);
 

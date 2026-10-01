@@ -7,6 +7,29 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const migrationsDirectory = path.resolve("supabase/migrations");
 
+// Historic migration fixtures retain their original caller. Current student
+// starts use the same service role and JWT role as the app's server boundary.
+async function studentStartQuery<T>(database:PGlite,sql:string,args:unknown[]=[]) {
+  const current=(await database.query<{modern:boolean;role:string;jwt:string|null}>(
+    "select to_regclass('private.vocabulary_question_content_versions') is not null modern,current_user role,current_setting('request.jwt.claim.role',true) jwt")).rows[0];
+  if(!current.modern)return database.query<T>(sql,args);
+  if(!['postgres','authenticated','service_role'].includes(current.role))throw Error('Unexpected fixture caller');
+  let nested=false;
+  try{await database.exec('savepoint student_start_call');nested=true;}
+  catch(error){if((error as {code?:string}).code!=='25P01')throw error;}
+  try{
+    await database.exec("set role service_role;select set_config('request.jwt.claim.role','service_role',false)");
+    return await database.query<T>(sql,args);
+  }catch(error){if(nested)await database.exec('rollback to student_start_call');throw error;}
+  finally{
+    if(nested)await database.exec('release student_start_call');
+    await database.exec('reset role');
+    await database.query("select set_config('request.jwt.claim.role',$1,false)",[current.jwt??'']);
+    if(current.role!=='postgres')await database.exec('set role '+current.role);
+  }
+}
+
+
 describe.sequential("passed-only point settlement", () => {
   let database: PGlite;
   let pending: Awaited<ReturnType<typeof createRegularPointAttempt>>;
@@ -35,9 +58,10 @@ describe.sequential("passed-only point settlement", () => {
       from public.student_point_events where quiz_attempt_id=$1`, [attempt.attemptId])).rows[0];
   }
   async function preserved() {
+    expect((await database.query<{n:number}>("select count(*)::int n from public.quiz_questions q where to_jsonb(q)->>'content_version_id' is not null")).rows[0].n).toBe(0);
     return (await database.query(`select
       (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.quiz_attempts t) attempts,
-      (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.quiz_questions t) questions,
+      (select md5(coalesce(jsonb_agg(to_jsonb(t)-'content_version_id' order by id)::text,'')) from public.quiz_questions t) questions,
       (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.students t) students,
       (select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) from public.student_vocab_wrong_events t) wrongs`)).rows;
   }
@@ -170,7 +194,7 @@ describe("confirmed partial current wrong review", () => {
       4,100::smallint,300,80::smallint,false,null,'fixed',null,array['${ids.student}'::uuid],
       'total',null,$q$${mixedQuestions}$q$::jsonb) id`);
     await db.exec("reset role");
-    const attempt = await db.query<{id:string}>(`select public.create_quiz_attempt_from_bank('${ids.student}','${assignment.rows[0].id}') id`);
+    const attempt = await studentStartQuery<{id:string}>(db, `select public.create_quiz_attempt_from_bank('${ids.student}','${assignment.rows[0].id}') id`);
     const original = await db.query<{id:string;correct_choice_index:number}>(`select id,correct_choice_index from public.quiz_questions where attempt_id='${attempt.rows[0].id}' order by order_index`);
     for (const [index, question] of original.rows.entries()) {
       await db.query(`select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)`,[ids.student,attempt.rows[0].id,question.id,(question.correct_choice_index+1)%4]);
@@ -872,7 +896,7 @@ async function createRegularPointAttempt(
     await database.exec("reset role;");
   }
 
-  const attempt = await database.query<{ attempt_id: string }>(`
+  const attempt = await studentStartQuery<{ attempt_id: string }>(database, `
       select public.create_quiz_attempt_from_bank(
       '${studentId}',
       '${assignmentId}'
@@ -1560,7 +1584,7 @@ describe.sequential("final review-assignment database schema", () => {
         new Date(reboundState.rows[0]!.replaced_at).getTime(),
       );
 
-      const attempt = await database.query<{ attempt_id: string }>(`
+      const attempt = await studentStartQuery<{ attempt_id: string }>(database, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}', '${replacementAssignmentId}'
         ) as attempt_id;
@@ -2853,9 +2877,9 @@ describe.sequential("final review-assignment database schema", () => {
           $questions$${reviewOnlyQuestions}$questions$::jsonb
         ) as assignment_id;
       `);
-      const sourceAttempt = await lifecycleDatabase.query<{
+      const sourceAttempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(lifecycleDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${sourceAssignment.rows[0]?.assignment_id}'
@@ -3099,7 +3123,7 @@ describe.sequential("final review-assignment database schema", () => {
       const secondResult = await createV6("Reassigned after cancellation");
       const secondAssignmentId = secondResult.rows[0]?.assignment_id;
       await lifecycleDatabase.exec("reset role;");
-      await lifecycleDatabase.query(`
+      await studentStartQuery(lifecycleDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${secondAssignmentId}'
@@ -3479,9 +3503,9 @@ describe.sequential("final review-assignment database schema", () => {
       expect(second.rows[0]?.assignment_id).toMatch(
         /^[0-9a-f-]{36}$/i,
       );
-      const attempt = await unlinkedDatabase.query<{
+      const attempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(unlinkedDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${second.rows[0]?.assignment_id}'
@@ -3625,9 +3649,9 @@ describe.sequential("final review-assignment database schema", () => {
         ) as assignment_id;
       `);
       await resolutionDatabase.exec("reset role;");
-      const attempt = await resolutionDatabase.query<{
+      const attempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(resolutionDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${assignment.rows[0]?.assignment_id}'
@@ -5404,9 +5428,9 @@ describe.sequential("admin deletion controls", () => {
         ) as assignment_id;
       `);
       const queueSourceAssignmentId = queueSource.rows[0]!.assignment_id;
-      const queueAttempt = await mixedReplacementDatabase.query<{
+      const queueAttempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(mixedReplacementDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}', '${queueSourceAssignmentId}'
         ) as attempt_id;
@@ -5683,9 +5707,9 @@ describe.sequential("admin deletion controls", () => {
       `);
       const queueSourceAssignmentId =
         queueSource.rows[0]!.assignment_id;
-      const queueSourceAttempt = await exactReplacementDatabase.query<{
+      const queueSourceAttempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(exactReplacementDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${queueSourceAssignmentId}'
@@ -6137,9 +6161,9 @@ describe.sequential("admin deletion controls", () => {
         replacement_audit_count: 1,
       });
 
-      const otherRecipientAttempt = await replacementDatabase.query<{
+      const otherRecipientAttempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(replacementDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${secondStudent}',
           '${sourceAssignmentId}'
@@ -6362,7 +6386,7 @@ describe.sequential("assignment retry rules", () => {
     let beforeLibraryQuestions: unknown[] | null = null;
     const addedCompositionKeys = ["composition_version_id_snapshot", "composition_item_id_snapshot", "composition_item_sha256_snapshot", "composition_pronunciation_snapshot"];
     const addedNotebookKeys = ["notebook_source_event_id", "notebook_source_snapshot", "notebook_pronunciation_snapshot"];
-    const addedSourceKeys = [...addedCompositionKeys, ...addedNotebookKeys];
+    const addedSourceKeys = [...addedCompositionKeys, ...addedNotebookKeys, "content_version_id"];
     const database = await createFinalSchemaDatabase({
       beforeMigration: async (pendingDatabase, migrationName) => {
         if (migrationName === "20260919212837_add_vocabulary_library_templates.sql") {
@@ -6824,7 +6848,7 @@ describe.sequential("assignment retry rules", () => {
       `);
       await database.exec("reset role;");
       const assignmentId = created.rows[0]!.assignment_id;
-      const attempt = await database.query<{ attempt_id: string }>(`
+      const attempt = await studentStartQuery<{ attempt_id: string }>(database, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${assignmentId}'
@@ -6974,7 +6998,7 @@ describe.sequential("assignment retry rules", () => {
       `);
       await database.exec("reset role;");
 
-      const attempt = await database.query<{ attempt_id: string }>(`
+      const attempt = await studentStartQuery<{ attempt_id: string }>(database, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${created.rows[0]!.assignment_id}'
@@ -7403,9 +7427,9 @@ describe.sequential("assignment retry rules", () => {
       `);
       await directReviewDatabase.exec("reset role;");
 
-      const sourceAttempt = await directReviewDatabase.query<{
+      const sourceAttempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(directReviewDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${sourceAssignment.rows[0]!.assignment_id}'
@@ -7790,9 +7814,9 @@ describe.sequential("assignment retry rules", () => {
       expect(remaining.rows).toEqual([]);
       await directReviewDatabase.exec("reset role;");
 
-      const reviewAttempt = await directReviewDatabase.query<{
+      const reviewAttempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(directReviewDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${firstCreation.rows[0]!.assignment_id}'
@@ -7914,9 +7938,9 @@ describe.sequential("assignment retry rules", () => {
         review_target_count: 1,
       });
 
-      const attempt = await directReviewDatabase.query<{
+      const attempt = await studentStartQuery<{
         attempt_id: string;
-      }>(`
+      }>(directReviewDatabase, `
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
           '${assignmentId}'
