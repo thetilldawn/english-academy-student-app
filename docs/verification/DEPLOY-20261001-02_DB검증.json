@@ -1,0 +1,351 @@
+{
+  "sourceSqlSha256": "8e391894050e8a2c22fb30dfa1f50b275b8edd30fac39cdb674c8c2cd34c212c",
+  "guardSqlSha256": "e338928ec632a22cd9b1076ad10d8cac3cba90b06eb574514e74838573aca8b6",
+  "existing17TablesPreservedInTransaction": true,
+  "localNormalAndRollbackChecks": 2,
+  "studentWrites": 0,
+  "preview": {
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.assert_quiz_preparation_student",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.assert_quiz_preparation_student(p_student_id uuid)",
+        "definition": "f4e951ca210dc870ca26e1bdc289c505",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.quiz_preparation_assignment",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.quiz_preparation_assignment(p_student_id uuid, p_assignment_id uuid)",
+        "definition": "2cc996cdb3a527ac66ad5eb368dcb508",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.quiz_preparation_fingerprint",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.quiz_preparation_fingerprint(a assignments)",
+        "definition": "fd0cb0e5a402b25a145c86f4e984114e",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "s",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.quiz_preparation_legacy_plan",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.quiz_preparation_legacy_plan(a assignments, p_questions jsonb)",
+        "definition": "85e4282266331440257462205b8205ca",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.begin_prepared_practice_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.begin_prepared_practice_v1(p_student_id uuid, p_preparation_id uuid)",
+        "definition": "44525e82076d0f779ab6d48b62993260",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.begin_prepared_quiz_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.begin_prepared_quiz_v1(p_student_id uuid, p_preparation_id uuid)",
+        "definition": "939543443b1ba9c485f477ed7098b0f9",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.find_word_practice_preparation_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.find_word_practice_preparation_v1(p_student_id uuid, p_request_key uuid, p_request_hash text)",
+        "definition": "a1b102589626c98aa57e5dc02ffbb012",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.get_quiz_preparation_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.get_quiz_preparation_v1(p_student_id uuid, p_preparation_id uuid)",
+        "definition": "203cacf8ac444493c28fc2aeec064fba",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.prepare_quiz_attempt_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.prepare_quiz_attempt_v1(p_student_id uuid, p_assignment_id uuid, p_questions jsonb)",
+        "definition": "2ea84c7f9fe49713fd57815ce5daa54f",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.prepare_word_practice_start_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.prepare_word_practice_start_v1(p_student_id uuid, p_request_key uuid, p_request_hash text, p_selection jsonb, p_settings jsonb, p_source_hash text, p_questions jsonb)",
+        "definition": "3b4c16029dce6bd27755f44240bb4585",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      }
+    ],
+    "migration": {
+      "name": "prepare_quiz_before_start",
+      "version": "20261001040337"
+    },
+    "new_row_count": 0,
+    "new_table_anon_rights": false,
+    "new_table_auth_rights": false,
+    "new_table_service_extra_rights": false
+  },
+  "production": {
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.assert_quiz_preparation_student",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.assert_quiz_preparation_student(p_student_id uuid)",
+        "definition": "f4e951ca210dc870ca26e1bdc289c505",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.quiz_preparation_assignment",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.quiz_preparation_assignment(p_student_id uuid, p_assignment_id uuid)",
+        "definition": "2cc996cdb3a527ac66ad5eb368dcb508",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.quiz_preparation_fingerprint",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.quiz_preparation_fingerprint(a assignments)",
+        "definition": "fd0cb0e5a402b25a145c86f4e984114e",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "s",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "private.quiz_preparation_legacy_plan",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "private.quiz_preparation_legacy_plan(a assignments, p_questions jsonb)",
+        "definition": "85e4282266331440257462205b8205ca",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.begin_prepared_practice_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.begin_prepared_practice_v1(p_student_id uuid, p_preparation_id uuid)",
+        "definition": "44525e82076d0f779ab6d48b62993260",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.begin_prepared_quiz_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.begin_prepared_quiz_v1(p_student_id uuid, p_preparation_id uuid)",
+        "definition": "939543443b1ba9c485f477ed7098b0f9",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.find_word_practice_preparation_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.find_word_practice_preparation_v1(p_student_id uuid, p_request_key uuid, p_request_hash text)",
+        "definition": "a1b102589626c98aa57e5dc02ffbb012",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.get_quiz_preparation_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.get_quiz_preparation_v1(p_student_id uuid, p_preparation_id uuid)",
+        "definition": "203cacf8ac444493c28fc2aeec064fba",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.prepare_quiz_attempt_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.prepare_quiz_attempt_v1(p_student_id uuid, p_assignment_id uuid, p_questions jsonb)",
+        "definition": "2ea84c7f9fe49713fd57815ce5daa54f",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "public.prepare_word_practice_start_v1",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosecdef": false,
+        "signature": "public.prepare_word_practice_start_v1(p_student_id uuid, p_request_key uuid, p_request_hash text, p_selection jsonb, p_settings jsonb, p_source_hash text, p_questions jsonb)",
+        "definition": "3b4c16029dce6bd27755f44240bb4585",
+        "owner_name": "postgres",
+        "proisstrict": false,
+        "provolatile": "v",
+        "anon_execute": false,
+        "service_execute": true,
+        "authenticated_execute": false
+      }
+    ],
+    "migration": {
+      "name": "prepare_quiz_before_start",
+      "version": "20261001040745"
+    },
+    "new_row_count": 0,
+    "new_table_anon_rights": false,
+    "new_table_auth_rights": false,
+    "new_table_service_extra_rights": false
+  }
+}

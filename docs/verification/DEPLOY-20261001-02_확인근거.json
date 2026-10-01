@@ -1,0 +1,509 @@
+{
+  "code": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+  "preview": {
+    "deployment": {
+      "checkedAt": "2026-10-01T04:06:25.768Z",
+      "target": "preview",
+      "found": true,
+      "id": "dpl_HAcG5dXR1oKEK4KrPbECCYGv8E1v",
+      "url": "english-academy-student-45yswsu3w-thetilldawn-3859s-projects.vercel.app",
+      "state": "READY",
+      "code": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+      "branch": "codex/vocabulary-templates-20260920",
+      "readyAt": 1790827556671
+    },
+    "checks": {
+      "checkedAt": "2026-10-01T04:07:01.580Z",
+      "deploymentId": "dpl_HAcG5dXR1oKEK4KrPbECCYGv8E1v",
+      "code": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+      "keyCreated": true,
+      "keyRevoked": true,
+      "ssoPreserved": true,
+      "originalKeysPreserved": true,
+      "redirectFollowing": false,
+      "studentWrites": 0,
+      "results": [
+        {
+          "route": "/api/preview-identity",
+          "status": 200,
+          "elapsedMs": 276,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json",
+          "identity": {
+            "deploymentHost": "english-academy-student-45yswsu3w-thetilldawn-3859s-projects.vercel.app",
+            "gitCommitRef": "codex/vocabulary-templates-20260920",
+            "gitCommitSha": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+            "supabaseProjectRef": "wojxpruvbjzbhrpmsbuy",
+            "vercelEnvironment": "preview"
+          }
+        },
+        {
+          "route": "/admin/login",
+          "status": 200,
+          "elapsedMs": 288,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "route": "/",
+          "status": 200,
+          "elapsedMs": 378,
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "route": "/code",
+          "status": 307,
+          "elapsedMs": 279,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8",
+          "redirectPath": "/"
+        },
+        {
+          "route": "/api/admin/wordbook-library",
+          "status": 401,
+          "elapsedMs": 589,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/admin/wordbook-compositions",
+          "status": 401,
+          "elapsedMs": 203,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/session",
+          "status": 401,
+          "elapsedMs": 124,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201",
+          "status": 401,
+          "elapsedMs": 90,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201",
+          "status": 401,
+          "elapsedMs": 148,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/notebook",
+          "status": 401,
+          "elapsedMs": 112,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/wrong-words",
+          "status": 401,
+          "elapsedMs": 54,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/practice",
+          "status": 401,
+          "elapsedMs": 71,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/student",
+          "status": 200,
+          "elapsedMs": 185,
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8",
+          "streamedRedirectToIndex": true
+        },
+        {
+          "route": "/api/student/dashboard/sections",
+          "status": 405,
+          "elapsedMs": 82,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": null
+        }
+      ],
+      "errors": [],
+      "withoutKeyStatusBefore": 302,
+      "activationChecks": [
+        {
+          "status": 200,
+          "redirectOrigin": null
+        }
+      ],
+      "routeActivationRetries": [
+        {
+          "route": "/admin/login",
+          "attempt": 0,
+          "status": 302,
+          "redirectPath": "/sso-api"
+        }
+      ],
+      "mutationGuards": [
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/ready",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/ready",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/ready",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/ready",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/answers",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/answers",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/answers",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/answers",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        }
+      ],
+      "revokedKeyStatus": 302,
+      "passed": true
+    }
+  },
+  "production": {
+    "deployment": {
+      "checkedAt": "2026-10-01T04:10:49.131Z",
+      "target": "production",
+      "found": true,
+      "id": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+      "url": "english-academy-student-6xvi1b9c6-thetilldawn-3859s-projects.vercel.app",
+      "state": "READY",
+      "code": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+      "branch": "main",
+      "readyAt": 1790827810332,
+      "currentProduction": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+      "aliasDeployment": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+      "keyCount": 0,
+      "sso": "all_except_custom_domains",
+      "aliasMatches": true
+    },
+    "checks": {
+      "checkedAt": "2026-10-01T04:11:06.479Z",
+      "origin": "https://english-academy-student-app.vercel.app",
+      "studentWrites": 0,
+      "results": [
+        {
+          "route": "/admin/login",
+          "status": 200,
+          "expected": 200,
+          "elapsedMs": 625,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "route": "/",
+          "status": 200,
+          "expected": 200,
+          "elapsedMs": 442,
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "route": "/code",
+          "status": 307,
+          "expected": 307,
+          "elapsedMs": 461,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8",
+          "redirectPath": "/"
+        },
+        {
+          "route": "/api/preview-identity",
+          "status": 404,
+          "expected": 404,
+          "elapsedMs": 432,
+          "cacheControl": "private, no-store",
+          "contentType": null
+        },
+        {
+          "route": "/api/admin/wordbook-library",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 616,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/admin/wordbook-compositions",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 435,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/session",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 90,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 119,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 153,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/notebook",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 54,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/wrong-words",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 269,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/api/student/practice",
+          "status": 401,
+          "expected": 401,
+          "elapsedMs": 61,
+          "cacheControl": "private, no-store",
+          "contentType": "application/json"
+        },
+        {
+          "route": "/student",
+          "status": 200,
+          "expected": 307,
+          "elapsedMs": 189,
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "contentType": "text/html; charset=utf-8",
+          "streamedRedirectToIndex": true
+        },
+        {
+          "route": "/api/student/dashboard/sections",
+          "status": 405,
+          "expected": 405,
+          "elapsedMs": 88,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "contentType": null
+        }
+      ],
+      "errors": [],
+      "mutationGuards": [
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/ready",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/ready",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/ready",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/ready",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/answers",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/answers",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/answers",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/answers",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        },
+        {
+          "route": "/api/student/practice/00000000-0000-4000-8000-000000000201/feedback",
+          "status": 403,
+          "expected": 403,
+          "cacheControl": "private, no-store",
+          "privateDataReturned": false
+        }
+      ],
+      "passed": true
+    },
+    "initialErrors": {
+      "deploymentId": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+      "since": "2026-10-01T04:10:10.332Z",
+      "until": "2026-10-01T04:11:49.122Z",
+      "results": [
+        {
+          "filter": [
+            "--level",
+            "error"
+          ],
+          "count": 0,
+          "reachedLimit": false
+        },
+        {
+          "filter": [
+            "--level",
+            "fatal"
+          ],
+          "count": 0,
+          "reachedLimit": false
+        },
+        {
+          "filter": [
+            "--status-code",
+            "5xx"
+          ],
+          "count": 0,
+          "reachedLimit": false
+        }
+      ],
+      "studentWrites": 0
+    },
+    "browser": {
+      "checkedAt": "2026-10-01T04:12:30Z",
+      "path": "/student",
+      "account": "existing-test-student",
+      "initialShell": true,
+      "loadedDashboard": true,
+      "newConsoleErrors": 0,
+      "studentWrites": 0,
+      "screenshot": ".codex-tmp/DEPLOY-20261001-02/운영_학생첫화면.jpg"
+    }
+  }
+}
