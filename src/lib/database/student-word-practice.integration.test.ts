@@ -14,6 +14,7 @@ describe.sequential("별도 자율연습과 정규 자료 보존",()=>{
   let db:PGlite;
   beforeAll(async()=>{
     db=await createFinalSchemaDatabase();
+    await db.exec("grant usage on schema auth,extensions to service_role; alter role service_role bypassrls");
     const previous=readFileSync("supabase/migrations/20260929165150_expand_student_word_notebook.sql","utf8");
     await db.exec(previous.slice(previous.indexOf("create function private.wrong_word_notebook_page_v2("),previous.indexOf("-- Server-only adapter."))
       .replace("private.wrong_word_notebook_page_v2(","private.expected_notebook_before_practice("));
@@ -82,6 +83,29 @@ describe.sequential("별도 자율연습과 정규 자료 보존",()=>{
     const result=await rpc<QuizAttemptResponse>("get_student_word_practice_v1",[student,run.attempt.id]);
     expect(result.attempt.status).toBe("completed");expect(result.attempt.questions.every(q=>q.revealedCorrectChoiceIndex!==null)).toBe(true);
     expect(await snapshot()).toEqual(before);
+  });
+  it("준비 중 실제 연습/정규 기록 없이 같은 준비를 복구하고, ready에서 한 번만 시작한다",async()=>{
+    const raw=await source(),config=settings("per_question"),before=await snapshot();
+    const args=[student,id(490),hash,selection,config,raw.sourceHash,questions(raw,config)];
+    const prepared=await rpc<string>("prepare_word_practice_start_v1",args);
+    expect(await rpc("find_word_practice_preparation_v1",[student,id(490),hash])).toBe(prepared);
+    expect(await rpc("prepare_word_practice_start_v1",args)).toBe(prepared);
+    expect((await owner("select count(*)::integer n from private.student_word_practice_runs")).rows[0].n).toBe(0);
+    expect(await snapshot()).toEqual(before);
+    const run=await rpc<QuizAttemptResponse>("begin_prepared_practice_v1",[student,prepared]);
+    const again=await rpc<QuizAttemptResponse>("begin_prepared_practice_v1",[student,prepared]);
+    expect(again.attempt.id).toBe(run.attempt.id);expect(again.attempt.startedAt).toBe(run.attempt.startedAt);
+    expect(run.timerRemainingMilliseconds).toBeGreaterThan(4500);
+    expect(run.attempt.questions.every(q=>q.revealedCorrectChoiceIndex===null)).toBe(true);
+    expect(await snapshot()).toEqual(before);
+  });
+  it("준비 뒤 원천 변경/타학생은 실제 시작을 거절한다",async()=>{
+    const raw=await source(),config=settings();
+    const prepared=await rpc<string>("prepare_word_practice_start_v1",[student,id(491),hash,selection,config,raw.sourceHash,questions(raw,config)]);
+    await fails(()=>rpc("begin_prepared_practice_v1",[other,prepared]),"preparation_not_found");
+    await owner("delete from public.vocab_entry_quiz_eligibility where dataset_id=$1",[id(4)]);
+    await fails(()=>rpc("begin_prepared_practice_v1",[student,prepared]),"practice_source_changed");
+    expect((await owner("select count(*)::integer n from private.student_word_practice_runs")).rows[0].n).toBe(0);
   });
   it("미응답 정답과 방향별 정답 추측 음원/원천을 응답에서 제거한다",async()=>{
     const run=await start();

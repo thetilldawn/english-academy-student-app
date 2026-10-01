@@ -8,6 +8,7 @@ type RetryResponse = {
 export async function requestAttemptRetry(attemptId: string) {
   const response = await fetch(`/api/student/attempts/${attemptId}/retry`, {
     method: "POST",
+    headers: { "x-quiz-preparation": "1" },
   });
   const payload = (await response.json()) as RetryResponse;
 

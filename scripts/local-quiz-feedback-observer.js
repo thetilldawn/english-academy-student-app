@@ -21,4 +21,17 @@
   }
   ObservedAudio.prototype = NativeAudio.prototype;
   window.Audio = ObservedAudio;
+  // Read-only visual evidence for the local fake exam. Never loaded in deployment.
+  let previousFrame;
+  const observeFrame = () => {
+    const prompt = document.querySelector('#quiz-prompt')?.textContent ?? null;
+    const statuses = Array.from(document.querySelectorAll('[role="status"]')).map(node => node.textContent);
+    const state = JSON.stringify({ prompt, preparing: statuses.some(text => text?.includes('다음 문제 준비 중')),
+      initial: statuses.some(text => text?.includes('시험 준비 중')) });
+    if (state === previousFrame) return;
+    previousFrame = state;
+    console.info('[local-quiz-frame]', Date.now(), state);
+  };
+  new MutationObserver(observeFrame).observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+  observeFrame();
 })();

@@ -58,6 +58,7 @@ export function reusableInProgressAttemptId(
 export async function startStudentAttempt(
   studentId: string,
   assignmentId: string,
+  prepare = false,
 ): Promise<string> {
   const supabase = getServiceSupabaseClient();
   const [{ data: assignmentData, error: assignmentError }, { data: linkData }] =
@@ -137,7 +138,7 @@ export async function startStudentAttempt(
     assignment.question_bank_version !== null
   ) {
     const { data, error } = await supabase.rpc(
-      "create_quiz_attempt_from_bank",
+      prepare ? "prepare_quiz_attempt_v1" : "create_quiz_attempt_from_bank",
       {
         p_student_id: studentId,
         p_assignment_id: assignmentId,
@@ -216,7 +217,7 @@ export async function startStudentAttempt(
     assignment.question_count,
     assignment.english_to_korean_ratio,
   );
-  const { data, error } = await supabase.rpc("create_quiz_attempt", {
+  const { data, error } = await supabase.rpc(prepare ? "prepare_quiz_attempt_v1" : "create_quiz_attempt", {
     p_student_id: studentId,
     p_assignment_id: assignmentId,
     p_questions: questions.map((question, index) => ({

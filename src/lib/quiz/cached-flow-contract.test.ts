@@ -100,7 +100,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(controller).not.toContain("}, 800)");
     expect(controller).toContain("const recoverFromServer");
     expect(submission).toContain("if (await tryRecover()) return");
-    expect(domain).toContain("ANSWER_RESULT_VISIBLE_MS = 200");
+    expect(domain).toContain("ANSWER_RESULT_VISIBLE_MS = 100");
     expect(submission).not.toContain("waitForAudio");
     expect(controller).not.toContain("router.refresh()");
     expect(

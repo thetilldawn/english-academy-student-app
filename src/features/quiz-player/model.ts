@@ -34,9 +34,10 @@ export type QuizAttempt = {
   quizContentMode: QuizContentMode;
   status: "in_progress" | "completed" | "expired";
   phase: QuizAttemptPhase;
-  startedAt: string;
-  deadlineAt: string;
-  timerDeadlineAt: string;
+  // Null only in a client-side prepared display; active API responses require strings.
+  startedAt: string | null;
+  deadlineAt: string | null;
+  timerDeadlineAt: string | null;
   timingMode: "none" | "total" | "per_question";
   questionTimeLimitSeconds: number | null;
   questions: QuizQuestion[];
@@ -70,7 +71,7 @@ export type QuizFeedbackResumeResponse = {
 };
 
 export type QuizAttemptResponse = {
-  attempt: QuizAttempt;
+  attempt: QuizAttempt & { startedAt:string; deadlineAt:string; timerDeadlineAt:string };
   timerRemainingMilliseconds: number;
   transitionRemainingMilliseconds?: number;
 };

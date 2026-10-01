@@ -8,6 +8,8 @@ import { RouteLoadingState } from "@/design-system/patterns/route-state/route-st
 import { getPractice, getPracticeHistory } from "../practice-service";
 import { PracticeHistory } from "../../client/practice-history";
 import { PracticePlayer } from "../../client/practice-player";
+import { PreparedQuizPlayer } from "../../ui/prepared-quiz-player";
+import { getQuizPreparation } from "../attempt-preparation";
 import styles from "../../ui/practice.module.css";
 
 export function PracticeContent(props: { params?: Promise<{ id: string }>; result?: boolean }) {
@@ -22,7 +24,12 @@ async function Content({ params, result }: { params?: Promise<{ id: string }>; r
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const initial = await getPractice(session.studentId, id);
-  if (!initial) notFound();
+  if (!initial) {
+    const prepared = !result ? await getQuizPreparation(session.studentId,id) : null;
+    if (!prepared || prepared.kind !== "practice") notFound();
+    if ("resumeId" in prepared) redirect(`/student/practice/${prepared.resumeId}`);
+    return <PreparedQuizPlayer key={prepared.id} preparation={prepared} />;
+  }
   const attempt = initial.attempt;
   if (!result) {
     if (attempt.status !== "in_progress") redirect(`/student/practice/${id}/result`);

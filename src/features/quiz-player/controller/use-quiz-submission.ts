@@ -240,26 +240,15 @@ export function useQuizSubmission(input: {
           throw new Error(studentAppText.attempt.stateError);
         }
 
-        const previewAttempt = applyQuizAnswerTransition({
-          attempt: submission.attempt,
-          answeredQuestionId: submission.question.id,
-          answeredPhase,
-          choiceIndex: submission.choiceIndex,
-          payload,
-          timerDeadlineAt: payload.questionDeadlineAt!,
-        });
         const previewMilliseconds = previewNextQuestionMilliseconds(
           submission.attempt,
           payload,
         );
-        const activatedAt = performance.now();
-        input.resetClock(previewMilliseconds);
-        input.dispatch({
-          type: "feedback-transitioned",
-          attempt: previewAttempt,
-        });
-
-        const synchronized = await transition.synchronization;
+        if (!transition.ready && !transition.quietReservation) {
+          cancelPending();
+          input.dispatch({ type: "next-question-preparing" });
+        }
+        const synchronized = transition.ready ?? await transition.synchronization;
         if (
           !input.mountedRef.current ||
           inFlightRequestRef.current !== requestKey
@@ -271,21 +260,6 @@ export function useQuizSubmission(input: {
           throw new Error(studentAppText.attempt.stateError);
         }
 
-        const serverStartRemaining = Math.max(
-          0,
-          synchronized.payload.transitionRemainingMilliseconds -
-            (performance.now() - synchronized.receivedAt),
-        );
-        if (serverStartRemaining > 0) {
-          await wait(serverStartRemaining);
-        }
-        if (
-          !input.mountedRef.current ||
-          inFlightRequestRef.current !== requestKey
-        ) {
-          return;
-        }
-
         const synchronizedAttempt = applyQuizAnswerTransition({
           attempt: submission.attempt,
           answeredQuestionId: submission.question.id,
@@ -295,7 +269,7 @@ export function useQuizSubmission(input: {
           timerDeadlineAt: synchronized.payload.questionDeadlineAt!,
         });
         const activeMilliseconds = activeNextQuestionMilliseconds({
-          activatedAt,
+          activatedAt: performance.now(),
           attempt: synchronizedAttempt,
           previewMilliseconds,
           serverMilliseconds:
@@ -309,7 +283,6 @@ export function useQuizSubmission(input: {
           type: "attempt-replaced",
           attempt: synchronizedAttempt,
           remainingSeconds: Math.ceil(activeMilliseconds / 1_000),
-          preservePendingChoice: true,
         });
         timeWarningAnnouncedRef.current = false;
 
@@ -352,7 +325,8 @@ export function useQuizSubmission(input: {
 
       if (
         !input.state.timerSynchronized ||
-        (!input.state.transitionPending && inFlightRequestRef.current !== null) ||
+        input.state.transitionPending ||
+        inFlightRequestRef.current !== null ||
         input.state.submitting ||
         input.state.feedback !== null
       ) {

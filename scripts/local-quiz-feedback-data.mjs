@@ -3,7 +3,8 @@ import { STUDY_SECRET } from "./local-student-study-data.mjs";
 const uid = (n) => "00000000-0000-4000-8000-" + String(n).padStart(12, "0");
 export const LOCAL_QUIZ_AUDIO = "https://media.merriam-webster.com/audio/prons/en/us/mp3/l/localfixture.mp3";
 export const localQuizCases = ["book_meaning_choice", "canonical_definition_to_headword", "canonical_example_to_headword"]
-  .flatMap((mode, m) => ["initial", "retry"].map((phase, p) => ({ id: uid(201 + m * 2 + p), mode, phase })));
+  .flatMap((mode, m) => ["initial", "retry"].map((phase, p) => ({ id: uid(201 + m * 2 + p), mode, phase })))
+  .concat([207,208].map(n=>({id:uid(n),mode:"book_meaning_choice",phase:"initial",prepared:true,feedbackDelayMs:n===208?1200:0})));
 const states = new Map();
 export const resetLocalQuizzes = () => states.clear();
 const deny = { status: 403, body: { error: "Local quiz fixture rejected" }, category: "rejected" };
@@ -34,24 +35,39 @@ function stateFor(id) {
             choice_dictionary_snapshots: choices.map((displayHeadword, choiceIndex) => ({ displayHeadword, choiceIndex, ...pronunciation })) } },
       };
     });
-    states.set(id, { ...sample, questions, index: 0, answers: new Map(), resumes: new Map(), startedAt: new Date().toISOString() });
+    states.set(id, { ...sample, questions, index: 0, answers: new Map(), resumes: new Map(), startedAt: sample.prepared ? null : new Date().toISOString() });
   }
   return states.get(id);
 }
 export function localQuizSummary() {
   return [...states.values()].map(s => ({ id: s.id, mode: s.mode, phase: s.phase,
-    answered: s.answers.size, resumed: s.resumes.size, currentQuestionId: s.questions[s.index]?.id ?? null }));
+    answered: s.answers.size, resumed: s.resumes.size, startedAt:s.startedAt, currentQuestionId: s.questions[s.index]?.id ?? null }));
 }
 export function isLocalQuizRequest(pathname, method) {
   return localQuizCases.some(({ id }) => method === "GET"
     ? pathname === `/api/student/attempts/${id}`
-    : method === "POST" && ["answers", "feedback"].some(action => pathname === `/api/student/attempts/${id}/${action}`));
+    : method === "POST" && ["answers", "feedback", "ready"].some(action => pathname === `/api/student/attempts/${id}/${action}`));
 }
 export function studentQuizFixture({ target, method, headers, input }) {
   if (target.origin !== "http://127.0.0.1:3038" || target.username || target.password ||
     headers.get("apikey") !== STUDY_SECRET || headers.get("authorization") !== "Bearer " + STUDY_SECRET) return deny;
   const table = target.pathname.replace("/rest/v1/", "");
   const query = target.searchParams;
+  if(table === "assignment_questions"){
+    const s=stateFor(query.get("assignment_id")?.slice(3));
+    if(method!=="GET" || !s?.prepared) return deny;
+    return ok(s.questions.map(q=>({id:q.id,...q.assignment_question})));
+  }
+  if(["rpc/get_quiz_preparation_v1","rpc/begin_prepared_quiz_v1"].includes(table)){
+    const s=stateFor(input?.p_preparation_id);
+    if(method!=="POST" || input?.p_student_id!==uid(1) || !s?.prepared) return deny;
+    if(table.endsWith("get_quiz_preparation_v1"))return ok(s.startedAt?{id:s.id,kind:"initial",begunId:s.id}:{
+      id:s.id,kind:"initial",begunId:null,assignment:{id:s.id,title:"로컬 준비 검사",quiz_content_mode:s.mode,timing_mode:"per_question",question_time_limit_seconds:180},
+      plan:s.questions.map(q=>({...q,assignment_question_id:q.id})),
+    },"quiz-preparation");
+    s.startedAt??=new Date().toISOString();
+    return ok(s.id,"quiz-ready");
+  }
   if (["quiz_attempts", "assignments", "quiz_questions"].includes(table)) {
     if (method !== "GET") return deny;
     const id = query.get(table === "quiz_questions" ? "attempt_id" : "id");
@@ -59,11 +75,13 @@ export function studentQuizFixture({ target, method, headers, input }) {
     if (!s) return deny;
     if (table === "quiz_attempts") {
       if (query.get("student_id") !== "eq." + uid(1)) return deny;
+      if(!s.startedAt)return ok(null);
       return ok({ id: s.id, assignment_id: s.id, status: s.index < 3 ? "in_progress" : "completed", phase: s.phase,
-        started_at: s.startedAt, deadline_at: "infinity", current_question_started_at: s.startedAt });
+        started_at: s.startedAt, deadline_at: "infinity", current_question_started_at: s.startedAt,
+        assignment:{timing_mode:s.prepared?"per_question":"none",question_time_limit_seconds:s.prepared?180:null} });
     }
     if (table === "assignments") return ok({ title: "로컬 음성 검사 · " + s.mode + " · " + s.phase,
-      timing_mode: "none", question_time_limit_seconds: null, quiz_content_mode: s.mode });
+      timing_mode: s.prepared?"per_question":"none", question_time_limit_seconds: s.prepared?180:null, quiz_content_mode: s.mode });
     return ok(s.questions);
   }
   if (!["rpc/answer_quiz_question_v4", "rpc/resume_quiz_after_feedback_v2", "rpc/materialize_ready_vocab_assignment_queue_v1"].includes(table)) return null;
@@ -82,15 +100,15 @@ export function studentQuizFixture({ target, method, headers, input }) {
     question[s.phase + "_is_correct"] = input.p_choice_index === 0;
     s.index += 1;
     const result = { correct: input.p_choice_index === 0, correctChoiceIndex: 0, completed: s.index === 3,
-      nextQuestionId: s.questions[s.index]?.id ?? null, nextPhase: s.index < 3 ? s.phase : null, questionDeadlineAt: "infinity" };
+      nextQuestionId: s.questions[s.index]?.id ?? null, nextPhase: s.index < 3 ? s.phase : null, questionDeadlineAt: s.prepared?new Date(Date.now()+187000).toISOString():"infinity" };
     s.answers.set(question.id, { choice: input.p_choice_index, result });
     return ok(result, "quiz-answer");
   }
   if (input.p_next_phase !== s.phase || s.index === 0 || s.questions[s.index]?.id !== input.p_next_question_id ||
     !Number.isInteger(input.p_transition_remaining_milliseconds) || input.p_transition_remaining_milliseconds < 0 || input.p_transition_remaining_milliseconds > 750) return deny;
   if (!s.resumes.has(input.p_next_question_id)) s.resumes.set(input.p_next_question_id, {
-    questionDeadlineAt: "infinity", questionStartsAt: new Date(Date.now() + input.p_transition_remaining_milliseconds).toISOString() });
-  return ok(s.resumes.get(input.p_next_question_id), "quiz-resume");
+    questionDeadlineAt: s.prepared?new Date(Date.now()+180000+input.p_transition_remaining_milliseconds).toISOString():"infinity", questionStartsAt: new Date(Date.now() + input.p_transition_remaining_milliseconds).toISOString() });
+  return {...ok(s.resumes.get(input.p_next_question_id), "quiz-resume"),delayMs:s.feedbackDelayMs ?? 0};
 }
 
 // Quiet eight-second PCM tone: real media events, not synthesized play/ended events.

@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ session: vi.fn(), get: vi.fn(), history: vi.fn(), preview: vi.fn(), start: vi.fn(), rpc: vi.fn() }));
+const mocks = vi.hoisted(() => ({ session: vi.fn(), get: vi.fn(), history: vi.fn(), preview: vi.fn(), start: vi.fn(), rpc: vi.fn(), ready: vi.fn() }));
 vi.mock("@/lib/auth/student-session", () => ({ getStudentSession: mocks.session }));
 vi.mock("./practice-service", async () => ({ ...await vi.importActual("./practice-rpc"), getPractice: mocks.get,
   getPracticeHistory: mocks.history, previewPractice: mocks.preview, startPractice: mocks.start, practiceRpc: mocks.rpc }));
 import { handlePracticeRequest } from "./practice-http";
 import { PracticeError } from "./practice-rpc";
+vi.mock("./attempt-preparation",()=>({beginQuizPreparation:mocks.ready,QuizPreparationChangedError:class extends Error{}}));
+import { QuizPreparationChangedError } from "./attempt-preparation";
 import { AuthenticationUnavailableError } from "@/lib/auth/authentication-error";
 const id = "00000000-0000-4000-8000-000000000001";
 const input = { requestKey: id, selection: { mode: "selected", keys: ["word:a"] }, settings: { questionCount: 1, englishToKoreanRatio: 100,
@@ -16,6 +18,17 @@ beforeEach(() => { vi.resetAllMocks(); vi.stubEnv("APP_ORIGIN", "https://app.tes
 afterEach(() => vi.unstubAllEnvs());
 
 describe("학생 자율연습 HTTP 경계", () => {
+  it("준비 완료는 세션 학생만 사용하고 확정 변경409와 장애503을 구분한다",async()=>{
+    mocks.ready.mockResolvedValueOnce({id}).mockRejectedValueOnce(new QuizPreparationChangedError("목록에서 다시 시작"))
+      .mockRejectedValueOnce(new Error("private internal failure"));
+    const ready=()=>handlePracticeRequest(request("POST",{kind:"practice"}),context("ready"));
+    expect((await ready()).status).toBe(200);
+    expect(mocks.ready).toHaveBeenCalledWith(id,id,"practice");
+    const changed=await ready();expect(changed.status).toBe(409);expect(await changed.json()).toMatchObject({code:"preparation_changed"});
+    const failed=await ready();expect(failed.status).toBe(503);expect(await failed.text()).not.toContain("internal");
+    expect(failed.headers.get("Cache-Control")).toBe("private, no-store");
+    expect((await handlePracticeRequest(request("POST",{kind:"practice",studentId:id}),context("ready"))).status).toBe(400);
+  });
   it("쓰기 다른 출처는 인증/DB 읽기도 하지 않는다", async () => {
     expect((await handlePracticeRequest(request("POST", input, undefined, "https://other.test"), context(), "preview")).status).toBe(403);
     expect(mocks.session).not.toHaveBeenCalled();

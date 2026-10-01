@@ -9,7 +9,7 @@ export class PracticeRequestError extends Error {
 async function send<T>(path: string, input: unknown, schema: z.ZodType<T>, signal?: AbortSignal): Promise<T> {
   const deadline = createRequestDeadline(20_000, signal);
   try {
-    const response = await awaitWithAbortSignal(fetch(path, { method: "POST", headers: { "content-type": "application/json" },
+    const response = await awaitWithAbortSignal(fetch(path, { method: "POST", headers: { "content-type": "application/json", "x-quiz-preparation": "1" },
       body: JSON.stringify(input), cache: "no-store", signal: deadline.signal }), deadline.signal);
     const value: unknown = await awaitWithAbortSignal(response.json(), deadline.signal);
     if (!response.ok) {
@@ -20,4 +20,4 @@ async function send<T>(path: string, input: unknown, schema: z.ZodType<T>, signa
   } finally { deadline.dispose(); }
 }
 export const requestPracticePreview = (input: PracticeInput, signal?: AbortSignal) => send("/api/student/practice/preview", input, practicePreviewSchema, signal);
-export const requestPracticeStart = (input: PracticeStartInput, signal?: AbortSignal) => send("/api/student/practice", input, attemptResponseSchema, signal);
+export const requestPracticeStart = (input: PracticeStartInput, signal?: AbortSignal) => send("/api/student/practice", input, z.union([z.object({preparationId:z.uuid()}),attemptResponseSchema]), signal);

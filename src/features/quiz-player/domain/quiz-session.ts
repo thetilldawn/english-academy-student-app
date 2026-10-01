@@ -14,7 +14,7 @@ export const ANSWER_AUDIO_END_TIMEOUT_MS = 3_000;
 export const ANSWER_AUDIO_START_TIMEOUT_MS = 1_000;
 export const QUIZ_REQUEST_TIMEOUT_MS = 2_000;
 export const ANSWER_SERVER_FEEDBACK_RESERVATION_MS = 7_000;
-export const ANSWER_RESULT_VISIBLE_MS = 200;
+export const ANSWER_RESULT_VISIBLE_MS = 100;
 export const PROMPT_AUDIO_AUTOPLAY_DELAY_MS = 250;
 
 /** Only a saved server judgement may restore feedback after a lost response. */

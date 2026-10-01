@@ -46,7 +46,7 @@ describe("start retry button", () => {
     expect(button).toBeDisabled();
     resolveRequest?.();
     await waitFor(() =>
-      expect(replace).toHaveBeenCalledWith("/student/attempt/attempt-1"),
+      expect(replace).toHaveBeenCalledWith("/student/attempt/attempt-1?prepare=retry"),
     );
   });
 

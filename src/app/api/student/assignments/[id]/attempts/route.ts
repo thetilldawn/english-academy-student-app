@@ -24,8 +24,8 @@ export const POST = withAuthenticationFailureResponse(async function POST(
   }
 
   try {
-    const attemptId = await startStudentAttempt(session.studentId, id);
-    return Response.json({ attemptId }, { status: 201 });
+    const attemptId = await startStudentAttempt(session.studentId, id, request.headers.get("x-quiz-preparation") === "1");
+    return Response.json({ attemptId }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return jsonError("시험을 시작할 수 없습니다.", 409);
   }

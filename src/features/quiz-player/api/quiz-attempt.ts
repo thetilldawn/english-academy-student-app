@@ -42,7 +42,7 @@ const questionSchema = z.object({
   revealedCorrectChoiceIndex: z.number().int().min(0).max(3).nullable(),
 });
 
-const attemptSchema = z.object({
+export const attemptSchema = z.object({
   id: z.string().min(1),
   assignmentTitle: z.string(),
   quizContentMode: z.enum(quizContentModes),

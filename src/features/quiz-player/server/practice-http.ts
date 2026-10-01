@@ -5,6 +5,7 @@ import { withAuthenticationFailureResponse } from "@/lib/auth/route-authenticati
 import { isSameOriginRequest, parseJson } from "@/lib/http";
 import { practicePreviewInputSchema, practiceStartInputSchema } from "../contracts/practice";
 import { getPractice, getPracticeHistory, PracticeError, practiceRpc, previewPractice, startPractice } from "./practice-service";
+import { beginQuizPreparation, QuizPreparationChangedError } from "./attempt-preparation";
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 const answer = z.object({ questionId: z.uuid(), phase: z.literal("initial"), choiceIndex: z.number().int().min(0).max(3) }).strict();
@@ -33,9 +34,13 @@ export const handlePracticeRequest = withAuthenticationFailureResponse(async fun
         return input ? json(await previewPractice(session.studentId, input)) : json({ error: "연습 설정을 확인해 주세요." }, 400);
       }
       const input = await parseJson(request, practiceStartInputSchema);
-      return input ? json(await startPractice(session.studentId, input)) : json({ error: "연습 설정을 확인해 주세요." }, 400);
+      return input ? json(await startPractice(session.studentId, input, request.headers.get("x-quiz-preparation") === "1")) : json({ error: "연습 설정을 확인해 주세요." }, 400);
     }
     const params = { p_student_id: session.studentId, p_run_id: id };
+    if (command === "ready") {
+      const input = await parseJson(request,z.object({kind:z.literal("practice")}).strict());
+      return input ? json(await beginQuizPreparation(session.studentId,id,"practice")) : json({error:"연습 요청을 확인해 주세요."},400);
+    }
     if (command === "answers" || command === "timeouts") {
       const input = await parseJson(request, command === "answers" ? answer : timeout);
       if (!input) return json({ error: "답안 요청을 확인해 주세요." }, 400);
@@ -50,6 +55,7 @@ export const handlePracticeRequest = withAuthenticationFailureResponse(async fun
     if (command === "expire") return json(await practiceRpc("expire_student_word_practice_v1", params));
     return json({ error: "연습을 찾을 수 없습니다." }, 404);
   } catch (error) {
+    if (error instanceof QuizPreparationChangedError) return json({error:error.message,code:"preparation_changed"},409);
     return error instanceof PracticeError ? json({ error: error.message, code: error.code }, error.status) : json({ error: "연습을 불러오지 못했습니다. 다시 시도해 주세요." }, 503);
   }
 });

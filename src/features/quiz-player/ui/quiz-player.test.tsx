@@ -141,7 +141,7 @@ function question(id: string, orderIndex: number): QuizQuestion {
   };
 }
 
-function attempt(): QuizAttempt {
+function attempt(): QuizAttempt & {startedAt:string;deadlineAt:string;timerDeadlineAt:string} {
   return {
     assignmentTitle: "Stable quiz",
     quizContentMode: "book_meaning_choice",
@@ -402,7 +402,7 @@ describe("QuizPlayer", () => {
     [false, true].flatMap(correct =>
       [false, true].flatMap(audio =>
         (["variable", "legacy"] as const).map(protocol => ({ phase, correct, audio, protocol })))));
-  it.each(variants)("shows $phase correct=$correct audio=$audio $protocol for 200ms without replay or skip", async ({ phase, correct, audio, protocol }) => {
+  it.each(variants)("shows $phase correct=$correct audio=$audio $protocol for 100ms without replay or skip", async ({ phase, correct, audio, protocol }) => {
     const value = attempt(); value.phase = phase;
     if (phase === "retry") value.questions.forEach(q => { q.initialChoiceIndex = 1; q.initialIsCorrect = false; });
     if (audio) value.questions[0].choicePronunciations[0] = availablePronunciation;
@@ -418,34 +418,36 @@ describe("QuizPlayer", () => {
     fireEvent.click(selected);
     fireEvent.keyDown(screen.getByRole("group"), { key: "2" });
     fireEvent.pointerDown(selected, { pointerType: "touch" });
-    await waitForAnswerSelection(199);
+    await waitForAnswerSelection(99);
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
     expect(mocks.submit).toHaveBeenCalledTimes(1);
     await waitForAnswerSelection(1);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.queryByText("다음 문제 준비 중")).toBeNull();
+    expect(document.querySelector('[class*="reveal"]')).toBeNull();
     fireEvent.pointerUp(selected, { pointerType: "touch" });
     fireEvent.click(selected);
     await waitForAnswerSelection(30);
     expect(mocks.submit).toHaveBeenCalledTimes(1);
     if (protocol === "legacy") expect(mocks.resume).not.toHaveBeenCalled();
-    else expect(mocks.resume).toHaveBeenCalledWith(expect.objectContaining({ transitionRemainingMilliseconds: 200 }));
+    else expect(mocks.resume).toHaveBeenCalledWith(expect.objectContaining({ transitionRemainingMilliseconds: 100 }));
   });
 
-  it.each(["completed", "needsRetry"] as const)("waits 200ms before the final %s result", async terminal => {
+  it.each(["completed", "needsRetry"] as const)("waits 100ms before the final %s result", async terminal => {
     mocks.submit.mockImplementation(async () => successfulTransport({
       correct: terminal === "completed", correctChoiceIndex: 0, [terminal]: true,
     }));
     await renderReady();
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
     await waitForAnswerSelection();
-    await waitForAnswerSelection(199);
+    await waitForAnswerSelection(99);
     expect(mocks.replace).not.toHaveBeenCalled();
     await waitForAnswerSelection(1);
     expect(mocks.replace).toHaveBeenCalledExactlyOnceWith("/student/result/attempt-1");
     expect(mocks.resume).not.toHaveBeenCalled();
   });
 
-  it("starts the full 200ms with the result even when saving is slow", async () => {
+  it("starts the full 100ms with the result even when saving is slow", async () => {
     let finish!: (value: unknown) => void;
     mocks.submit.mockReturnValue(new Promise(resolve => { finish = resolve; }));
     await renderReady();
@@ -455,7 +457,7 @@ describe("QuizPlayer", () => {
     expect(selected).toHaveAttribute("data-feedback", "selected");
     await act(async () => { finish(successfulTransport(nextAnswer())); });
     expect(selected).toHaveAttribute("data-feedback", "correct");
-    await waitForAnswerSelection(199);
+    await waitForAnswerSelection(99);
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
     await waitForAnswerSelection(1);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
@@ -469,32 +471,55 @@ describe("QuizPlayer", () => {
     fireEvent.click(selected); await waitForAnswerSelection(19);
     expect(mocks.submit).not.toHaveBeenCalled();
     await waitForAnswerSelection(1);
-    fireEvent.click(selected); await waitForAnswerSelection(200);
+    fireEvent.click(selected); await waitForAnswerSelection(100);
     expect(mocks.submit).toHaveBeenCalledTimes(1);
   });
 
-  it.each([true, false])("keeps the last next-question choice until slow readiness, settled=%s", async settled => {
+  it("does not flash loading for a confirmed short server reservation", async () => {
+    mocks.submit.mockImplementation(async () => successfulTransport(nextAnswer()));
+    mocks.resume.mockImplementation(async () => {
+      await new Promise(resolve => setTimeout(resolve,20));
+      return successfulTransport({questionDeadlineAt:"2099-01-01T00:00:10Z",questionStartsAt:"2099-01-01T00:00:00Z",
+        timerRemainingMilliseconds:10_100,transitionRemainingMilliseconds:100});
+    });
+    await renderReady();
+    const choice=screen.getByRole("button",{name:/^1\s*question-1-one/});
+    fireEvent.click(choice);await waitForAnswerSelection();await waitForAnswerSelection(100);
+    expect(screen.queryByText("다음 문제 준비 중")).toBeNull();
+    expect(choice).toHaveAttribute("data-feedback","correct");expect(choice).toBeDisabled();
+    fireEvent.keyDown(screen.getByRole("group"),{key:"2"});
+    await waitForAnswerSelection(20);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(document.querySelector('[class*="reveal"]')).toBeNull();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows preparation only after 100ms and rejects touches until ready", async () => {
     let finish!: (value: unknown) => void;
     mocks.submit.mockImplementationOnce(async () => successfulTransport(nextAnswer()))
       .mockReturnValue(new Promise(() => {}));
     mocks.resume.mockReturnValue(new Promise(resolve => { finish = resolve; }));
     await renderReady();
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
-    const next = screen.getByRole("button", { name: /question-2-three/ });
-    fireEvent.click(screen.getByRole("button", { name: /question-2-two/ }));
-    await waitForAnswerSelection(10); fireEvent.click(next);
-    await waitForAnswerSelection(settled ? 50 : 19);
-    expect(next).toHaveAttribute("data-feedback", "selected");
+    await waitForAnswerSelection(); await waitForAnswerSelection(99);
+    expect(screen.queryByText("다음 문제 준비 중")).toBeNull();
+    await waitForAnswerSelection(1);
+    expect(screen.getByText("다음 문제 준비 중")).toBeInTheDocument();
+    expect(screen.queryByText("question-2-prompt")).toBeNull();
+    fireEvent.keyDown(document.querySelector("section")!, { key: "2" });
+    fireEvent.click(screen.getByText("question-1-two"));
+    await waitForAnswerSelection(50);
     expect(mocks.submit).toHaveBeenCalledTimes(1);
     await act(async () => { finish(successfulTransport({
       questionDeadlineAt: "2099-01-01T00:00:10.000Z", questionStartsAt: "2099-01-01T00:00:00.000Z",
       timerRemainingMilliseconds: 10_000, transitionRemainingMilliseconds: 0,
     })); });
-    if (!settled) expect(mocks.submit).toHaveBeenCalledTimes(1);
-    await waitForAnswerSelection(1);
+    expect(screen.queryByText("다음 문제 준비 중")).toBeNull();
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: /question-2-three/ }));
+    await waitForAnswerSelection(20);
     expect(mocks.submit).toHaveBeenCalledTimes(2);
-    expect(mocks.submit).toHaveBeenLastCalledWith(expect.objectContaining({ questionId: "question-2", choiceIndex: 2 }));
   });
 
   it("discards a pending next answer on recovery, and never repeats shown feedback", async () => {
@@ -506,8 +531,8 @@ describe("QuizPlayer", () => {
     await renderReady(value);
     mocks.recover.mockImplementation(async () => successfulTransport({ attempt: restored, timerRemainingMilliseconds: 10_000 }));
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
-    fireEvent.click(screen.getByRole("button", { name: /question-2-two/ }));
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
+    fireEvent.click(screen.getByText("question-1-two"));
     await waitForAnswerSelection(20);
     await act(async () => { finish({ ok: false, payload: {} }); });
     expect(screen.getByRole("button", { name: /question-2-two/ })).toHaveAttribute("data-feedback", "idle");
@@ -522,8 +547,8 @@ describe("QuizPlayer", () => {
     mocks.resume.mockReturnValue(new Promise(resolve => { finish = resolve; }));
     const view = await renderReady();
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
-    fireEvent.click(screen.getByRole("button", { name: /question-2-two/ }));
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
+    fireEvent.click(screen.getByText("question-1-two"));
     view.unmount();
     await act(async () => { finish({ ok: false, payload: {} }); });
     await waitForAnswerSelection(5_000);
@@ -537,7 +562,7 @@ describe("QuizPlayer", () => {
       ? { correct: true, correctChoiceIndex: 0, completed: true } : nextAnswer()));
     const view = await renderReady();
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(199);
+    await waitForAnswerSelection(); await waitForAnswerSelection(99);
     view.unmount(); await waitForAnswerSelection(5_000);
     expect(mocks.replace).not.toHaveBeenCalled();
     expect(mocks.submit).toHaveBeenCalledTimes(1);
@@ -549,7 +574,7 @@ describe("QuizPlayer", () => {
     mocks.submit.mockImplementation(async () => successfulTransport(nextAnswer({ correct: false })));
     await renderReady(value);
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
     expect(audioPlayCount()).toBe(0);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
   });
@@ -568,7 +593,7 @@ describe("QuizPlayer", () => {
     player.pause.mockClear();
     await waitForAnswerSelection();
     expect(player.pause).toHaveBeenCalled();
-    await waitForAnswerSelection(200);
+    await waitForAnswerSelection(100);
     expect(audibleAudioPlayCount()).toBe(2);
   });
 
@@ -583,7 +608,7 @@ describe("QuizPlayer", () => {
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
     await waitForAnswerSelection();
     expect(player.pause).toHaveBeenCalled();
-    await waitForAnswerSelection(199);
+    await waitForAnswerSelection(99);
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
     await waitForAnswerSelection(1);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
@@ -617,7 +642,7 @@ describe("QuizPlayer", () => {
     const selected = screen.getByRole("button", { name: /^1\s*question-1-one/ });
     fireEvent.click(selected); await waitForAnswerSelection();
     expect(selected).toHaveAttribute("data-feedback", correct ? "correct" : "wrong");
-    await waitForAnswerSelection(199);
+    await waitForAnswerSelection(99);
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
     expect(mocks.replace).not.toHaveBeenCalled();
     await waitForAnswerSelection(1);
@@ -636,7 +661,7 @@ describe("QuizPlayer", () => {
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
     await waitForAnswerSelection();
     expect(screen.getByText(studentAppText.attempt.timeoutTitle)).toBeInTheDocument();
-    await waitForAnswerSelection(200);
+    await waitForAnswerSelection(100);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
   });
 
@@ -667,7 +692,7 @@ describe("QuizPlayer", () => {
     mocks.submit.mockRejectedValue(new Error("lost")); await renderReady(value);
     mocks.recover.mockImplementation(async () => successfulTransport({ attempt: restored, timerRemainingMilliseconds: 1_100 }));
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:01");
   });
 
@@ -681,7 +706,7 @@ describe("QuizPlayer", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it("uses the custom practice transport and result route with the same 20/200ms contract", async () => {
+  it("uses the custom practice transport and result route with the same 20/100ms contract", async () => {
     const value = attempt();
     const practice = {
       answer: vi.fn(async () => successfulTransport({ correct: true, correctChoiceIndex: 0, completed: true })),
@@ -695,7 +720,7 @@ describe("QuizPlayer", () => {
     expect(practice.answer).not.toHaveBeenCalled();
     await waitForAnswerSelection(1);
     expect(practice.answer).toHaveBeenCalledTimes(1);
-    await waitForAnswerSelection(199);
+    await waitForAnswerSelection(99);
     expect(mocks.replace).not.toHaveBeenCalled();
     await waitForAnswerSelection(1);
     expect(mocks.replace).toHaveBeenCalledWith("/student/practice/attempt-1/result");
@@ -713,27 +738,28 @@ describe("QuizPlayer", () => {
   });
 
 
-  it.each([5, 8, 10])("preserves a legacy %s-second budget while showing the next question at 200ms", async seconds => {
+  it.each([5, 8, 10])("waits for a legacy reservation without spending the %s-second budget", async seconds => {
     const value = attempt(); value.questionTimeLimitSeconds = seconds;
     mocks.submit.mockImplementationOnce(async () => successfulTransport(nextAnswer({
       feedbackProtocol: "legacy", timerRemainingMilliseconds: seconds * 1_000 + 750,
     }))).mockReturnValue(new Promise(() => {}));
     await renderReady(value);
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
-    const choice = screen.getByRole("button", { name: /question-2-two/ });
-    fireEvent.click(choice);
-    await waitForAnswerSelection(549);
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
+    expect(screen.getByText("다음 문제 준비 중")).toBeInTheDocument();
+    expect(screen.queryByText("question-2-prompt")).toBeNull();
+    await waitForAnswerSelection(649);
     expect(mocks.submit).toHaveBeenCalledTimes(1);
-    expect(choice).toHaveAttribute("data-feedback", "selected");
     await waitForAnswerSelection(1);
-    await waitForAnswerSelection(1);
-    expect(mocks.submit).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("다음 문제 준비 중")).toBeNull();
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:" + String(seconds).padStart(2, "0"));
+    fireEvent.click(screen.getByRole("button", { name: /question-2-two/ }));
+    await waitForAnswerSelection(20);
+    expect(mocks.submit).toHaveBeenCalledTimes(2);
     expect(mocks.resume).not.toHaveBeenCalled();
   });
 
-  it("submits one automatic timeout then shows its delayed judgement for 200ms", async () => {
+  it("submits one automatic timeout then shows its delayed judgement for 100ms", async () => {
     const value = attempt(); value.questionTimeLimitSeconds = 5;
     let finish!: (value: unknown) => void;
     mocks.submit.mockReturnValue(new Promise(resolve => { finish = resolve; }));
@@ -749,7 +775,7 @@ describe("QuizPlayer", () => {
     expect(mocks.submit).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("quiz-timeout-overlay")).toBeInTheDocument();
     await act(async () => { finish(successfulTransport(nextAnswer({ correct: false, timedOut: true }))); });
-    await waitForAnswerSelection(199);
+    await waitForAnswerSelection(99);
     expect(screen.getByTestId("quiz-timeout-overlay")).toBeInTheDocument();
     await waitForAnswerSelection(1);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
@@ -758,7 +784,7 @@ describe("QuizPlayer", () => {
     expect(mocks.submit).toHaveBeenCalledTimes(1);
   });
 
-  it.each(["total", "none"] as const)("preserves a finite %s deadline through normal 200ms feedback", async timingMode => {
+  it.each(["total", "none"] as const)("preserves a finite %s deadline through normal 100ms feedback", async timingMode => {
     const value = attempt(); value.timingMode = timingMode; value.questionTimeLimitSeconds = null;
     mocks.submit.mockImplementation(async () => successfulTransport(nextAnswer({
       timerRemainingMilliseconds: timingMode === "total" ? 8_500 : 1_500,
@@ -770,10 +796,10 @@ describe("QuizPlayer", () => {
     mocks.expire.mockResolvedValue({ ok: true });
     await renderReady(value);
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
     expect(mocks.expire).not.toHaveBeenCalled();
-    await waitForAnswerSelection(1_302);
+    await waitForAnswerSelection(1_402);
     await waitForAnswerSelection(1);
     expect(mocks.expire).toHaveBeenCalledTimes(1);
     await waitForAnswerSelection(10_000);
@@ -790,7 +816,7 @@ describe("QuizPlayer", () => {
     }));
     await renderReady(value, 0);
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
-    await waitForAnswerSelection(); await waitForAnswerSelection(200);
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
     await waitForAnswerSelection(60_000);
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /question-2-one/ })).toBeEnabled();
@@ -806,12 +832,12 @@ describe("QuizPlayer", () => {
     const selected = screen.getByRole("button", { name: /^1\s*question-1-one/ });
     fireEvent.click(selected); await waitForAnswerSelection();
     expect(selected).toHaveAttribute("data-feedback", "wrong");
-    await waitForAnswerSelection(199); expect(mocks.replace).not.toHaveBeenCalled();
+    await waitForAnswerSelection(99); expect(mocks.replace).not.toHaveBeenCalled();
     await waitForAnswerSelection(1);
     expect(mocks.replace).toHaveBeenCalledExactlyOnceWith("/student/result/attempt-1");
   });
 
-  it("locks answers until the initial server timer is conservatively synchronized", async () => {
+  it("does not subtract preparation round-trip twice from the server remaining time", async () => {
     let resolveRecovery: (value: unknown) => void = () => {};
     const quizAttempt = attempt();
     quizAttempt.questions[0].direction = "english_to_korean";
@@ -853,7 +879,7 @@ describe("QuizPlayer", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:09");
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
     expect(firstChoice).toBeEnabled();
     expect(audioPlayCount()).toBe(0);
     act(() => vi.advanceTimersByTime(249));
@@ -865,7 +891,7 @@ describe("QuizPlayer", () => {
     expect(audioPlayCount()).toBe(1);
   });
 
-  it("locks at the conservative zero but waits for the server deadline before timing out", async () => {
+  it("keeps the server remaining budget and never times out early after a slow read", async () => {
     let resolveRecovery: (value: unknown) => void = () => {};
     const quizAttempt = attempt();
     mocks.recover.mockReturnValue(
@@ -909,10 +935,10 @@ describe("QuizPlayer", () => {
       vi.advanceTimersByTime(601);
       await Promise.resolve();
     });
-    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:00");
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:01");
     expect(
       screen.getByRole("button", { name: /^1\s*question-1-one/ }),
-    ).toBeDisabled();
+    ).toBeEnabled();
     expect(mocks.submit).not.toHaveBeenCalled();
 
     act(() => vi.advanceTimersByTime(399));
@@ -921,6 +947,7 @@ describe("QuizPlayer", () => {
       vi.advanceTimersByTime(1);
       await Promise.resolve();
     });
+    await waitForAnswerSelection(1);
     expect(mocks.submit).toHaveBeenCalledWith(
       expect.objectContaining({ choiceIndex: null }),
     );

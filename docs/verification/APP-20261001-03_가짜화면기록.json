@@ -1,0 +1,171 @@
+{
+  "environment": "isolated-local-fake",
+  "capturedAt": "2026-10-01T02:54:00Z",
+  "realStudentWrites": 0,
+  "quizzes": [
+    {
+      "id": "00000000-0000-4000-8000-000000000207",
+      "mode": "book_meaning_choice",
+      "phase": "initial",
+      "answered": 2,
+      "resumed": 2,
+      "startedAt": "2026-10-01T02:53:02.185Z",
+      "currentQuestionId": "00000000-0000-4000-8000-000000002072"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000208",
+      "mode": "book_meaning_choice",
+      "phase": "initial",
+      "answered": 1,
+      "resumed": 1,
+      "startedAt": "2026-10-01T02:53:14.415Z",
+      "currentQuestionId": "00000000-0000-4000-8000-000000002081"
+    }
+  ],
+  "http": [
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000207",
+      "method": "GET",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 32972,
+      "durationMs": 45.252799999987474,
+      "at": 1790823182098
+    },
+    {
+      "path": "/icon.svg",
+      "method": "GET",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 257,
+      "durationMs": 8.907700000010664,
+      "at": 1790823182159
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/ready",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 449,
+      "durationMs": 46.16060000000289,
+      "at": 1790823182217
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/answers",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 249,
+      "durationMs": 8.492700000002515,
+      "at": 1790823188101
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/feedback",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 169,
+      "durationMs": 8.600099999981467,
+      "at": 1790823188113
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/answers",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 249,
+      "durationMs": 8.470499999995809,
+      "at": 1790823194020
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000207/feedback",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 169,
+      "durationMs": 22.90570000000298,
+      "at": 1790823194046
+    },
+    {
+      "path": "/student/attempt/00000000-0000-4000-8000-000000000208",
+      "method": "GET",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 32972,
+      "durationMs": 39.41610000000219,
+      "at": 1790823194278
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000208/ready",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 449,
+      "durationMs": 39.86599999997998,
+      "at": 1790823194433
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000208/answers",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 249,
+      "durationMs": 8.59429999999702,
+      "at": 1790823205934
+    },
+    {
+      "path": "/api/student/attempts/00000000-0000-4000-8000-000000000208/feedback",
+      "method": "POST",
+      "rsc": false,
+      "prefetch": false,
+      "status": 200,
+      "bytes": 167,
+      "durationMs": 1242.5256999999983,
+      "at": 1790823207180
+    }
+  ],
+  "audio": [
+    {
+      "kind": "playing",
+      "id": 2,
+      "at": 1790823188471,
+      "currentTime": 0,
+      "paused": false,
+      "muted": false
+    },
+    {
+      "kind": "pause",
+      "id": 2,
+      "at": 1790823191479,
+      "currentTime": 2.960787,
+      "paused": true,
+      "muted": false
+    },
+    {
+      "kind": "playing",
+      "id": 2,
+      "at": 1790823207441,
+      "currentTime": 0,
+      "paused": false,
+      "muted": false
+    },
+    {
+      "kind": "pause",
+      "id": 2,
+      "at": 1790823210447,
+      "currentTime": 2.971566,
+      "paused": true,
+      "muted": false
+    }
+  ]
+}

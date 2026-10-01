@@ -48,7 +48,7 @@ function PracticeSetup({ selection, initialCount, onClose }: { selection: Practi
     if (pending.current || !input || !preview?.confirmation) return;
     const next = sent ?? { ...input, confirmation: preview.confirmation };
     setSent(next); pending.current = true; setBusy(true); setError(""); request.current = new AbortController();
-    try { const value = await requestPracticeStart(next, request.current.signal); if (active.current) router.push(value.attempt.status === "in_progress" ? `/student/practice/${value.attempt.id}` : `/student/practice/${value.attempt.id}/result`); }
+    try { const value = await requestPracticeStart(next, request.current.signal); if (active.current) router.push("preparationId" in value ? `/student/practice/${value.preparationId}` : value.attempt.status === "in_progress" ? `/student/practice/${value.attempt.id}` : `/student/practice/${value.attempt.id}/result`); }
     catch (failure) { if (active.current) {
       failed(failure);
       if (failure instanceof PracticeRequestError && failure.code === "source_changed") { setSent(null); setInput(null); setPreview(null); }

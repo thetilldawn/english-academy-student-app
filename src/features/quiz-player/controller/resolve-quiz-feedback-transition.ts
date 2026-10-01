@@ -20,6 +20,8 @@ export type QuizFeedbackSynchronization = {
 
 export type ResolvedQuizFeedbackTransition = {
   synchronization: Promise<QuizFeedbackSynchronization> | null;
+  ready: QuizFeedbackSynchronization | null;
+  quietReservation: boolean;
 };
 
 function wait(milliseconds: number) {
@@ -89,10 +91,10 @@ export async function resolveQuizFeedbackTransition(input: {
   // Start with the acknowledged result, not the click or an audio event.
   const readyAt = performance.now() + ANSWER_RESULT_VISIBLE_MS;
   if (!input.isActive()) {
-    return { synchronization: null };
+    return { synchronization: null, ready: null, quietReservation: false };
   }
 
-  const synchronization =
+  const response: Promise<QuizFeedbackSynchronization> | null =
     input.disposition === "next-question" &&
     input.payload.nextQuestionId &&
     input.payload.nextPhase
@@ -102,7 +104,7 @@ export async function resolveQuizFeedbackTransition(input: {
               ...input.payload,
               questionStartsAt: "",
               // Older servers reserve up to 750ms before a timed question.
-              // Show it after 200ms, but keep queued input until it can start.
+              // Do not expose an answerable question before that reservation ends.
               transitionRemainingMilliseconds: input.questionTimeLimitSeconds
                 ? Math.max(0, Math.min(750,
                     (input.payload.timerRemainingMilliseconds ?? 0) -
@@ -122,6 +124,29 @@ export async function resolveQuizFeedbackTransition(input: {
             receivedAt: input.receivedAt,
           })
       : null;
+  const observed: { value: QuizFeedbackSynchronization | null } = { value: null };
+  const synchronization = response?.then(async (result) => {
+    observed.value = result;
+    const remaining = Math.max(0,
+      result.payload.transitionRemainingMilliseconds -
+        (performance.now() - result.receivedAt));
+    if (!result.recoverFromServer && remaining > 0) await wait(remaining);
+    return result;
+  }) ?? null;
   await wait(Math.max(0, readyAt - performance.now()));
-  return { synchronization };
+  const value = observed.value;
+  // Equal-deadline timers may fire in either order. Read the confirmed deadline,
+  // not whether the promise's timeout callback happened to run first.
+  const ready = value && !value.recoverFromServer && input.isActive() &&
+    value.payload.transitionRemainingMilliseconds <= performance.now() - value.receivedAt
+    ? value : null;
+  // A prompt response can still have a few milliseconds of the server's
+  // confirmed start reservation left. Keep feedback/input lock during that
+  // reservation, without flashing a loader or starting the clock early.
+  const reservationLeft = value ? value.payload.transitionRemainingMilliseconds -
+    (performance.now() - value.receivedAt) : Infinity;
+  const quietReservation = Boolean(value && !value.recoverFromServer &&
+    input.payload.feedbackProtocol !== "legacy" && reservationLeft > 0 &&
+    reservationLeft <= ANSWER_RESULT_VISIBLE_MS);
+  return { synchronization, ready, quietReservation };
 }

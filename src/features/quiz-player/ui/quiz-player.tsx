@@ -1,4 +1,5 @@
 "use client";
+import type { RefObject } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
 import type { QuizTransport } from "../api/quiz-transport";
@@ -9,7 +10,8 @@ import {
   quizChoicesDensity,
   quizPromptDensity,
 } from "../domain/quiz-session";
-import type { QuizAttempt } from "../model";
+import type { QuizAttempt, QuizAttemptResponse } from "../model";
+import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import type { QuizChoiceFeedback } from "./quiz-choice";
 import { QuizFrame } from "./quiz-frame";
 import styles from "./quiz-player.module.css";
@@ -25,18 +27,27 @@ export function QuizPlayer({
   initialRemainingMilliseconds,
   transport,
   phaseLabel,
+  initialTimerReady,
+  preparation,
 }: {
   initialAttempt: QuizAttempt;
   initialRemainingMilliseconds: number;
   transport?: QuizTransport;
   phaseLabel?: string;
+  initialTimerReady?: boolean;
+  preparation?: { response: (QuizAttemptResponse & {receivedAt:number}) | null; error:string; retry?:(()=>void); frameRef:RefObject<HTMLDivElement|null> };
 }) {
   const controller = useQuizPlayerController({
     initialAttempt,
     initialRemainingMilliseconds,
     transport,
+    initialTimerReady,
+    preparedResponse: preparation?.response,
   });
   const { currentQuestion, state } = controller;
+  // A later question or recovery also pauses timer synchronization. Only the
+  // first clock receipt owns the initial preparation screen.
+  const initialPreparing = Boolean(preparation) && state.attempt.startedAt === null;
 
   if (!currentQuestion) {
     return (
@@ -76,6 +87,9 @@ export function QuizPlayer({
 
   return (
     <main className={styles.shell} id="main-content">
+      <div className={styles.stage} ref={preparation?.frameRef} aria-busy={initialPreparing || state.transitionPending}>
+      <div className={initialPreparing ? styles.initialHidden : state.transitionPending ? styles.waiting : state.revealQuestion ? styles.reveal : undefined}
+        inert={initialPreparing || state.transitionPending || undefined} aria-hidden={initialPreparing || state.transitionPending || undefined}>
       <QuizFrame
         phaseLabel={phaseLabel}
         answerAnnouncement={controller.answerAnnouncement}
@@ -115,6 +129,13 @@ export function QuizPlayer({
         timedOut={state.feedback?.timedOut ?? false}
         timingMode={state.attempt.timingMode}
       />
+      </div>
+      {initialPreparing ? <div className={styles.initialPreparing}>
+        <strong>{state.attempt.assignmentTitle}</strong>
+        <div className={styles.prepareBody}>{preparation?.error ? <><p role="alert">{preparation.error}</p>{preparation.retry ? <Button onClick={preparation.retry}>다시 확인</Button> : null}<ButtonLink href="/student">목록으로</ButtonLink></> : <p role="status">시험 준비 중</p>}</div>
+      </div> : null}
+      {state.transitionPending ? <div className={styles.preparing} role="status">다음 문제 준비 중</div> : null}
+      </div>
     </main>
   );
 }

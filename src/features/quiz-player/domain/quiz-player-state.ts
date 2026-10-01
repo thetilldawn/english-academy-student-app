@@ -22,13 +22,14 @@ export type QuizPlayerState = {
   error: string;
   timerSynchronized: boolean;
   transitionPending: boolean;
+  revealQuestion: boolean;
   timeWarning: string;
 };
 
 export type QuizPlayerAction =
   | { type: "timer-ticked"; remainingSeconds: number }
   | { type: "time-warning"; message: string }
-  | { type: "synchronization-started" }
+  | { type: "synchronization-started"; preserveTransition?: boolean }
   | { type: "choice-pending"; choiceIndex: number | null }
   | {
       type: "submission-started";
@@ -42,7 +43,7 @@ export type QuizPlayerAction =
       remainingSeconds: number;
       preservePendingChoice?: boolean;
     }
-  | { type: "feedback-transitioned"; attempt: QuizAttempt }
+  | { type: "next-question-preparing" }
   | { type: "submission-failed"; message: string };
 
 export function createQuizPlayerState(
@@ -59,6 +60,7 @@ export function createQuizPlayerState(
     error: "",
     timerSynchronized: false,
     transitionPending: false,
+    revealQuestion: false,
     timeWarning: "",
   };
 }
@@ -85,7 +87,8 @@ export function quizPlayerReducer(
         submitting: false,
         error: "",
         timerSynchronized: false,
-        transitionPending: false,
+        transitionPending: Boolean(action.preserveTransition && state.transitionPending),
+        revealQuestion: false,
         timeWarning: "",
       };
     case "choice-pending":
@@ -104,6 +107,7 @@ export function quizPlayerReducer(
         submitting: true,
         error: "",
         transitionPending: false,
+        revealQuestion: false,
       };
     case "answer-received":
       return state.feedback
@@ -132,18 +136,20 @@ export function quizPlayerReducer(
         error: "",
         timerSynchronized: true,
         transitionPending: false,
+        revealQuestion: state.transitionPending,
         timeWarning: "",
       };
-    case "feedback-transitioned":
+    case "next-question-preparing":
       return {
         ...state,
         pendingChoice: null,
-        attempt: action.attempt,
+        selectionVersion: state.selectionVersion + 1,
         feedback: null,
-        submitting: false,
+        submitting: true,
         error: "",
-        timerSynchronized: true,
+        timerSynchronized: false,
         transitionPending: true,
+        revealQuestion: false,
         timeWarning: "",
       };
     case "submission-failed":
@@ -155,6 +161,7 @@ export function quizPlayerReducer(
         submitting: false,
         error: action.message,
         transitionPending: false,
+        revealQuestion: false,
       };
   }
 }

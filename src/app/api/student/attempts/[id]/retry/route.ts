@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getStudentSession } from "@/lib/auth/student-session";
 import { jsonError, isSameOriginRequest } from "@/lib/http";
 import { startStudentRetry } from "@/lib/services/quiz/attempt-command";
+import { prepareStudentRetry } from "@/features/quiz-player/public-server";
 
 export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
@@ -24,8 +25,9 @@ export const POST = withAuthenticationFailureResponse(async function POST(
   }
 
   try {
-    const retry = await startStudentRetry(session.studentId, id);
-    return Response.json({ retry });
+    const retry = request.headers.get("x-quiz-preparation") === "1"
+      ? await prepareStudentRetry(session.studentId,id) : await startStudentRetry(session.studentId, id);
+    return Response.json({ retry }, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return jsonError(
       "재시험을 시작할 수 없거나 이미 종료된 시험입니다.",

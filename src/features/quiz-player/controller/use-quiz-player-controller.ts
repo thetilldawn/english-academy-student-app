@@ -17,7 +17,7 @@ import {
   createQuizPlayerState,
   quizPlayerReducer,
 } from "../domain/quiz-player-state";
-import type { QuizAttempt } from "../model";
+import type { QuizAttempt, QuizAttemptResponse } from "../model";
 import { useInitialQuizSynchronization } from "./use-initial-quiz-synchronization";
 import { useQuizAudio } from "./use-quiz-audio";
 import { useQuizClock } from "./use-quiz-clock";
@@ -28,17 +28,19 @@ export function useQuizPlayerController(input: {
   initialAttempt: QuizAttempt;
   initialRemainingMilliseconds: number;
   transport?: QuizTransport;
+  initialTimerReady?: boolean;
+  preparedResponse?: (QuizAttemptResponse & { receivedAt: number }) | null;
 }) {
   const router = useRouter();
   const transport = input.transport ?? regularQuizTransport;
   const [state, dispatch] = useReducer(
     quizPlayerReducer,
-    createQuizPlayerState(
+    { ...createQuizPlayerState(
       input.initialAttempt,
       quizAttemptUsesDeadlineClock(input.initialAttempt)
         ? Math.ceil(input.initialRemainingMilliseconds / 1000)
         : 1,
-    ),
+    ), timerSynchronized: Boolean(input.initialTimerReady) },
   );
   const deadlineSubmissionNotBefore = useRef(0);
   const expireStarted = useRef(false);
@@ -82,6 +84,16 @@ export function useQuizPlayerController(input: {
     handleClockTick,
     quizAttemptUsesDeadlineClock(state.attempt),
   );
+  const appliedPreparation = useRef<unknown>(null);
+  useEffect(() => {
+    const response = input.preparedResponse;
+    if (!response || appliedPreparation.current === response) return;
+    appliedPreparation.current = response;
+    const remaining = quizAttemptUsesDeadlineClock(response.attempt)
+      ? Math.max(0,response.timerRemainingMilliseconds-(performance.now()-response.receivedAt)) : 1_000;
+    resetClock(remaining);
+    dispatch({type:"attempt-replaced",attempt:response.attempt,remainingSeconds:Math.ceil(remaining/1000)});
+  },[input.preparedResponse,resetClock]);
 
   useEffect(() => {
     mounted.current = true;
@@ -110,6 +122,7 @@ export function useQuizPlayerController(input: {
   const triggerInitialSynchronization = useInitialQuizSynchronization(
     recoverFromServer,
     handleInitialSynchronizationFailure,
+    input.initialTimerReady || input.preparedResponse !== undefined,
   );
   const retrySynchronization = useCallback(() => {
     dispatch({ type: "synchronization-started" });
@@ -222,8 +235,8 @@ export function useQuizPlayerController(input: {
   ]);
 
   useEffect(() => {
-    promptRef.current?.focus({ preventScroll: false });
-  }, [currentQuestion?.id]);
+    if (state.timerSynchronized) promptRef.current?.focus({ preventScroll: false });
+  }, [currentQuestion?.id,state.timerSynchronized]);
 
   const priorWrongIndicator = currentQuestion
     ? getPriorWrongIndicator(currentQuestion.priorWrongLevel)

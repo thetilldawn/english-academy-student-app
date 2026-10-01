@@ -24,7 +24,7 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
 
     try {
       await requestAttemptRetry(attemptId);
-      router.replace(`/student/attempt/${attemptId}`);
+      router.replace(`/student/attempt/${attemptId}?prepare=retry`);
     } catch (startError) {
       setError(
         startError instanceof Error

@@ -38,7 +38,7 @@ export function useQuizRecovery(input: {
 
   return useCallback(async (beforeRestore?: BeforeQuizRestore) => {
     try {
-      const { ok, payload, receivedAt, roundTripMilliseconds } =
+      const { ok, payload, receivedAt } =
         await transport.read(attemptId);
       if (!mountedRef.current) return true;
       if (
@@ -67,7 +67,7 @@ export function useQuizRecovery(input: {
       if (transitionRemaining > 0) {
         // A failed feedback acknowledgement can leave the server's reservation
         // outstanding. It is waiting time, not extra time to answer questions.
-        dispatch({ type: "synchronization-started" });
+        dispatch({ type: "synchronization-started", preserveTransition: true });
         const waitMilliseconds = Math.max(0,
           transitionRemaining - (performance.now() - receivedAt));
         await new Promise<void>(resolve => window.setTimeout(resolve, waitMilliseconds));
@@ -76,7 +76,7 @@ export function useQuizRecovery(input: {
       inFlightRequestRef.current = null;
       const elapsedAdjustedMilliseconds = Math.max(
         0,
-        payload.timerRemainingMilliseconds - roundTripMilliseconds -
+        payload.timerRemainingMilliseconds -
           (performance.now() - receivedAt),
       );
       const safeRemainingMilliseconds =

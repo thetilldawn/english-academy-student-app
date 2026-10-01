@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { TimingMode } from "@/lib/admin/assignment-settings";
-import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
+import { normalizeQuizContentMode, type QuizContentMode } from "@/lib/quiz/question-content-mode";
 import { questionSemantics } from "@/lib/quiz/question-semantics";
 import {
   parseChoiceDictionaryIds,
@@ -33,7 +33,7 @@ import {
   type AttemptState,
 } from "./question-snapshot";
 
-type QuestionRow = {
+export type QuestionRow = {
   id: string;
   vocab_entry_id: number | null;
   order_index: number;
@@ -100,6 +100,63 @@ export async function getStudentAttempt(
   const quizContentMode = normalizeQuizContentMode(assignmentData.quiz_content_mode);
 
   const rows = (questionData ?? []) as QuestionRow[];
+  const initialCurrent = rows.find(
+    (question) => question.initial_choice_index === null,
+  );
+  const retryCurrent = rows.find(
+    (question) =>
+      question.initial_is_correct === false &&
+      question.retry_choice_index === null,
+  );
+  const phase: AttemptState["phase"] =
+    attemptData.status !== "in_progress"
+      ? "completed"
+      : attemptData.phase;
+  const currentQuestionId =
+    phase === "initial"
+      ? (initialCurrent?.id ?? null)
+      : phase === "retry"
+        ? (retryCurrent?.id ?? null)
+        : null;
+  if (
+    attemptData.status === "in_progress" &&
+    (phase === "initial" || phase === "retry") &&
+    (!questionData || questionData.length === 0 || !currentQuestionId)
+  ) {
+    throw new Error("quiz_attempt_question_state_invalid");
+  }
+  const timingMode =
+    (assignmentData?.timing_mode as TimingMode | undefined) ?? "total";
+  const questionTimeLimitSeconds =
+    assignmentData?.question_time_limit_seconds ?? null;
+  const timerDeadlineAt =
+    timingMode === "per_question" && questionTimeLimitSeconds
+      ? new Date(
+          Date.parse(attemptData.current_question_started_at) +
+            questionTimeLimitSeconds * 1000,
+        ).toISOString()
+      : attemptData.deadline_at;
+
+  return {
+    id: attemptData.id,
+    assignmentTitle: assignmentData?.title ?? "단어 시험",
+    quizContentMode,
+    status: attemptData.status,
+    phase,
+    startedAt: attemptData.started_at,
+    deadlineAt: attemptData.deadline_at,
+    timerDeadlineAt,
+    currentQuestionStartsAt: attemptData.current_question_started_at,
+    timingMode,
+    questionTimeLimitSeconds,
+    currentQuestionId,
+    questions: await hydrateQuizQuestions(rows, quizContentMode),
+  };
+}
+
+
+/** Shared by prepared and running attempts; pronunciation precedence must stay identical. */
+export async function hydrateQuizQuestions(rows: QuestionRow[], quizContentMode: QuizContentMode): Promise<AttemptState["questions"]> {
   const registryIds = rows.flatMap((question) => {
     const bankQuestion = oneRelation(question.assignment_question);
     if (compositionQuestionPronunciation(bankQuestion, question.choices.length)) return [];
@@ -165,57 +222,7 @@ export async function getStudentAttempt(
     loadEntrySourcePronunciationRegistry(registryIds),
     loadPronunciationAudioCorrections(),
   ]);
-  const initialCurrent = rows.find(
-    (question) => question.initial_choice_index === null,
-  );
-  const retryCurrent = rows.find(
-    (question) =>
-      question.initial_is_correct === false &&
-      question.retry_choice_index === null,
-  );
-  const phase: AttemptState["phase"] =
-    attemptData.status !== "in_progress"
-      ? "completed"
-      : attemptData.phase;
-  const currentQuestionId =
-    phase === "initial"
-      ? (initialCurrent?.id ?? null)
-      : phase === "retry"
-        ? (retryCurrent?.id ?? null)
-        : null;
-  if (
-    attemptData.status === "in_progress" &&
-    (phase === "initial" || phase === "retry") &&
-    (!questionData || questionData.length === 0 || !currentQuestionId)
-  ) {
-    throw new Error("quiz_attempt_question_state_invalid");
-  }
-  const timingMode =
-    (assignmentData?.timing_mode as TimingMode | undefined) ?? "total";
-  const questionTimeLimitSeconds =
-    assignmentData?.question_time_limit_seconds ?? null;
-  const timerDeadlineAt =
-    timingMode === "per_question" && questionTimeLimitSeconds
-      ? new Date(
-          Date.parse(attemptData.current_question_started_at) +
-            questionTimeLimitSeconds * 1000,
-        ).toISOString()
-      : attemptData.deadline_at;
-
-  return {
-    id: attemptData.id,
-    assignmentTitle: assignmentData?.title ?? "단어 시험",
-    quizContentMode,
-    status: attemptData.status,
-    phase,
-    startedAt: attemptData.started_at,
-    deadlineAt: attemptData.deadline_at,
-    timerDeadlineAt,
-    currentQuestionStartsAt: attemptData.current_question_started_at,
-    timingMode,
-    questionTimeLimitSeconds,
-    currentQuestionId,
-    questions: rows.map((question) => {
+  return rows.map((question) => {
       const roles = questionSemantics(quizContentMode, question.direction);
       const answered =
         question.initial_choice_index !== null ||
@@ -343,6 +350,5 @@ export async function getStudentAttempt(
           ? question.correct_choice_index
           : null,
       };
-    }),
-  };
+    });
 }

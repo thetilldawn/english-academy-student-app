@@ -12,6 +12,15 @@ const answer = { p_student_id: uid(1), p_attempt_id: uid(201), p_question_id: ui
   p_phase: "initial", p_choice_index: 0, p_force_timeout: false };
 beforeEach(resetLocalQuizzes);
 describe("격리된 실제 플레이어 검사 자료", () => {
+  it("준비 자료 조회는 시각을 시작하지 않고 ready는 같은 시각을 반환한다",()=>{
+    const input={p_student_id:uid(1),p_preparation_id:uid(207)};
+    expect(rpc("get_quiz_preparation_v1",input).body.kind).toBe("initial");
+    expect(localQuizSummary()[0].startedAt).toBeNull();
+    expect(rpc("begin_prepared_quiz_v1",{...input,p_student_id:uid(2)}).status).toBe(403);
+    expect(rpc("begin_prepared_quiz_v1",input).body).toBe(uid(207));
+    const started=localQuizSummary()[0].startedAt;
+    rpc("begin_prepared_quiz_v1",input);expect(localQuizSummary()[0].startedAt).toBe(started);
+  });
   it("기본 읽기 전용 모드에서는 시험 저장을 열지 않는다", () => {
     expect(rpc("answer_quiz_question_v4", answer, { quizFeedback: false }).status).toBe(403);
     expect(localQuizSummary()).toEqual([]);
