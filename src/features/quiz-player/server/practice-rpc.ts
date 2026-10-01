@@ -1,5 +1,6 @@
 import "server-only";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import { quizExpirationError, quizAnswerError } from "./quiz-command-error";
 
 export class PracticeError extends Error {
   constructor(public readonly status: number, message: string, public readonly code?: string) { super(message); }
@@ -10,6 +11,8 @@ export class PracticeError extends Error {
 export async function practiceRpc(name: string, parameters: Record<string, unknown>) {
   const { data, error } = await getServiceSupabaseClient().rpc(name, parameters);
   if (error) {
+    if (name === "expire_student_word_practice_v1") throw quizExpirationError(error);
+    if (name === "answer_student_word_practice_v1") throw quizAnswerError(error);
     const code = error.message?.split(/[\s:]/)[0];
     if (error.code === "42501") throw new PracticeError(403, "다시 로그인해 주세요.");
     if (code === "practice_not_found") throw new PracticeError(404, "연습을 찾을 수 없습니다.");

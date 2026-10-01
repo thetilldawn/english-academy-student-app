@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { beginPreparedAttempt, PreparationChanged } from "../api/prepare-attempt";
 import { type PreparedQuiz } from "../contracts/preparation";
 import type { QuizAttempt, QuizAttemptResponse } from "../model";
+import { quizResultIsConfirmed } from "../domain/quiz-session";
 
 // All QuizPlayer code is statically imported. The preparation page has already
 // received questions/voices; only the clock receipt is requested after hydration.
@@ -36,6 +37,9 @@ export function usePreparedQuiz(preparation:PreparedQuiz) {
           if (!active) return;
           const practice=preparation.kind === "practice";
           if (clock.status !== "in_progress" || clock.phase === "review" || clock.phase === "completed") {
+            if (!quizResultIsConfirmed({ attempt: clock, completionConfirmed: clock.completionConfirmed })) {
+              throw new Error("시험 종료를 확인하지 못했습니다.");
+            }
             router.replace(practice ? `/student/practice/${clock.id}/result` : `/student/result/${clock.id}`);return;
           }
           if (clock.phase !== preparation.phase || (!practice && (clock.id !== preparation.id || clock.currentQuestionId !== preparation.currentQuestionId)) ||
@@ -47,6 +51,7 @@ export function usePreparedQuiz(preparation:PreparedQuiz) {
           if (practice && clock.id !== preparation.id) window.history.replaceState(null,"",`/student/practice/${clock.id}`);
           completed.current=true;
           setReady({attempt:{...preparation,...clock,questions},
+            completionConfirmed: clock.completionConfirmed,
             timerRemainingMilliseconds:clock.timerRemainingMilliseconds,receivedAt});
         }).catch((cause:unknown) => {
           if (active) {

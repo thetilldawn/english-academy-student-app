@@ -863,6 +863,10 @@
     {
       "path": "src/app/api/student/notebook/route.test.ts",
       "owner": "students"
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/expire/route.test.ts",
+      "owner": "quiz-player"
     }
   ],
   "routeOwners": [
@@ -2455,12 +2459,21 @@
     {
       "path": "src/features/assignments/server/planning/notebook-assignment.ts",
       "owner": "assignments"
+    },
+    {
+      "path": "src/features/quiz-player/server/quiz-command-error.ts",
+      "owner": "quiz-player"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20261001113432_confirm_practice_completion.sql",
+      "owner": "quiz-player",
+      "flow": "student-word-practice"
+    },
     {
       "path": "supabase/migrations/20261001014318_prepare_quiz_before_start.sql",
       "owner": "quiz-player",
@@ -3602,6 +3615,12 @@
       "to": "src/features/assignments/public-contracts.ts",
       "reason": "오답 후보 진단의 순수 공개 계약을 서버 준비와 선택 계산이 공유",
       "removeIn": "오답 서비스의 기능 server 이동 때 재검토"
+    },
+    {
+      "from": "src/lib/services/quiz/attempt-command.ts",
+      "to": "src/features/quiz-player/server/quiz-command-error.ts",
+      "reason": "APP-20261001-05 같은 시험 기능의 종료 오류 분류를 정규/연습 서버에서 공유",
+      "removeIn": "R6 quiz-player/server 명령 이동 때 내부 import로 전환"
     }
   ],
   "currentFeatureToLibBridges": [
@@ -3640,14 +3659,20 @@
     {
       "from": "src/features/quiz-player/server/attempt-preparation.ts",
       "to": "src/features/wordbook-compositions/public-contracts.ts",
-      "via": ["src/lib/services/quiz/attempt-query.ts", "src/lib/services/quiz/question-snapshot.ts"],
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/question-snapshot.ts"
+      ],
       "reason": "준비·진행 화면이 같은 문항 발음 복원을 재사용",
       "removeIn": "기존 시험 조회의 기능 server 이동"
     },
     {
       "from": "src/features/quiz-player/server/attempt-preparation.ts",
       "to": "src/features/wordbook-compositions/public-server.ts",
-      "via": ["src/lib/services/quiz/attempt-query.ts", "src/lib/services/quiz/pronunciation-registry.ts"],
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/pronunciation-registry.ts"
+      ],
       "reason": "준비와 진행의 동일 발음 복원을 재사용",
       "removeIn": "기존 시험 명령의 기능 server 이동"
     },
@@ -7656,17 +7681,26 @@
           "src/features/quiz-player/controller/use-quiz-player-controller.ts",
           "src/features/quiz-player/controller/use-quiz-recovery.ts",
           "src/features/quiz-player/controller/use-quiz-submission.ts",
-          "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts"
+          "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts",
+          "src/features/quiz-player/controller/use-initial-quiz-synchronization.ts",
+          "src/features/quiz-player/controller/use-quiz-expiration.ts",
+          "src/features/quiz-player/controller/observe-quiz-answer.ts",
+          "src/features/quiz-player/controller/recover-quiz-submission.ts",
+          "src/features/quiz-player/controller/use-prepared-quiz.ts"
         ],
         "application": [],
         "domain": [
-          "src/features/quiz-player/domain/practice-plan.ts"
+          "src/features/quiz-player/domain/practice-plan.ts",
+          "src/features/quiz-player/domain/quiz-session.ts",
+          "src/features/quiz-player/domain/quiz-player-state.ts",
+          "src/features/quiz-player/domain/quiz-expiration.ts"
         ],
         "presentation": [],
         "contract": [
           "src/features/quiz-player/contracts/practice.ts",
           "src/features/quiz-player/public-contracts.ts",
-          "src/features/quiz-player/contracts/preparation.ts"
+          "src/features/quiz-player/contracts/preparation.ts",
+          "src/features/quiz-player/model.ts"
         ],
         "transport": [
           "src/features/quiz-player/api/practice-transport.ts",
@@ -7694,7 +7728,8 @@
         "database": [
           "supabase/migrations/20260930034455_add_student_word_practice.sql",
           "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql",
-          "supabase/migrations/20261001014318_prepare_quiz_before_start.sql"
+          "supabase/migrations/20261001014318_prepare_quiz_before_start.sql",
+          "supabase/migrations/20261001113432_confirm_practice_completion.sql"
         ],
         "cacheStreaming": [
           "src/features/quiz-player/server/practice-http.ts",
@@ -7728,7 +7763,8 @@
           "src/lib/services/quiz/pronunciation-registry.test.ts",
           "src/features/quiz-player/ui/prepared-quiz-player.test.tsx",
           "src/features/quiz-player/controller/resolve-quiz-feedback-transition.test.ts",
-          "src/features/quiz-player/server/attempt-preparation.integration.test.ts"
+          "src/features/quiz-player/server/attempt-preparation.integration.test.ts",
+          "src/features/quiz-player/domain/quiz-expiration.test.ts"
         ]
       },
       "requiredImportEdges": [],

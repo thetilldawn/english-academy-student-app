@@ -1,0 +1,245 @@
+{
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "environment": "preview",
+  "concurrency": "not_demonstrated_tool_calls_executed_sequentially",
+  "before": [
+    {
+      "table_name": "public.students",
+      "row_count": 80,
+      "row_hash": "00cdb781113a3dfc4eac839ff4787d04"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 182,
+      "row_hash": "e0119c34a4e4c20e6a77e0e82ad7aa11"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 181,
+      "row_hash": "c8065ad0ac86b2e84c52c1ca4098f787"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1496,
+      "row_hash": "05901baca56d8d65b77019f9079efc08"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 94,
+      "row_hash": "b480cb65b625635db7ef2cf55ce011c8"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1438,
+      "row_hash": "fbe7f81fb3ae89d605f7b91206c8dcb3"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 786,
+      "row_hash": "7064f49a10504aeba7a6c33bd6acb323"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 658,
+      "row_hash": "d9fb912243f8e6a3e9587f1bb102f6d6"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1021,
+      "row_hash": "91b171dd6f310771fea2e920e7d2a256"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 21,
+      "row_hash": "c055381329efb2a79c44613ed404a430"
+    },
+    {
+      "table_name": "private.vocab_assignment_series",
+      "row_count": 41,
+      "row_hash": "9f43d75380f36d39a68a8be7fe3f1f5c"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_items",
+      "row_count": 112,
+      "row_hash": "063cfc8852dc8c83bac237e54b18260d"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_events",
+      "row_count": 143,
+      "row_hash": "798c4200a097cd1a83d228c066d68d60"
+    }
+  ],
+  "after": [
+    {
+      "table_name": "public.students",
+      "row_count": 80,
+      "row_hash": "00cdb781113a3dfc4eac839ff4787d04"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 182,
+      "row_hash": "e0119c34a4e4c20e6a77e0e82ad7aa11"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 181,
+      "row_hash": "c8065ad0ac86b2e84c52c1ca4098f787"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1496,
+      "row_hash": "05901baca56d8d65b77019f9079efc08"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 94,
+      "row_hash": "b480cb65b625635db7ef2cf55ce011c8"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1438,
+      "row_hash": "fbe7f81fb3ae89d605f7b91206c8dcb3"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 786,
+      "row_hash": "7064f49a10504aeba7a6c33bd6acb323"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 658,
+      "row_hash": "d9fb912243f8e6a3e9587f1bb102f6d6"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1021,
+      "row_hash": "91b171dd6f310771fea2e920e7d2a256"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 21,
+      "row_hash": "c055381329efb2a79c44613ed404a430"
+    },
+    {
+      "table_name": "private.vocab_assignment_series",
+      "row_count": 41,
+      "row_hash": "9f43d75380f36d39a68a8be7fe3f1f5c"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_items",
+      "row_count": 112,
+      "row_hash": "063cfc8852dc8c83bac237e54b18260d"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_events",
+      "row_count": 143,
+      "row_hash": "798c4200a097cd1a83d228c066d68d60"
+    }
+  ],
+  "existingRowsUnchanged": true,
+  "fixtureHash": "04a46c36724733d636b7583ae09f674ec2bc75daddcc0f128b49840c1669c900",
+  "results": [
+    {
+      "result": {
+        "points": {
+          "sum": 8,
+          "rows": 4
+        },
+        "series": 0,
+        "attempts": [
+          {
+            "id": "a1101001-5a11-4b11-8c11-000000000201",
+            "phase": "completed",
+            "score": 100,
+            "passed": true,
+            "status": "completed"
+          },
+          {
+            "id": "a1101001-5a11-4b11-8c11-000000000202",
+            "phase": "completed",
+            "score": 75,
+            "passed": false,
+            "status": "expired"
+          },
+          {
+            "id": "a1101001-5a11-4b11-8c11-000000000203",
+            "phase": "completed",
+            "score": 75,
+            "passed": false,
+            "status": "expired"
+          }
+        ],
+        "wrongState": [
+          0,
+          0,
+          0,
+          2
+        ],
+        "reviewQueue": 0,
+        "wrongEvents": 2
+      }
+    }
+  ],
+  "cleanup": [
+    {
+      "cleanup": {
+        "sessions": 0,
+        "inProgress": 0,
+        "adminActive": false,
+        "assignments": [
+          {
+            "status": "closed",
+            "deleted": true
+          },
+          {
+            "status": "closed",
+            "deleted": true
+          },
+          {
+            "status": "closed",
+            "deleted": true
+          }
+        ],
+        "datasetActive": false,
+        "studentStatus": "blocked",
+        "remainingQaTransactions": 0
+      }
+    }
+  ],
+  "race1": {
+    "aObserved": [],
+    "blocking": [],
+    "results": [
+      [
+        {
+          "pid": 1094553,
+          "finished_at": "2026-10-01 12:31:23.289396+00"
+        }
+      ],
+      [
+        {
+          "pid": 1094556,
+          "finished_at": "2026-10-01 12:31:29.324058+00"
+        }
+      ]
+    ]
+  },
+  "sql": {
+    "race1": {
+      "qa": "begin isolation level read committed; set local application_name='m11_race1_A'; set local transaction_timeout='20s'; set local statement_timeout='16s'; set local lock_timeout='12s'; set local idle_in_transaction_session_timeout='5s'; select set_config('request.jwt.claim.role','service_role',true); select set_config('request.jwt.claims','{\"role\":\"service_role\"}',true);update public.quiz_attempts set deadline_at=clock_timestamp()+interval '1 second' where id='a1101001-5a11-4b11-8c11-000000000201' and student_id='a1101001-5a11-4b11-8c11-000000000002' and status='in_progress'; select public.answer_quiz_question_v4('a1101001-5a11-4b11-8c11-000000000002','a1101001-5a11-4b11-8c11-000000000201','a1101001-5a11-4b11-8c11-000000000314','initial',3::smallint,false); select pg_sleep(10);select pg_backend_pid() pid,clock_timestamp() finished_at;commit;",
+      "qb": "begin isolation level read committed; set local application_name='m11_race1_B'; set local transaction_timeout='20s'; set local statement_timeout='16s'; set local lock_timeout='12s'; set local idle_in_transaction_session_timeout='5s'; select set_config('request.jwt.claim.role','service_role',true); select set_config('request.jwt.claims','{\"role\":\"service_role\"}',true);select public.expire_quiz_attempt('a1101001-5a11-4b11-8c11-000000000002','a1101001-5a11-4b11-8c11-000000000201');select pg_backend_pid() pid,clock_timestamp() finished_at;commit;"
+    },
+    "sequential": "begin;set local transaction_timeout='15s';set local statement_timeout='8s'; select set_config('request.jwt.claim.role','service_role',true);select set_config('request.jwt.claims','{\"role\":\"service_role\"}',true); update public.quiz_attempts set deadline_at=clock_timestamp()-interval '1 second' where id in ('a1101001-5a11-4b11-8c11-000000000202','a1101001-5a11-4b11-8c11-000000000203') and student_id='a1101001-5a11-4b11-8c11-000000000002' and status='in_progress';select public.expire_quiz_attempt('a1101001-5a11-4b11-8c11-000000000002','a1101001-5a11-4b11-8c11-000000000202');select public.expire_quiz_attempt('a1101001-5a11-4b11-8c11-000000000002','a1101001-5a11-4b11-8c11-000000000203');select public.expire_quiz_attempt('a1101001-5a11-4b11-8c11-000000000002','a1101001-5a11-4b11-8c11-000000000203');commit;",
+    "cleanup": "begin;set local transaction_timeout='15s';set local statement_timeout='8s';select set_config('request.jwt.claim.sub','a1101001-5a11-4b11-8c11-000000000001',true);select set_config('request.jwt.claim.role','authenticated',true);select set_config('request.jwt.claims','{\"role\":\"authenticated\",\"sub\":\"a1101001-5a11-4b11-8c11-000000000001\"}',true);select public.delete_assignment_v2('a1101001-5a11-4b11-8c11-000000000101','M11 Preview 검증 종료');select public.delete_assignment_v2('a1101001-5a11-4b11-8c11-000000000102','M11 Preview 검증 종료');select public.delete_assignment_v2('a1101001-5a11-4b11-8c11-000000000103','M11 Preview 검증 종료');select public.delete_student_v2('a1101001-5a11-4b11-8c11-000000000002');update public.vocab_datasets set is_active=false,status='retired' where id='a1101001-5a11-4b11-8c11-000000000003' and dataset_key='m11-pg2-20261001-a1101001';update public.admin_profiles set is_active=false where user_id='a1101001-5a11-4b11-8c11-000000000001';commit;"
+  }
+}

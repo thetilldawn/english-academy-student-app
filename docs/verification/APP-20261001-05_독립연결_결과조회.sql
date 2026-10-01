@@ -1,0 +1,25 @@
+with q as(select * from private.vocab_assignment_series_items where series_id='b1101001-5a11-4b11-8c11-000000000402'),
+nx as(select * from q where id='b1101001-5a11-4b11-8c11-000000000404'),
+e as(select * from private.vocab_assignment_series_events where series_id='b1101001-5a11-4b11-8c11-000000000402'),
+a as(select * from public.quiz_attempts where student_id='b1101001-5a11-4b11-8c11-000000000002')
+select jsonb_build_object(
+'queueStates',(select jsonb_agg(status order by sequence_number) from q),
+'nextAssignmentId',(select assignment_id from nx),
+'firstCompletedOnce',(select count(*)=1 from q where id='b1101001-5a11-4b11-8c11-000000000403' and status='completed' and completed_attempt_id='b1101001-5a11-4b11-8c11-000000000204'),
+'nextAssignedOnce',(select count(*)=1 from nx where status='assigned' and assignment_id is not null and materialized_at is not null),
+'queueEvents',(select jsonb_object_agg(event_kind,n) from(select event_kind,count(*) n from e group by event_kind) t),
+'nextAssignmentOwnerMatches',(select count(*)=1 from public.assignments x join nx on nx.assignment_id=x.id where x.created_by='b1101001-5a11-4b11-8c11-000000000001' and x.dataset_id='b1101001-5a11-4b11-8c11-000000000003' and x.status='active'),
+'nextStudentLinks',(select count(*) from public.assignment_students s join nx on s.assignment_id=nx.assignment_id where s.student_id='b1101001-5a11-4b11-8c11-000000000002'),
+'nextQuestionCount',(select count(*) from public.assignment_questions aq join nx on aq.assignment_id=nx.assignment_id),
+'nextExamSnapshots',(select count(*) from public.assignment_question_exam_use_snapshot es join nx on es.assignment_id=nx.assignment_id where es.release_id='b1101001-5a11-4b11-8c11-000000000405'),
+'nextAttemptCount',(select count(*) from public.quiz_attempts qa join nx on qa.assignment_id=nx.assignment_id),
+'attempts',(select jsonb_agg(jsonb_build_object('id',id,'status',status,'initialScore',initial_score,'finalScore',final_score,'passed',passed,'initialCorrect',initial_correct_count,'unresolvedWrong',unresolved_wrong_count) order by id) from a),
+'points',(select jsonb_agg(to_jsonb(t) order by attempt_id) from(select quiz_attempt_id attempt_id,count(*) event_count,sum(delta) delta from public.student_point_events where student_id='b1101001-5a11-4b11-8c11-000000000002' group by quiz_attempt_id) t),
+'wrongEvents',(select count(*) from public.student_vocab_wrong_events where student_id='b1101001-5a11-4b11-8c11-000000000002'),
+'queueHash',(select md5(coalesce(string_agg(to_jsonb(q)::text,'' order by id),'')) from q),
+'eventHash',(select md5(coalesce(string_agg(to_jsonb(e)::text,'' order by id),'')) from e),
+'attemptHash',(select md5(coalesce(string_agg(to_jsonb(a)::text,'' order by id),'')) from a),
+'newAssignmentHash',(select md5(string_agg(to_jsonb(x)::text,'' order by x.id)) from public.assignments x join nx on x.id=nx.assignment_id),
+'newQuestionHash',(select md5(string_agg(to_jsonb(aq)::text,'' order by aq.id)) from public.assignment_questions aq join nx on aq.assignment_id=nx.assignment_id),
+'newSnapshotHash',(select md5(string_agg(to_jsonb(es)::text,'' order by es.assignment_question_id)) from public.assignment_question_exam_use_snapshot es join nx on es.assignment_id=nx.assignment_id)
+) evidence;

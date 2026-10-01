@@ -130,6 +130,8 @@ export function QuizPlayer({
         timingMode={state.attempt.timingMode}
       />
       </div>
+      {state.savingSlow ? <p role="status">답이 저장됐는지 확인하고 있습니다.</p> : null}
+      {state.expirationPending ? <p role="status">시험 종료를 확인하고 있습니다.</p> : null}
       {initialPreparing ? <div className={styles.initialPreparing}>
         <strong>{state.attempt.assignmentTitle}</strong>
         <div className={styles.prepareBody}>{preparation?.error ? <><p role="alert">{preparation.error}</p>{preparation.retry ? <Button onClick={preparation.retry}>다시 확인</Button> : null}<ButtonLink href="/student">목록으로</ButtonLink></> : <p role="status">시험 준비 중</p>}</div>

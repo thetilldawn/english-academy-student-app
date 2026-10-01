@@ -9,6 +9,7 @@ import {
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { timeoutStudentQuestion } from "@/lib/services/quiz/attempt-command";
 import { questionTimeoutSchema } from "@/lib/validation";
+import { quizCommandErrorResponse } from "@/features/quiz-player/server/quiz-command-error";
 
 export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
@@ -44,7 +45,7 @@ export const POST = withAuthenticationFailureResponse(async function POST(
     }, {
       headers: { "Cache-Control": "private, no-store" },
     });
-  } catch {
-    return jsonError("시간 초과 상태를 저장하지 못했습니다.", 409);
+  } catch (error) {
+    return quizCommandErrorResponse(error, "answer");
   }
 });

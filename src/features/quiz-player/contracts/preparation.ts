@@ -7,6 +7,7 @@ export const preparedQuizSchema = attemptSchema.omit({
 }).extend({ kind: z.enum(["initial", "retry", "practice"]) });
 export type PreparedQuiz = z.infer<typeof preparedQuizSchema>;
 export const readyQuizSchema = z.object({
+  completionConfirmed: z.boolean().optional(),
   id: z.string().min(1),
   phase: z.enum(["initial", "review", "retry", "completed"]),
   status: z.enum(["in_progress", "completed", "expired"]),

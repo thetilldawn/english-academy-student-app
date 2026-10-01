@@ -24,6 +24,7 @@ import { useQuizClock } from "./use-quiz-clock";
 import { useQuizPhaseSnapshot } from "./use-quiz-phase-snapshot";
 import { useQuizRecovery } from "./use-quiz-recovery";
 import { useQuizSubmission } from "./use-quiz-submission";
+import { useQuizExpiration } from "./use-quiz-expiration";
 export function useQuizPlayerController(input: {
   initialAttempt: QuizAttempt;
   initialRemainingMilliseconds: number;
@@ -43,7 +44,6 @@ export function useQuizPlayerController(input: {
     ), timerSynchronized: Boolean(input.initialTimerReady) },
   );
   const deadlineSubmissionNotBefore = useRef(0);
-  const expireStarted = useRef(false);
   const inFlightRequest = useRef<string | null>(null);
   const timeWarningAnnounced = useRef(false);
   const mounted = useRef(false);
@@ -107,7 +107,6 @@ export function useQuizPlayerController(input: {
     attemptId: state.attempt.id,
     deadlineSubmissionNotBeforeRef: deadlineSubmissionNotBefore,
     dispatch,
-    expireStartedRef: expireStarted,
     inFlightRequestRef: inFlightRequest,
     mountedRef: mounted,
     resetClock,
@@ -124,43 +123,9 @@ export function useQuizPlayerController(input: {
     handleInitialSynchronizationFailure,
     input.initialTimerReady || input.preparedResponse !== undefined,
   );
-  const retrySynchronization = useCallback(() => {
-    dispatch({ type: "synchronization-started" });
-    triggerInitialSynchronization();
-  }, [triggerInitialSynchronization]);
-
-  const expireCurrentAttempt = useCallback(async () => {
-    if (expireStarted.current || inFlightRequest.current) return;
-    expireStarted.current = true;
-    inFlightRequest.current = "expiring";
-    try {
-      const response = await transport.expire(state.attempt.id);
-      if (!mounted.current) return;
-      if (response.ok) {
-        router.replace(transport.resultHref(state.attempt.id));
-        return;
-      }
-      const recovered = await recoverFromServer();
-      if (!recovered && mounted.current) {
-        inFlightRequest.current = null;
-        expireStarted.current = false;
-        dispatch({
-          type: "submission-failed",
-          message: studentAppText.attempt.stateError,
-        });
-      }
-    } catch {
-      const recovered = await recoverFromServer();
-      if (!recovered && mounted.current) {
-        inFlightRequest.current = null;
-        expireStarted.current = false;
-        dispatch({
-          type: "submission-failed",
-          message: studentAppText.attempt.stateError,
-        });
-      }
-    }
-  }, [recoverFromServer, router, state.attempt.id, transport]);
+  const expiration = useQuizExpiration({ attemptId: state.attempt.id, transport, dispatch,
+    mountedRef: mounted, inFlightRequestRef: inFlightRequest, recoverFromServer,
+    onResult: id => router.replace(transport.resultHref(id)) });
 
   useEffect(() => {
     if (
@@ -182,7 +147,7 @@ export function useQuizPlayerController(input: {
     state.timerSynchronized,
   ]);
 
-  const { hasPendingChoice, submitChoice } = useQuizSubmission({
+  const { hasPendingChoice, submitChoice, retryPendingRecovery } = useQuizSubmission({
     transport,
     currentQuestion,
     deadlineSubmissionNotBeforeRef: deadlineSubmissionNotBefore,
@@ -197,12 +162,18 @@ export function useQuizPlayerController(input: {
     timeWarningAnnouncedRef: timeWarningAnnounced,
   });
   const attemptUsesDeadlineClock = quizAttemptUsesDeadlineClock(state.attempt);
+  const retrySynchronization = useCallback(() => {
+    if (retryPendingRecovery() || expiration.retry()) return;
+    dispatch({ type: "synchronization-started" });
+    triggerInitialSynchronization();
+  }, [expiration, retryPendingRecovery, triggerInitialSynchronization]);
 
   useEffect(() => {
     if (
       state.remainingSeconds !== 0 ||
       !attemptUsesDeadlineClock ||
       !state.timerSynchronized ||
+      state.error ||
       state.attempt.status !== "in_progress"
     ) {
       return;
@@ -219,18 +190,19 @@ export function useQuizPlayerController(input: {
       if (state.attempt.timingMode === "per_question") {
         void submitChoice(null);
       } else {
-        void expireCurrentAttempt();
+        expiration.expire();
       }
     }, timerDelayMilliseconds);
     return () => window.clearTimeout(timer);
   }, [
     attemptUsesDeadlineClock,
-    expireCurrentAttempt,
+    expiration,
     hasPendingChoice,
     state.attempt.status,
     state.attempt.timingMode,
     state.remainingSeconds,
     state.timerSynchronized,
+    state.error,
     submitChoice,
   ]);
 

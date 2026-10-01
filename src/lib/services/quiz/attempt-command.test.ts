@@ -67,7 +67,7 @@ describe("quiz attempt completion commands", () => {
 
     await expect(
       expireStudentAttempt("student-1", "attempt-1"),
-    ).rejects.toThrow("시험 종료상태를 저장하지 못했습니다.");
+    ).rejects.toThrow("시험 종료가 저장됐는지 확인하지 못했습니다.");
     expect(mocks.materialize).not.toHaveBeenCalled();
   });
 

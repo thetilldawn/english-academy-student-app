@@ -4,8 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, type Dispatch } from "
 
 import { studentAppText } from "@/content/ko/student-app";
 
-import { submitQuizAnswer } from "../api/quiz-attempt";
-import type { QuizTransport } from "../api/quiz-transport";
+import { regularQuizTransport, type QuizTransport } from "../api/quiz-transport";
 import {
   ANSWER_SELECTION_DELAY_MS,
   ANSWER_RESULT_VISIBLE_MS,
@@ -18,13 +17,15 @@ import type {
   QuizPlayerAction,
   QuizPlayerState,
 } from "../domain/quiz-player-state";
-import type { QuizAttempt, QuizQuestion } from "../model";
-import type { BeforeQuizRestore } from "./use-quiz-recovery";
+import type { QuizAnswerResponse, QuizAttempt, QuizQuestion } from "../model";
+import type { BeforeQuizRestore, QuizRecoverySnapshot } from "./use-quiz-recovery";
 import {
   activeNextQuestionMilliseconds,
   previewNextQuestionMilliseconds,
 } from "./quiz-transition-timer";
 import { resolveQuizFeedbackTransition } from "./resolve-quiz-feedback-transition";
+import { observeQuizAnswer } from "./observe-quiz-answer";
+import { recoverQuizSubmission } from "./recover-quiz-submission";
 
 type PendingSubmission = {
   attemptId: string;
@@ -39,13 +40,12 @@ type RunSubmissionInput = {
   attempt: QuizAttempt;
   choiceIndex: number | null;
   question: QuizQuestion;
+  recoverOnly?: boolean;
+  feedbackVisibleUntil?: number;
+  retryable?: boolean;
 };
 
-function wait(milliseconds: number) {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, milliseconds);
-  });
-}
+class QuizSubmissionFailure extends Error {}
 
 export function useQuizSubmission(input: {
   transport?: QuizTransport;
@@ -55,7 +55,7 @@ export function useQuizSubmission(input: {
   inFlightRequestRef: { current: string | null };
   mountedRef: { current: boolean };
   onResult: (attemptId: string) => void;
-  recoverFromServer: (beforeRestore?: BeforeQuizRestore) => Promise<boolean>;
+  recoverFromServer: (beforeRestore?: BeforeQuizRestore, confirmed?: QuizRecoverySnapshot) => Promise<boolean>;
   resetClock: (remainingMilliseconds: number) => void;
   state: QuizPlayerState;
   stopAudio: () => void;
@@ -64,6 +64,10 @@ export function useQuizSubmission(input: {
   const { inFlightRequestRef, deadlineSubmissionNotBeforeRef, timeWarningAnnouncedRef } = input;
   const pendingSubmissionRef = useRef<PendingSubmission | null>(null);
   const pendingTimerRef = useRef<number | null>(null);
+  const requestSerial = useRef(0);
+  const generation = useRef(0);
+  const ownedRequest = useRef<string | null>(null);
+  const unconfirmedSubmission = useRef<RunSubmissionInput | null>(null);
   const latestInputRef = useRef(input);
   const runSubmissionRef = useRef<((submission: RunSubmissionInput) => Promise<void>) | null>(null);
   useLayoutEffect(() => {
@@ -80,6 +84,13 @@ export function useQuizSubmission(input: {
     clearPendingTimer();
     pendingSubmissionRef.current = null;
   }, [clearPendingTimer]);
+  useLayoutEffect(() => () => {
+    generation.current += 1;
+    if (inFlightRequestRef.current === ownedRequest.current) inFlightRequestRef.current = null;
+    ownedRequest.current = null;
+    unconfirmedSubmission.current = null;
+    cancelPending();
+  }, [input.state.attempt.id, input.transport, inFlightRequestRef, cancelPending]);
   const hasPendingChoice = useCallback(() => {
     const pending = pendingSubmissionRef.current;
     const current = latestInputRef.current;
@@ -147,97 +158,123 @@ export function useQuizSubmission(input: {
     async function run(submission: RunSubmissionInput): Promise<void> {
       const answeredPhase = submission.attempt.phase;
       if (answeredPhase !== "initial" && answeredPhase !== "retry") return;
+      if (latestInputRef.current.state.attempt.id !== submission.attempt.id ||
+          latestInputRef.current.transport !== input.transport) return;
+      const version = generation.current;
 
       input.stopAudio();
       const requestKey = [
         submission.attempt.id,
         answeredPhase,
         submission.question.id,
+        ++requestSerial.current,
       ].join(":");
       inFlightRequestRef.current = requestKey;
+      ownedRequest.current = requestKey;
+      unconfirmedSubmission.current = submission;
+      const isActive = () => input.mountedRef.current && generation.current === version &&
+        inFlightRequestRef.current === requestKey;
+      const transport = input.transport ?? regularQuizTransport;
       input.dispatch({
         type: "submission-started",
         phase: answeredPhase,
         choiceIndex: submission.choiceIndex,
       });
       let recoveryAttempted = false;
-      let answerReceived = false;
-      const tryRecover = async () => {
+      let confirmedUnanswered = false;
+      let feedbackVisibleUntil: number | null = submission.feedbackVisibleUntil ?? null;
+      const showFeedback = (payload: QuizAnswerResponse) => {
+        if (feedbackVisibleUntil === null) {
+          input.dispatch({ type: "answer-received", payload });
+          feedbackVisibleUntil = performance.now() + ANSWER_RESULT_VISIBLE_MS;
+          submission.feedbackVisibleUntil = feedbackVisibleUntil;
+        }
+        return feedbackVisibleUntil;
+      };
+      const savedFeedback = (attempt: QuizAttempt) => attempt.id === submission.attempt.id
+        ? recoveredQuizAnswerFeedback({ attempt, questionId: submission.question.id,
+            phase: answeredPhase, choiceIndex: submission.choiceIndex }) : null;
+      const tryRecover = async (confirmed?: QuizRecoverySnapshot) => {
+        if (!isActive()) return true;
         if (recoveryAttempted) return false;
         recoveryAttempted = true;
         cancelPending();
-        input.dispatch({ type: "choice-pending", choiceIndex: null });
-        return input.recoverFromServer(async (attempt) => {
-          const isActive = () => input.mountedRef.current &&
-            inFlightRequestRef.current === requestKey;
-          if (!isActive()) return false;
-          if (!answerReceived && attempt.id === submission.attempt.id) {
-            const feedback = recoveredQuizAnswerFeedback({
-              attempt, questionId: submission.question.id,
-              phase: answeredPhase, choiceIndex: submission.choiceIndex,
-            });
-            if (feedback) {
-              answerReceived = true;
-              input.dispatch({ type: "answer-received", payload: feedback });
-              await wait(ANSWER_RESULT_VISIBLE_MS);
-            }
-          }
-          return isActive();
-        });
+        const recovered = await input.recoverFromServer(snapshot => {
+          const attempt = snapshot.payload.attempt;
+          const question = attempt.questions.find(value => value.id === submission.question.id);
+          confirmedUnanswered = attempt.id === submission.attempt.id && attempt.phase === answeredPhase &&
+            attempt.status === "in_progress" && attempt.currentQuestionId === submission.question.id && Boolean(question) &&
+            (answeredPhase === "initial" ? question!.initialIsCorrect === null : question!.retryIsCorrect === null);
+          return recoverQuizSubmission({
+          snapshot, transport, dispatch: input.dispatch,
+          questionId: submission.question.id, phase: answeredPhase, choiceIndex: submission.choiceIndex,
+          isActive: () => isActive() && snapshot.isCurrent(), showFeedback,
+          });
+        }, confirmed);
+        if (recovered && unconfirmedSubmission.current === submission) unconfirmedSubmission.current = null;
+        return recovered;
       };
 
       try {
-        const { ok, payload, receivedAt } = await (input.transport?.answer ?? submitQuizAnswer)({
-          attemptId: submission.attempt.id,
-          questionId: submission.question.id,
-          phase: answeredPhase,
-          choiceIndex: submission.choiceIndex,
+        if (submission.recoverOnly) {
+          if (await tryRecover()) return;
+          if (!isActive() || !submission.retryable || !confirmedUnanswered) throw new QuizSubmissionFailure(studentAppText.attempt.saveError);
+          recoveryAttempted = false;
+        }
+        submission.retryable = false;
+        const observed = await observeQuizAnswer({
+          answer: () => transport.answer({ attemptId: submission.attempt.id,
+            questionId: submission.question.id, phase: answeredPhase, choiceIndex: submission.choiceIndex }),
+          read: () => transport.read(submission.attempt.id),
+          isSaved: attempt => Boolean(savedFeedback(attempt)), isActive,
+          onSlow: () => input.dispatch({ type: "submission-slow" }),
         });
-        if (
-          !input.mountedRef.current ||
-          inFlightRequestRef.current !== requestKey
-        ) {
+        if (!isActive()) return;
+        if (observed.kind === "recovered") {
+          if (await tryRecover(observed.snapshot)) return;
+          throw new QuizSubmissionFailure(studentAppText.attempt.stateError);
+        }
+        const { ok, payload, receivedAt } = observed.response;
+        if (!isActive()) {
           return;
         }
         if (!ok) {
+          submission.retryable = payload.retryable === true && payload.outcome === "not_applied";
           if (await tryRecover()) return;
-          throw new Error(payload.error ?? studentAppText.attempt.saveError);
+          throw new QuizSubmissionFailure(payload.error ?? studentAppText.attempt.saveError);
         }
         if (payload.expired) {
+          unconfirmedSubmission.current = null;
           inFlightRequestRef.current = null;
           input.onResult(submission.attempt.id);
           return;
         }
 
-        input.dispatch({ type: "answer-received", payload });
-        answerReceived = true;
+        showFeedback(payload);
         const disposition = quizAnswerDisposition(payload, answeredPhase);
         const transition = await resolveQuizFeedbackTransition({
           resume: input.transport?.feedback,
           attemptId: submission.attempt.id,
           disposition,
-          isActive: () =>
-            input.mountedRef.current &&
-            inFlightRequestRef.current === requestKey,
+          isActive,
           payload,
           receivedAt,
           questionTimeLimitSeconds: submission.attempt.timingMode === "per_question"
             ? submission.attempt.questionTimeLimitSeconds : null,
+          feedbackVisibleUntil: feedbackVisibleUntil!,
         });
-        if (
-          !input.mountedRef.current ||
-          inFlightRequestRef.current !== requestKey
-        ) {
+        if (!isActive()) {
           return;
         }
         if (disposition === "result") {
+          unconfirmedSubmission.current = null;
           inFlightRequestRef.current = null;
           input.onResult(submission.attempt.id);
           return;
         }
         if (disposition === "recover" || !transition.synchronization) {
           if (await tryRecover()) return;
-          throw new Error(studentAppText.attempt.stateError);
+          throw new QuizSubmissionFailure(studentAppText.attempt.stateError);
         }
 
         const previewMilliseconds = previewNextQuestionMilliseconds(
@@ -249,15 +286,12 @@ export function useQuizSubmission(input: {
           input.dispatch({ type: "next-question-preparing" });
         }
         const synchronized = transition.ready ?? await transition.synchronization;
-        if (
-          !input.mountedRef.current ||
-          inFlightRequestRef.current !== requestKey
-        ) {
+        if (!isActive()) {
           return;
         }
         if (synchronized.recoverFromServer) {
           if (await tryRecover()) return;
-          throw new Error(studentAppText.attempt.stateError);
+          throw new QuizSubmissionFailure(studentAppText.attempt.stateError);
         }
 
         const synchronizedAttempt = applyQuizAnswerTransition({
@@ -277,6 +311,7 @@ export function useQuizSubmission(input: {
           serverReceivedAt: synchronized.receivedAt,
         });
         inFlightRequestRef.current = null;
+        unconfirmedSubmission.current = null;
         deadlineSubmissionNotBeforeRef.current = 0;
         input.resetClock(activeMilliseconds);
         input.dispatch({
@@ -287,14 +322,16 @@ export function useQuizSubmission(input: {
         timeWarningAnnouncedRef.current = false;
 
       } catch (requestError) {
+        if (!isActive()) return;
         cancelPending();
         if (await tryRecover()) return;
-        if (!input.mountedRef.current) return;
+        if (!isActive()) return;
         inFlightRequestRef.current = null;
         input.dispatch({
           type: "submission-failed",
+          preserveChoice: submission.choiceIndex,
           message:
-            requestError instanceof Error
+            requestError instanceof QuizSubmissionFailure
               ? requestError.message
               : studentAppText.attempt.saveError,
         });
@@ -306,6 +343,12 @@ export function useQuizSubmission(input: {
   useLayoutEffect(() => {
     runSubmissionRef.current = runSubmission;
   }, [runSubmission]);
+  const retryPendingRecovery = useCallback(() => {
+    const submission = unconfirmedSubmission.current;
+    if (!submission || submission.attempt.id !== latestInputRef.current.state.attempt.id) return false;
+    if (!inFlightRequestRef.current) void runSubmissionRef.current?.({ ...submission, recoverOnly: true });
+    return true;
+  }, [inFlightRequestRef]);
 
   const submitChoice = useCallback(
     (choiceIndex: number | null) => {
@@ -358,6 +401,7 @@ export function useQuizSubmission(input: {
   );
   return {
     hasPendingChoice,
+    retryPendingRecovery,
     submitChoice,
   };
 }

@@ -10,6 +10,7 @@ import { PracticeHistory } from "../../client/practice-history";
 import { PracticePlayer } from "../../client/practice-player";
 import { PreparedQuizPlayer } from "../../ui/prepared-quiz-player";
 import { getQuizPreparation } from "../attempt-preparation";
+import { quizResultIsConfirmed } from "../../domain/quiz-session";
 import styles from "../../ui/practice.module.css";
 
 export function PracticeContent(props: { params?: Promise<{ id: string }>; result?: boolean }) {
@@ -31,6 +32,9 @@ async function Content({ params, result }: { params?: Promise<{ id: string }>; r
     return <PreparedQuizPlayer key={prepared.id} preparation={prepared} />;
   }
   const attempt = initial.attempt;
+  if (attempt.status !== "in_progress" && !quizResultIsConfirmed(initial)) {
+    return <main id="main-content" className={styles.page}><p role="alert">연습 종료를 확인하지 못했습니다. 잠시 후 다시 열어 주세요.</p><ButtonLink href="/student/practice">연습 내역</ButtonLink></main>;
+  }
   if (!result) {
     if (attempt.status !== "in_progress") redirect(`/student/practice/${id}/result`);
     return <PracticePlayer initial={initial} />;

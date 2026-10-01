@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
+import { StrictMode, createRef } from "react";
 
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -164,7 +165,8 @@ function successfulTransport<T>(
 ) {
   return {
     ok: true as const,
-    payload,
+    payload: typeof payload === "object" && payload !== null && "attempt" in payload && !("completionConfirmed" in payload)
+      ? { ...payload, completionConfirmed: (payload.attempt as QuizAttempt).status !== "in_progress" } : payload,
     receivedAt: performance.now(),
     roundTripMilliseconds,
   };
@@ -236,7 +238,8 @@ describe("QuizPlayer", () => {
     }));
     await act(async () => { render(<QuizPlayer initialAttempt={value} initialRemainingMilliseconds={240_000} />); });
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("--:--");
-    const choice = screen.getByRole("button", { name: /^1\s*question-1-one/ });
+    expect(screen.getByText("다음 문제 준비 중")).toBeInTheDocument();
+    const choice = screen.getByText("question-1-one").closest("button")!;
     expect(choice).toBeDisabled();
     fireEvent.click(choice);
     await waitForAnswerSelection(5_999);
@@ -527,7 +530,9 @@ describe("QuizPlayer", () => {
     const value = attempt(), restored = savedAttempt(value, false);
     mocks.submit.mockImplementation(async () => successfulTransport(nextAnswer()));
     mocks.resume.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }))
-      .mockResolvedValue({ ok: false, payload: {} });
+      .mockResolvedValueOnce({ ok: false, payload: {} })
+      .mockImplementation(async () => successfulTransport({ questionDeadlineAt: value.timerDeadlineAt,
+        questionStartsAt: value.startedAt, timerRemainingMilliseconds: 10000, transitionRemainingMilliseconds: 0 }));
     await renderReady(value);
     mocks.recover.mockImplementation(async () => successfulTransport({ attempt: restored, timerRemainingMilliseconds: 10_000 }));
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
@@ -682,7 +687,8 @@ describe("QuizPlayer", () => {
     mocks.recover.mockImplementation(async () => successfulTransport({ attempt: restored, timerRemainingMilliseconds: 10_000 }));
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
     await waitForAnswerSelection();
-    expect(screen.getByRole("button", { name: /^1\s*question-1-one/ })).toHaveAttribute("data-feedback", "idle");
+    expect(screen.getByRole("button", { name: /^1\s*question-1-one/ })).toHaveAttribute("data-feedback", "selected");
+    expect(screen.getByRole("button", { name: /^1\s*question-1-one/ })).toBeDisabled();
     expect(screen.queryByText(studentAppText.attempt.correct)).toBeNull();
   });
 
@@ -691,6 +697,8 @@ describe("QuizPlayer", () => {
     const restored = savedAttempt(value, true);
     mocks.submit.mockRejectedValue(new Error("lost")); await renderReady(value);
     mocks.recover.mockImplementation(async () => successfulTransport({ attempt: restored, timerRemainingMilliseconds: 1_100 }));
+    mocks.resume.mockImplementation(async input => successfulTransport({ questionDeadlineAt: value.timerDeadlineAt,
+      questionStartsAt: value.startedAt, timerRemainingMilliseconds: 1100, transitionRemainingMilliseconds: input.transitionRemainingMilliseconds }));
     fireEvent.click(screen.getByRole("button", { name: /^1\s*question-1-one/ }));
     await waitForAnswerSelection(); await waitForAnswerSelection(100);
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:01");
@@ -1019,3 +1027,220 @@ function savedAttempt(value: QuizAttempt, correct: boolean, terminal = false): Q
   if (terminal) { restored.phase = "completed"; restored.status = "completed"; }
   return restored;
 }
+
+
+describe("M11 saved answer and expiry recovery", () => {
+  it.each(["answer","expiry"])("releases the old %s owner when another prepared attempt replaces it", async mode => {
+    const value=attempt();if(mode==="expiry")value.timingMode="total";
+    let finish!:(value:unknown)=>void;
+    const oldRequest=new Promise(resolve=>{finish=resolve;});
+    if(mode==="answer")mocks.submit.mockReturnValueOnce(oldRequest);
+    else mocks.expire.mockReturnValueOnce(oldRequest);
+    const view=render(<QuizPlayer initialAttempt={value} initialRemainingMilliseconds={mode==="answer"?60000:0} initialTimerReady/>);
+    if(mode==="answer")fireEvent.click(screen.getByRole("button",{name:/question-1-one/}));
+    await waitForAnswerSelection(20);
+    const newer={...value,id:"attempt-2"};
+    view.rerender(<QuizPlayer initialAttempt={value} initialRemainingMilliseconds={60000} initialTimerReady
+      preparation={{response:{attempt:newer,timerRemainingMilliseconds:60000,receivedAt:performance.now()},error:"",frameRef:createRef<HTMLDivElement>()}}/>);
+    await act(async()=>{finish(mode==="answer"?successfulTransport({completed:true,correct:true,correctChoiceIndex:0}):{ok:true});});
+    expect(mocks.replace).not.toHaveBeenCalled();
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    mocks.submit.mockResolvedValue(successfulTransport(nextAnswer()));
+    fireEvent.click(screen.getByRole("button",{name:/question-1-one/}));await waitForAnswerSelection(20);
+    expect(mocks.submit.mock.lastCall?.[0].attemptId).toBe("attempt-2");
+  });
+  it("starts a fresh initial read after StrictMode cancels the previous owner", async () => {
+    const finish: ((value: unknown) => void)[] = [];
+    mocks.recover.mockImplementation(() => new Promise(resolve => finish.push(resolve)));
+    render(<StrictMode><QuizPlayer initialAttempt={attempt()} initialRemainingMilliseconds={60000}/></StrictMode>);
+    expect(finish).toHaveLength(2);
+    await act(async () => { finish[0](successfulTransport({attempt: attempt(), timerRemainingMilliseconds:1000})); });
+    expect(screen.getByRole("button",{name:/question-1-one/})).toBeDisabled();
+    await act(async () => { finish[1](successfulTransport({attempt: attempt(), timerRemainingMilliseconds:10000})); });
+    expect(screen.getByRole("button",{name:/question-1-one/})).toBeEnabled();
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
+  });
+
+  it("allows one manual same-answer retry only after confirmed rollback and an unanswered read", async () => {
+    mocks.submit.mockResolvedValueOnce({ok:false,payload:{retryable:true,outcome:"not_applied"}})
+      .mockResolvedValueOnce(successfulTransport(nextAnswer()));
+    await renderReady();
+    fireEvent.click(screen.getByRole("button",{name:/question-1-one/}));
+    await waitForAnswerSelection();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    const retry=screen.getByRole("button",{name:studentAppText.attempt.synchronizationRetry});
+    fireEvent.click(retry); fireEvent.click(retry);
+    await waitForAnswerSelection(100);
+    expect(mocks.submit).toHaveBeenCalledTimes(2);
+    expect(mocks.submit.mock.calls[1]).toEqual(mocks.submit.mock.calls[0]);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+  });
+
+  it("does not grant another feedback interval when manually recovering a lost acknowledgement", async () => {
+    const value=attempt(); await renderReady(value);
+    mocks.submit.mockRejectedValue(new Error("lost"));
+    mocks.recover.mockImplementation(async()=>successfulTransport({attempt:savedAttempt(value,true),timerRemainingMilliseconds:17000,transitionRemainingMilliseconds:0}));
+    mocks.resume.mockResolvedValue({ok:false,payload:{}});
+    fireEvent.click(screen.getByRole("button",{name:/question-1-one/}));
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
+    const retry=screen.getByRole("button",{name:studentAppText.attempt.synchronizationRetry});
+    mocks.resume.mockImplementation(async input=>successfulTransport({questionDeadlineAt:value.timerDeadlineAt,questionStartsAt:value.startedAt,
+      timerRemainingMilliseconds:10000,transitionRemainingMilliseconds:input.transitionRemainingMilliseconds}));
+    fireEvent.click(retry); await waitForAnswerSelection(1);
+    expect(mocks.resume.mock.lastCall?.[0].transitionRemainingMilliseconds).toBe(0);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([false, undefined])("does not accept an unconfirmed displayed expiry (%s)", async marker => {
+    const value=attempt();value.timingMode="total";
+    await renderReady(value,1000);
+    mocks.expire.mockRejectedValue(new Error("unknown"));
+    mocks.recover.mockImplementation(async()=>successfulTransport({attempt:{...value,status:"expired",phase:"completed"},
+      timerRemainingMilliseconds:0,completionConfirmed:marker}));
+    await waitForAnswerSelection(1001);
+    await waitForAnswerSelection(1);
+    expect(mocks.replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("button",{name:studentAppText.attempt.synchronizationRetry})).toBeEnabled();
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops expiry retries after the confirmation read loses authentication", async () => {
+    const value=attempt();value.timingMode="total";await renderReady(value,1000);
+    mocks.expire.mockResolvedValue({ok:false,payload:{retryable:true,outcome:"not_applied"}});
+    mocks.recover.mockResolvedValue({ok:false,status:401,payload:{error:"학생 인증이 필요합니다."}});
+    await waitForAnswerSelection(1001); await waitForAnswerSelection(10000);
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("학생 인증이 필요합니다.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:studentAppText.attempt.synchronizationRetry}));
+    await waitForAnswerSelection(1);
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+  });
+  it.each([5, 8, 10])("releases a recovered reservation without waiting seven seconds (%i seconds)", async seconds => {
+    const value = attempt(); value.questionTimeLimitSeconds = seconds;
+    mocks.submit.mockRejectedValue(new Error("lost"));
+    await renderReady(value);
+    mocks.recover.mockImplementation(async () => successfulTransport({
+      attempt: savedAttempt(value, true), timerRemainingMilliseconds: seconds * 1000 + 7000,
+      transitionRemainingMilliseconds: 7000,
+    }));
+    mocks.resume.mockImplementation(async input => successfulTransport({
+      questionDeadlineAt: value.timerDeadlineAt, questionStartsAt: value.startedAt,
+      timerRemainingMilliseconds: seconds * 1000 + input.transitionRemainingMilliseconds,
+      transitionRemainingMilliseconds: input.transitionRemainingMilliseconds,
+    }));
+    fireEvent.click(screen.getByRole("button", { name: /question-1-one/ }));
+    await waitForAnswerSelection();
+    expect(mocks.resume).toHaveBeenCalledTimes(1);
+    await waitForAnswerSelection(99);
+    expect(screen.getByRole("button", { name: /question-1-one/ })).toHaveAttribute("data-feedback", "correct");
+    await waitForAnswerSelection(1);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:" + String(seconds).padStart(2,"0"));
+    expect(screen.queryByText("다음 문제 준비 중")).toBeNull();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the newly confirmed total deadline without subtracting seven seconds twice", async () => {
+    const value = attempt(); value.timingMode = "total"; value.questionTimeLimitSeconds = null;
+    mocks.submit.mockRejectedValue(new Error("lost")); await renderReady(value);
+    mocks.recover.mockImplementation(async () => successfulTransport({ attempt: savedAttempt(value,true),
+      timerRemainingMilliseconds: 238000, transitionRemainingMilliseconds: 5000 }));
+    mocks.resume.mockImplementation(async input => successfulTransport({
+      questionDeadlineAt: value.deadlineAt, questionStartsAt: value.startedAt,
+      timerRemainingMilliseconds: 233100, transitionRemainingMilliseconds: input.transitionRemainingMilliseconds,
+    }));
+    fireEvent.click(screen.getByRole("button", { name: /question-1-one/ }));
+    await waitForAnswerSelection(); await waitForAnswerSelection(100);
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("3:53");
+    expect(mocks.resume).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for the original response when a slow-request check arrives before storage", async () => {
+    let finish!: (value: unknown) => void;
+    mocks.submit.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+    await renderReady();
+    fireEvent.click(screen.getByRole("button", { name: /question-1-one/ }));
+    await waitForAnswerSelection(); await waitForAnswerSelection(2000);
+    expect(screen.getByText("답이 저장됐는지 확인하고 있습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /question-1-one/ })).toHaveAttribute("data-feedback", "selected");
+    expect(mocks.recover).toHaveBeenCalledTimes(2);
+    await act(async () => { finish(successfulTransport(nextAnswer())); });
+    await waitForAnswerSelection(100);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.resume).toHaveBeenCalledTimes(1);
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("adopts a saved check once and ignores the later original response", async () => {
+    const value = attempt(); let finish!: (value: unknown) => void;
+    mocks.submit.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+    await renderReady(value);
+    mocks.recover.mockImplementation(async () => successfulTransport({ attempt: savedAttempt(value,true),
+      timerRemainingMilliseconds: 17000, transitionRemainingMilliseconds: 7000 }));
+    fireEvent.click(screen.getByRole("button", { name: /question-1-one/ }));
+    await waitForAnswerSelection(); await waitForAnswerSelection(2100);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    await act(async () => { finish(successfulTransport(nextAnswer())); });
+    await waitForAnswerSelection(500);
+    expect(mocks.resume).toHaveBeenCalledTimes(1);
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("preserves an unconfirmed selection and retries only its receipt", async () => {
+    const value = attempt(); mocks.submit.mockRejectedValue(new Error("lost"));
+    await renderReady(value);
+    fireEvent.click(screen.getByRole("button", { name: /question-1-one/ }));
+    await waitForAnswerSelection();
+    expect(screen.getByRole("button", { name: /question-1-one/ })).toHaveAttribute("data-feedback","selected");
+    expect(screen.getByRole("button", { name: /question-1-two/ })).toBeDisabled();
+    mocks.recover.mockImplementation(async () => successfulTransport({ attempt: savedAttempt(value,true), timerRemainingMilliseconds: 10000 }));
+    fireEvent.click(screen.getByRole("button", { name: studentAppText.attempt.synchronizationRetry }));
+    await waitForAnswerSelection(100);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("limits confirmed temporary expiry failures to the initial call and two retries", async () => {
+    const value = attempt(); value.timingMode = "total"; value.questionTimeLimitSeconds = null;
+    const times: number[] = [];
+    mocks.expire.mockImplementation(async () => { times.push(performance.now()); return {
+      ok:false, payload: { retryable: true, outcome: "not_applied" },
+    }; });
+    await renderReady(value,0); await waitForAnswerSelection(1);
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+    await waitForAnswerSelection(1000);
+    expect(mocks.expire).toHaveBeenCalledTimes(2);
+    await waitForAnswerSelection(3000);
+    expect(mocks.expire).toHaveBeenCalledTimes(3);
+    expect(times[1]-times[0]).toBe(1000); expect(times[2]-times[1]).toBe(3000);
+    await waitForAnswerSelection(30000);
+    expect(mocks.expire).toHaveBeenCalledTimes(3);
+    expect(screen.getByRole("button", { name: studentAppText.attempt.synchronizationRetry })).toBeEnabled();
+    mocks.recover.mockImplementation(async () => successfulTransport({ attempt: {...value,status:"expired",phase:"completed"}, timerRemainingMilliseconds:0 }));
+    fireEvent.click(screen.getByRole("button", { name: studentAppText.attempt.synchronizationRetry }));
+    await waitForAnswerSelection(1);
+    expect(mocks.replace).toHaveBeenCalledExactlyOnceWith("/student/result/attempt-1");
+    expect(mocks.expire).toHaveBeenCalledTimes(3);
+  });
+
+  it("never repeats an expiry POST whose outcome is unknown", async () => {
+    const value=attempt(); value.timingMode="total";
+    mocks.expire.mockRejectedValue(new DOMException("lost","AbortError"));
+    await renderReady(value,0); await waitForAnswerSelection(1); await waitForAnswerSelection(10000);
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+    const retry = screen.getByRole("button", { name: studentAppText.attempt.synchronizationRetry });
+    fireEvent.click(retry);
+    fireEvent.click(retry);
+    await waitForAnswerSelection(1);
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+    expect(mocks.recover).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not repeatedly submit a per-question timeout after failed confirmation", async () => {
+    mocks.submit.mockRejectedValue(new Error("lost"));
+    await renderReady(attempt(),0); await waitForAnswerSelection(1); await waitForAnswerSelection(10000);
+    expect(mocks.submit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({choiceIndex:null}));
+    expect(screen.getByRole("button", { name: studentAppText.attempt.synchronizationRetry })).toBeEnabled();
+  });
+});

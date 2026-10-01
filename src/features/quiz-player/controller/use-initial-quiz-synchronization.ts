@@ -21,6 +21,7 @@ export function useInitialQuizSynchronization(
     });
     return () => {
       active = false;
+      if (inFlight.current === request) inFlight.current = null;
     };
   }, [initialTimerReady, onFailure, requestVersion, synchronize]);
 

@@ -13,9 +13,19 @@ export const ANSWER_SELECTION_DELAY_MS = 20;
 export const ANSWER_AUDIO_END_TIMEOUT_MS = 3_000;
 export const ANSWER_AUDIO_START_TIMEOUT_MS = 1_000;
 export const QUIZ_REQUEST_TIMEOUT_MS = 2_000;
+export const QUIZ_COMMAND_TIMEOUT_MS = 15_000;
 export const ANSWER_SERVER_FEEDBACK_RESERVATION_MS = 7_000;
 export const ANSWER_RESULT_VISIBLE_MS = 100;
 export const PROMPT_AUDIO_AUTOPLAY_DELAY_MS = 250;
+
+/** A calculated deadline expiry is not evidence that the result was saved. */
+export function quizResultIsConfirmed(response: {
+  attempt: Pick<QuizAttempt, "status" | "phase">; completionConfirmed?: boolean;
+}): boolean {
+  const { attempt } = response;
+  return attempt.status === "in_progress" && attempt.phase === "review" ||
+    attempt.status !== "in_progress" && attempt.phase === "completed" && response.completionConfirmed === true;
+}
 
 /** Only a saved server judgement may restore feedback after a lost response. */
 export function recoveredQuizAnswerFeedback(input: {

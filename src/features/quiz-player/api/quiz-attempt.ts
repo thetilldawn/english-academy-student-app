@@ -3,12 +3,13 @@ import { z } from "zod";
 import { awaitWithAbortSignal, createRequestDeadline } from "@/lib/network/request-policy";
 import { quizContentModes } from "@/lib/quiz/question-content-mode";
 
-import { QUIZ_REQUEST_TIMEOUT_MS } from "../domain/quiz-session";
+import { QUIZ_COMMAND_TIMEOUT_MS, QUIZ_REQUEST_TIMEOUT_MS } from "../domain/quiz-session";
 import type {
   QuizAnswerResponse,
   QuizAttemptResponse,
   QuizFeedbackResumeResponse,
   QuizTransportResult,
+  QuizExpirationResponse,
 } from "../model";
 
 const pronunciationSegmentSchema = z.object({
@@ -112,6 +113,7 @@ const answerResponseSchema = z
   });
 
 export const attemptResponseSchema = z.object({
+  completionConfirmed: z.boolean().optional(),
   attempt: attemptSchema,
   timerRemainingMilliseconds: z.number().int().nonnegative(),
   transitionRemainingMilliseconds: z.number().int().min(0).max(7_250).optional(),
@@ -126,14 +128,18 @@ const feedbackResumeResponseSchema = z.object({
 
 const errorResponseSchema = z.object({
   error: z.string().optional(),
+  code: z.string().optional(),
+  retryable: z.boolean().optional(),
+  outcome: z.enum(["not_applied", "unknown"]).optional(),
 });
 
 async function boundedRequest<T>(
   resource: RequestInfo | URL,
   options: RequestInit,
   read: (response: Response) => Promise<T>,
+  timeoutMilliseconds = QUIZ_REQUEST_TIMEOUT_MS,
 ) {
-  const deadline = createRequestDeadline(QUIZ_REQUEST_TIMEOUT_MS, options.signal);
+  const deadline = createRequestDeadline(timeoutMilliseconds, options.signal);
   try {
     const response = await awaitWithAbortSignal(fetch(resource, {
       ...options,
@@ -178,6 +184,7 @@ export async function submitQuizAnswer(input: {
       }),
     },
     readPayload,
+    QUIZ_COMMAND_TIMEOUT_MS,
   );
   const receivedAt = performance.now();
   const timing = {
@@ -185,7 +192,7 @@ export async function submitQuizAnswer(input: {
     roundTripMilliseconds: Math.max(0, receivedAt - requestStartedAt),
   };
   if (!response.ok) {
-    return { ok: false, payload: errorPayload(payload), ...timing };
+    return { ok: false, status: response.status, payload: errorPayload(payload), ...timing };
   }
   return {
     ok: true,
@@ -208,7 +215,7 @@ export async function recoverQuizAttempt(
     roundTripMilliseconds: Math.max(0, receivedAt - requestStartedAt),
   };
   if (!response.ok) {
-    return { ok: false, payload: errorPayload(payload), ...timing };
+    return { ok: false, status: response.status, payload: errorPayload(payload), ...timing };
   }
   return {
     ok: true,
@@ -244,7 +251,7 @@ export async function resumeQuizAfterFeedback(input: {
     roundTripMilliseconds: Math.max(0, receivedAt - requestStartedAt),
   };
   if (!response.ok) {
-    return { ok: false, payload: errorPayload(payload), ...timing };
+    return { ok: false, status: response.status, payload: errorPayload(payload), ...timing };
   }
   return {
     ok: true,
@@ -255,8 +262,14 @@ export async function resumeQuizAfterFeedback(input: {
   };
 }
 
-export async function expireQuizAttempt(attemptId: string, basePath = "/api/student/attempts") {
-  return boundedRequest(`${basePath}/${attemptId}/expire`, {
+export async function expireQuizAttempt(attemptId: string, basePath = "/api/student/attempts"): Promise<QuizExpirationResponse> {
+  const { response, payload } = await boundedRequest(`${basePath}/${attemptId}/expire`, {
     method: "POST",
-  }, async (response) => response);
+  }, readPayload, QUIZ_COMMAND_TIMEOUT_MS);
+  // Regular expiry returns {ok:true}; practice expiry returns its saved attempt.
+  const attempt = attemptResponseSchema.safeParse(payload);
+  if (response.ok && (basePath === "/api/student/attempts" && z.object({ ok: z.literal(true) }).safeParse(payload).success ||
+      attempt.success && attempt.data.attempt.id === attemptId && attempt.data.attempt.status !== "in_progress" &&
+      attempt.data.attempt.phase === "completed" && attempt.data.completionConfirmed !== false)) return { ok: true };
+  return { ok: false, payload: response.ok ? { outcome: "unknown" } : errorPayload(payload) };
 }

@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { expireQuizAttempt, recoverQuizAttempt, resumeQuizAfterFeedback, submitQuizAnswer } from "./quiz-attempt";
-import { QUIZ_REQUEST_TIMEOUT_MS } from "../domain/quiz-session";
+import { QUIZ_REQUEST_TIMEOUT_MS, QUIZ_COMMAND_TIMEOUT_MS } from "../domain/quiz-session";
 
 function response(payload: unknown) {
   return Promise.resolve(
@@ -38,7 +38,7 @@ describe("quiz attempt transport", () => {
     const success = vi.fn();
     const failure = vi.fn();
     const request = actions[name]().then(success, failure);
-    await vi.advanceTimersByTimeAsync(QUIZ_REQUEST_TIMEOUT_MS - 1);
+    await vi.advanceTimersByTimeAsync((name === "submit" ? QUIZ_COMMAND_TIMEOUT_MS : QUIZ_REQUEST_TIMEOUT_MS) - 1);
     expect(success).not.toHaveBeenCalled();
     expect(failure).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
@@ -52,13 +52,13 @@ describe("quiz attempt transport", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("헤더와 본문에 각각 2초가 아니라 합산 2초를 적용한다", async () => {
+  it("답 저장의 헤더와 본문에 합산 15초 제한을 적용한다", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("fetch", vi.fn(() => new Promise(resolve => {
       setTimeout(() => resolve({ ok: true, json: () => new Promise(() => {}) }), 1_500);
     })));
     const rejected = expect(actions.submit()).rejects.toMatchObject({ name: "AbortError" });
-    await vi.advanceTimersByTimeAsync(QUIZ_REQUEST_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(QUIZ_COMMAND_TIMEOUT_MS);
     await rejected;
     expect(vi.getTimerCount()).toBe(0);
   });
@@ -67,18 +67,29 @@ describe("quiz attempt transport", () => {
     vi.useFakeTimers();
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
     const rejected = expect(expireQuizAttempt("a")).rejects.toMatchObject({ name: "AbortError" });
-    await vi.advanceTimersByTimeAsync(QUIZ_REQUEST_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(QUIZ_COMMAND_TIMEOUT_MS);
     await rejected;
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("만료는 사용하지 않는 본문을 기다리지 않고 기존 Response를 반환한다", async () => {
+  it("만료의 실패 분류를 읽고 본문 지연도 같은 제한으로 중단한다", async () => {
     vi.useFakeTimers();
-    const response = { ok: true, json: vi.fn(() => new Promise(() => {})) };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
-    expect(await expireQuizAttempt("a")).toBe(response);
-    expect(response.json).not.toHaveBeenCalled();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => new Promise(() => {}) }));
+    const rejected = expect(expireQuizAttempt("a")).rejects.toMatchObject({ name: "AbortError" });
+    await vi.advanceTimersByTimeAsync(QUIZ_COMMAND_TIMEOUT_MS);
+    await rejected;
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("만료 실패의 거래 결과와 재시도 가능 여부를 유지한다", async () => {
+    const payload = { error: "일시 실패", code: "temporary_database_failure", retryable: true, outcome: "not_applied" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 503 })));
+    expect(await expireQuizAttempt("a")).toEqual({ ok: false, payload });
+  });
+
+  it("만료의 잘못된 성공 본문은 처리 결과 불명으로 남긴다", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
+    expect(await expireQuizAttempt("a")).toEqual({ ok: false, payload: { outcome: "unknown" } });
   });
 
   it.each([200, 503])("잘못된 JSON(%i)을 무한 대기하지 않고 기존 성공 검증/실패로 넘긴다", async (status) => {

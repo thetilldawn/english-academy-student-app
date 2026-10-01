@@ -28,6 +28,15 @@ beforeEach(()=>{
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.useRealTimers();});
 async function advance(ms:number){await act(async()=>{await vi.advanceTimersByTimeAsync(ms);});}
 describe("first prepared exam display",()=>{
+  it.each([false,undefined])("keeps an unconfirmed terminal preparation recoverable (%s)",async completionConfirmed=>{
+    mocks.fetch.mockResolvedValue({ok:true,json:async()=>({...clock,status:"expired",phase:"completed",currentQuestionId:null,completionConfirmed})});
+    render(<PreparedQuizPlayer preparation={{...preparation,kind:"practice"}}/>);await advance(32);
+    expect(mocks.replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("시험을 준비하지 못했습니다. 다시 확인해 주세요.");
+    mocks.fetch.mockResolvedValue({ok:true,json:async()=>({...clock,status:"expired",phase:"completed",currentQuestionId:null,completionConfirmed:true})});
+    fireEvent.click(screen.getByRole("button",{name:"다시 확인"}));await advance(32);
+    expect(mocks.replace).toHaveBeenCalledWith("/student/practice/prepared-1/result");
+  });
   it("mounts the actual inactive frame before two frames, then starts once without another heavy read",async()=>{
     render(<StrictMode><PreparedQuizPlayer preparation={preparation}/></StrictMode>);
     const prompt=document.querySelector("[data-question-id='q1']");
@@ -98,6 +107,9 @@ describe("first prepared exam display",()=>{
     fireEvent.click(screen.getByRole("button",{name:/1.*사과/}));await advance(120);
     expect(screen.getByText("다음 문제 준비 중")).toBeInTheDocument();
     expect(screen.queryByText("시험 준비 중")).toBeNull();
+    if(!failure)mocks.feedback.mockImplementationOnce(async()=>({ok:false,payload:{}}))
+      .mockImplementation(async()=>success({questionDeadlineAt:clock.timerDeadlineAt,questionStartsAt:clock.startedAt,
+        timerRemainingMilliseconds:5500,transitionRemainingMilliseconds:500}));
     await act(async()=>{finish({ok:false,payload:{}});});
     if(failure){
       expect(screen.queryByText("시험 준비 중")).toBeNull();

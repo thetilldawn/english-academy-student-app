@@ -51,7 +51,7 @@ describe("격리된 실제 플레이어 검사 자료", () => {
   it("공식 파서에 맞는 음원과 여섯 유형의 현재 문항을 제공한다", () => {
     for (const c of localQuizCases) {
       const rows = request("quiz_questions?attempt_id=eq." + c.id).body;
-      expect(rows).toHaveLength(3);
+      expect(rows).toHaveLength(c.answerLoss ? 99 : 3);
       const snapshot = rows[0].assignment_question.exam_use_snapshot;
       expect(parseTargetPronunciation(snapshot.pronunciation_snapshot).available).toBe(true);
       expect(parseChoicePronunciations(snapshot.choice_dictionary_snapshots, rows[0].choices).every(p => p.available)).toBe(true);
@@ -59,6 +59,22 @@ describe("격리된 실제 플레이어 검사 자료", () => {
     }
     expect(request("quiz_attempts?id=eq." + uid(201) + "&student_id=eq." + uid(2)).status).toBe(403);
     expect(request("quiz_questions?attempt_id=eq." + uid(201), { method: "DELETE" }).status).toBe(403);
+  });
+  it("응답 지연 검사에서는 답이 저장되어도 다음 문항의 7초 예약이 남는다", () => {
+    const input = { p_student_id: uid(1), p_preparation_id: uid(209) };
+    rpc("begin_prepared_quiz_v1", input);
+    const delayedAnswer = { ...answer, p_attempt_id: uid(209), p_question_id: uid(209000), p_choice_index: 2 };
+    const before = Date.now();
+    const result = rpc("answer_quiz_question_v4", delayedAnswer);
+    expect(result).toMatchObject({ status: 200, delayMs: 2000,
+      body: { correct: true, correctChoiceIndex: 2, nextQuestionId: uid(209001), completed: false } });
+    const recovered = request("quiz_attempts?id=eq." + uid(209) + "&student_id=eq." + uid(1)).body;
+    expect(Date.parse(recovered.current_question_started_at)).toBeGreaterThanOrEqual(before + 7000);
+    const rows = request("quiz_questions?attempt_id=eq." + uid(209)).body;
+    expect(rows[0]).toMatchObject({ prompt: "committee", initial_is_correct: true, initial_choice_index: 2 });
+    expect(rows[0].choices).toEqual(["주머니", "졸업생", "위원회", "어려움"]);
+    expect(rpc("answer_quiz_question_v4", delayedAnswer).body).toEqual(result.body);
+    expect(localQuizSummary()[0]).toMatchObject({ answered: 1, resumed: 0, currentQuestionId: uid(209001) });
   });
   it("프록시는 정확한 가짜 ID의 조회/답/시간 확인만 허용한다", () => {
     const base = "/api/student/attempts/" + uid(201);
@@ -68,6 +84,17 @@ describe("격리된 실제 플레이어 검사 자료", () => {
     for (const suffix of ["/expire", "/timeouts", "/answers/", "?other=1"]) expect(isLocalQuizRequest(base + suffix, "POST")).toBe(false);
     expect(isLocalQuizRequest(base + "/answers", "DELETE")).toBe(false);
     expect(isLocalQuizRequest(base.replace(uid(201), uid(999)), "GET")).toBe(false);
+  });
+  it("복구 경쟁과 종료 실패는 지정된 가짜 회차만 제공한다",()=>{
+    rpc("begin_prepared_quiz_v1",{p_student_id:uid(1),p_preparation_id:uid(210)});
+    expect(rpc("answer_quiz_question_v4",{...answer,p_attempt_id:uid(210),p_question_id:uid(210000),p_choice_index:2})).toMatchObject({status:200,delayMs:4000});
+    rpc("begin_prepared_quiz_v1",{p_student_id:uid(1),p_preparation_id:uid(211)});
+    const expiry={p_student_id:uid(1),p_attempt_id:uid(211)};
+    expect(isLocalQuizRequest('/api/student/attempts/'+uid(211)+'/expire','POST')).toBe(true);
+    for(let n=0;n<3;n++)expect(rpc('expire_quiz_attempt',expiry)).toMatchObject({status:500,body:{code:'57014'}});
+    expect(localQuizSummary().find(item=>item.id===uid(211))).toMatchObject({expirations:3,answered:0});
+    expect(rpc('expire_quiz_attempt',{...expiry,p_attempt_id:uid(210)}).status).toBe(403);
+    expect(rpc('expire_quiz_attempt',{...expiry,p_student_id:uid(2)}).status).toBe(403);
   });
   it("실제 미디어 요소를 유지하고 검사음만 로컬로 연결한다", () => {
     const wave = localQuizWave();

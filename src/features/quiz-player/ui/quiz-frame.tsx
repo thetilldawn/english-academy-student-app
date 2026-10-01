@@ -285,7 +285,7 @@ export function QuizFrame({
       <QuizSynchronizationError
         message={error}
         onRetry={
-          error && !timerSynchronized
+          error
             ? onRetrySynchronization
             : undefined
         }

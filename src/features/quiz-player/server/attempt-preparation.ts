@@ -84,7 +84,8 @@ export async function getQuizPreparation(studentId: string, id: string): Promise
 export async function beginQuizPreparation(studentId: string, id: string, kind: PreparedQuiz["kind"]): Promise<ReadyQuiz> {
   if (kind === "practice") {
     const result = attemptResponseSchema.parse(await rpc("begin_prepared_practice_v1", { p_student_id: studentId, p_preparation_id: id }));
-    return readyQuizSchema.parse({ ...result.attempt, questionIds: result.attempt.questions.map(q => q.id), timerRemainingMilliseconds: result.timerRemainingMilliseconds });
+    return readyQuizSchema.parse({ ...result.attempt, completionConfirmed: result.completionConfirmed,
+      questionIds: result.attempt.questions.map(q => q.id), timerRemainingMilliseconds: result.timerRemainingMilliseconds });
   }
   const actualId = kind === "retry" ? id : z.uuid().parse(await rpc("begin_prepared_quiz_v1", { p_student_id: studentId, p_preparation_id: id }));
   if (kind === "retry") {
@@ -104,7 +105,8 @@ export async function beginQuizPreparation(studentId: string, id: string, kind: 
   const question = questions?.find(q => data.phase === "retry" ? q.initial_is_correct === false && q.retry_choice_index === null : q.initial_choice_index === null);
   const timerDeadlineAt = a.timing_mode === "per_question" && a.question_time_limit_seconds
     ? new Date(Date.parse(data.current_question_started_at)+a.question_time_limit_seconds*1000).toISOString() : data.deadline_at;
-  return readyQuizSchema.parse({ id: actualId, phase: data.phase, status: data.status, startedAt: data.started_at,
+  return readyQuizSchema.parse({ id: actualId, phase: data.phase, status: data.status,
+    completionConfirmed: data.status !== "in_progress", startedAt: data.started_at,
     deadlineAt: data.deadline_at, timerDeadlineAt, currentQuestionId: question?.id ?? null,
     questionIds: questions?.map(q => q.id),
     priorWrongLevels: questions?.map(q => q.prior_wrong_count >= 2 ? 2 : q.prior_wrong_count === 1 ? 1 : 0),

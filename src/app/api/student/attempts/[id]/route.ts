@@ -30,6 +30,7 @@ export const GET = withAuthenticationFailureResponse(async function GET(
 
   const now = currentTimeMilliseconds();
   return Response.json({
+    completionConfirmed: attempt.status !== "in_progress",
     attempt,
     timerRemainingMilliseconds:
       millisecondsUntil(
@@ -38,5 +39,5 @@ export const GET = withAuthenticationFailureResponse(async function GET(
       ) ?? 0,
     transitionRemainingMilliseconds:
       millisecondsUntil(attempt.currentQuestionStartsAt ?? null, now) ?? 0,
-  });
+  }, { headers: { "Cache-Control": "private, no-store" } });
 });

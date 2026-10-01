@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getStudentSession } from "@/lib/auth/student-session";
 import { jsonError, isSameOriginRequest } from "@/lib/http";
 import { expireStudentAttempt } from "@/lib/services/quiz/attempt-command";
+import { quizCommandErrorResponse } from "@/features/quiz-player/server/quiz-command-error";
 
 export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
@@ -25,8 +26,8 @@ export const POST = withAuthenticationFailureResponse(async function POST(
 
   try {
     await expireStudentAttempt(session.studentId, id);
-    return Response.json({ ok: true });
-  } catch {
-    return jsonError("아직 종료할 수 없거나 시험을 찾지 못했습니다.", 409);
+    return Response.json({ ok: true }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    return quizCommandErrorResponse(error);
   }
 });

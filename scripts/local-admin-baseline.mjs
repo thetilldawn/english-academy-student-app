@@ -94,7 +94,7 @@ const dataServer = http.createServer(async (req, res) => {
     const source = (notebookAssignment ? await localNotebookAssignmentFixture(request) : null) ?? (practice ? await localPracticeFixture(request) : null) ?? (notebook ? localNotebookFixture(request) : null) ?? (vocabularyLibrary ? vocabularyLibraryFixture(request) : null) ?? fixtureResponse(request);
     const result = notebook ? notebookDisplaySamples(request, source) : source;
     if (process.argv.includes("--layout-delay") && ["directory", "history", "auth", "student-auth", "student-dashboard"].includes(result.category)) await new Promise(resolve => setTimeout(resolve, 800));
-    if(quizFeedback && result.delayMs > 0 && result.delayMs <= 2000) await new Promise(resolve=>setTimeout(resolve,result.delayMs));
+    if(quizFeedback && result.delayMs > 0 && result.delayMs <= 4000) await new Promise(resolve=>setTimeout(resolve,result.delayMs));
     metrics.data.push({ path: new URL(DATA_ORIGIN + req.url).pathname, method: req.method,
       category: result.category, status: result.status, at: Date.now() });
     if (Number.isSafeInteger(result.count) && result.count >= 0) res.setHeader("Content-Range", "*/" + result.count);

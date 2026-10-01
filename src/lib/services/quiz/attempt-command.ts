@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import { quizExpirationError, quizAnswerError } from "@/features/quiz-player/server/quiz-command-error";
 import {
   answerQuizQuestionWithCompatibleRpc,
   resumeQuizAfterFeedbackWithCompatibleRpc,
@@ -19,7 +20,7 @@ export async function expireStudentAttempt(
   });
 
   if (error) {
-    throw new Error("시험 종료상태를 저장하지 못했습니다.");
+    throw quizExpirationError(error);
   }
   await materializeReadyVocabAssignmentQueue(studentId);
 }
@@ -70,7 +71,7 @@ export async function answerStudentQuestion(input: {
     );
 
   if (error || !data) {
-    throw new Error("답안을 저장하지 못했습니다.");
+    throw quizAnswerError(error ?? {});
   }
 
   if ((data as Record<string, unknown>).completed === true ||
@@ -119,7 +120,7 @@ export async function timeoutStudentQuestion(input: {
       },
     );
   if (error || !data) {
-    throw new Error("시간 초과 상태를 저장하지 못했습니다.");
+    throw quizAnswerError(error ?? {});
   }
   if ((data as Record<string, unknown>).completed === true ||
       (input.phase === "initial" && (data as Record<string, unknown>).needsRetry === true)) {

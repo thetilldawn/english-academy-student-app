@@ -71,6 +71,7 @@ export type QuizFeedbackResumeResponse = {
 };
 
 export type QuizAttemptResponse = {
+  completionConfirmed?: boolean;
   attempt: QuizAttempt & { startedAt:string; deadlineAt:string; timerDeadlineAt:string };
   timerRemainingMilliseconds: number;
   transitionRemainingMilliseconds?: number;
@@ -85,7 +86,16 @@ export type QuizTransportResult<T> =
     }
   | {
       ok: false;
-      payload: { error?: string };
+      payload: QuizCommandFailure;
+      status?: number;
       receivedAt: number;
       roundTripMilliseconds: number;
     };
+
+export type QuizCommandFailure = {
+  error?: string;
+  code?: string;
+  retryable?: boolean;
+  outcome?: "not_applied" | "unknown";
+};
+export type QuizExpirationResponse = { ok: true } | { ok: false; payload: QuizCommandFailure };

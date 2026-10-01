@@ -6,6 +6,7 @@ import { isSameOriginRequest, parseJson } from "@/lib/http";
 import { practicePreviewInputSchema, practiceStartInputSchema } from "../contracts/practice";
 import { getPractice, getPracticeHistory, PracticeError, practiceRpc, previewPractice, startPractice } from "./practice-service";
 import { beginQuizPreparation, QuizPreparationChangedError } from "./attempt-preparation";
+import { QuizCommandError, quizCommandErrorResponse } from "./quiz-command-error";
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 const answer = z.object({ questionId: z.uuid(), phase: z.literal("initial"), choiceIndex: z.number().int().min(0).max(3) }).strict();
@@ -55,6 +56,7 @@ export const handlePracticeRequest = withAuthenticationFailureResponse(async fun
     if (command === "expire") return json(await practiceRpc("expire_student_word_practice_v1", params));
     return json({ error: "연습을 찾을 수 없습니다." }, 404);
   } catch (error) {
+    if (error instanceof QuizCommandError) return quizCommandErrorResponse(error);
     if (error instanceof QuizPreparationChangedError) return json({error:error.message,code:"preparation_changed"},409);
     return error instanceof PracticeError ? json({ error: error.message, code: error.code }, error.status) : json({ error: "연습을 불러오지 못했습니다. 다시 시도해 주세요." }, 503);
   }

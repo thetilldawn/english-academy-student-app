@@ -19,6 +19,8 @@ export type QuizPlayerState = {
   pendingChoice: number | null;
   selectionVersion: number;
   submitting: boolean;
+  savingSlow: boolean;
+  expirationPending: boolean;
   error: string;
   timerSynchronized: boolean;
   transitionPending: boolean;
@@ -37,6 +39,8 @@ export type QuizPlayerAction =
       choiceIndex: number | null;
     }
   | { type: "answer-received"; payload: QuizAnswerResponse }
+  | { type: "submission-slow" }
+  | { type: "expiration-started" }
   | {
       type: "attempt-replaced";
       attempt: QuizAttempt;
@@ -44,7 +48,7 @@ export type QuizPlayerAction =
       preservePendingChoice?: boolean;
     }
   | { type: "next-question-preparing" }
-  | { type: "submission-failed"; message: string };
+  | { type: "submission-failed"; message: string; preserveChoice?: number | null };
 
 export function createQuizPlayerState(
   attempt: QuizAttempt,
@@ -57,6 +61,8 @@ export function createQuizPlayerState(
     pendingChoice: null,
     selectionVersion: 0,
     submitting: false,
+    savingSlow: false,
+    expirationPending: false,
     error: "",
     timerSynchronized: false,
     transitionPending: false,
@@ -85,6 +91,8 @@ export function quizPlayerReducer(
         selectionVersion: state.selectionVersion + 1,
         feedback: null,
         submitting: false,
+        savingSlow: false,
+        expirationPending: false,
         error: "",
         timerSynchronized: false,
         transitionPending: Boolean(action.preserveTransition && state.transitionPending),
@@ -105,14 +113,21 @@ export function quizPlayerReducer(
           timedOut: action.choiceIndex === null,
         },
         submitting: true,
+        savingSlow: false,
+        expirationPending: false,
         error: "",
         transitionPending: false,
         revealQuestion: false,
       };
+    case "submission-slow":
+      return { ...state, savingSlow: true };
+    case "expiration-started":
+      return { ...state, expirationPending: true, submitting: true, error: "", transitionPending: false };
     case "answer-received":
       return state.feedback
         ? {
             ...state,
+            savingSlow: false,
             feedback: {
               ...state.feedback,
               correctChoice:
@@ -133,6 +148,8 @@ export function quizPlayerReducer(
         remainingSeconds: action.remainingSeconds,
         feedback: null,
         submitting: false,
+        savingSlow: false,
+        expirationPending: false,
         error: "",
         timerSynchronized: true,
         transitionPending: false,
@@ -146,6 +163,8 @@ export function quizPlayerReducer(
         selectionVersion: state.selectionVersion + 1,
         feedback: null,
         submitting: true,
+        savingSlow: false,
+        expirationPending: false,
         error: "",
         timerSynchronized: false,
         transitionPending: true,
@@ -155,10 +174,13 @@ export function quizPlayerReducer(
     case "submission-failed":
       return {
         ...state,
-        pendingChoice: null,
+        pendingChoice: action.preserveChoice ?? null,
         selectionVersion: state.selectionVersion + 1,
         feedback: null,
         submitting: false,
+        savingSlow: false,
+        expirationPending: false,
+        timerSynchronized: false,
         error: action.message,
         transitionPending: false,
         revealQuestion: false,

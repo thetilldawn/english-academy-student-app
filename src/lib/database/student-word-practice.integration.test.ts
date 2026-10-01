@@ -195,10 +195,35 @@ describe.sequential("별도 자율연습과 정규 자료 보존",()=>{
     await owner("update private.student_word_practice_runs set current_starts_at=clock_timestamp()-interval '6 seconds' where id=$1",[run.attempt.id]);
     const result=await answer(run,0,null);expect(result.timedOut).toBe(true);expect(result.completed).toBe(false);
     await owner("update private.student_word_practice_runs set deadline_at=clock_timestamp()-interval '1 second' where id=$1",[run.attempt.id]);
-    expect((await rpc<QuizAttemptResponse>("get_student_word_practice_v1",[student,run.attempt.id])).attempt.status).toBe("expired");
+    const pending=await rpc<QuizAttemptResponse>("get_student_word_practice_v1",[student,run.attempt.id]);
+    expect(pending.attempt.status).toBe("in_progress");expect(pending.completionConfirmed).toBe(false);
     const expired=await rpc<QuizAttemptResponse>("expire_student_word_practice_v1",[student,run.attempt.id]);expect(expired.attempt.status).toBe("expired");
     expect((await rpc<QuizAttemptResponse>("expire_student_word_practice_v1",[student,run.attempt.id])).attempt.status).toBe("expired");
     await fails(()=>resume(run,1),"practice_question_not_ready");
+  });
+  it.each(["total","per_question"] as const)("%s 마감 조회는 상태·정답을 확정하지 않고 기존 종료 명령만 저장한다",async mode=>{
+    const before=await snapshot(),run=await start(settings(mode));
+    await answer(run,0);
+    await owner("update private.student_word_practice_runs set deadline_at=clock_timestamp()-interval '1 second' where id=$1",[run.attempt.id]);
+    const privateRows=async()=>({
+      run:(await owner("select to_jsonb(r) value from private.student_word_practice_runs r where id=$1",[run.attempt.id])).rows,
+      questions:(await owner("select to_jsonb(q) value from private.student_word_practice_questions q where run_id=$1 order by ordinal",[run.attempt.id])).rows,
+    });
+    const pendingRows=await privateRows();
+    const pending=await rpc<QuizAttemptResponse>("get_student_word_practice_v1",[student,run.attempt.id]);
+    expect(pending).toMatchObject({completionConfirmed:false,timerRemainingMilliseconds:0,attempt:{status:"in_progress",phase:"initial",currentQuestionId:run.attempt.questions[1].id}});
+    expect(pending.attempt.questions.slice(1).every(q=>q.revealedCorrectChoiceIndex===null)).toBe(true);
+    expect(await privateRows()).toEqual(pendingRows);
+    if(mode==="total")await rpc("expire_student_word_practice_v1",[student,run.attempt.id]);
+    else expect(await answer(run,1,null)).toMatchObject({expired:true});
+    const finished=await rpc<QuizAttemptResponse>("get_student_word_practice_v1",[student,run.attempt.id]);
+    expect(finished).toMatchObject({completionConfirmed:true,attempt:{status:"expired",phase:"completed",currentQuestionId:null}});
+    expect(finished.attempt.questions[0]).toEqual(pending.attempt.questions[0]);
+    const savedRows=await privateRows();
+    await rpc("expire_student_word_practice_v1",[student,run.attempt.id]);
+    expect(await privateRows()).toEqual(savedRows);
+    expect(savedRows.questions).toEqual(pendingRows.questions);
+    expect(await snapshot()).toEqual(before);
   });
   it("타인/차단 학생·직접표 접근과 비서비스 역할을 막는다",async()=>{
     const run=await start();expect(await rpc("get_student_word_practice_v1",[other,run.attempt.id])).toBeNull();

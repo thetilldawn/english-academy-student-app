@@ -87,9 +87,10 @@ export async function resolveQuizFeedbackTransition(input: {
   payload: QuizAnswerResponse;
   receivedAt: number;
   questionTimeLimitSeconds?: number | null;
+  feedbackVisibleUntil?: number;
 }): Promise<ResolvedQuizFeedbackTransition> {
   // Start with the acknowledged result, not the click or an audio event.
-  const readyAt = performance.now() + ANSWER_RESULT_VISIBLE_MS;
+  const readyAt = input.feedbackVisibleUntil ?? performance.now() + ANSWER_RESULT_VISIBLE_MS;
   if (!input.isActive()) {
     return { synchronization: null, ready: null, quietReservation: false };
   }
@@ -133,7 +134,8 @@ export async function resolveQuizFeedbackTransition(input: {
     if (!result.recoverFromServer && remaining > 0) await wait(remaining);
     return result;
   }) ?? null;
-  await wait(Math.max(0, readyAt - performance.now()));
+  const visibleRemaining = Math.max(0, readyAt - performance.now());
+  if (visibleRemaining > 0) await wait(visibleRemaining);
   const value = observed.value;
   // Equal-deadline timers may fire in either order. Read the confirmed deadline,
   // not whether the promise's timeout callback happened to run first.

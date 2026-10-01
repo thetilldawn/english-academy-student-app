@@ -9,6 +9,7 @@ import {
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { answerStudentQuestion } from "@/lib/services/quiz/attempt-command";
 import { answerSchema } from "@/lib/validation";
+import { quizCommandErrorResponse } from "@/features/quiz-player/server/quiz-command-error";
 
 export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
@@ -47,8 +48,8 @@ export const POST = withAuthenticationFailureResponse(async function POST(
             currentTimeMilliseconds(),
           ) ?? 0
         : null,
-    });
-  } catch {
-    return jsonError("답안을 저장하지 못했습니다.", 409);
+    }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    return quizCommandErrorResponse(error, "answer");
   }
 });

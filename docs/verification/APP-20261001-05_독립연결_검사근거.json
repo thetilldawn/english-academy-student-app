@@ -1,0 +1,907 @@
+{
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "environment": "preview",
+  "runPrefix": "b1101001-5a11-4b11-8c11-",
+  "connectionMethod": "MCP transaction A + hidden Node HTTP B; no native PostgreSQL binaries",
+  "race1": [
+    {
+      "observation": [
+        {
+          "pidA": 1096818,
+          "pidB": 1096819,
+          "waitEvent": "transactionid",
+          "observedAt": "2026-10-01T21:56:54.586812+09:00",
+          "blockingPids": [
+            1096818
+          ],
+          "isExpectedRpc": true,
+          "waitEventType": "Lock"
+        }
+      ],
+      "a_finished_at": "2026-10-01 12:56:54.588511+00"
+    }
+  ],
+  "race2": [
+    {
+      "observation": [
+        {
+          "pidA": 1096824,
+          "pidB": 1096826,
+          "waitEvent": "transactionid",
+          "observedAt": "2026-10-01T21:57:42.420847+09:00",
+          "blockingPids": [
+            1096824
+          ],
+          "isExpectedRpc": true,
+          "waitEventType": "Lock"
+        }
+      ],
+      "a_finished_at": "2026-10-01 12:57:42.421963+00"
+    }
+  ],
+  "race3": [
+    {
+      "observation": [
+        {
+          "pidA": 1096845,
+          "pidB": 1096847,
+          "waitEvent": "transactionid",
+          "observedAt": "2026-10-01T21:58:16.588796+09:00",
+          "blockingPids": [
+            1096845
+          ],
+          "isExpectedRpc": true,
+          "waitEventType": "Lock"
+        }
+      ],
+      "a_finished_at": "2026-10-01 12:58:16.589153+00"
+    }
+  ],
+  "race4": [
+    {
+      "observation": [
+        {
+          "pidA": 1096924,
+          "pidB": 1097151,
+          "waitEvent": "transactionid",
+          "observedAt": "2026-10-01T22:04:00.857781+09:00",
+          "blockingPids": [
+            1096924
+          ],
+          "isExpectedRpc": true,
+          "waitEventType": "Lock"
+        }
+      ],
+      "materialized": [
+        {
+          "status": "assigned",
+          "item_id": "b1101001-5a11-4b11-8c11-000000000404",
+          "series_id": "b1101001-5a11-4b11-8c11-000000000402",
+          "assignment_id": "c77ea849-91ca-423e-b23e-a16ca12506bf"
+        }
+      ],
+      "a_finished_at": "2026-10-01 13:04:00.88357+00"
+    }
+  ],
+  "before": [
+    {
+      "table_name": "public.students",
+      "row_count": 81,
+      "row_hash": "ed7d56ccb0ea56af12387345cfb4d77a"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 185,
+      "row_hash": "6fe68f472a6930cc109fa212415dbcf4"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 184,
+      "row_hash": "6bec1efc79be325322a14579abe86a2d"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1499,
+      "row_hash": "3199ad437e49822572185c0599f86491"
+    },
+    {
+      "table_name": "public.assignment_questions",
+      "row_count": 5411,
+      "row_hash": "ea36f9e5103c9f047a9decd4b2203ea3"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 97,
+      "row_hash": "ae70ab4da052cb2f9b850ac4eee69237"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1450,
+      "row_hash": "0f992aacc5380f2777561d1179bff90b"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 788,
+      "row_hash": "5f5a5faeeae3ab9726adeaae57c044f7"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 662,
+      "row_hash": "9dcb2c1c010648c9fb6692d800943cad"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1025,
+      "row_hash": "51e270f0f09edb21bee9e14dc007c30b"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 22,
+      "row_hash": "d237370157a5a6df7293518fb2b90b50"
+    },
+    {
+      "table_name": "public.student_sessions",
+      "row_count": 72,
+      "row_hash": "523ad8818c44b81a1661a5b8acb8b93e"
+    },
+    {
+      "table_name": "private.vocab_assignment_series",
+      "row_count": 41,
+      "row_hash": "9f43d75380f36d39a68a8be7fe3f1f5c"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_items",
+      "row_count": 112,
+      "row_hash": "063cfc8852dc8c83bac237e54b18260d"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_events",
+      "row_count": 143,
+      "row_hash": "798c4200a097cd1a83d228c066d68d60"
+    },
+    {
+      "table_name": "public.admin_profiles",
+      "row_count": 2,
+      "row_hash": "bc90112c73602cfd0eef2acb1fe7f7d4"
+    },
+    {
+      "table_name": "public.vocab_datasets",
+      "row_count": 44,
+      "row_hash": "60fb573c957c82918b3d9e782946f98a"
+    },
+    {
+      "table_name": "public.vocab_units",
+      "row_count": 1249,
+      "row_hash": "28565f8e57608d70cd978130467d8a2c"
+    },
+    {
+      "table_name": "public.vocab_entries",
+      "row_count": 39373,
+      "row_hash": "94c1348521fcad8e0dedef0f9c815792"
+    },
+    {
+      "table_name": "word_index.app_exam_use_release",
+      "row_count": 29,
+      "row_hash": "27cde932f8d9e88d53bd16dae8380fde"
+    },
+    {
+      "table_name": "word_index.app_exam_use_occurrence",
+      "row_count": 19304,
+      "row_hash": "1d97aed408b4ccb96d34cd95c3fa4a94"
+    },
+    {
+      "table_name": "public.assignment_question_exam_use_snapshot",
+      "row_count": 4751,
+      "row_hash": "c0c6acc60da0dcbdaca06f4a524e2eaf"
+    },
+    {
+      "table_name": "word_index.assignment_exam_use_release_snapshot",
+      "row_count": 121,
+      "row_hash": "aa1ff1698d66008f85ec3a9183176669"
+    },
+    {
+      "table_name": "private.vocab_assignment_queue_requests",
+      "row_count": 31,
+      "row_hash": "463c2dbe2f9ccc1c03569a1fc5f9d605"
+    }
+  ],
+  "after": [
+    {
+      "table_name": "public.students",
+      "row_count": 81,
+      "row_hash": "ed7d56ccb0ea56af12387345cfb4d77a"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 185,
+      "row_hash": "6fe68f472a6930cc109fa212415dbcf4"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 184,
+      "row_hash": "6bec1efc79be325322a14579abe86a2d"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1499,
+      "row_hash": "3199ad437e49822572185c0599f86491"
+    },
+    {
+      "table_name": "public.assignment_questions",
+      "row_count": 5411,
+      "row_hash": "ea36f9e5103c9f047a9decd4b2203ea3"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 97,
+      "row_hash": "ae70ab4da052cb2f9b850ac4eee69237"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1450,
+      "row_hash": "0f992aacc5380f2777561d1179bff90b"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 788,
+      "row_hash": "5f5a5faeeae3ab9726adeaae57c044f7"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 662,
+      "row_hash": "9dcb2c1c010648c9fb6692d800943cad"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1025,
+      "row_hash": "51e270f0f09edb21bee9e14dc007c30b"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 22,
+      "row_hash": "d237370157a5a6df7293518fb2b90b50"
+    },
+    {
+      "table_name": "public.student_sessions",
+      "row_count": 72,
+      "row_hash": "523ad8818c44b81a1661a5b8acb8b93e"
+    },
+    {
+      "table_name": "private.vocab_assignment_series",
+      "row_count": 41,
+      "row_hash": "9f43d75380f36d39a68a8be7fe3f1f5c"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_items",
+      "row_count": 112,
+      "row_hash": "063cfc8852dc8c83bac237e54b18260d"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_events",
+      "row_count": 143,
+      "row_hash": "798c4200a097cd1a83d228c066d68d60"
+    },
+    {
+      "table_name": "public.admin_profiles",
+      "row_count": 2,
+      "row_hash": "bc90112c73602cfd0eef2acb1fe7f7d4"
+    },
+    {
+      "table_name": "public.vocab_datasets",
+      "row_count": 44,
+      "row_hash": "60fb573c957c82918b3d9e782946f98a"
+    },
+    {
+      "table_name": "public.vocab_units",
+      "row_count": 1249,
+      "row_hash": "28565f8e57608d70cd978130467d8a2c"
+    },
+    {
+      "table_name": "public.vocab_entries",
+      "row_count": 39373,
+      "row_hash": "94c1348521fcad8e0dedef0f9c815792"
+    },
+    {
+      "table_name": "word_index.app_exam_use_release",
+      "row_count": 29,
+      "row_hash": "27cde932f8d9e88d53bd16dae8380fde"
+    },
+    {
+      "table_name": "word_index.app_exam_use_occurrence",
+      "row_count": 19304,
+      "row_hash": "1d97aed408b4ccb96d34cd95c3fa4a94"
+    },
+    {
+      "table_name": "public.assignment_question_exam_use_snapshot",
+      "row_count": 4751,
+      "row_hash": "c0c6acc60da0dcbdaca06f4a524e2eaf"
+    },
+    {
+      "table_name": "word_index.assignment_exam_use_release_snapshot",
+      "row_count": 121,
+      "row_hash": "aa1ff1698d66008f85ec3a9183176669"
+    },
+    {
+      "table_name": "private.vocab_assignment_queue_requests",
+      "row_count": 31,
+      "row_hash": "463c2dbe2f9ccc1c03569a1fc5f9d605"
+    }
+  ],
+  "resultBeforeReplay": [
+    {
+      "evidence": {
+        "points": [
+          {
+            "delta": 8,
+            "attempt_id": "b1101001-5a11-4b11-8c11-000000000201",
+            "event_count": 4
+          },
+          {
+            "delta": 8,
+            "attempt_id": "b1101001-5a11-4b11-8c11-000000000204",
+            "event_count": 4
+          }
+        ],
+        "attempts": [
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000201",
+            "passed": true,
+            "status": "completed",
+            "finalScore": 100,
+            "initialScore": 100,
+            "initialCorrect": 4,
+            "unresolvedWrong": 0
+          },
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000202",
+            "passed": false,
+            "status": "expired",
+            "finalScore": 75,
+            "initialScore": 75,
+            "initialCorrect": 3,
+            "unresolvedWrong": 1
+          },
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000203",
+            "passed": false,
+            "status": "expired",
+            "finalScore": 75,
+            "initialScore": 75,
+            "initialCorrect": 3,
+            "unresolvedWrong": 1
+          },
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000204",
+            "passed": true,
+            "status": "completed",
+            "finalScore": 100,
+            "initialScore": 100,
+            "initialCorrect": 4,
+            "unresolvedWrong": 0
+          }
+        ],
+        "eventHash": "455f9923e5b3719e4763ece93af1963e",
+        "queueHash": "facd55186d87a44533c15ff5f4f7dcd0",
+        "attemptHash": "ed25bad50a4c0cab4697cc9c09fdd98b",
+        "queueEvents": {
+          "session.ready": 1,
+          "session.assigned": 1,
+          "session.completed": 1
+        },
+        "queueStates": [
+          "completed",
+          "assigned"
+        ],
+        "wrongEvents": 2,
+        "newQuestionHash": "0c1b34c3a931cb2ca17ea2d4d3d55fa4",
+        "newSnapshotHash": "01e58c64195b11c429f561d4bd89893e",
+        "nextAssignedOnce": true,
+        "nextAssignmentId": "c77ea849-91ca-423e-b23e-a16ca12506bf",
+        "nextAttemptCount": 0,
+        "nextStudentLinks": 1,
+        "newAssignmentHash": "8224f5400da480f605268e8196cdf81c",
+        "nextExamSnapshots": 4,
+        "nextQuestionCount": 4,
+        "firstCompletedOnce": true,
+        "nextAssignmentOwnerMatches": true
+      }
+    }
+  ],
+  "resultAfterReplay": [
+    {
+      "evidence": {
+        "points": [
+          {
+            "delta": 8,
+            "attempt_id": "b1101001-5a11-4b11-8c11-000000000201",
+            "event_count": 4
+          },
+          {
+            "delta": 8,
+            "attempt_id": "b1101001-5a11-4b11-8c11-000000000204",
+            "event_count": 4
+          }
+        ],
+        "attempts": [
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000201",
+            "passed": true,
+            "status": "completed",
+            "finalScore": 100,
+            "initialScore": 100,
+            "initialCorrect": 4,
+            "unresolvedWrong": 0
+          },
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000202",
+            "passed": false,
+            "status": "expired",
+            "finalScore": 75,
+            "initialScore": 75,
+            "initialCorrect": 3,
+            "unresolvedWrong": 1
+          },
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000203",
+            "passed": false,
+            "status": "expired",
+            "finalScore": 75,
+            "initialScore": 75,
+            "initialCorrect": 3,
+            "unresolvedWrong": 1
+          },
+          {
+            "id": "b1101001-5a11-4b11-8c11-000000000204",
+            "passed": true,
+            "status": "completed",
+            "finalScore": 100,
+            "initialScore": 100,
+            "initialCorrect": 4,
+            "unresolvedWrong": 0
+          }
+        ],
+        "eventHash": "455f9923e5b3719e4763ece93af1963e",
+        "queueHash": "facd55186d87a44533c15ff5f4f7dcd0",
+        "attemptHash": "ed25bad50a4c0cab4697cc9c09fdd98b",
+        "queueEvents": {
+          "session.ready": 1,
+          "session.assigned": 1,
+          "session.completed": 1
+        },
+        "queueStates": [
+          "completed",
+          "assigned"
+        ],
+        "wrongEvents": 2,
+        "newQuestionHash": "0c1b34c3a931cb2ca17ea2d4d3d55fa4",
+        "newSnapshotHash": "01e58c64195b11c429f561d4bd89893e",
+        "nextAssignedOnce": true,
+        "nextAssignmentId": "c77ea849-91ca-423e-b23e-a16ca12506bf",
+        "nextAttemptCount": 0,
+        "nextStudentLinks": 1,
+        "newAssignmentHash": "8224f5400da480f605268e8196cdf81c",
+        "nextExamSnapshots": 4,
+        "nextQuestionCount": 4,
+        "firstCompletedOnce": true,
+        "nextAssignmentOwnerMatches": true
+      }
+    }
+  ],
+  "cleanup": [
+    {
+      "cleanup": {
+        "dataset": {
+          "active": false,
+          "status": "retired"
+        },
+        "release": {
+          "status": "retired",
+          "retiredAt": "2026-10-01T22:07:20.143247+09:00"
+        },
+        "student": {
+          "status": "blocked",
+          "deleted": true
+        },
+        "sessions": 0,
+        "queueSeries": "cancelled",
+        "queueStates": [
+          "completed",
+          "cancelled"
+        ],
+        "adminInactive": true,
+        "assignmentsClosed": 5,
+        "inProgressAttempts": 0,
+        "remainingTransactions": 0
+      }
+    }
+  ],
+  "processes": "no running QA/native PostgreSQL processes",
+  "failedFirstTransportAttempt": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"name\":\"HttpException\",\"message\":\"Failed to run sql query: ERROR:  P0001: m11_actual_lock_not_observed\\nCONTEXT:  PL/pgSQL function inline_code_block line 15 at RAISE\\n\"}}"
+          }
+        ],
+        "structuredContent": {
+          "error_code": "INVALID_ARGUMENT"
+        },
+        "isError": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "51f0b1",
+        "wall_time_seconds": 1.2953394,
+        "exit_code": 1,
+        "original_token_count": 60,
+        "output": "{\"project\":\"wojxpruvbjzbhrpmsbuy\",\"mode\":\"expire\",\"race\":1,\"startedAt\":\"2026-10-01T12:54:34.995Z\",\"completedAt\":\"2026-10-01T12:54:35.819Z\",\"elapsedMs\":824,\"status\":400,\"error\":{\"code\":\"22023\",\"message\":\"attempt_not_expired\"},\"data\":null}\n"
+      }
+    }
+  ],
+  "sql": {
+    "FixtureSql": "-- Preview wojxpruvbjzbhrpmsbuy only. Never apply as a migration or on Production.\n-- Synthetic fixture: no email, password, login code, session or real student data.\nbegin;\nset local statement_timeout = '8s';\ndo $fixture$\ndeclare\n  p constant text := 'b1101001-5a11-4b11-8c11-';\n  admin_id uuid := (p || '000000000001')::uuid;\n  student_id_value uuid := (p || '000000000002')::uuid;\n  dataset_id_value uuid := (p || '000000000003')::uuid;\n  unit_id_value uuid := (p || '000000000004')::uuid;\n  assignment_id_value uuid;\n  attempt_id_value uuid;\n  k integer;\nbegin\n  if exists (select 1 from auth.users where id::text like p || '%')\n    or exists (select 1 from public.students where id::text like p || '%')\n    or exists (select 1 from public.vocab_datasets where id::text like p || '%')\n    or exists (select 1 from public.assignments where id::text like p || '%')\n    or exists (select 1 from public.quiz_attempts where id::text like p || '%')\n    or exists (select 1 from public.quiz_questions where id::text like p || '%')\n    or exists (select 1 from public.vocab_datasets where dataset_key='m11-http-20261001-b1101001')\n  then raise exception 'fixture_prefix_already_used'; end if;\n  insert into auth.users(id) values (admin_id);\n  insert into public.admin_profiles(user_id,display_name,is_active)\n    values (admin_id,'[M11 검증] 가짜 관리자',true);\n  insert into public.students(id,display_name,school_name,grade_label,note,status,created_by)\n    values (student_id_value,'[M11 검증] 가짜 학생','검증용 가상고','고2',\n      'M11-HTTP-20261001: 실제 학생 아님','active',admin_id);\n  insert into public.vocab_datasets(id,dataset_key,title,source_label,source_sha256,\n    row_count,status,is_active,imported_by,metadata)\n    values (dataset_id_value,'m11-http-20261001-b1101001','[M11 검증] 가짜 4단어',\n      '독립 생성한 검증 자료',repeat('A',64),4,'ready',true,admin_id,\n      '{\"testRun\":\"M11-HTTP-20261001\",\"fixtureOnly\":true}'::jsonb);\n  insert into public.vocab_units(id,dataset_id,unit_label,normalized_label,unit_kind,\n    unit_number,sort_index,entry_count)\n    values(unit_id_value,dataset_id_value,'DAY 1','day-1','day',1,1,4);\n  insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,\n    meanings,primary_meaning,source_ref,row_sha256,unit_id,position_in_unit,entry_type)\n    select dataset_id_value,n,'m11fixture'||n,'m11fixture'||n,\n      array['가짜 뜻 '||n],'가짜 뜻 '||n,'M11-HTTP-20261001',repeat(n::text,64),\n      unit_id_value,n,'word' from generate_series(1,4) n;\n  for k in 1..4 loop\n    assignment_id_value := (p||lpad((100+k)::text,12,'0'))::uuid;\n    attempt_id_value := (p||lpad((200+k)::text,12,'0'))::uuid;\n    insert into public.assignments(id,title,dataset_id,range_start,range_end,question_count,\n      english_to_korean_ratio,time_limit_seconds,passing_score,passing_basis,\n      retake_allowed,retry_enabled,status,available_from,created_by,range_basis,\n      question_order_mode,timing_mode,assignment_purpose,source_kind,points_policy_version)\n      values(assignment_id_value,'[M11 검증] 경합 '||k,dataset_id_value,1,4,4,100,60,80,\n        'initial',false,false,'active',clock_timestamp()-interval '1 minute',\n        admin_id,'source_rows','fixed','total','regular','book','vocab-points-v1');\n    insert into public.assignment_units(assignment_id,dataset_id,unit_id,position,is_primary)\n      values(assignment_id_value,dataset_id_value,unit_id_value,1,true);\n    insert into public.assignment_students(assignment_id,student_id,assigned_by)\n      values(assignment_id_value,student_id_value,admin_id);\n    insert into public.quiz_attempts(id,student_id,assignment_id,attempt_number,status,phase,\n      started_at,deadline_at,current_question_started_at,question_count_snapshot,\n      time_limit_seconds_snapshot,passing_score_snapshot,passing_basis_snapshot,point_rule_version_snapshot)\n      values(attempt_id_value,student_id_value,assignment_id_value,1,'in_progress','initial',\n        clock_timestamp()-interval '50 seconds',clock_timestamp()+interval '1 day',\n        clock_timestamp()-interval '5 seconds',4,60,80,'initial','vocab-points-v1');\n    insert into public.quiz_questions(id,attempt_id,vocab_entry_id,order_index,direction,\n      prompt,choices,correct_choice_index,initial_choice_index,initial_is_correct,initial_answered_at)\n      select (p||lpad((300+k*10+e.source_row)::text,12,'0'))::uuid,\n        attempt_id_value,e.id,e.source_row,'english_to_korean',e.headword,\n        '[\"가짜 뜻 1\",\"가짜 뜻 2\",\"가짜 뜻 3\",\"가짜 뜻 4\"]'::jsonb,\n        (e.source_row-1)::smallint,\n        case when e.source_row<4 then (e.source_row-1)::smallint end,\n        case when e.source_row<4 then true end,\n        case when e.source_row<4 then clock_timestamp()-interval '10 seconds' end\n        from public.vocab_entries e where e.dataset_id=dataset_id_value;\n  end loop;\nend $fixture$;\ncommit;",
+    "QueueFixtureSql": "-- Preview only. Run after the b1101001 synthetic four-attempt fixture.\nbegin;\nset local statement_timeout='8s';\ndo $queue_fixture$\ndeclare\n  p constant text := 'b1101001-5a11-4b11-8c11-';\n  admin_id uuid := (p||'000000000001')::uuid;\n  student_id_value uuid := (p||'000000000002')::uuid;\n  dataset_id_value uuid := (p||'000000000003')::uuid;\n  unit_id_value uuid := (p||'000000000004')::uuid;\n  assignment_id_value uuid := (p||'000000000104')::uuid;\n  request_id_value uuid := (p||'000000000401')::uuid;\n  series_id_value uuid := (p||'000000000402')::uuid;\n  first_item_id uuid := (p||'000000000403')::uuid;\n  next_item_id uuid := (p||'000000000404')::uuid;\n  release_id_value uuid := (p||'000000000405')::uuid;\n  at_time timestamptz := clock_timestamp();\n  dataset_key_value text;\n  package_hash text := encode(extensions.digest(convert_to('M11-QA-b1101001-20261001-queue-release','UTF8'),'sha256'),'hex');\n  plan jsonb;\n  common_payload jsonb;\n  first_payload jsonb;\n  next_payload jsonb;\n  receipt jsonb;\nbegin\n  if exists(select 1 from private.vocab_assignment_queue_requests where idempotency_key=request_id_value)\n     or exists(select 1 from private.vocab_assignment_series where id=series_id_value)\n     or exists(select 1 from private.vocab_assignment_series_items where id in(first_item_id,next_item_id))\n     or exists(select 1 from word_index.app_exam_use_release where release_id=release_id_value or package_version=package_hash)\n  then raise exception 'm11_queue_fixture_already_exists'; end if;\n  select dataset_key into dataset_key_value from public.vocab_datasets\n    where id=dataset_id_value and imported_by=admin_id and status='ready' and is_active\n      and metadata->>'fixtureOnly'='true';\n  if not found or (select count(*) from public.vocab_entries where dataset_id=dataset_id_value)<>4\n    or not exists(select 1 from public.quiz_attempts where id=(p||'000000000204')::uuid\n      and assignment_id=assignment_id_value and student_id=student_id_value and status='in_progress')\n  then raise exception 'm11_queue_fixture_input_mismatch'; end if;\n\n  update public.vocab_datasets set metadata=metadata||jsonb_build_object(\n    'projectionProfile','exam_scope_candidate_v1','packageVersion',package_hash,\n    'syntheticFixture',true,'testRun','M11-QA-b1101001') where id=dataset_id_value;\n  insert into word_index.app_exam_use_release(\n    release_id,release_key,dataset_id,dataset_key,schema_version,package_version,\n    source_sha256,candidate_dictionary_version,manifest_content_hash,exam_review_ledger_sha256,\n    wordbook_id,title,target_environment,common_dictionary_release_allowed,exam_use_import_allowed,\n    expected_occurrence_count,expected_dictionary_count,expected_included_count,status,package_json,activated_at_utc)\n  select release_id_value,'m11-qa-b1101001-queue-release',id,dataset_key,'1.0',package_hash,\n    lower(source_sha256),package_hash,package_hash,package_hash,'m11-qa-b1101001',\n    '[M11 검증] 가짜 후속 배정 자료','preview',false,true,4,4,4,'active',\n    '{\"syntheticFixture\":true,\"testRun\":\"M11-QA-b1101001\"}'::jsonb,at_time\n  from public.vocab_datasets where id=dataset_id_value;\n  insert into word_index.app_exam_use_occurrence(\n    release_id,dataset_id,source_row,vocab_entry_id,unit_id,position_in_unit,dictionary_id,\n    display_headword,display_gloss_ko,display_pronunciation_review_status,audio_status,listening_enabled,\n    occurrence_id,occurrence_content_hash,package_entry_content_hash,exam_review_id,exam_input_hash,\n    exam_use_status,context_evidence_status,context_evidence,source_projection_row_sha256,\n    source_entry_id,source_entry_sha256,include_in_exam,audio_json,package_entry_json)\n  select release_id_value,e.dataset_id,e.source_row,e.id,e.unit_id,e.position_in_unit,\n    'word:m11-qa-b1101001-'||e.source_row,e.headword,e.primary_meaning,'candidate','disabled',false,\n    'occ:m11-qa-b1101001-'||e.source_row,lower(e.row_sha256),lower(e.row_sha256),\n    'exam-review:m11-qa-b1101001-'||e.source_row,lower(e.row_sha256),'reviewed_for_preview',\n    'source_entry_context','{\"syntheticFixture\":true}'::jsonb,lower(e.row_sha256),\n    'm11-qa-b1101001-entry-'||e.source_row,lower(e.row_sha256),true,'{}'::jsonb,\n    '{\"syntheticFixture\":true}'::jsonb\n  from public.vocab_entries e where e.dataset_id=dataset_id_value;\n\n  select jsonb_agg(jsonb_build_object('vocab_entry_id',e.id,'base_order_index',e.source_row,\n    'direction','english_to_korean','choice_vocab_entry_ids',\n      (select jsonb_agg(c.id order by c.source_row) from public.vocab_entries c where c.dataset_id=dataset_id_value))\n      order by e.source_row)\n    into plan from public.vocab_entries e where e.dataset_id=dataset_id_value;\n  common_payload:=jsonb_build_object('kind','regular','student_id',student_id_value,\n    'dataset_id',dataset_id_value,'unit_ids',jsonb_build_array(unit_id_value),'unit_labels',jsonb_build_array('DAY 1'),\n    'question_count',4,'english_to_korean_ratio',100,'time_limit_seconds',60,'passing_score',80,\n    'question_order_mode','fixed','timing_mode','total','question_time_limit_seconds',null,\n    'retry_enabled',false,'retry_passing_score',null,'session_count',2,'questions',plan);\n  first_payload:=common_payload||jsonb_build_object('title','[M11 검증] 경합 4','session_number',1,\n    'available_from',at_time-interval '1 minute','available_until',at_time+interval '1 hour');\n  next_payload:=common_payload||jsonb_build_object('title','[M11 검증] 후속 배정 2','session_number',2,\n    'available_from',at_time+interval '1 day','available_until',at_time+interval '25 hours');\n  receipt:=jsonb_build_array(\n    jsonb_build_object('student_id',student_id_value,'queue_series_id',series_id_value,'assignment_id',assignment_id_value,'session_number',1,'status','assigned'),\n    jsonb_build_object('student_id',student_id_value,'queue_series_id',series_id_value,'assignment_id',null,'session_number',2,'status','queued'));\n  insert into private.vocab_assignment_queue_requests(idempotency_key,request_sha256,payload_sha256,actor_admin_id,result,completed_at)\n    values(request_id_value,package_hash,package_hash,admin_id,receipt,at_time);\n  insert into private.vocab_assignment_series(id,request_id,student_id,dataset_id,exam_use_release_id,\n    actor_admin_id,dataset_label,range_label,recurrence_slots,status)\n    values(series_id_value,request_id_value,student_id_value,dataset_id_value,release_id_value,admin_id,\n      '[M11 검증] 가짜 4단어','DAY 1',\n      jsonb_build_array(jsonb_build_object('isodow',1,'local_time','09:00:00','duration_seconds',3600)),'active');\n  update public.assignments set available_from=at_time-interval '1 minute',available_until=at_time+interval '1 hour'\n    where id=assignment_id_value and created_by=admin_id and dataset_id=dataset_id_value;\n  insert into private.vocab_assignment_series_items(id,series_id,sequence_number,status,question_count,unit_ids,unit_labels,\n    planned_available_from,planned_available_until,effective_available_from,effective_available_until,payload,assignment_id,materialized_at)\n    values(first_item_id,series_id_value,1,'assigned',4,array[unit_id_value],array['DAY 1'],\n      at_time-interval '1 minute',at_time+interval '1 hour',at_time-interval '1 minute',at_time+interval '1 hour',\n      first_payload,assignment_id_value,at_time);\n  insert into private.vocab_assignment_series_items(id,series_id,sequence_number,status,question_count,unit_ids,unit_labels,\n    planned_available_from,planned_available_until,effective_available_from,effective_available_until,payload)\n    values(next_item_id,series_id_value,2,'queued',4,array[unit_id_value],array['DAY 1'],\n      at_time+interval '1 day',at_time+interval '25 hours',at_time+interval '1 day',at_time+interval '25 hours',next_payload);\nend $queue_fixture$;\ncommit;",
+    "Race1Sql": "begin isolation level read committed;\nset local application_name='m11_http_race1_A';set local transaction_timeout='20s';set local statement_timeout='18s';set local lock_timeout='6s';set local idle_in_transaction_session_timeout='5s';\nselect set_config('request.jwt.claim.role','service_role',true);\nselect set_config('request.jwt.claims','{\"role\":\"service_role\"}',true);\nupdate public.quiz_attempts set deadline_at=clock_timestamp()+interval '1 second' where id='b1101001-5a11-4b11-8c11-000000000201' and student_id='b1101001-5a11-4b11-8c11-000000000002' and status='in_progress';\nselect public.answer_quiz_question_v4('b1101001-5a11-4b11-8c11-000000000002','b1101001-5a11-4b11-8c11-000000000201','b1101001-5a11-4b11-8c11-000000000314','initial',3::smallint,false);\ndo $observe$\ndeclare seen jsonb; until_time timestamptz := clock_timestamp()+interval '14 seconds';\nbegin\n loop\n  perform pg_stat_clear_snapshot();\n  select jsonb_agg(jsonb_build_object('pidA',pg_backend_pid(),'pidB',a.pid,\n    'waitEventType',a.wait_event_type,'waitEvent',a.wait_event,\n    'blockingPids',pg_blocking_pids(a.pid),'observedAt',clock_timestamp(),\n    'isExpectedRpc',a.query like '%expire_quiz_attempt%')) into seen\n  from pg_stat_activity a where a.pid<>pg_backend_pid()\n    and pg_backend_pid()=any(pg_blocking_pids(a.pid)) and a.query like '%expire_quiz_attempt%';\n  if seen is not null then\n   perform set_config('m11.observed',seen::text,true); exit;\n  end if;\n  if clock_timestamp()>=until_time then raise exception 'm11_actual_lock_not_observed'; end if;\n  perform pg_sleep(0.1);\n end loop;\nend $observe$;\nselect current_setting('m11.observed')::jsonb observation,clock_timestamp() a_finished_at;\ncommit;",
+    "Race2Sql": "begin isolation level read committed;\nset local application_name='m11_http_race2_A';set local transaction_timeout='20s';set local statement_timeout='18s';set local lock_timeout='6s';set local idle_in_transaction_session_timeout='5s';\nselect set_config('request.jwt.claim.role','service_role',true);\nselect set_config('request.jwt.claims','{\"role\":\"service_role\"}',true);\nupdate public.quiz_attempts set deadline_at=clock_timestamp()-interval '1 second' where id='b1101001-5a11-4b11-8c11-000000000202' and student_id='b1101001-5a11-4b11-8c11-000000000002' and status='in_progress';\nselect public.expire_quiz_attempt('b1101001-5a11-4b11-8c11-000000000002','b1101001-5a11-4b11-8c11-000000000202');\ndo $observe$\ndeclare seen jsonb; until_time timestamptz := clock_timestamp()+interval '14 seconds';\nbegin\n loop\n  perform pg_stat_clear_snapshot();\n  select jsonb_agg(jsonb_build_object('pidA',pg_backend_pid(),'pidB',a.pid,\n    'waitEventType',a.wait_event_type,'waitEvent',a.wait_event,\n    'blockingPids',pg_blocking_pids(a.pid),'observedAt',clock_timestamp(),\n    'isExpectedRpc',a.query like '%answer_quiz_question_v4%')) into seen\n  from pg_stat_activity a where a.pid<>pg_backend_pid()\n    and pg_backend_pid()=any(pg_blocking_pids(a.pid)) and a.query like '%answer_quiz_question_v4%';\n  if seen is not null then\n   perform set_config('m11.observed',seen::text,true); exit;\n  end if;\n  if clock_timestamp()>=until_time then raise exception 'm11_actual_lock_not_observed'; end if;\n  perform pg_sleep(0.1);\n end loop;\nend $observe$;\nselect current_setting('m11.observed')::jsonb observation,clock_timestamp() a_finished_at;\ncommit;",
+    "Race3Sql": "begin isolation level read committed;\nset local application_name='m11_http_race3_A';set local transaction_timeout='20s';set local statement_timeout='18s';set local lock_timeout='6s';set local idle_in_transaction_session_timeout='5s';\nselect set_config('request.jwt.claim.role','service_role',true);\nselect set_config('request.jwt.claims','{\"role\":\"service_role\"}',true);\nupdate public.quiz_attempts set deadline_at=clock_timestamp()-interval '1 second' where id='b1101001-5a11-4b11-8c11-000000000203' and student_id='b1101001-5a11-4b11-8c11-000000000002' and status='in_progress';\nselect public.expire_quiz_attempt('b1101001-5a11-4b11-8c11-000000000002','b1101001-5a11-4b11-8c11-000000000203');\ndo $observe$\ndeclare seen jsonb; until_time timestamptz := clock_timestamp()+interval '14 seconds';\nbegin\n loop\n  perform pg_stat_clear_snapshot();\n  select jsonb_agg(jsonb_build_object('pidA',pg_backend_pid(),'pidB',a.pid,\n    'waitEventType',a.wait_event_type,'waitEvent',a.wait_event,\n    'blockingPids',pg_blocking_pids(a.pid),'observedAt',clock_timestamp(),\n    'isExpectedRpc',a.query like '%expire_quiz_attempt%')) into seen\n  from pg_stat_activity a where a.pid<>pg_backend_pid()\n    and pg_backend_pid()=any(pg_blocking_pids(a.pid)) and a.query like '%expire_quiz_attempt%';\n  if seen is not null then\n   perform set_config('m11.observed',seen::text,true); exit;\n  end if;\n  if clock_timestamp()>=until_time then raise exception 'm11_actual_lock_not_observed'; end if;\n  perform pg_sleep(0.1);\n end loop;\nend $observe$;\nselect current_setting('m11.observed')::jsonb observation,clock_timestamp() a_finished_at;\ncommit;",
+    "Race4Sql": "begin isolation level read committed;\nset local application_name='m11_http_race4_A';set local transaction_timeout='20s';set local statement_timeout='18s';set local lock_timeout='6s';set local idle_in_transaction_session_timeout='5s';\nselect set_config('request.jwt.claim.role','service_role',true);\nselect set_config('request.jwt.claims','{\"role\":\"service_role\"}',true);\nselect public.answer_quiz_question_v4('b1101001-5a11-4b11-8c11-000000000002','b1101001-5a11-4b11-8c11-000000000204','b1101001-5a11-4b11-8c11-000000000344','initial',3::smallint,false);\ndo $queue_check$\ndeclare statuses text[]; result jsonb;\nbegin\n select array_agg(status order by sequence_number) into statuses from private.vocab_assignment_series_items where series_id='b1101001-5a11-4b11-8c11-000000000402';\n if statuses is distinct from array['completed','ready'] then raise exception 'm11_queue_completion_not_confirmed'; end if;\n result:=public.materialize_ready_vocab_assignment_queue_v1('b1101001-5a11-4b11-8c11-000000000002',10);\n if jsonb_array_length(result)<>1 then raise exception 'm11_queue_assignment_count_mismatch'; end if;\n perform set_config('m11.queue_created',result::text,true);\nend $queue_check$;\ndo $observe$\ndeclare seen jsonb; until_time timestamptz := clock_timestamp()+interval '14 seconds';\nbegin\n loop\n  perform pg_stat_clear_snapshot();\n  select jsonb_agg(jsonb_build_object('pidA',pg_backend_pid(),'pidB',a.pid,\n    'waitEventType',a.wait_event_type,'waitEvent',a.wait_event,\n    'blockingPids',pg_blocking_pids(a.pid),'observedAt',clock_timestamp(),\n    'isExpectedRpc',a.query like '%materialize_ready_vocab_assignment_queue_v1%')) into seen\n  from pg_stat_activity a where a.pid<>pg_backend_pid() and a.usename='authenticator'\n    and pg_backend_pid()=any(pg_blocking_pids(a.pid)) and a.query like '%materialize_ready_vocab_assignment_queue_v1%';\n  if seen is not null then\n   perform set_config('m11.observed',seen::text,true); exit;\n  end if;\n  if clock_timestamp()>=until_time then raise exception 'm11_actual_lock_not_observed'; end if;\n  perform pg_sleep(0.1);\n end loop;\nend $observe$;\nselect current_setting('m11.observed')::jsonb observation,current_setting('m11.queue_created')::jsonb materialized,clock_timestamp() a_finished_at;\ncommit;",
+    "SnapshotSql": "select 'public.students' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.students t where t.id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.assignments' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.assignments t where t.created_by is distinct from 'b1101001-5a11-4b11-8c11-000000000001'::uuid\nunion all\nselect 'public.assignment_students' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.assignment_students t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.assignment_units' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.assignment_units t where not exists (select 1 from public.assignments a where a.id=t.assignment_id and a.created_by='b1101001-5a11-4b11-8c11-000000000001')\nunion all\nselect 'public.assignment_questions' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.assignment_questions t where not exists (select 1 from public.assignments a where a.id=t.assignment_id and a.created_by='b1101001-5a11-4b11-8c11-000000000001')\nunion all\nselect 'public.quiz_attempts' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.quiz_attempts t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.quiz_questions' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.quiz_questions t where not exists (select 1 from public.quiz_attempts a where a.id=t.attempt_id and a.student_id='b1101001-5a11-4b11-8c11-000000000002')\nunion all\nselect 'public.student_vocab_wrong_events' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.student_vocab_wrong_events t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.student_vocab_state' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.student_vocab_state t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.student_vocab_review_queue' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.student_vocab_review_queue t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.student_point_events' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.student_point_events t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.student_point_totals' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.student_point_totals t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'public.student_sessions' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.student_sessions t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'private.vocab_assignment_series' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from private.vocab_assignment_series t where t.student_id <> 'b1101001-5a11-4b11-8c11-000000000002'\nunion all\nselect 'private.vocab_assignment_series_items' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from private.vocab_assignment_series_items t where not exists (select 1 from private.vocab_assignment_series s where s.id=t.series_id and s.student_id='b1101001-5a11-4b11-8c11-000000000002')\nunion all\nselect 'private.vocab_assignment_series_events' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from private.vocab_assignment_series_events t where not exists (select 1 from private.vocab_assignment_series s where s.id=t.series_id and s.student_id='b1101001-5a11-4b11-8c11-000000000002')\nunion all\nselect 'public.admin_profiles' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.admin_profiles t where t.user_id <> 'b1101001-5a11-4b11-8c11-000000000001'\nunion all\nselect 'public.vocab_datasets' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.vocab_datasets t where t.imported_by is distinct from 'b1101001-5a11-4b11-8c11-000000000001'::uuid\nunion all\nselect 'public.vocab_units' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.vocab_units t where t.dataset_id <> 'b1101001-5a11-4b11-8c11-000000000003'\nunion all\nselect 'public.vocab_entries' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.vocab_entries t where t.dataset_id <> 'b1101001-5a11-4b11-8c11-000000000003';",
+    "ExtraSnapshotSql": "select 'word_index.app_exam_use_release' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from word_index.app_exam_use_release t where t.dataset_id <> 'b1101001-5a11-4b11-8c11-000000000003'\nunion all\nselect 'word_index.app_exam_use_occurrence' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from word_index.app_exam_use_occurrence t where t.dataset_id <> 'b1101001-5a11-4b11-8c11-000000000003'\nunion all\nselect 'public.assignment_question_exam_use_snapshot' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from public.assignment_question_exam_use_snapshot t where not exists(select 1 from public.assignments a where a.id=t.assignment_id and a.created_by='b1101001-5a11-4b11-8c11-000000000001')\nunion all\nselect 'word_index.assignment_exam_use_release_snapshot' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from word_index.assignment_exam_use_release_snapshot t where not exists(select 1 from public.assignments a where a.id=t.assignment_id and a.created_by='b1101001-5a11-4b11-8c11-000000000001')\nunion all\nselect 'private.vocab_assignment_queue_requests' as table_name,count(*) as row_count,md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text)),'')) as row_hash from private.vocab_assignment_queue_requests t where t.actor_admin_id <> 'b1101001-5a11-4b11-8c11-000000000001';",
+    "CleanupSql": "begin;set local statement_timeout='8s';\nselect set_config('request.jwt.claim.sub','b1101001-5a11-4b11-8c11-000000000001',true);\nselect set_config('request.jwt.claim.role','authenticated',true);\nselect set_config('request.jwt.claims','{\"role\":\"authenticated\",\"sub\":\"b1101001-5a11-4b11-8c11-000000000001\"}',true);\ndo $cleanup$\ndeclare row_record record;\nbegin\n if (select count(*) from public.assignments where created_by='b1101001-5a11-4b11-8c11-000000000001' and dataset_id='b1101001-5a11-4b11-8c11-000000000003')<>5\n then raise exception 'm11_cleanup_fixture_count_mismatch'; end if;\n for row_record in select id from public.assignments where created_by='b1101001-5a11-4b11-8c11-000000000001' and dataset_id='b1101001-5a11-4b11-8c11-000000000003'\n loop perform public.delete_assignment_v2(row_record.id,'M11 독립 연결 검증 종료'); end loop;\n perform public.delete_student_v2('b1101001-5a11-4b11-8c11-000000000002');\n update word_index.app_exam_use_release set status='retired',retired_at_utc=clock_timestamp()\n where release_id='b1101001-5a11-4b11-8c11-000000000405' and dataset_id='b1101001-5a11-4b11-8c11-000000000003' and release_key='m11-qa-b1101001-queue-release';\n update public.vocab_datasets set is_active=false,status='retired' where id='b1101001-5a11-4b11-8c11-000000000003' and imported_by='b1101001-5a11-4b11-8c11-000000000001';\n update public.admin_profiles set is_active=false where user_id='b1101001-5a11-4b11-8c11-000000000001';\nend $cleanup$;\ncommit;",
+    "CleanupReadSql": "select jsonb_build_object(\n'student',(select jsonb_build_object('status',status,'deleted',deleted_at is not null) from public.students where id='b1101001-5a11-4b11-8c11-000000000002'),\n'assignmentsClosed',(select count(*) from public.assignments where created_by='b1101001-5a11-4b11-8c11-000000000001' and status='closed' and deleted_at is not null),\n'inProgressAttempts',(select count(*) from public.quiz_attempts where student_id='b1101001-5a11-4b11-8c11-000000000002' and status='in_progress'),\n'sessions',(select count(*) from public.student_sessions where student_id='b1101001-5a11-4b11-8c11-000000000002'),\n'adminInactive',(select not is_active from public.admin_profiles where user_id='b1101001-5a11-4b11-8c11-000000000001'),\n'dataset',(select jsonb_build_object('status',status,'active',is_active) from public.vocab_datasets where id='b1101001-5a11-4b11-8c11-000000000003'),\n'release',(select jsonb_build_object('status',status,'retiredAt',retired_at_utc) from word_index.app_exam_use_release where release_id='b1101001-5a11-4b11-8c11-000000000405'),\n'queueSeries',(select status from private.vocab_assignment_series where id='b1101001-5a11-4b11-8c11-000000000402'),\n'queueStates',(select jsonb_agg(status order by sequence_number) from private.vocab_assignment_series_items where series_id='b1101001-5a11-4b11-8c11-000000000402'),\n'remainingTransactions',(select count(*) from pg_stat_activity where application_name like 'm11_http_race%' and pid<>pg_backend_pid() and xact_start is not null)\n) cleanup;"
+  },
+  "http": {
+    "expire-3": {
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "mode": "expire",
+      "race": 3,
+      "startedAt": "2026-10-01T12:58:05.599Z",
+      "completedAt": "2026-10-01T12:58:15.879Z",
+      "elapsedMs": 10280,
+      "status": 200,
+      "error": null,
+      "data": {
+        "expired": true,
+        "completed": true
+      }
+    },
+    "expire-1": {
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "mode": "expire",
+      "race": 1,
+      "startedAt": "2026-10-01T12:56:43.133Z",
+      "completedAt": "2026-10-01T12:56:53.938Z",
+      "elapsedMs": 10805,
+      "status": 200,
+      "error": null,
+      "data": {
+        "expired": false,
+        "completed": true
+      }
+    },
+    "answer-2": {
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "mode": "answer",
+      "race": 2,
+      "startedAt": "2026-10-01T12:57:31.481Z",
+      "completedAt": "2026-10-01T12:57:41.733Z",
+      "elapsedMs": 10252,
+      "status": 400,
+      "error": {
+        "code": "22023",
+        "message": "question_already_answered"
+      },
+      "data": null
+    },
+    "expire-service": {
+      "mode": "expire-service",
+      "environment": "preview",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "startedAt": "2026-10-01T13:05:02.353Z",
+      "elapsedMs": 587,
+      "requests": [
+        {
+          "rpc": "expire_quiz_attempt",
+          "sentAt": "2026-10-01T13:05:02.359Z",
+          "durationMs": 452,
+          "status": 200
+        },
+        {
+          "rpc": "materialize_ready_vocab_assignment_queue_v1",
+          "sentAt": "2026-10-01T13:05:02.813Z",
+          "durationMs": 127,
+          "status": 200
+        }
+      ],
+      "data": {
+        "returned": true
+      }
+    },
+    "materialize": {
+      "mode": "materialize",
+      "environment": "preview",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "startedAt": "2026-10-01T13:03:59.163Z",
+      "elapsedMs": 1453,
+      "requests": [
+        {
+          "rpc": "materialize_ready_vocab_assignment_queue_v1",
+          "sentAt": "2026-10-01T13:03:59.17Z",
+          "durationMs": 1445,
+          "status": 200
+        }
+      ],
+      "data": []
+    }
+  },
+  "afterRunBeforeCleanup": [
+    {
+      "table_name": "public.students",
+      "row_count": 81,
+      "row_hash": "ed7d56ccb0ea56af12387345cfb4d77a"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 185,
+      "row_hash": "6fe68f472a6930cc109fa212415dbcf4"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 184,
+      "row_hash": "6bec1efc79be325322a14579abe86a2d"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1499,
+      "row_hash": "3199ad437e49822572185c0599f86491"
+    },
+    {
+      "table_name": "public.assignment_questions",
+      "row_count": 5411,
+      "row_hash": "ea36f9e5103c9f047a9decd4b2203ea3"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 97,
+      "row_hash": "ae70ab4da052cb2f9b850ac4eee69237"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1450,
+      "row_hash": "0f992aacc5380f2777561d1179bff90b"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 788,
+      "row_hash": "5f5a5faeeae3ab9726adeaae57c044f7"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 662,
+      "row_hash": "9dcb2c1c010648c9fb6692d800943cad"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1025,
+      "row_hash": "51e270f0f09edb21bee9e14dc007c30b"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 22,
+      "row_hash": "d237370157a5a6df7293518fb2b90b50"
+    },
+    {
+      "table_name": "public.student_sessions",
+      "row_count": 72,
+      "row_hash": "523ad8818c44b81a1661a5b8acb8b93e"
+    },
+    {
+      "table_name": "private.vocab_assignment_series",
+      "row_count": 41,
+      "row_hash": "9f43d75380f36d39a68a8be7fe3f1f5c"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_items",
+      "row_count": 112,
+      "row_hash": "063cfc8852dc8c83bac237e54b18260d"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_events",
+      "row_count": 143,
+      "row_hash": "798c4200a097cd1a83d228c066d68d60"
+    },
+    {
+      "table_name": "public.admin_profiles",
+      "row_count": 2,
+      "row_hash": "bc90112c73602cfd0eef2acb1fe7f7d4"
+    },
+    {
+      "table_name": "public.vocab_datasets",
+      "row_count": 44,
+      "row_hash": "60fb573c957c82918b3d9e782946f98a"
+    },
+    {
+      "table_name": "public.vocab_units",
+      "row_count": 1249,
+      "row_hash": "28565f8e57608d70cd978130467d8a2c"
+    },
+    {
+      "table_name": "public.vocab_entries",
+      "row_count": 39373,
+      "row_hash": "94c1348521fcad8e0dedef0f9c815792"
+    },
+    {
+      "table_name": "word_index.app_exam_use_release",
+      "row_count": 29,
+      "row_hash": "27cde932f8d9e88d53bd16dae8380fde"
+    },
+    {
+      "table_name": "word_index.app_exam_use_occurrence",
+      "row_count": 19304,
+      "row_hash": "1d97aed408b4ccb96d34cd95c3fa4a94"
+    },
+    {
+      "table_name": "public.assignment_question_exam_use_snapshot",
+      "row_count": 4751,
+      "row_hash": "c0c6acc60da0dcbdaca06f4a524e2eaf"
+    },
+    {
+      "table_name": "word_index.assignment_exam_use_release_snapshot",
+      "row_count": 121,
+      "row_hash": "aa1ff1698d66008f85ec3a9183176669"
+    },
+    {
+      "table_name": "private.vocab_assignment_queue_requests",
+      "row_count": 31,
+      "row_hash": "463c2dbe2f9ccc1c03569a1fc5f9d605"
+    }
+  ],
+  "afterCleanup": [
+    {
+      "table_name": "public.students",
+      "row_count": 81,
+      "row_hash": "ed7d56ccb0ea56af12387345cfb4d77a"
+    },
+    {
+      "table_name": "public.assignments",
+      "row_count": 185,
+      "row_hash": "6fe68f472a6930cc109fa212415dbcf4"
+    },
+    {
+      "table_name": "public.assignment_students",
+      "row_count": 184,
+      "row_hash": "6bec1efc79be325322a14579abe86a2d"
+    },
+    {
+      "table_name": "public.assignment_units",
+      "row_count": 1499,
+      "row_hash": "3199ad437e49822572185c0599f86491"
+    },
+    {
+      "table_name": "public.assignment_questions",
+      "row_count": 5411,
+      "row_hash": "ea36f9e5103c9f047a9decd4b2203ea3"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "row_count": 97,
+      "row_hash": "ae70ab4da052cb2f9b850ac4eee69237"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "row_count": 1450,
+      "row_hash": "0f992aacc5380f2777561d1179bff90b"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "row_count": 788,
+      "row_hash": "5f5a5faeeae3ab9726adeaae57c044f7"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "row_count": 662,
+      "row_hash": "9dcb2c1c010648c9fb6692d800943cad"
+    },
+    {
+      "table_name": "public.student_vocab_review_queue",
+      "row_count": 31,
+      "row_hash": "ded2226cd55b118e8f55a71179b66228"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "row_count": 1025,
+      "row_hash": "51e270f0f09edb21bee9e14dc007c30b"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "row_count": 22,
+      "row_hash": "d237370157a5a6df7293518fb2b90b50"
+    },
+    {
+      "table_name": "public.student_sessions",
+      "row_count": 72,
+      "row_hash": "523ad8818c44b81a1661a5b8acb8b93e"
+    },
+    {
+      "table_name": "private.vocab_assignment_series",
+      "row_count": 41,
+      "row_hash": "9f43d75380f36d39a68a8be7fe3f1f5c"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_items",
+      "row_count": 112,
+      "row_hash": "063cfc8852dc8c83bac237e54b18260d"
+    },
+    {
+      "table_name": "private.vocab_assignment_series_events",
+      "row_count": 143,
+      "row_hash": "798c4200a097cd1a83d228c066d68d60"
+    },
+    {
+      "table_name": "public.admin_profiles",
+      "row_count": 2,
+      "row_hash": "bc90112c73602cfd0eef2acb1fe7f7d4"
+    },
+    {
+      "table_name": "public.vocab_datasets",
+      "row_count": 44,
+      "row_hash": "60fb573c957c82918b3d9e782946f98a"
+    },
+    {
+      "table_name": "public.vocab_units",
+      "row_count": 1249,
+      "row_hash": "28565f8e57608d70cd978130467d8a2c"
+    },
+    {
+      "table_name": "public.vocab_entries",
+      "row_count": 39373,
+      "row_hash": "94c1348521fcad8e0dedef0f9c815792"
+    },
+    {
+      "table_name": "word_index.app_exam_use_release",
+      "row_count": 29,
+      "row_hash": "27cde932f8d9e88d53bd16dae8380fde"
+    },
+    {
+      "table_name": "word_index.app_exam_use_occurrence",
+      "row_count": 19304,
+      "row_hash": "1d97aed408b4ccb96d34cd95c3fa4a94"
+    },
+    {
+      "table_name": "public.assignment_question_exam_use_snapshot",
+      "row_count": 4751,
+      "row_hash": "c0c6acc60da0dcbdaca06f4a524e2eaf"
+    },
+    {
+      "table_name": "word_index.assignment_exam_use_release_snapshot",
+      "row_count": 121,
+      "row_hash": "aa1ff1698d66008f85ec3a9183176669"
+    },
+    {
+      "table_name": "private.vocab_assignment_queue_requests",
+      "row_count": 31,
+      "row_hash": "463c2dbe2f9ccc1c03569a1fc5f9d605"
+    }
+  ],
+  "existing25Unchanged": true
+}
