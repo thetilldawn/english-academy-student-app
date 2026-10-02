@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 137,
-      "pathSetSha256": "33a5cf9b0499898c674da7899d9f376505dc10218a17404769ac5a062a88b947"
+      "fileCount": 138,
+      "pathSetSha256": "90fa2017f203468c160ed21b10080320aa4aeb9222f960a7abd5a7de0f5d7d61"
     },
     {
       "path": "src/lib/deploy",
@@ -3050,6 +3050,11 @@
       "path": "supabase/migrations/20261002155950_classify_wordbook_templates.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
     }
   ],
   "features": [
@@ -7389,7 +7394,8 @@
           "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql",
           "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql",
           "supabase/migrations/20261002140634_retain_operational_logs_and_preparations.sql",
-          "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql"
+          "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql",
+          "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7468,7 +7474,8 @@
           "src/features/results/ui/student-result-view.test.tsx",
           "src/features/student-dashboard/server/components/assignment-study-content.test.tsx",
           "src/features/quiz-player/test-support/local-quiz-fixtures.ts",
-          "src/lib/database/operational-retention.integration.test.ts"
+          "src/lib/database/operational-retention.integration.test.ts",
+          "src/lib/database/historical-question-migration.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

@@ -1,0 +1,992 @@
+{
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "syntheticOnly": true,
+  "productionWrites": 0,
+  "realStudentWrites": 0,
+  "races": [
+    {
+      "case": "prepare_apply_vs_apply",
+      "proof": {
+        "aPid": 8765,
+        "bPid": 8768,
+        "waitType": "Lock",
+        "blockedBy": [
+          8765
+        ],
+        "waitEvent": "advisory",
+        "observedAt": "2026-10-02T19:04:14.680891+00:00"
+      },
+      "httpStatus": 200,
+      "httpBackendPid": 8768,
+      "result": {
+        "rows": 4,
+        "changed": 4,
+        "sameRequestSameReceipt": true
+      },
+      "serverStartedAt": "2026-10-02T19:04:14.644833+00:00",
+      "serverFinishedAt": "2026-10-02T19:04:14.873742+00:00"
+    },
+    {
+      "case": "new_answer_vs_restore",
+      "proof": {
+        "aPid": 8782,
+        "bPid": 8788,
+        "waitType": "Lock",
+        "blockedBy": [
+          8782
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-02T19:05:14.762743+00:00"
+      },
+      "httpStatus": 200,
+      "httpBackendPid": 8788,
+      "result": {
+        "rows": 4,
+        "changed": 4,
+        "sameRequestSameReceipt": true
+      },
+      "serverStartedAt": "2026-10-02T19:05:14.742822+00:00",
+      "serverFinishedAt": "2026-10-02T19:05:14.819744+00:00"
+    },
+    {
+      "case": "lower_key_late_commit",
+      "proof": {
+        "aPid": 8803,
+        "bPid": 8808,
+        "waitType": "Lock",
+        "blockedBy": [
+          8803
+        ],
+        "waitEvent": "advisory",
+        "observedAt": "2026-10-02T19:06:04.162315+00:00"
+      },
+      "httpStatus": 200,
+      "httpBackendPid": 8808,
+      "result": {
+        "after": [
+          "a8030000-0000-4000-8000-000000000100",
+          "a8030000-0000-4000-8000-000000000101"
+        ],
+        "before": [
+          "a8030000-0000-4000-8000-000000000101"
+        ],
+        "lowKeyFound": true
+      },
+      "serverStartedAt": "2026-10-02T19:06:04.147274+00:00",
+      "serverFinishedAt": "2026-10-02T19:06:04.165714+00:00"
+    }
+  ],
+  "restoration": [
+    {
+      "evidence": {
+        "checkedAt": "2026-10-02T19:06:52.949065+00:00",
+        "newQuizRows": 4,
+        "answerReceipts": 1,
+        "operatorReceipts": 3,
+        "remainingPermits": 0,
+        "restoredQuestions": 4,
+        "answerRowUnchanged": true,
+        "compactedQuestions": 4,
+        "duplicateUuidRejected": true,
+        "sharedContentVersions": 4,
+        "answerReceiptReplaySame": true
+      }
+    }
+  ],
+  "cleanup": [
+    {
+      "evidence": {
+        "permits": 0,
+        "checkedAt": "2026-10-02T19:08:28.807455+00:00",
+        "probeRemoved": true,
+        "adminInactive": true,
+        "datasetInactive": true,
+        "latestMigration": "20261002190658",
+        "retiredStudents": 2,
+        "retiredAssignments": 3
+      }
+    }
+  ],
+  "preservation": {
+    "existingTables": 170,
+    "existingRows": 251904,
+    "differences": [],
+    "fixtureExclusions": {
+      "private.assignment_vocabulary_meaning_refs": "assignment_question_id not in(select id from public.assignment_questions where assignment_id in(select id from public.assignments where created_by='a8030000-0000-4000-8000-000000000001'))",
+      "private.student_vocabulary_versions": "student_id not in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005')",
+      "private.vocabulary_answer_receipts": "quiz_question_id not in(select id from public.quiz_questions where attempt_id in(select id from public.quiz_attempts where student_id in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005')))",
+      "private.vocabulary_legacy_state_baselines": "student_id not in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005')",
+      "private.vocabulary_phase_results": "attempt_id not in(select id from public.quiz_attempts where student_id in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005'))",
+      "private.vocabulary_question_content_versions": "not('a8030000-0000-4000-8000-000000000003'::uuid=any(dataset_ids))",
+      "private.vocabulary_question_meaning_versions": "content_version_id not in(select id from private.vocabulary_question_content_versions where 'a8030000-0000-4000-8000-000000000003'::uuid=any(dataset_ids))",
+      "private.vocabulary_result_policies": "attempt_id not in(select id from public.quiz_attempts where student_id in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005'))",
+      "public.admin_profiles": "user_id<>'a8030000-0000-4000-8000-000000000001'",
+      "public.assignment_questions": "assignment_id not in(select id from public.assignments where created_by='a8030000-0000-4000-8000-000000000001')",
+      "public.assignment_sources": "assignment_id not in(select id from public.assignments where created_by='a8030000-0000-4000-8000-000000000001')",
+      "public.assignment_students": "assignment_id not in(select id from public.assignments where created_by='a8030000-0000-4000-8000-000000000001')",
+      "public.assignment_units": "assignment_id not in(select id from public.assignments where created_by='a8030000-0000-4000-8000-000000000001')",
+      "public.assignments": "created_by is distinct from 'a8030000-0000-4000-8000-000000000001'",
+      "public.audit_events": "actor_admin_id is distinct from 'a8030000-0000-4000-8000-000000000001' and (student_id is null or student_id not in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005'))",
+      "public.notification_receipts": "assignment_id is null or assignment_id not in(select id from public.assignments where created_by='a8030000-0000-4000-8000-000000000001')",
+      "public.quiz_attempts": "student_id not in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005')",
+      "public.quiz_questions": "attempt_id not in(select id from public.quiz_attempts where student_id in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005'))",
+      "public.student_vocab_state": "student_id not in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005')",
+      "public.students": "id not in('a8030000-0000-4000-8000-000000000002','a8030000-0000-4000-8000-000000000005')",
+      "public.vocab_datasets": "id<>'a8030000-0000-4000-8000-000000000003'",
+      "public.vocab_entries": "dataset_id<>'a8030000-0000-4000-8000-000000000003'",
+      "public.vocab_units": "dataset_id<>'a8030000-0000-4000-8000-000000000003'"
+    },
+    "tableHashes": [
+      {
+        "name": "private.app_migration_snapshots",
+        "rows": 5,
+        "hash": "4348a4d68fbfb6c8d764f216035127c0"
+      },
+      {
+        "name": "private.assignment_release_links_v1",
+        "rows": 22,
+        "hash": "2ad88c52e488590c3bb9dc8bbc83027e"
+      },
+      {
+        "name": "private.assignment_replacement_requests",
+        "rows": 2,
+        "hash": "6ef5c614c355f86a66ac8b713178d5ff"
+      },
+      {
+        "name": "private.assignment_study_examples_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 122,
+        "hash": "2fb8643968d003fcb7a396fc39918056"
+      },
+      {
+        "name": "private.assignment_vocabulary_new_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.bulk_canonical_question_preview_requests",
+        "rows": 9,
+        "hash": "004ad61fc3743573c30147ac9e504278"
+      },
+      {
+        "name": "private.bulk_vocab_series_requests",
+        "rows": 72,
+        "hash": "dc16b934247abef5f5ec30af7dc2fb34"
+      },
+      {
+        "name": "private.current_wrong_review_assignment_requests",
+        "rows": 4,
+        "hash": "75c267cf32528f91b35321a2e5b20557"
+      },
+      {
+        "name": "private.entry_source_pronunciations_v1",
+        "rows": 855,
+        "hash": "60c8cf2cb7e8724463010a0aecb81b25"
+      },
+      {
+        "name": "private.local_quiz_phase_plans",
+        "rows": 8,
+        "hash": "0f49c9d7875b265db341777ee2c85a89"
+      },
+      {
+        "name": "private.local_quiz_phase_receipts",
+        "rows": 8,
+        "hash": "0cbfe8f88af2d63f4b1aa38c01dc5dd6"
+      },
+      {
+        "name": "private.local_quiz_preparations",
+        "rows": 7,
+        "hash": "e157ffa6fccd1d15cb1f3d91a60822bf"
+      },
+      {
+        "name": "private.local_quiz_runs",
+        "rows": 7,
+        "hash": "097daa0849f0e7b9ff7e17d2a0ed619d"
+      },
+      {
+        "name": "private.notebook_assignment_requests",
+        "rows": 2,
+        "hash": "9dbbddcf2fd63d17b313c66c6be9380b"
+      },
+      {
+        "name": "private.notebook_question_origins_v2",
+        "rows": 6,
+        "hash": "8719df0af271bf9ae0a148990eb3d392"
+      },
+      {
+        "name": "private.operational_retention_holds",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_jobs",
+        "rows": 4,
+        "hash": "72a8a08237876bde2d16aa13b2e5e611"
+      },
+      {
+        "name": "private.operational_retention_policy",
+        "rows": 1,
+        "hash": "b8abb7ee4329a2e13c1cf9ac30967a0d"
+      },
+      {
+        "name": "private.operational_retention_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.pronunciation_audio_corrections_v1",
+        "rows": 2,
+        "hash": "88e9da3e60d59b5f4b0d47f9749819fb"
+      },
+      {
+        "name": "private.quiz_attempt_preparations",
+        "rows": 33,
+        "hash": "16876945d83b31ff1dbc4a2763cef61a"
+      },
+      {
+        "name": "private.quiz_preparation_compaction_checks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.quiz_preparation_expirations",
+        "rows": 2,
+        "hash": "4e24addb2bd7758b2f87edc275076d41"
+      },
+      {
+        "name": "private.reviewed_entry_resource_approvals_v1",
+        "rows": 2,
+        "hash": "70f98c0e06371c5e172609607bd2c28a"
+      },
+      {
+        "name": "private.reviewed_entry_resource_releases_v1",
+        "rows": 2,
+        "hash": "d4fd721348b0fc219bafd99abf3a2d58"
+      },
+      {
+        "name": "private.reviewed_entry_resources_v1",
+        "rows": 864,
+        "hash": "6ad0606069351ca1b2dfdc7e2c181c7e"
+      },
+      {
+        "name": "private.reviewed_exam_entries",
+        "rows": 1061,
+        "hash": "6525908f405d200782c32113b1bc49a9"
+      },
+      {
+        "name": "private.reviewed_exam_import_approvals",
+        "rows": 1,
+        "hash": "b68e8711acf8510de6ff1527d03d4f8b"
+      },
+      {
+        "name": "private.reviewed_exam_items",
+        "rows": 3380,
+        "hash": "4f4089ffebcf5eed332dbb3d8e01f6ca"
+      },
+      {
+        "name": "private.reviewed_exam_releases",
+        "rows": 4,
+        "hash": "a6c1b2e03023cf7684ddf122740ce621"
+      },
+      {
+        "name": "private.reviewed_mock_source_approvals_v1",
+        "rows": 20,
+        "hash": "18a176c9e4ae39cc52ad8d21935d8a31"
+      },
+      {
+        "name": "private.reviewed_mock_source_releases_v1",
+        "rows": 20,
+        "hash": "fe32e2339c5307da260d1fe61e35cd0e"
+      },
+      {
+        "name": "private.reviewed_mock_source_resources_v1",
+        "rows": 16894,
+        "hash": "fafdaf9b32f7da81149d9411be863b49"
+      },
+      {
+        "name": "private.reviewed_pronunciation_asset_approvals_v1",
+        "rows": 1,
+        "hash": "6548d80ab6070ab0e9e45b52434f06d5"
+      },
+      {
+        "name": "private.reviewed_pronunciation_assets_v1",
+        "rows": 127,
+        "hash": "3e0d8575e3c8655b47d9d861d4cb86c3"
+      },
+      {
+        "name": "private.school_handout_import_approvals_v1",
+        "rows": 3,
+        "hash": "5b30d97644127a58e1139e53d324f418"
+      },
+      {
+        "name": "private.school_schedule_manual_edits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.school_schedule_versions",
+        "rows": 3,
+        "hash": "f38ae3021603e18ab1bc621fcbacba28"
+      },
+      {
+        "name": "private.student_app_maintenance_retry_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_vocabulary_meaning_states",
+        "rows": 39,
+        "hash": "74e41550db5d31c7be9c50ae80584709"
+      },
+      {
+        "name": "private.student_vocabulary_versions",
+        "rows": 23,
+        "hash": "2d846909555f8a86622419ab6936c161"
+      },
+      {
+        "name": "private.student_word_practice_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_word_practice_runs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_queue_requests",
+        "rows": 32,
+        "hash": "9b8c130e1e285e734648694803ab06ec"
+      },
+      {
+        "name": "private.vocab_assignment_series",
+        "rows": 42,
+        "hash": "a28d7861ba9eda4878d5b8d4979f9023"
+      },
+      {
+        "name": "private.vocab_assignment_series_events",
+        "rows": 148,
+        "hash": "55788bfca5ba69f17aab73062fa9db54"
+      },
+      {
+        "name": "private.vocab_assignment_series_items",
+        "rows": 114,
+        "hash": "b0b01e4d75bafc0c37f30994db66edc2"
+      },
+      {
+        "name": "private.vocabulary_answer_receipts",
+        "rows": 99,
+        "hash": "f8d6cf9a8dc2aba06d5907841ff14fe0"
+      },
+      {
+        "name": "private.vocabulary_composition_build_positions",
+        "rows": 14329,
+        "hash": "a5c24976a386a40f5f22fa67ccae2f64"
+      },
+      {
+        "name": "private.vocabulary_composition_builds",
+        "rows": 1,
+        "hash": "2e942c53b93e45ffccee76e03a09e5e2"
+      },
+      {
+        "name": "private.vocabulary_composition_entries",
+        "rows": 15903,
+        "hash": "d5039a5499cefa1f6490e1ea1ad3a94c"
+      },
+      {
+        "name": "private.vocabulary_composition_items",
+        "rows": 31806,
+        "hash": "8b2b73f6f555fca29ba044b00540d935"
+      },
+      {
+        "name": "private.vocabulary_composition_management_approvals",
+        "rows": 5,
+        "hash": "ad9b901ff25cfdc15d9145cc1134568f"
+      },
+      {
+        "name": "private.vocabulary_composition_management_chunks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_inputs",
+        "rows": 5,
+        "hash": "c0526e3d3ea8d314daf5ef9cb949171c"
+      },
+      {
+        "name": "private.vocabulary_composition_management_requests",
+        "rows": 5,
+        "hash": "3dd53de1135a6042542def0c396db55d"
+      },
+      {
+        "name": "private.vocabulary_composition_management_results",
+        "rows": 5,
+        "hash": "4fb62401513df0a1aa5a233a84d18e87"
+      },
+      {
+        "name": "private.vocabulary_composition_question_plans",
+        "rows": 1,
+        "hash": "555e4a141780dfddebadc266039f5765"
+      },
+      {
+        "name": "private.vocabulary_composition_storage_formats",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_write_context",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_compositions",
+        "rows": 5,
+        "hash": "788b891fd721c3f1ad9a1894a0d6e7af"
+      },
+      {
+        "name": "private.vocabulary_expired_answer_results",
+        "rows": 1,
+        "hash": "5b3adfd84937bb698d67e3e80dc9463b"
+      },
+      {
+        "name": "private.vocabulary_learning_value_bindings",
+        "rows": 3,
+        "hash": "76be3527890151c79649fd58bee34a3b"
+      },
+      {
+        "name": "private.vocabulary_learning_value_versions",
+        "rows": 2,
+        "hash": "73f6378addaf9069b45be1fc86461a2d"
+      },
+      {
+        "name": "private.vocabulary_legacy_question_baselines",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_legacy_state_baselines",
+        "rows": 77,
+        "hash": "2b95af0113b31e85832f348067b3787b"
+      },
+      {
+        "name": "private.vocabulary_library_import_approvals",
+        "rows": 54,
+        "hash": "83377e8837c0807f9674126d846f7b5f"
+      },
+      {
+        "name": "private.vocabulary_library_import_chunks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_management_requests",
+        "rows": 10,
+        "hash": "8b42b42f0415f067b1f0213d3d46fc96"
+      },
+      {
+        "name": "private.vocabulary_library_management_results",
+        "rows": 10,
+        "hash": "6404de4a141980066e1f87442ed3aeca"
+      },
+      {
+        "name": "private.vocabulary_library_requests",
+        "rows": 8,
+        "hash": "12303acf77fa263bad1dbd88b329e912"
+      },
+      {
+        "name": "private.vocabulary_library_row_fingerprints",
+        "rows": 22327,
+        "hash": "4fdd60d8ec3d1c9b04c7a12508c2351b"
+      },
+      {
+        "name": "private.vocabulary_library_scope_rows",
+        "rows": 22327,
+        "hash": "a5f93bbc49bcfb0d68ce38c7c9808e2d"
+      },
+      {
+        "name": "private.vocabulary_library_scopes",
+        "rows": 686,
+        "hash": "d74dd60ed60592f4b654824eb1a7bd4e"
+      },
+      {
+        "name": "private.vocabulary_library_template_approvals",
+        "rows": 10,
+        "hash": "4aa403a4bc0ecc4f0ae492827b7fd894"
+      },
+      {
+        "name": "private.vocabulary_library_templates",
+        "rows": 13,
+        "hash": "c45a8d9ee81fe0052c1aa8809fed07e6"
+      },
+      {
+        "name": "private.vocabulary_library_versions",
+        "rows": 13,
+        "hash": "d20dcbbfb2cd426583bb82841b855518"
+      },
+      {
+        "name": "private.vocabulary_phase_results",
+        "rows": 16,
+        "hash": "edfee70f4a97388c793d798524382f1e"
+      },
+      {
+        "name": "private.vocabulary_question_content_versions",
+        "rows": 23,
+        "hash": "72fa562fe26a70fd7c7114e513e07795"
+      },
+      {
+        "name": "private.vocabulary_question_meaning_versions",
+        "rows": 12,
+        "hash": "ccefc179e6b183c05704c3d40d41566a"
+      },
+      {
+        "name": "private.vocabulary_result_policies",
+        "rows": 12,
+        "hash": "c9b91d1bf4938311a87e135794acc402"
+      },
+      {
+        "name": "private.worksheet_mistake_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.admin_history_hidden_entries",
+        "rows": 10,
+        "hash": "79c4cb6b4da516a66c38ef330c047b2d"
+      },
+      {
+        "name": "public.admin_profiles",
+        "rows": 8,
+        "hash": "7e9e0905860d108b8b02cd45c434299c"
+      },
+      {
+        "name": "public.admin_vocab_assignment_time_templates",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.assignment_question_exam_use_snapshot",
+        "rows": 4755,
+        "hash": "720c8a178da6edf312a79d2008996344"
+      },
+      {
+        "name": "public.assignment_questions",
+        "rows": 5543,
+        "hash": "2720a64c5b2a0e6d31c1c3d8b46523ec"
+      },
+      {
+        "name": "public.assignment_quiz_mode_snapshots",
+        "rows": 144,
+        "hash": "f658e9d91509571cb90d4e2e205b27dc"
+      },
+      {
+        "name": "public.assignment_review_targets",
+        "rows": 42,
+        "hash": "917ea9d715566e14306debac77c9c97c"
+      },
+      {
+        "name": "public.assignment_sources",
+        "rows": 224,
+        "hash": "a8aa01d5ea5a7f9d3841036d2811f17c"
+      },
+      {
+        "name": "public.assignment_students",
+        "rows": 223,
+        "hash": "ce242864f998e4d9a0b7dd8af95c0d3f"
+      },
+      {
+        "name": "public.assignment_units",
+        "rows": 1538,
+        "hash": "7568e98f7d2966c7fef3790363681904"
+      },
+      {
+        "name": "public.assignments",
+        "rows": 224,
+        "hash": "906608366c65d196576f2bfa1499bd78"
+      },
+      {
+        "name": "public.audit_events",
+        "rows": 1080,
+        "hash": "f582488ae4404a92c60be91f1456a4f9"
+      },
+      {
+        "name": "public.class_group_students",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.class_groups",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.notification_receipts",
+        "rows": 320,
+        "hash": "83893c2c2b0572261e35122fc9de37d2"
+      },
+      {
+        "name": "public.quiz_attempts",
+        "rows": 132,
+        "hash": "5c6a5dc14bf81a4c5bb55d9b9b051c63"
+      },
+      {
+        "name": "public.quiz_questions",
+        "rows": 1590,
+        "hash": "1c79a8ce00b3ab1acd98a65e2e4260f6"
+      },
+      {
+        "name": "public.student_codes",
+        "rows": 32,
+        "hash": "2c4253d2c02009589f20970f8bdeaa07"
+      },
+      {
+        "name": "public.student_learning_sources",
+        "rows": 41,
+        "hash": "a2d4f30135faa16baf77537b8dea9c14"
+      },
+      {
+        "name": "public.student_login_attempts",
+        "rows": 72,
+        "hash": "76f77a2a58aa9ffb82266904db08ca26"
+      },
+      {
+        "name": "public.student_point_events",
+        "rows": 1073,
+        "hash": "ba8c63edca6178134c43e1cdce0c40b1"
+      },
+      {
+        "name": "public.student_point_totals",
+        "rows": 32,
+        "hash": "7a6a8d9d226988aef5a5ab8eb689a01f"
+      },
+      {
+        "name": "public.student_sessions",
+        "rows": 73,
+        "hash": "18ab0dda7d3741a256879cd0de2915a8"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_draft_items",
+        "rows": 2,
+        "hash": "499c6272f080d4298560bbe10bfaff39"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_drafts",
+        "rows": 2,
+        "hash": "174c2205650a9758919f641dfb79ad8b"
+      },
+      {
+        "name": "public.student_vocab_review_queue",
+        "rows": 40,
+        "hash": "5305b79fe3304effdbaac93eb8f482a4"
+      },
+      {
+        "name": "public.student_vocab_state",
+        "rows": 743,
+        "hash": "0f6c482f3dd07687111dfc558bcdfbd6"
+      },
+      {
+        "name": "public.student_vocab_wrong_events",
+        "rows": 838,
+        "hash": "05920848def85f54e2645e9178a18f2e"
+      },
+      {
+        "name": "public.students",
+        "rows": 117,
+        "hash": "be50744aaf6cbb70c800d9187d0cba19"
+      },
+      {
+        "name": "public.vocab_approved_korean_pronunciations",
+        "rows": 496,
+        "hash": "a835d15682b139bbdef94d573754fcf0"
+      },
+      {
+        "name": "public.vocab_dataset_capabilities",
+        "rows": 22,
+        "hash": "528906509a52120bfbe9885c33434892"
+      },
+      {
+        "name": "public.vocab_dataset_catalog",
+        "rows": 44,
+        "hash": "0a130b9ccbfdbf5211e582ae0be7aa7e"
+      },
+      {
+        "name": "public.vocab_datasets",
+        "rows": 51,
+        "hash": "601c52bcf7a7375b29b5e14661511cc5"
+      },
+      {
+        "name": "public.vocab_entries",
+        "rows": 39398,
+        "hash": "1cac3dccad1f06cd15c31fb8208fbead"
+      },
+      {
+        "name": "public.vocab_entry_pronunciation_bindings_v2",
+        "rows": 10512,
+        "hash": "68f5a7821419af6d3feb8e3a26287d05"
+      },
+      {
+        "name": "public.vocab_entry_pronunciations",
+        "rows": 60,
+        "hash": "97ba60a72ad2f31330ae1ce53219e5ff"
+      },
+      {
+        "name": "public.vocab_entry_quiz_eligibility",
+        "rows": 6074,
+        "hash": "cc0d7a7f0b439c00dd46b9614a7b4f50"
+      },
+      {
+        "name": "public.vocab_pronunciation_identities_v2",
+        "rows": 7195,
+        "hash": "d6336bd5c749940e41aae7143dc9db20"
+      },
+      {
+        "name": "public.vocab_pronunciation_releases_v2",
+        "rows": 9,
+        "hash": "e3dd2723fcd77593bd2039e3e12d78a1"
+      },
+      {
+        "name": "public.vocab_pronunciation_tts_assets_v2",
+        "rows": 1300,
+        "hash": "6cf703dcdea0fa124fda1bc33cb4b1bd"
+      },
+      {
+        "name": "public.vocab_rule_derived_korean_pronunciations",
+        "rows": 582,
+        "hash": "386bdfca3871ce58aab23b88bad7728d"
+      },
+      {
+        "name": "public.vocab_synthetic_audio_assets",
+        "rows": 412,
+        "hash": "a420e0e1162425434f530c8754fcedbf"
+      },
+      {
+        "name": "public.vocab_synthetic_audio_bindings",
+        "rows": 418,
+        "hash": "68744c4de987cae8a6b2ecdf1f3324a6"
+      },
+      {
+        "name": "public.vocab_unit_catalog",
+        "rows": 1179,
+        "hash": "5112f7a151b81fecaaba24ca4855177b"
+      },
+      {
+        "name": "public.vocab_units",
+        "rows": 1256,
+        "hash": "99eafa74559ae682171eb5fda7075c50"
+      },
+      {
+        "name": "public.worksheet_request_items",
+        "rows": 3,
+        "hash": "cf3da27caf3e9425f7f424e6bba8c440"
+      },
+      {
+        "name": "public.worksheet_requests",
+        "rows": 1,
+        "hash": "09f723ea1dfa7fb4ac0645a1332cf550"
+      },
+      {
+        "name": "word_index.app_canonical_question_preview_item",
+        "rows": 2785,
+        "hash": "cf3fa529fa1714236bc3869cffb52d8f"
+      },
+      {
+        "name": "word_index.app_canonical_question_preview_release",
+        "rows": 9,
+        "hash": "579c941111b51d7b312bf29bd35dfb25"
+      },
+      {
+        "name": "word_index.app_exam_use_occurrence",
+        "rows": 19308,
+        "hash": "f064880d6f0edf19a6f661aa8681b15e"
+      },
+      {
+        "name": "word_index.app_exam_use_release",
+        "rows": 30,
+        "hash": "17fc928d0a5646c0e1bc2ea1d8382bde"
+      },
+      {
+        "name": "word_index.assignment_exam_use_release_snapshot",
+        "rows": 122,
+        "hash": "0f01987942f966e6025ca21828841062"
+      },
+      {
+        "name": "word_index.data_issue",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.dataset_source",
+        "rows": 7,
+        "hash": "b8b133f4d8caf84048d38d97136a867d"
+      },
+      {
+        "name": "word_index.etymology",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.example",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.import_batch",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.import_run",
+        "rows": 1,
+        "hash": "8c5fac61a4631b2606e149dfacb23cf2"
+      },
+      {
+        "name": "word_index.index_build",
+        "rows": 5,
+        "hash": "353b6cb9ea9b1557d68a02a142399a72"
+      },
+      {
+        "name": "word_index.input_file_manifest",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.legacy_freeze",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.level_mapping",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.lexeme",
+        "rows": 2277,
+        "hash": "0e539df932c8378c3ec24c2370285da9"
+      },
+      {
+        "name": "word_index.lexeme_metric",
+        "rows": 15,
+        "hash": "a3d967bb87bdcd320b81a51b4e023de0"
+      },
+      {
+        "name": "word_index.lexeme_tag",
+        "rows": 7,
+        "hash": "03afacacd33e87d994523ad4bd917f77"
+      },
+      {
+        "name": "word_index.mock_wordbook_composition",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_identity_review",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_lineage",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_scope",
+        "rows": 510,
+        "hash": "065e461876e78e3c2c586f9052e001a0"
+      },
+      {
+        "name": "word_index.occurrence",
+        "rows": 2129,
+        "hash": "d8df40a1a29945662930f39f2b15ac4c"
+      },
+      {
+        "name": "word_index.pipeline_rule",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_batch",
+        "rows": 11,
+        "hash": "0e086ec8cf7fa5185ff6fe3c35e571d0"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_member",
+        "rows": 1979,
+        "hash": "1febae248b1528a947ef1cb5a84ca42f"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_run",
+        "rows": 1,
+        "hash": "f233a2344530f92c3187101755c637df"
+      },
+      {
+        "name": "word_index.raw_pointer",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.relation",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.relation_evidence",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.review",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.schema_meta",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.sense",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.source",
+        "rows": 7,
+        "hash": "c55292f89827308e8d2caf686a1b1f22"
+      },
+      {
+        "name": "word_index.type_decision",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_entry_link",
+        "rows": 3029,
+        "hash": "034b06776250cac1ac8cc7878c8b86fa"
+      },
+      {
+        "name": "word_index.vocab_entry_mapping_candidate",
+        "rows": 2,
+        "hash": "803cace0d6d60e721c12908535e12270"
+      },
+      {
+        "name": "word_index.vocab_link_import_batch",
+        "rows": 34,
+        "hash": "73edb1ddd34ba6585f5867cc3923548c"
+      },
+      {
+        "name": "word_index.vocab_link_import_run",
+        "rows": 7,
+        "hash": "7641803a30803d51684ec44c89003787"
+      },
+      {
+        "name": "word_index.work_queue",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    ]
+  }
+}
