@@ -141,4 +141,18 @@ describe.sequential("immutable shared vocabulary values and exact source binding
       await expect(db.query(`delete from private.${table}`)).rejects.toThrow(/immutable/);
     }
   });
+  it("counts fixed dictionary and learning keys without merging unreviewed meanings or hiding broken references", async () => {
+    const second = await register({ ...entry, id: entry.id + 2, source_row: 3 }, null, selected, { ...source, sourceRow: 3, occurrenceKey: sha("m07-second") });
+    const first = { key: "a", resources: stored }, another = { key: "b", resources: second };
+    const quantities = (occurrences: unknown[], includedKeys = ["a", "b"]) => scalar("select private.vocabulary_library_quantities_v1($1::jsonb) value", [JSON.stringify({ occurrences, includedKeys })]);
+    expect(await quantities([first, another, first])).toEqual({ uniqueWordCount: 1, unknownWordItems: 0, meaningItemCount: 2, unknownMeaningItems: 0, sourceSpecificMeaningItems: 2, questionCounts: null });
+    expect(await quantities([first, another], ["a"])).toMatchObject({ uniqueWordCount: 1, meaningItemCount: 1 });
+    expect(await quantities([{ key: "a", resources: { selected } }], ["a"])).toMatchObject({ uniqueWordCount: 1, meaningItemCount: null, unknownMeaningItems: 1 });
+    expect(await quantities([{ key: "a" }], ["a"])).toMatchObject({ uniqueWordCount: null, unknownWordItems: 1, meaningItemCount: null });
+    await expect(quantities([{ key: "a", resources: { ...stored, selectionBinding: { ...stored.selectionBinding, bindingHash: "e".repeat(64) } } }], ["a"])).rejects.toThrow("vocabulary_binding_unavailable");
+    for (const schemaVersion of [undefined, "broken-reference-format"]) {
+      await expect(quantities([{ key: "a", resources: { ...stored, selected: { ...stored.selected, schemaVersion } } }], ["a"])).rejects.toThrow(/vocabulary_/);
+    }
+    await expect(quantities([first])).rejects.toThrow("library_quantity_reference_missing");
+  });
 });

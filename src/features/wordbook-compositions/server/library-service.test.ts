@@ -105,6 +105,21 @@ describe("materialized book response and recovery", () => {
     expect(await materializeLibraryComposition(command)).toEqual(result);
     expect(mocks.plan).not.toHaveBeenCalled(); expect(mocks.finalize).not.toHaveBeenCalled();
   });
+  it("routes v3 materialization through the same generator and checks the official kind on both returned objects", async () => {
+    const saved=template.versions[0]!;
+    const classified={template:{id:template.id,revision:1,metadata:template.metadata,templateKind:"mock_exam",latestVersion:{id:saved.id,number:1,contentHash:saved.contentHash,scopeStatus:"unconfirmed",scopeCount:0,sourceCount:0,includedCount:0,sourceVersionId:null,datasetId:null,createdAt:saved.createdAt,hasCriteria:false}},createdBook:{...result.createdBook,dataset:{...result.createdBook.dataset,templateKind:"mock_exam"}}};
+    mocks.getAdminContextOrThrow.mockResolvedValue({userId:request.requestId});
+    mocks.rpc.mockImplementation(async(name:string)=>({data:name==="advance_vocabulary_template_book_v1"?completed:classified,error:null}));
+    const response=await commandRoute(new Request("http://localhost",{method:"POST",headers:{"X-Wordbook-Viewer":request.requestId},body:JSON.stringify({...command,protocolVersion:3})}));
+    expect(response.status).toBe(200);expect(await response.json()).toEqual(classified);
+    expect(mocks.rpc).toHaveBeenCalledWith("advance_vocabulary_template_book_v1",{p_request:command});
+    expect(mocks.rpc).toHaveBeenLastCalledWith("get_vocabulary_composition_summary_v3",{p_version_id:command.versionId});
+    expect(mocks.plan).not.toHaveBeenCalled();expect(mocks.finalize).not.toHaveBeenCalled();
+    for(const dataset of [{...result.createdBook.dataset},{...result.createdBook.dataset,templateKind:"other"}]){
+      mocks.rpc.mockImplementation(async(name:string)=>({data:name==="advance_vocabulary_template_book_v1"?completed:{...classified,createdBook:{...classified.createdBook,dataset}},error:null}));
+      await expect(materializeLibraryComposition({...command,protocolVersion:3},undefined,true,true)).rejects.toMatchObject({status:503});
+    }
+  });
   it("accepts another administrator completing the shared template between progress and preparation", async () => {
     mocks.rpc.mockImplementation(async (name: string) => ({ data: name === "advance_vocabulary_template_book_v1" ? step : name === "prepare_vocabulary_template_question_input_v1" ? { ...prepared, state: "ready" } : result, error: null }));
     expect(await materializeLibraryComposition(command)).toEqual(result);

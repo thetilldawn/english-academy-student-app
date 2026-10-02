@@ -9,6 +9,9 @@ export const DATASET_CATALOG_GROUPS = [
 
 export type DatasetCatalogGroup = (typeof DATASET_CATALOG_GROUPS)[number];
 
+export const TEMPLATE_KINDS = ["performance_assessment", "exam_prep", "mock_exam", "other"] as const;
+export type TemplateKind = (typeof TEMPLATE_KINDS)[number];
+
 export type DatasetMaterialKind =
   | "textbook"
   | "wordbook"
@@ -25,6 +28,7 @@ export type VocabUnitType =
   | "supplement";
 
 export type CataloguedDataset = {
+  templateKind?: TemplateKind | null;
   vocabularyRole?: "original" | "composition";
   id: string;
   title: string;
@@ -54,6 +58,7 @@ export type RawCataloguedDataset = {
 };
 
 export type DatasetCatalogMetadata = {
+  templateKind?: TemplateKind | null;
   displayName: string;
   catalogGroup: DatasetCatalogGroup;
   materialKind: DatasetMaterialKind;
@@ -103,6 +108,7 @@ export function cataloguedDatasetFromMetadata(
   catalog: DatasetCatalogMetadata | undefined,
 ): CataloguedDataset {
   return {
+    ...(catalog && "templateKind" in catalog ? { templateKind: catalog.templateKind } : {}),
     ...(datasetVocabularyRole(dataset.metadata) ? { vocabularyRole: datasetVocabularyRole(dataset.metadata) } : {}),
     id: dataset.id,
     title: dataset.title,

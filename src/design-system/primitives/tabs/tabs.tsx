@@ -32,6 +32,8 @@ export function Tabs<Value extends string>({
 }) {
   const fallbackId = useId();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const firstEnabled = items.findIndex(item => !item.disabled);
+  const hasSelection = items.some(item => item.value === value && !item.disabled);
 
   function moveFocus(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
@@ -103,7 +105,7 @@ export function Tabs<Value extends string>({
               tabRefs.current[index] = node;
             }}
             role="tab"
-            tabIndex={selected ? 0 : -1}
+            tabIndex={selected || !hasSelection && index === firstEnabled ? 0 : -1}
             type="button"
           >
             {item.label}

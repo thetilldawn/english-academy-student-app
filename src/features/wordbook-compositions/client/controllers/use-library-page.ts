@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { type LibraryQuery, type LibraryQueryResultOf } from "../../contracts/library-query";
+import { type LibraryQuery } from "../../contracts/library-query";
+import { type ClassifiedQueryResultOf as LibraryQueryResultOf } from "../../contracts/library-v3";
 import { readLibraryPage } from "../transport/library-transport";
 
 type State<K extends LibraryQuery["kind"]> = { key: string; status: "loading" | "ready" | "error"; data: LibraryQueryResultOf<K> | null; error: string };

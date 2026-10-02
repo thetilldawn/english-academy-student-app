@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 136,
-      "pathSetSha256": "658912f4d1432c853f98e2806344dd1d19e7d831e9730dc64b1267523f014506"
+      "fileCount": 137,
+      "pathSetSha256": "33a5cf9b0499898c674da7899d9f376505dc10218a17404769ac5a062a88b947"
     },
     {
       "path": "src/lib/deploy",
@@ -2571,6 +2571,10 @@
     {
       "path": "src/features/quiz-player/server/local-quiz-protocol-query.ts",
       "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/commands/library-command-v3.ts",
+      "owner": "wordbook-compositions"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -3041,6 +3045,11 @@
       "path": "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261002155950_classify_wordbook_templates.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
     }
   ],
   "features": [
@@ -7594,7 +7603,8 @@
           "src/features/assignments/client/controllers/use-assignment-dataset-picker.ts",
           "src/features/assignments/controller/use-assignment-dataset-directory.ts",
           "src/features/assignments/controller/use-assignment-dataset-unit-catalog.ts",
-          "src/features/assignments/controller/use-assignment-previous-exam.ts"
+          "src/features/assignments/controller/use-assignment-previous-exam.ts",
+          "src/features/assignments/controller/use-assignment-dataset-metadata.ts"
         ],
         "application": [],
         "domain": [
@@ -7644,7 +7654,8 @@
           "src/features/assignments/transport/assignment-workspace-reads.test.ts",
           "src/features/assignments/controller/use-assignment-student-directory.test.tsx",
           "src/features/assignments/domain/assignment-student-context.test.ts",
-          "src/features/assignments/controller/use-assignment-planner-preparation.test.tsx"
+          "src/features/assignments/controller/use-assignment-planner-preparation.test.tsx",
+          "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -8065,7 +8076,7 @@
         "students"
       ],
       "dataClass": "mutation",
-      "cachePolicy": "관리자 자료 private no-store, 저장 거래 안에서 원출처와 버전 재검증",
+      "cachePolicy": "관리자 자료 private no-store. 공식 종류/검색/관리자별 커서, 표시만 수정하면 고정 내용판 유지, 확정 저장 뒤 표시 갱신 실패는 콜백만 재시도.",
       "streamingPolicy": "SQL 목록/범위/단어 페이지와 펼칠 때 이전 버전 조회, no-store. 같은 요청 재확인·관리자 변경 폐기",
       "closedLocalLayers": [],
       "touchpoints": {
@@ -8086,13 +8097,17 @@
           "src/features/assignments/ui/vocab-range-fields.tsx",
           "src/features/wordbook-compositions/ui/library-editor-fields.tsx",
           "src/features/wordbook-compositions/ui/library-query-panels.tsx",
-          "src/styles/reset.css"
+          "src/styles/reset.css",
+          "src/design-system/primitives/tabs/tabs.tsx",
+          "src/features/assignments/ui/vocab-assignment-planner.tsx"
         ],
         "clientState": [
           "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
           "src/features/wordbook-compositions/client/controllers/use-wordbook-library.ts",
           "src/features/wordbook-compositions/client/controllers/use-library-page.ts",
-          "src/features/wordbook-compositions/client/controllers/use-library-command.ts"
+          "src/features/wordbook-compositions/client/controllers/use-library-command.ts",
+          "src/features/assignments/controller/use-assignment-dataset-metadata.ts",
+          "src/features/assignments/controller/use-assignment-dataset-directory.ts"
         ],
         "application": [],
         "domain": [
@@ -8112,7 +8127,8 @@
           "src/features/wordbook-compositions/contracts/library-resources.ts",
           "src/features/wordbook-compositions/contracts/library-materialization.ts",
           "src/features/wordbook-compositions/contracts/library-query.ts",
-          "src/features/wordbook-compositions/contracts/library-command-v2.ts"
+          "src/features/wordbook-compositions/contracts/library-command-v2.ts",
+          "src/features/wordbook-compositions/contracts/library-v3.ts"
         ],
         "transport": [
           "src/features/wordbook-compositions/client/transport/composition-transport.ts",
@@ -8133,7 +8149,8 @@
           "scripts/import-vocabulary-library.ts",
           "src/features/wordbook-compositions/server/queries/library-query.ts",
           "src/features/wordbook-compositions/server/commands/library-command-v2.ts",
-          "src/features/wordbook-compositions/server/library-error.ts"
+          "src/features/wordbook-compositions/server/library-error.ts",
+          "src/features/wordbook-compositions/server/commands/library-command-v3.ts"
         ],
         "database": [
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
@@ -8159,7 +8176,8 @@
           "supabase/migrations/20260921050000_save_vocabulary_filter_templates.sql",
           "supabase/migrations/20260921060000_add_reviewed_csat_wordbooks.sql",
           "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
-          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+          "supabase/migrations/20261002155950_classify_wordbook_templates.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -8193,7 +8211,13 @@
           "src/lib/quiz/choice-safety.test.ts",
           "src/lib/database/vocabulary-learning-values.integration.test.ts",
           "src/lib/database/vocabulary-learning-migration.integration.test.ts",
-          "src/features/wordbook-compositions/contracts/library-resources.test.ts"
+          "src/features/wordbook-compositions/contracts/library-resources.test.ts",
+          "src/lib/database/vocabulary-library-kinds.integration.test.ts",
+          "src/features/wordbook-compositions/contracts/library-command-v3.test.ts",
+          "src/features/wordbook-compositions/client/controllers/use-library-command.test.tsx",
+          "src/design-system/primitives/tabs/tabs.test.tsx",
+          "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx",
+          "scripts/verify-wordbook-kinds-browser.ts"
         ]
       },
       "requiredImportEdges": [],

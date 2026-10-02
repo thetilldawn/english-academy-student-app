@@ -8,6 +8,8 @@ import {
   cataloguedDatasetDisplayLabel,
   type DatasetCatalogGroup,
   type DatasetMaterialKind,
+  TEMPLATE_KINDS,
+  type TemplateKind,
 } from "@/lib/admin/dataset-catalog";
 
 export type RawDataset = {
@@ -38,6 +40,9 @@ export function catalogMetadata(catalog: Omit<DatasetCatalogRow, "dataset_id"> |
   const school = typeof metadata.school === "string" ? metadata.school.trim() : "";
   const schoolName = school && school.length <= 120 ? school : null;
   const purpose = metadata.purpose === "exam_prep" ? "exam_prep" as const : null;
+  const hasTemplateKind = Object.hasOwn(metadata, "templateKind");
+  if (hasTemplateKind && metadata.templateKind !== null && !TEMPLATE_KINDS.includes(metadata.templateKind as TemplateKind)) throw new Error("단어장 분류 정보를 확인하지 못했습니다.");
+  const templateKind = TEMPLATE_KINDS.includes(metadata.templateKind as TemplateKind) ? metadata.templateKind as TemplateKind : null;
   const semester: 1 | 2 | null = metadata.semester === 1 || metadata.semester === 2 ? metadata.semester : null;
   // Only explicit provenance tags are public. Never infer a school/common audience from titles.
   const schoolClassification = schoolName ? "school" as const : metadata.audience === "common" && metadata.school == null
@@ -58,6 +63,7 @@ export function catalogMetadata(catalog: Omit<DatasetCatalogRow, "dataset_id"> |
         schoolName,
         schoolClassification,
         purpose,
+        ...(hasTemplateKind ? { templateKind } : {}),
         semester,
       }
     : undefined;

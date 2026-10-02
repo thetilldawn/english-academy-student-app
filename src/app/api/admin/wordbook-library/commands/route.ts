@@ -2,7 +2,7 @@ import { withAuthenticationFailureResponse } from "@/lib/auth/route-authenticati
 import { getAdminContextOrThrow } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 import { adminLearningText } from "@/content/ko/admin-learning";
-import { saveLibraryTemplateV2, materializeLibraryComposition, LibraryCommandError, libraryJsonResponse } from "@/features/wordbook-compositions/public-server";
+import { saveLibraryTemplateV2, saveLibraryTemplateV3, materializeLibraryComposition, LibraryCommandError, libraryJsonResponse } from "@/features/wordbook-compositions/public-server";
 
 export const maxDuration = 300;
 export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
@@ -12,7 +12,9 @@ export const POST = withAuthenticationFailureResponse(async function POST(reques
     if (request.headers.get("X-Wordbook-Viewer") !== admin.userId) return privateJsonError("관리자 로그인이 필요합니다.", 403);
     const input: unknown = await request.json().catch(() => null);
     const materialize = input && typeof input === "object" && "action" in input && input.action === "materialize";
-    return libraryJsonResponse(await (materialize ? materializeLibraryComposition(input, admin, true) : saveLibraryTemplateV2(input, admin)));
+    const classified = !!input && typeof input === "object" && "protocolVersion" in input && input.protocolVersion === 3;
+    return libraryJsonResponse(await (materialize ? materializeLibraryComposition(input, admin, true, classified)
+      : classified ? saveLibraryTemplateV3(input, admin) : saveLibraryTemplateV2(input, admin)));
   } catch (error) {
     const status = error instanceof LibraryCommandError ? error.status : 503;
     const response = privateJsonError(status === 403 ? "관리자 로그인이 필요합니다." : status === 404 ? "템플릿을 찾을 수 없습니다. 목록을 다시 확인해 주세요."

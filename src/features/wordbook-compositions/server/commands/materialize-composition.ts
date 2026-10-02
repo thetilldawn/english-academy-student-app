@@ -8,10 +8,14 @@ import { planCompositionQuestions } from "../use-cases/composition-question-plan
 import { LibraryCommandError } from "./library-command";
 import { isVocabularySourceError } from "../library-error";
 import { libraryCommandV2ResultSchema } from "../../contracts/library-command-v2";
+import { libraryCommandV3Schema, libraryCommandV3ResultSchema } from "../../contracts/library-v3";
 
-export async function materializeLibraryComposition(input: unknown, admin?: AdminContext, compact = false) {
+export async function materializeLibraryComposition(input: unknown, admin?: AdminContext, compact = false, classified = false) {
   if (!admin) await requireAdmin();
-  const parsed = libraryCommandSchema.safeParse(input);
+  const classifiedInput = classified ? libraryCommandV3Schema.safeParse(input) : null;
+  if (classified && (!classifiedInput?.success || classifiedInput.data.action !== "materialize")) throw new LibraryCommandError(422);
+  const original = classifiedInput?.success ? Object.fromEntries(Object.entries(classifiedInput.data).filter(([key]) => key !== "protocolVersion")) : input;
+  const parsed = libraryCommandSchema.safeParse(original);
   if (!parsed.success || parsed.data.action !== "materialize") throw new LibraryCommandError(422);
   const command = parsed.data;
   const client = await createServerSupabaseClient();
@@ -62,8 +66,9 @@ export async function materializeLibraryComposition(input: unknown, admin?: Admi
     step = checkedStep(response);
   }
   if (step.state !== "ready") return compositionProgressSchema.parse({ ...step, kind: "materializing", requestId: command.requestId, templateId: command.templateId });
-  const response = await client.rpc(compact ? "get_vocabulary_composition_summary_v2" : "get_vocabulary_composition_summary_v1", { p_version_id: command.versionId });
-  const result = (compact ? libraryCommandV2ResultSchema : libraryCommandResultSchema).safeParse(response.data);
+  const response = await client.rpc(classified ? "get_vocabulary_composition_summary_v3" : compact ? "get_vocabulary_composition_summary_v2" : "get_vocabulary_composition_summary_v1", { p_version_id: command.versionId });
+  const result = (classified ? libraryCommandV3ResultSchema : compact ? libraryCommandV2ResultSchema : libraryCommandResultSchema).safeParse(response.data);
   if (response.error || !result.success || !("template" in result.data) || result.data.template.id !== command.templateId || result.data.createdBook?.versionId !== command.versionId || result.data.createdBook.contentHash !== command.contentHash || result.data.createdBook.dataset.id !== datasetId) throw new LibraryCommandError(503);
+  if (classified && "templateKind" in result.data.template && "templateKind" in result.data.createdBook.dataset && result.data.template.templateKind !== result.data.createdBook.dataset.templateKind) throw new LibraryCommandError(503);
   return result.data;
 }

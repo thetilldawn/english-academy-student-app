@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen, fireEvent, waitFor, cleanup, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { libraryQuerySchema, type LibraryCriteria } from "../contracts/library-query";
-import type { LibraryCommandV2 as LibraryCommand } from "../contracts/library-command-v2";
+import type { LibraryWriteCommand as LibraryCommand, TemplateKind } from "../contracts/library-v3";
 import { queryFixture, versionSummary } from "./library-query.fixture";
 import { WordbookLibrary } from "./wordbook-library";
 import { EMPTY_LIBRARY_FILTERS, type LibraryCatalog, type LibraryTemplate } from "../contracts/library";
@@ -19,7 +19,7 @@ function data(): LibraryCatalog {
 }
 const metadata = { title: "가짜 기말 템플릿", tags: ["직전 대비"], school: "가짜고", targetGrade: "g11", schoolYear: 2026, semester: 2 as const, assessment: "기말", purpose: "시험 준비" };
 function existing(): LibraryTemplate {
-  return { id: id(50), revision: 2, metadata, versions: [{ id: id(52), number: 2, contentHash: "e".repeat(64),
+  return { id: id(50), revision: 2, metadata: { ...metadata, tags: [...metadata.tags] }, versions: [{ id: id(52), number: 2, contentHash: "e".repeat(64),
     recipe: { filters: EMPTY_LIBRARY_FILTERS, scopes: [{ id: id(2), version: "a".repeat(64) }], excludedOccurrenceKeys: [], scopeStatus: "confirmed" },
     includedKeys: ["2".repeat(64)], sourceCount: 1, sourceVersionId: id(51), datasetId: null, createdAt: "2026-09-20T01:00:00Z" },
   { id: id(51), number: 1, contentHash: "f".repeat(64), recipe: { filters: EMPTY_LIBRARY_FILTERS, scopes: [], excludedOccurrenceKeys: [], scopeStatus: "unconfirmed" },
@@ -27,20 +27,21 @@ function existing(): LibraryTemplate {
 }
 
 let catalog: LibraryCatalog, postFailure = 0, getFailure = 0;
+const templateKinds = new Map<string, TemplateKind | null>();
 const requests: LibraryCommand[] = [], queries: string[] = [], savedCriteria = new Map<string, LibraryCriteria>();
-const summary = (t: LibraryTemplate) => ({ id:t.id, revision:t.revision, metadata:t.metadata, latestVersion:versionSummary(t.versions[0]!,savedCriteria.has(t.versions[0]!.id)) });
+const summary = (t: LibraryTemplate) => ({ id:t.id, revision:t.revision, metadata:t.metadata, templateKind:templateKinds.get(t.id) ?? null, latestVersion:versionSummary(t.versions[0]!,savedCriteria.has(t.versions[0]!.id)) });
 function useCriteria(years: number[] = []) {
   return { groups:[{ id:"mock",kind:"mock" as const,datasetId:null,mode:"filter" as const,filters:{...EMPTY_LIBRARY_FILTERS,kinds:["mock" as const],years},scopes:[],excludedScopeKeys:[] }],excludedOccurrenceKeys:[],scopeStatus:"confirmed" as const };
 }
 beforeEach(() => {
   HTMLDialogElement.prototype.showModal = function () { this.open = true; };
   HTMLDialogElement.prototype.close = function () { this.open = false; };
-  catalog=data();postFailure=0;getFailure=0;requests.length=0;queries.length=0;savedCriteria.clear();
+  catalog=data();postFailure=0;getFailure=0;requests.length=0;queries.length=0;savedCriteria.clear();templateKinds.clear();
   vi.stubGlobal("fetch",vi.fn(async (url,init) => {
     if(String(url).endsWith("/query")) {
       const q=libraryQuerySchema.parse(JSON.parse(init.body)); queries.push(q.kind);
       if(getFailure) return new Response("{}",{status:getFailure});
-      try { return Response.json(queryFixture(q,catalog,savedCriteria)); } catch { return new Response("{}",{status:409}); }
+      try { return Response.json(queryFixture(q,catalog,savedCriteria,templateKinds)); } catch { return new Response("{}",{status:409}); }
     }
     const c=JSON.parse(init.body) as LibraryCommand;requests.push(c);
     if(postFailure) { const status=postFailure;postFailure=0;return new Response("{}",{status}); }
@@ -53,9 +54,10 @@ beforeEach(() => {
       base.versions=c.action==="create"?[v]:[v,...base.versions];if(c.criteria)savedCriteria.set(v.id,c.criteria);
     } else if(c.action==="metadata") { base.metadata=c.metadata;base.revision=c.expectedRevision+1; }
     else if(c.action==="copy") { const source=catalog.templates.flatMap(t=>t.versions).find(v=>v.id===c.sourceVersionId)!;base.id=id(60);base.metadata=c.metadata;base.revision=1;base.versions=[{...source,id:id(61),number:1,sourceVersionId:source.id}]; }
+    if("templateKind" in c) templateKinds.set(base.id,c.templateKind);
     catalog.templates=[base,...catalog.templates.filter(t=>t.id!==base.id)];
     if(c.action==="materialize") return Response.json({template:summary(base),createdBook:{versionId:c.versionId,contentHash:c.contentHash,dataset:{
-      id:id(80),title:base.metadata.title,displayName:base.metadata.title,edition:null,catalogGroup:"high",materialKind:"wordbook",gradeCode:"g11",publisher:null,seriesTitle:null,
+      templateKind:templateKinds.get(base.id) ?? null,id:id(80),title:base.metadata.title,displayName:base.metadata.title,edition:null,catalogGroup:"high",materialKind:"wordbook",gradeCode:"g11",publisher:null,seriesTitle:null,
       academicYear:2026,curriculumRevision:null,editionLabel:null,isAssignable:true,catalogSortIndex:0,schoolName:"가짜고",schoolClassification:"school",purpose:"exam_prep",semester:2,
       isActive:true,rowCount:4,status:"ready",questionBankKind:"vocabulary_composition_v1",availableQuestionModes:["book_meaning_choice","canonical_definition_to_headword"],
     }}});
@@ -66,10 +68,11 @@ afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 async function start(addMock=true) {
   render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByText("이 조건에 맞는 템플릿이 없습니다.");
   fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));
+  fireEvent.click(screen.getByRole("tab",{name:"직전대비"}));
   fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"나의 템플릿"}});
   if(addMock) {fireEvent.click(screen.getByRole("button",{name:"모의고사 추가"}));await screen.findByLabelText("시행연도 구간 시작");await waitFor(()=>expect(screen.getByRole("button",{name:"템플릿 저장"})).toBeEnabled());}
 }
-async function openExisting(mode="이름·대상 수정",onSaved?:()=>void) {
+async function openExisting(mode="이름·종류·대상 수정",onSaved?:()=>void) {
   render(<WordbookLibrary onBack={vi.fn()} onSaved={onSaved} />);await screen.findByRole("heading",{name:catalog.templates[0]!.metadata.title});
   fireEvent.click(screen.getByRole("button",{name:mode}));await screen.findByLabelText("템플릿 이름");
 }
@@ -85,6 +88,70 @@ function addTextbook() {
   s.occurrences = [{ ...s.occurrences[0]!,key:"5".repeat(64),sourceEntryId:5 }]; catalog.scopes.push(s);
 }
 describe("library editor with on-demand query boundaries", () => {
+  it("requires a deliberate kind and preserves title, hidden target and mixed source groups across all tabs",async()=>{
+    addTextbook();await start();fireEvent.change(screen.getByLabelText("학교"),{target:{value:"보존할 학교"}});
+    fireEvent.click(screen.getByRole("button",{name:"교과서 추가"}));await screen.findByLabelText("자료 선택");fireEvent.change(screen.getByLabelText("자료 선택"),{target:{value:id(15)}});await screen.findByText(/담은 범위 4개/);
+    for(const label of ["수행평가","모의고사","기타","직전대비"]){
+      fireEvent.click(screen.getByRole("tab",{name:label}));expect(screen.getByLabelText("템플릿 이름")).toHaveValue("나의 템플릿");expect(screen.queryByLabelText("시행연도 구간 시작")).not.toBeInTheDocument();expect(screen.getByRole("button",{name:/1. 모의고사/})).toBeVisible();expect(screen.getByRole("button",{name:/2. 교과서/})).toBeVisible();
+      if(label==="모의고사"||label==="기타")expect(screen.queryByLabelText("학교")).not.toBeInTheDocument();
+    }
+    expect(screen.getByLabelText("학교")).toHaveValue("보존할 학교");await clickSave();await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests[0]).toMatchObject({protocolVersion:3,templateKind:"exam_prep",recipe:{scopes:expect.arrayContaining([{id:id(5),version:"a".repeat(64)}])}});
+  });
+  it("keeps an old selected version in summary and excludes latest tags from its source display",async()=>{
+    const t=existing();t.metadata={...metadata,tags:["최신 2026년 태그"]};t.versions[1]={...t.versions[1]!,recipe:{...t.versions[0]!.recipe,scopes:[{id:id(1),version:"a".repeat(64)}]},includedKeys:["1".repeat(64)],sourceCount:1};catalog.templates=[t];
+    render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByText("분류 확인 · 시험 준비");fireEvent.click(screen.getByText("이전 저장 버전 보기"));await screen.findByLabelText(`${metadata.title} 저장 버전`);fireEvent.change(screen.getByLabelText(`${metadata.title} 저장 버전`),{target:{value:id(51)}});
+    await waitFor(()=>expect(screen.getByLabelText("선택한 판의 자료 태그")).toHaveTextContent("2024년 모고"));expect(screen.getByLabelText("선택한 판의 자료 태그")).not.toHaveTextContent("2026");
+    fireEvent.click(screen.getByRole("button",{name:"구성 요약 보기"}));await screen.findByText("분류 확인 · 선택한 1판");expect(screen.queryByLabelText("시행연도 구간 시작")).not.toBeInTheDocument();expect(screen.getByLabelText("템플릿 이름")).toBeDisabled();
+    fireEvent.click(screen.getByRole("button",{name:"이름·종류 수정"}));fireEvent.click(screen.getByRole("tab",{name:"수행평가"}));await clickSave();await screen.findByText("수행평가 · 선택한 1판");expect(requests).toHaveLength(1);expect(requests[0]).toMatchObject({action:"metadata",templateKind:"performance_assessment"});expect(screen.getByLabelText("선택한 판의 자료 태그")).toHaveTextContent("2024년 모고");
+  });
+  it("keeps metadata-only changes out of live filter regeneration and materializes the selected saved version",async()=>{
+    catalog.templates=[existing()];savedCriteria.set(id(52),useCriteria());await openExisting("이 범위로 단어장 만들기");await screen.findByLabelText(/조건에 맞는 자료가 달라졌습니다/);
+    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"이름만 변경"}});await clickSave("확인한 범위로 단어장 만들기");
+    await waitFor(()=>expect(requests.map(r=>r.action)).toEqual(["metadata","materialize"]));expect(requests[1]).toMatchObject({versionId:id(52),contentHash:"e".repeat(64)});
+  });
+  it("allows a range edit after renaming and preserves manual tags when saving the new range",async()=>{
+    const t=existing();t.metadata.tags=["보충 필요"];catalog.templates=[t];await openExisting("범위 바꾸기");
+    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"이름과 범위 변경"}});
+    fireEvent.click(screen.getByRole("button",{name:"모의고사 추가"}));await screen.findByLabelText("시행연도 구간 시작");
+    await clickSave("새 버전 저장");await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests[0]).toMatchObject({action:"version",metadata:{title:"이름과 범위 변경",tags:expect.arrayContaining(["보충 필요"])},recipe:{scopes:expect.arrayContaining([{id:id(1),version:"a".repeat(64)},{id:id(2),version:"a".repeat(64)}])}});
+  });
+  it.each(["order","exclude"])("edits the displayed saved scope after renaming without importing live additions: %s",async action=>{
+    const t=existing();t.versions[0]!.recipe.scopes=[{id:id(1),version:"a".repeat(64)},{id:id(3),version:"a".repeat(64)}];t.versions[0]!.includedKeys=["1".repeat(64),"3".repeat(64)];t.versions[0]!.sourceCount=2;
+    catalog.scopes[0]!.occurrences[0]!.headword="firstfake";catalog.templates=[t];savedCriteria.set(id(52),useCriteria());await openExisting("범위 바꾸기");await screen.findByText(/담은 범위 3개/);
+    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"저장판에서만 변경"}});await screen.findByText(/담은 범위 2개/);
+    if(action==="order"){fireEvent.click(screen.getByText("담은 범위와 순서 확인"));fireEvent.click(await screen.findByRole("button",{name:/2026.*앞으로/}));}
+    else{fireEvent.click(screen.getByText("단어별 포함·제외"));fireEvent.click(await screen.findByLabelText(/firstfake/));}
+    await clickSave("새 버전 저장");await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests[0]).toMatchObject({action:"version",recipe:{scopes:(action==="order"?[3,1]:[1,3]).map(n=>({id:id(n),version:"a".repeat(64)})),excludedOccurrenceKeys:action==="exclude"?["1".repeat(64)]:[]}});
+  });
+  it.each(["이름·종류·대상 수정","이 범위로 단어장 만들기"])("keeps the selected old version through a metadata conflict in %s",async mode=>{
+    const t=existing();t.versions[1]={...t.versions[1]!,recipe:{...t.versions[0]!.recipe,scopes:[{id:id(1),version:"a".repeat(64)}]},includedKeys:["1".repeat(64)],sourceCount:1};catalog.templates=[t];
+    render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByRole("heading",{name:metadata.title});
+    fireEvent.click(screen.getByText("이전 저장 버전 보기"));await screen.findByLabelText(`${metadata.title} 저장 버전`);fireEvent.change(screen.getByLabelText(`${metadata.title} 저장 버전`),{target:{value:id(51)}});
+    fireEvent.click(screen.getByRole("button",{name:mode}));await screen.findByText("분류 확인 · 선택한 1판");
+    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"과거 판의 이름 변경"}});postFailure=409;
+    const button=mode==="이 범위로 단어장 만들기"?"확인한 범위로 단어장 만들기":"템플릿 저장";await clickSave(button);
+    await screen.findByText("자료가 변경되었습니다. 변경 내용을 다시 확인해 주세요.");catalog.templates[0]!.revision=3;catalog.templates[0]!.metadata={...t.metadata,title:"다른 곳의 변경"};
+    fireEvent.click(screen.getByRole("button",{name:"최신 자료 다시 확인"}));await screen.findByText("다른 곳의 변경");
+    fireEvent.click(screen.getByRole("button",{name:"현재 입력을 최신 버전에 이어서 검토"}));expect(screen.getByText("분류 확인 · 선택한 1판")).toBeVisible();
+    expect(screen.getByLabelText("선택한 판의 자료 태그")).toHaveTextContent("2024년 모고");await clickSave(button);
+    await waitFor(()=>expect(requests).toHaveLength(mode==="이 범위로 단어장 만들기"?3:2));expect(requests[1]).toMatchObject({action:"metadata",expectedRevision:3});
+    if(mode==="이 범위로 단어장 만들기")expect(requests[2]).toMatchObject({action:"materialize",versionId:id(51),contentHash:"f".repeat(64)});
+  });
+  it("leaves a visible callback-only retry after metadata is saved",async()=>{
+    catalog.templates=[existing()];const refresh=vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(undefined);
+    render(<WordbookLibrary onBack={vi.fn()} onLibraryChanged={refresh} />);await screen.findByRole("button",{name:"이름·종류·대상 수정"});fireEvent.click(screen.getByRole("button",{name:"이름·종류·대상 수정"}));await screen.findByLabelText("템플릿 이름");
+    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"저장된 이름"}});await clickSave();await screen.findByText("저장은 완료됐습니다. 목록 갱신을 다시 확인해 주세요.");
+    fireEvent.click(screen.getByRole("button",{name:"같은 내용으로 저장 확인"}));await waitFor(()=>expect(refresh).toHaveBeenCalledTimes(2));expect(requests).toHaveLength(1);expect(screen.getByLabelText("템플릿 이름")).toHaveValue("저장된 이름");
+  });
+  it("does not treat a missing kind as other when saving an unconfirmed template",async()=>{
+    render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByText("이 조건에 맞는 템플릿이 없습니다.");fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));
+    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"범위 미정 틀"}});fireEvent.click(screen.getByLabelText("범위를 나중에 정할 예정입니다"));
+    expect(screen.getByRole("button",{name:"템플릿 저장"})).toBeDisabled();expect(screen.getByText("만들 단어장 종류를 골라 주세요.")).toBeVisible();fireEvent.click(screen.getByRole("tab",{name:"기타"}));await clickSave();await screen.findByText("템플릿을 저장했습니다.");
+    fireEvent.click(await screen.findByRole("button",{name:"구성 요약 보기"}));await screen.findByText("기타 · 선택한 1판");expect(screen.getByRole("button",{name:"이 범위 사용"})).toBeDisabled();expect(requests[0]).toMatchObject({templateKind:"other",recipe:{scopeStatus:"unconfirmed",scopes:[]}});
+  });
   it("fetches another template page only on demand and resets to a new search", async () => {
     catalog.templates=Array.from({length:25},(_,i)=>({...existing(),id:id(100+i),metadata:{...metadata,title:`가짜 목록 ${String(i+1).padStart(2,"0")}`}}));
     render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByRole("heading",{name:"가짜 목록 20"});expect(screen.queryByRole("heading",{name:"가짜 목록 21"})).not.toBeInTheDocument();
@@ -100,7 +167,7 @@ describe("library editor with on-demand query boundaries", () => {
   it("requests only template summaries initially and reads versions and details on opening", async () => {
     catalog.templates=[existing()];render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByRole("heading",{name:metadata.title});
     expect(queries).toEqual(["templates"]);fireEvent.click(screen.getByText("이전 저장 버전 보기"));await screen.findByLabelText(`${metadata.title} 저장 버전`);
-    expect(queries).toEqual(["templates","versions"]);fireEvent.click(screen.getByRole("button",{name:"이름·대상 수정"}));await screen.findByLabelText("템플릿 이름");
+    expect(queries).toEqual(["templates","versions"]);fireEvent.click(screen.getByRole("button",{name:"이름·종류·대상 수정"}));await screen.findByLabelText("템플릿 이름");
     expect(queries).toContain("detail");expect(queries).not.toContain("words");expect(queries).not.toContain("scopes");
   });
   it("preserves manual student targets and ranges when the initial student context changes", async () => {
@@ -113,21 +180,21 @@ describe("library editor with on-demand query boundaries", () => {
   });
   it("keeps a saved template target even if another student's defaults arrive", async () => {
     catalog.templates=[existing()];const onBack=vi.fn();const {rerender}=render(<WordbookLibrary onBack={onBack} initialTarget={{school:"다른고",targetGrade:"g12",semester:1,schoolYear:2027}} />);
-    await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"이름·대상 수정"}));await screen.findByLabelText("학교");
+    await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"이름·종류·대상 수정"}));await screen.findByLabelText("학교");
     rerender(<WordbookLibrary onBack={onBack} initialTarget={{school:"새 학교",targetGrade:"g10",semester:1,schoolYear:2028}} />);
     expect(screen.getByLabelText("학교")).toHaveValue(metadata.school);expect(screen.getByLabelText("사용 대상 학년")).toHaveValue(metadata.targetGrade);expect(requests).toHaveLength(0);
   });
   it("keeps exact correlated legacy references without inferring filters or dirtying the draft", async () => {
     addGist();const t=existing();t.versions[0]!.recipe.scopes=[catalog.scopes[0]!,catalog.scopes[3]!].map(s=>({id:s.id,version:s.version}));catalog.templates=[t];
     const dirty=vi.fn();render(<WordbookLibrary onBack={vi.fn()} onDirtyChange={dirty} />);await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"범위 바꾸기"}));
-    await screen.findByText(/직접 선택해 저장한 범위와 순서를 유지/);await screen.findByText(/담은 범위 2개/);expect(screen.queryByRole("group",{name:"유형"})).not.toBeInTheDocument();expect(dirty).not.toHaveBeenCalledWith(true);expect(requests).toHaveLength(0);
+    await screen.findByRole("button",{name:/1. 저장된 개별 범위/});fireEvent.click(screen.getByRole("button",{name:/1. 저장된 개별 범위/}));await screen.findByText(/직접 선택해 저장한 범위와 순서를 유지/);await screen.findByText(/담은 범위 2개/);expect(screen.queryByRole("group",{name:"유형"})).not.toBeInTheDocument();expect(dirty).not.toHaveBeenCalledWith(true);expect(requests).toHaveLength(0);
   });
   it("normalizes whitespace for preview and save while retaining legacy tags", async () => {
     catalog.templates=[{...existing(),metadata:{...metadata,tags:["꼭 외우기"]}}];await openExisting();
     fireEvent.change(screen.getByLabelText("학교"),{target:{value:"   "}});await clickSave();await screen.findByText("템플릿을 저장했습니다.");
     expect(requests[0]).toMatchObject({metadata:{school:null,tags:expect.arrayContaining(["꼭 외우기"])}});
-    fireEvent.change(screen.getByLabelText("템플릿 검색"),{target:{value:"꼭 외우기 2학기"}});await screen.findByRole("heading",{name:metadata.title});
-    fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));fireEvent.click(screen.getByRole("button",{name:"모의고사 추가"}));fireEvent.change(screen.getByLabelText("용도 (선택)"),{target:{value:"   "}});
+    fireEvent.click(screen.getByRole("button",{name:"저장한 템플릿 찾기"}));fireEvent.change(screen.getByLabelText("템플릿 검색"),{target:{value:"꼭 외우기 2학기"}});await screen.findByRole("heading",{name:metadata.title});
+    fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));fireEvent.click(screen.getByRole("button",{name:"모의고사 추가"}));fireEvent.change(screen.getByLabelText("종류 설명 (선택)"),{target:{value:"   "}});fireEvent.click(screen.getByRole("tab",{name:"직전대비"}));
     await screen.findByText(/담은 범위 3개/);await waitFor(()=>expect(screen.getByRole("button",{name:"템플릿 저장"})).toBeEnabled());
   });
   it("blocks empty confirmed scopes and displays required errors beside inputs", async () => {
@@ -137,16 +204,16 @@ describe("library editor with on-demand query boundaries", () => {
   });
   it("recalculates inclusive year ranges and preserves the prior selection during invalid input", async () => {
     await start();fireEvent.change(screen.getByLabelText("시행연도 구간 시작"),{target:{value:"2024"}});fireEvent.change(screen.getByLabelText("시행연도 구간 끝"),{target:{value:"2025"}});
-    await screen.findByText(/담은 범위 2개.*포함 2개/);fireEvent.change(screen.getByLabelText("시행연도 구간 시작"),{target:{value:"2026"}});
+    await screen.findByText(/담은 범위 2개.*포함 항목 2개/);fireEvent.change(screen.getByLabelText("시행연도 구간 시작"),{target:{value:"2026"}});
     expect(screen.getByRole("button",{name:"템플릿 저장"})).toBeDisabled();expect(screen.getByText(/담은 범위 2개/)).toBeVisible();
-    fireEvent.change(screen.getByLabelText("시행연도 구간 끝"),{target:{value:"2026"}});await screen.findByText(/담은 범위 1개.*포함 1개/);await clickSave();await screen.findByText("템플릿을 저장했습니다.");
+    fireEvent.change(screen.getByLabelText("시행연도 구간 끝"),{target:{value:"2026"}});await screen.findByText(/담은 범위 1개.*포함 항목 1개/);await clickSave();await screen.findByText("템플릿을 저장했습니다.");
     expect(requests[0]).toMatchObject({action:"create",criteria:{groups:[{mode:"filter",filters:{yearFrom:2026,yearTo:2026}}]},recipe:{scopes:[{id:id(3)}]}});
   });
   it("clears obsolete question constraints when switching type and preserves another textbook group", async () => {
     addGist();addTextbook();await start();fireEvent.click(screen.getByRole("button",{name:"주제"}));fireEvent.click(screen.getByText("문제번호로 더 좁히기"));fireEvent.click(screen.getByRole("button",{name:"23번"}));
     fireEvent.click(screen.getByRole("button",{name:"교과서 추가"}));await screen.findByLabelText("자료 선택");fireEvent.change(screen.getByLabelText("자료 선택"),{target:{value:id(15)}});await screen.findByRole("group",{name:"교과서 과"});
     expect(screen.queryByLabelText("시행연도 구간 시작")).not.toBeInTheDocument();fireEvent.click(screen.getByRole("button",{name:/1. 모의고사/}));await screen.findByRole("button",{name:"요지"});
-    fireEvent.click(screen.getByRole("button",{name:"요지"}));fireEvent.click(screen.getByRole("button",{name:"주제"}));await screen.findByText(/담은 범위 2개.*포함 2개/);await clickSave();await screen.findByText("템플릿을 저장했습니다.");
+    fireEvent.click(screen.getByRole("button",{name:"요지"}));fireEvent.click(screen.getByRole("button",{name:"주제"}));await screen.findByText(/담은 범위 2개.*포함 항목 2개/);await clickSave();await screen.findByText("템플릿을 저장했습니다.");
     expect(requests[0]).toMatchObject({recipe:{scopes:[{id:id(4)},{id:id(5)}]},criteria:{groups:[{filters:{types:["gist"],questions:[]}},{kind:"textbook"}]}});
   });
   it("shows CSAT academic years and registered long reading without November or DAY inputs", async () => {
@@ -172,7 +239,7 @@ describe("library editor with on-demand query boundaries", () => {
   });
   it("suggests automatic tags and keeps a manually edited title through filter changes", async () => {
     await start();fireEvent.click(screen.getByRole("button",{name:"범위에 맞는 이름 다시 제안"}));await waitFor(()=>expect((screen.getByLabelText("템플릿 이름") as HTMLInputElement).value).toContain("2024~2026년 모고"));
-    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"우리 반 주제"}});fireEvent.click(screen.getByRole("button",{name:"2024년"}));await waitFor(()=>expect(screen.getByLabelText("자동 태그")).toHaveTextContent("2024년 모고"));expect(screen.getByLabelText("템플릿 이름")).toHaveValue("우리 반 주제");
+    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"우리 반 주제"}});fireEvent.click(screen.getByRole("button",{name:"2024년"}));await waitFor(()=>expect(screen.getByLabelText("선택한 판의 자료 태그")).toHaveTextContent("2024년 모고"));expect(screen.getByLabelText("템플릿 이름")).toHaveValue("우리 반 주제");
   });
   it("protects drafts across tabs and resets after explicit discard", async () => {
     await start();fireEvent.click(screen.getByRole("button",{name:"저장한 템플릿 찾기"}));fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));expect(screen.getByRole("alertdialog")).toBeVisible();fireEvent.click(screen.getByRole("button",{name:"계속 작성"}));
@@ -189,7 +256,7 @@ describe("library editor with on-demand query boundaries", () => {
   it("discards another draft before opening a saved template and waits for a deliberate creation click", async () => {
     catalog.templates=[existing()];render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));fireEvent.click(screen.getByRole("button",{name:"모의고사 추가"}));fireEvent.click(screen.getByRole("button",{name:"저장한 템플릿 찾기"}));fireEvent.click(screen.getByRole("button",{name:"이 범위로 단어장 만들기"}));
     expect(requests).toHaveLength(0);fireEvent.click(screen.getByRole("button",{name:"변경 내용을 버리고 이동"}));await screen.findByLabelText("템플릿 이름");await screen.findByText(/담은 범위 1개/);expect(requests).toHaveLength(0);await clickSave("확인한 범위로 단어장 만들기");await waitFor(()=>expect(requests.at(-1)?.action).toBe("materialize"));
-    expect(requests.find(r=>r.action==="version")).toMatchObject({recipe:{scopes:[{id:id(2)}]}});
+    expect(requests.map(r=>r.action)).toEqual(["materialize"]);expect(requests[0]).toMatchObject({versionId:id(52),contentHash:"e".repeat(64)});
   });
   it("retries only the local assignment connection after a confirmed book callback fails", async () => {
     catalog.templates=[existing()];const onSaved=vi.fn().mockRejectedValueOnce(new Error("local callback")).mockResolvedValue(undefined);await openExisting("이 범위로 단어장 만들기",onSaved);await clickSave("확인한 범위로 단어장 만들기");await screen.findByText("단어장은 저장됐습니다. 다시 눌러 시험 설정에 연결해 주세요.");
@@ -204,8 +271,8 @@ describe("library editor with on-demand query boundaries", () => {
     fireEvent.click(screen.getByRole("button",{name:"같은 내용으로 저장 확인"}));await screen.findByText("템플릿을 저장했습니다.");expect(requests[0]).toEqual(requests[1]);
   });
   it("edits metadata without a range command then copies an old unconfirmed version", async () => {
-    catalog.templates=[existing()];await openExisting();fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"가짜 이름 변경"}});await clickSave();await screen.findByText("템플릿을 저장했습니다.");await screen.findByRole("heading",{name:"가짜 이름 변경"});expect(requests[0]).toMatchObject({action:"metadata",expectedRevision:2});expect(requests[0]).not.toHaveProperty("recipe");
-    fireEvent.click(screen.getByText("이전 저장 버전 보기"));await screen.findByLabelText("가짜 이름 변경 저장 버전");fireEvent.change(screen.getByLabelText("가짜 이름 변경 저장 버전"),{target:{value:id(51)}});fireEvent.click(screen.getByText("이전 저장 버전 보기"));await waitFor(()=>expect(screen.queryByLabelText("가짜 이름 변경 저장 버전")).not.toBeInTheDocument());expect(screen.getByRole("button",{name:"이 범위로 단어장 만들기"})).toBeDisabled();fireEvent.click(screen.getByRole("button",{name:"복사"}));await screen.findByLabelText("템플릿 이름");await clickSave();await waitFor(()=>expect(requests[1]).toMatchObject({action:"copy",sourceVersionId:id(51)}));
+    catalog.templates=[existing()];await openExisting();fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"가짜 이름 변경"}});await clickSave();await screen.findByText("템플릿을 저장했습니다.");fireEvent.click(screen.getByRole("button",{name:"저장한 템플릿 찾기"}));await screen.findByRole("heading",{name:"가짜 이름 변경"});expect(requests[0]).toMatchObject({action:"metadata",expectedRevision:2});expect(requests[0]).not.toHaveProperty("recipe");
+    fireEvent.click(screen.getByText("이전 저장 버전 보기"));await screen.findByLabelText("가짜 이름 변경 저장 버전");fireEvent.change(screen.getByLabelText("가짜 이름 변경 저장 버전"),{target:{value:id(51)}});fireEvent.click(screen.getByText("이전 저장 버전 보기"));await waitFor(()=>expect(screen.queryByLabelText("가짜 이름 변경 저장 버전")).not.toBeInTheDocument());expect(screen.getByRole("button",{name:"이 범위로 단어장 만들기"})).toBeDisabled();fireEvent.click(screen.getByRole("button",{name:"복사"}));await screen.findByLabelText("템플릿 이름");fireEvent.click(screen.getByRole("tab",{name:"기타"}));await clickSave();await waitFor(()=>expect(requests[1]).toMatchObject({action:"copy",sourceVersionId:id(51)}));
   });
   it("distinguishes query failures from empty data and hides private fields after authorization failure", async () => {
     getFailure=503;render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByText("자료를 불러오지 못했습니다. 다시 시도해 주세요.");expect(screen.queryByText("이 조건에 맞는 템플릿이 없습니다.")).not.toBeInTheDocument();getFailure=401;fireEvent.click(screen.getByRole("button",{name:"다시 불러오기"}));await screen.findByText(/처음 저장한 관리자 계정으로 로그인한 뒤 확인/);expect(screen.queryByLabelText("템플릿 검색")).not.toBeInTheDocument();
@@ -251,17 +318,17 @@ describe("library editor with on-demand query boundaries", () => {
     }));
     fireEvent.click(screen.getByRole("button",{name:"최신 자료 다시 확인"}));await waitFor(()=>expect(signal).toBeDefined());
     fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));fireEvent.click(screen.getByRole("button",{name:"변경 내용을 버리고 이동"}));expect(signal?.aborted).toBe(true);
-    catalog.templates[0]!.revision=3;await act(async()=>finish(Response.json(queryFixture({kind:"detail",templateId:id(50)},catalog,savedCriteria))));
+    catalog.templates[0]!.revision=3;await act(async()=>finish(Response.json(queryFixture({kind:"detail",templateId:id(50)},catalog,savedCriteria,templateKinds))));
     expect(screen.getByRole("heading",{name:"새 템플릿"})).toBeVisible();expect(screen.queryByRole("button",{name:"현재 입력을 최신 버전에 이어서 검토"})).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"새 구성"}});fireEvent.click(screen.getByRole("button",{name:"모의고사 추가"}));await clickSave();await screen.findByText("템플릿을 저장했습니다.");expect(requests.at(-1)?.action).toBe("create");
+    fireEvent.click(screen.getByRole("tab",{name:"기타"}));fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"새 구성"}});fireEvent.click(screen.getByRole("button",{name:"모의고사 추가"}));await clickSave();await screen.findByText("템플릿을 저장했습니다.");expect(requests.at(-1)?.action).toBe("create");
   });
   it("does not let a delayed list success reopen an authentication failure", async () => {
-    catalog.templates=[existing()];const capture1=()=>vi.fn();const {rerender}=render(<WordbookLibrary onBack={vi.fn()} captureAuthenticationFailure={capture1} />);await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"이름·대상 수정"}));await screen.findByLabelText("템플릿 이름");
+    catalog.templates=[existing()];const capture1=()=>vi.fn();const {rerender}=render(<WordbookLibrary onBack={vi.fn()} captureAuthenticationFailure={capture1} />);await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"이름·종류·대상 수정"}));await screen.findByLabelText("템플릿 이름");
     const original=fetch;let finish:(r:Response)=>void=()=>undefined;vi.stubGlobal("fetch",vi.fn((url,init)=>String(url).endsWith("/query")?new Promise<Response>(resolve=>{finish=resolve;}):original(url,init)));rerender(<WordbookLibrary onBack={vi.fn()} captureAuthenticationFailure={()=>vi.fn()} />);
-    await act(async()=>{await new Promise(resolve=>setTimeout(resolve,300));});postFailure=401;await clickSave();await screen.findByRole("button",{name:"로그인 후 다시 확인"});await act(async()=>finish(Response.json(queryFixture(libraryQuerySchema.parse({kind:"templates",search:""}),catalog,savedCriteria))));expect(screen.queryByLabelText("템플릿 이름")).not.toBeInTheDocument();
+    await act(async()=>{await new Promise(resolve=>setTimeout(resolve,300));});postFailure=401;await clickSave();await screen.findByRole("button",{name:"로그인 후 다시 확인"});await act(async()=>finish(Response.json(queryFixture(libraryQuerySchema.parse({kind:"templates",search:""}),catalog,savedCriteria,templateKinds))));expect(screen.queryByLabelText("템플릿 이름")).not.toBeInTheDocument();
   });
   it("can retry an uncertain write despite a delayed list failure", async () => {
-    catalog.templates=[existing()];const capture1=()=>vi.fn();const {rerender}=render(<WordbookLibrary onBack={vi.fn()} captureAuthenticationFailure={capture1} />);await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"이름·대상 수정"}));await screen.findByLabelText("템플릿 이름");
+    catalog.templates=[existing()];const capture1=()=>vi.fn();const {rerender}=render(<WordbookLibrary onBack={vi.fn()} captureAuthenticationFailure={capture1} />);await screen.findByRole("heading",{name:metadata.title});fireEvent.click(screen.getByRole("button",{name:"이름·종류·대상 수정"}));await screen.findByLabelText("템플릿 이름");
     const original=fetch;let finish:(r:Response)=>void=()=>undefined;vi.stubGlobal("fetch",vi.fn((url,init)=>String(url).endsWith("/query")?new Promise<Response>(resolve=>{finish=resolve;}):original(url,init)));rerender(<WordbookLibrary onBack={vi.fn()} captureAuthenticationFailure={()=>vi.fn()} />);await act(async()=>{await new Promise(resolve=>setTimeout(resolve,300));});
     postFailure=503;await clickSave();await screen.findByRole("button",{name:"같은 내용으로 저장 확인"});await act(async()=>finish(new Response("{}",{status:503})));fireEvent.click(screen.getByRole("button",{name:"같은 내용으로 저장 확인"}));await screen.findByText("템플릿을 저장했습니다.");expect(requests[0]).toEqual(requests[1]);
   });

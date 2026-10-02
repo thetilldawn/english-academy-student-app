@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Button } from "@/design-system/primitives/button/button";
 import { Input } from "@/design-system/primitives/form/field";
 import { EMPTY_LIBRARY_FILTERS, libraryFiltersSchema } from "../contracts/library";
-import { type LibraryQuery, type LibraryTemplateSummary, type LibraryVersionSummary } from "../contracts/library-query";
+import { type LibraryQuery, type LibraryVersionSummary } from "../contracts/library-query";
+import { templateKindLabel, type ClassifiedTemplateSummary as LibraryTemplateSummary, type ClassifiedLibraryDetail } from "../contracts/library-v3";
 import { type useWordbookLibrary } from "../client/controllers/use-wordbook-library";
 import { useLibraryPage } from "../client/controllers/use-library-page";
 import { libraryScopeLabel, needsBook } from "../domain/library-editor";
@@ -11,6 +12,17 @@ import { LibrarySourceFilters } from "./library-source-filters";
 import styles from "./wordbook-library.module.css";
 
 type Controller = ReturnType<typeof useWordbookLibrary>;
+export function LibraryQuantitySummary({ quantities: q }: { quantities: ClassifiedLibraryDetail["quantities"] | undefined }) {
+  if (!q) return null;
+  return <div className={styles.hint} aria-label="수량의 기준">
+    <p>고유 단어 {q.uniqueWordCount === null ? `확인 필요 (단어 키 미연결 ${q.unknownWordItems}개 항목)` : `${q.uniqueWordCount}개`} · 뜻별 학습 항목 {q.meaningItemCount === null ? `확인 필요 (${q.unknownMeaningItems}개 항목)` : `${q.meaningItemCount}개`}</p>
+    {q.sourceSpecificMeaningItems ? <p>뜻별 학습 항목 중 {q.sourceSpecificMeaningItems}개는 출처별로 구분해 둔 항목입니다.</p> : null}
+    {q.questionCounts ? <details><summary>출제 가능 문항 확인</summary>{q.questionCounts.map(count => <p key={count.mode}>
+      {count.mode === "book_meaning_choice" ? `교재 뜻: 영어→뜻 ${count.englishToKorean}개 / 뜻→영어 ${count.koreanToEnglish}개`
+        : count.mode === "canonical_definition_to_headword" ? `영영풀이→단어 ${count.koreanToEnglish}개` : `단어→영영풀이 ${count.englishToKorean}개`}
+    </p>)}<p>최종 출제 수는 배정할 범위에서 다시 확인합니다.</p></details> : <p>출제 가능 문항: 단어장 생성 후 확인</p>}
+  </div>;
+}
 export function LibraryPageStatus({ page }: { page: { status: string; error: string; reload: () => void } }) {
   return page.status === "loading" ? <p role="status">자료를 불러오는 중…</p> : page.status === "error" ? <div role="alert"><p>{page.error}</p><Button size="small" onClick={page.reload}>다시 불러오기</Button></div> : null;
 }
@@ -26,6 +38,7 @@ export function LibraryRangePanel({ c }: { c: Controller }) {
   const includes = (scope: (typeof rows)[number]) => group.mode === "fixed" ? group.scopes.some(r => r.id === scope.id) : scope.availability === "available" && !group.excludedScopeKeys.includes(scope.scopeKey);
   const all = rows.length > 0 && rows.every(includes);
   return <div className={styles.groupEditor}>
+    <Button size="small" onClick={() => c.actions.selectGroup(null)}>범위 편집 닫기</Button>
     {group.mode === "fixed" ? <p className={styles.hint}>직접 선택해 저장한 범위와 순서를 유지합니다. 다른 자료는 새 묶음으로 추가할 수 있습니다.</p> : <>
       {needsBook(group.kind) ? <Input aria-label="자료명으로 찾기" value={bookSearch} disabled={c.scopesLocked} placeholder="교재 또는 자료명" onChange={e => setBookSearch(e.target.value)} /> : null}
       <LibraryPageStatus page={facets} />
@@ -48,7 +61,7 @@ export function LibraryRangePanel({ c }: { c: Controller }) {
 
 export function LibrarySelectedDetails({ c }: { c: Controller }) {
   const [wordsOpen, setWordsOpen] = useState(false), [rangesOpen, setRangesOpen] = useState(false), [search, setSearch] = useState("");
-  const preview = c.preview.data, frozen = c.editor.mode === "metadata" || c.editor.mode === "copy";
+  const preview = c.preview.data, frozen = ["metadata", "copy", "summary"].includes(c.editor.mode) || c.metadataOnly;
   const recipe = frozen ? c.editor.detail?.recipe : preview?.recipe;
   const wordsQuery: Extract<LibraryQuery, { kind: "words" }> | null = wordsOpen && (frozen || c.preview.status === "ready") && recipe
     ? { kind: "words", ...(frozen && c.editor.detail ? { versionId: c.editor.detail.version.id, contentHash: c.editor.detail.version.contentHash } : { selection: { mode: "recipe", recipe }, contentHash: preview!.contentHash }), search, cursor: null, limit: 50 } : null;
@@ -82,10 +95,13 @@ export function LibraryTemplateCard({ template: t, c, navigate, onDelete }: { te
   const [expanded, setExpanded] = useState(false), [selectedVersion, setSelectedVersion] = useState<LibraryVersionSummary | null>(null);
   const versions = useLibraryPage(expanded ? { kind: "versions", templateId: t.id, cursor: null, limit: 20 } : null, c.viewerId, c.reportError, undefined, c.enabled);
   const v = selectedVersion ?? t.latestVersion;
+  const detail = useLibraryPage(selectedVersion ? { kind: "detail", templateId: t.id, versionId: v.id } : null, c.viewerId, c.reportError, undefined, c.enabled);
   const empty = v.scopeStatus === "confirmed" && v.includedCount === 0;
   return <article className={styles.card}>
-    <h4>{t.metadata.title}</h4><p>{t.metadata.tags.map(tag => <span className={styles.tag} key={tag}>{tag}</span>)}</p>
-    <p>{v.scopeStatus === "unconfirmed" ? "시험 범위가 아직 정해지지 않았습니다." : `${v.number}판 · 범위 ${v.scopeCount}개 · 원자료 ${v.sourceCount}개 · 포함 ${v.includedCount}개`}</p>
+    <h4>{t.metadata.title}</h4><p>{templateKindLabel(t.templateKind)}{t.metadata.purpose ? ` · ${t.metadata.purpose}` : ""}</p>
+    {selectedVersion ? <><LibraryPageStatus page={detail} /><p aria-label="선택한 판의 자료 태그">{detail.data?.sourceTags.map(tag => <span className={styles.tag} key={tag}>{tag}</span>)}</p></> :
+      <p aria-label="저장 태그">{t.metadata.tags.map(tag => <span className={styles.tag} key={tag}>{tag}</span>)}</p>}
+    <p>{v.scopeStatus === "unconfirmed" ? "시험 범위가 아직 정해지지 않았습니다." : `${v.number}판 · 범위 ${v.scopeCount}개 · 원자료 항목 ${v.sourceCount}개 · 포함 항목 ${v.includedCount}개`}</p>
     <details open={expanded} onToggle={e => setExpanded(e.currentTarget.open)}><summary>이전 저장 버전 보기</summary>
       <LibraryPageStatus page={versions} />
       {versions.data ? <label>저장 버전 <select aria-label={`${t.metadata.title} 저장 버전`} value={v.id} disabled={c.locked} onChange={e => setSelectedVersion(versions.data?.items.find(v => v.id === e.target.value) ?? null)}>
@@ -95,7 +111,8 @@ export function LibraryTemplateCard({ template: t, c, navigate, onDelete }: { te
       {versions.data?.nextCursor ? <Button size="small" disabled={versions.status !== "ready"} onClick={versions.more}>이전 버전 20개 더 보기</Button> : null}
     </details>
     <div className={styles.buttons}>
-      <Button size="small" disabled={c.locked} onClick={() => navigate(() => { void c.actions.open(t, t.latestVersion, "metadata"); })}>이름·대상 수정</Button>
+      <Button size="small" disabled={c.locked} onClick={() => navigate(() => { void c.actions.open(t, v, "summary"); })}>구성 요약 보기</Button>
+      <Button size="small" disabled={c.locked} onClick={() => navigate(() => { void c.actions.open(t, v, "metadata"); })}>이름·종류·대상 수정</Button>
       <Button size="small" disabled={c.locked} onClick={() => navigate(() => { void c.actions.open(t, v, "version"); })}>범위 바꾸기</Button>
       <Button size="small" disabled={c.locked || empty} onClick={() => navigate(() => { void c.actions.open(t, v, "copy"); })}>복사</Button>
       <Button size="small" disabled={c.locked || empty || v.scopeStatus === "unconfirmed"} onClick={() => navigate(() => { void c.actions.open(t, v, "use"); })}>{v.datasetId ? "이 단어장 사용" : "이 범위로 단어장 만들기"}</Button>

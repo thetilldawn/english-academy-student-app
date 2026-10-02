@@ -106,6 +106,7 @@ export function AssignmentWorkspace({
           }}
           initialDatasetId={planner.data.initialDatasetId}
           interactionAllowed={interactionAllowed}
+          refreshDatasetMetadata={controller.actions.refreshDatasetMetadata}
           onClose={planner.actions.close}
           onSuccess={(assignmentCount, studentCount, queuedCount) => {
             announceStudentDirectoryRefresh();

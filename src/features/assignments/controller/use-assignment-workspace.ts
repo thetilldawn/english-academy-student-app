@@ -261,6 +261,7 @@ export function useAssignmentWorkspace({
       openSingleAssignment,
       prepareBulkAssignment,
       refreshDirectory,
+      refreshDatasetMetadata: datasetDirectory.actions.refreshMetadata,
       resetFilters,
       setEntryDatasetId,
       setEntryMode: changeEntryMode,

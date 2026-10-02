@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TEMPLATE_KINDS } from "@/lib/admin/dataset-catalog";
 import { libraryClassificationSchema, libraryFiltersSchema, libraryHashSchema, libraryRecipeSchema, libraryScopeSchema, templateMetadataSchema } from "./library";
 
 const refs = libraryRecipeSchema.shape.scopes;
@@ -46,7 +47,7 @@ const selection = z.discriminatedUnion("mode", [
   z.object({ mode: z.literal("recipe"), recipe: libraryRecipeSchema }).strict(),
 ]);
 export const libraryQuerySchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("templates"), search: z.string().max(240), ...page }).strict(),
+  z.object({ kind: z.literal("templates"), search: z.string().max(240), templateKind: z.enum(["all", "unclassified", ...TEMPLATE_KINDS]).optional(), ...page }).strict(),
   z.object({ kind: z.literal("versions"), templateId: z.uuid(), ...page }).strict(),
   z.object({ kind: z.literal("detail"), templateId: z.uuid(), versionId: z.uuid().optional() }).strict(),
   z.object({ kind: z.literal("facets"), sourceKind: kind, datasetId: z.uuid().nullable(), bookSearch: z.string().max(240).default(""), ...page }).strict(),

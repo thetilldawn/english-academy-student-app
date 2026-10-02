@@ -1,18 +1,18 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { templateMetadataSchema, type CreatedLibraryBook, type LibraryFilters, type TemplateMetadata } from "../../contracts/library";
-import { type LibraryCriteria, type LibraryCriteriaGroup, type LibraryDetail, type LibraryScopeHeader, type LibraryTemplateSummary, type LibraryVersionSummary } from "../../contracts/library-query";
-import { type LibraryCommandV2 } from "../../contracts/library-command-v2";
+import { type LibraryCriteria, type LibraryCriteriaGroup, type LibraryScopeHeader, type LibraryVersionSummary } from "../../contracts/library-query";
+import { type LibraryWriteCommand, type ClassifiedLibraryDetail as LibraryDetail, type ClassifiedTemplateSummary as LibraryTemplateSummary, type TemplateKind, type TemplateKindFilter } from "../../contracts/library-v3";
 import { emptyLibraryCriteria, fixedLibraryCriteria, newCriteriaGroup, toggleCriteriaScope, validLibraryCriteria } from "../../domain/library-criteria";
 import { kindFilters, libraryTagsFromClassifications, needsBook, type LibraryKind } from "../../domain/library-editor";
-import { LibraryRequestError, readLibraryPage } from "../transport/library-transport";
+import { readLibraryPage } from "../transport/library-transport";
 import { useLibraryPage } from "./use-library-page";
 import { useLibraryCommand } from "./use-library-command";
 
 const emptyMetadata = (): TemplateMetadata => ({ title: "", tags: [], school: null, targetGrade: null, schoolYear: null, semester: null, assessment: null, purpose: null });
-type Mode = "create" | "metadata" | "version" | "copy" | "use";
+type Mode = "create" | "summary" | "metadata" | "version" | "copy" | "use";
 export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: unknown) => void, onSaved?: (book: CreatedLibraryBook) => void,
-  initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">, enabled = true) {
+  initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">, enabled = true, onLibraryChanged?: () => Promise<void> | void) {
   const [viewerId, setViewerId] = useState<string>();
   const actor = useRef<string | undefined>(undefined), openRequest = useRef<AbortController | null>(null);
   const [authenticationFailed, setAuthenticationFailed] = useState(false);
@@ -23,7 +23,8 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const [metadataInput, setMetadata] = useState<TemplateMetadata>(() => ({ ...emptyMetadata(), ...initialTarget }));
   const [previousTarget, setPreviousTarget] = useState(initialTarget);
   const [titleEdited, setTitleEdited] = useState(false), [criteria, setCriteria] = useState<LibraryCriteria>(emptyLibraryCriteria);
-  const [legacyTags, setLegacyTags] = useState<string[]>([]);
+  const [templateKind, setTemplateKind] = useState<TemplateKind | null>(null), [savedKindFilter, setSavedKindFilter] = useState<TemplateKindFilter>("all");
+  const [rangeDirty, setRangeDirty] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null), [dirty, setDirty] = useState(false);
   const [notice, setNotice] = useState(""), [opening, setOpening] = useState(false), [openError, setOpenError] = useState("");
   const [changeConfirmed, setChangeConfirmed] = useState<string | null>(null), [editorRevision, setEditorRevision] = useState(0);
@@ -41,7 +42,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   }
   const reportError = useCallback((error: unknown) => {
     captureAuthenticationFailure?.()(error);
-    if (error instanceof LibraryRequestError && [401, 403].includes(error.status)) {
+    if (error && typeof error === "object" && "status" in error && (error.status === 401 || error.status === 403)) {
       authGate.current = { failed: true, recovering: false }; setAuthenticationFailed(true); setAuthRecovering(false); openRequest.current?.abort(); setOpening(false);
     }
   }, [captureAuthenticationFailure]);
@@ -50,12 +51,12 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     if (actor.current && actor.current !== id) { authGate.current = { failed: true, recovering: false }; setAuthenticationFailed(true); setAuthRecovering(false); return; }
     actor.current = id; authGate.current = { failed: false, recovering: false }; setViewerId(id); setAuthenticationFailed(false); setAuthRecovering(false);
   }, []);
-  const templates = useLibraryPage(!authenticationFailed || authRecovering ? { kind: "templates", search, cursor: null, limit: 20 } : null, undefined, reportError, acceptViewer, enabled);
+  const templates = useLibraryPage(!authenticationFailed || authRecovering ? { kind: "templates", search, templateKind: savedKindFilter, cursor: null, limit: 20 } : null, undefined, reportError, acceptViewer, enabled);
   const activeGroup = criteria.groups.find(g => g.id === activeGroupId) ?? null;
   const valid = validLibraryCriteria(criteria);
   const [lastValid, setLastValid] = useState(criteria);
   if (valid && JSON.stringify(criteria) !== JSON.stringify(lastValid)) setLastValid(criteria);
-  const rangeEditable = editor.mode !== "metadata" && editor.mode !== "copy";
+  const rangeEditable = !["metadata", "copy", "summary"].includes(editor.mode);
   const normalizedMetadata = { ...metadataInput, school: metadataInput.school?.trim() || null, assessment: metadataInput.assessment?.trim() || null, purpose: metadataInput.purpose?.trim() || null };
   const preview = useLibraryPage(tab === "sources" && viewerId && rangeEditable && !authenticationFailed ? { kind: "preview", selection: { mode: "criteria", criteria: lastValid },
     compareVersionId: editor.detail?.version.id ?? null, metadata: { ...normalizedMetadata, title: metadataInput.title.slice(0, 100) } } : null, viewerId, reportError, undefined, enabled);
@@ -64,11 +65,17 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   if (shown && (lastSuggestedTitle.revision !== editorRevision || lastSuggestedTitle.title !== shown.suggestedTitle)) setLastSuggestedTitle({ revision: editorRevision, title: shown.suggestedTitle });
   const metadata: TemplateMetadata = { ...normalizedMetadata,
     title: titleEdited ? metadataInput.title : shown?.suggestedTitle ?? (lastSuggestedTitle.revision === editorRevision ? lastSuggestedTitle.title : ""),
-    tags: [...new Set([...legacyTags, ...(shown?.automaticTags ?? [...libraryTagsFromClassifications([], normalizedMetadata), ...(editor.detail?.sourceTags ?? [])])])].slice(0, 30) };
+    tags: editor.detail && !rangeDirty ? metadataInput.tags : [...new Set([...metadataInput.tags, ...(shown?.automaticTags ?? [...libraryTagsFromClassifications([], normalizedMetadata), ...(editor.detail?.sourceTags ?? [])])])].slice(0, 30) };
+  const metadataChanged = !!editor.detail && (templateKind !== editor.detail.template.templateKind || JSON.stringify(metadata) !== JSON.stringify(editor.detail.template.metadata));
+  const metadataOnly = !!editor.detail && !rangeDirty && metadataChanged && (editor.mode === "version" || editor.mode === "use");
+  const needsPreview = rangeEditable && !metadataOnly;
+  const currentTargetTags = libraryTagsFromClassifications([], normalizedMetadata);
+  const sourceTags = needsPreview ? (shown?.automaticTags ?? []).filter(t => !currentTargetTags.includes(t)) : editor.detail?.sourceTags ?? [];
   const errors: Record<string, string> = {};
   const parsedMeta = templateMetadataSchema.safeParse(metadata);
   if (!parsedMeta.success) for (const issue of parsedMeta.error.issues) errors[String(issue.path[0])] = issue.path[0] === "title" ? "템플릿 이름을 입력해 주세요." : issue.path[0] === "schoolYear" ? "시험 준비 연도는 2000~2100년으로 입력해 주세요." : "입력한 내용을 확인해 주세요.";
-  if (rangeEditable && criteria.scopeStatus === "confirmed") {
+  if (["create", "copy"].includes(editor.mode) && templateKind === null) errors.templateKind = "만들 단어장 종류를 골라 주세요.";
+  if (needsPreview && criteria.scopeStatus === "confirmed") {
     if (!valid) errors.range = "범위의 시작과 끝을 확인해 주세요.";
     else if (!criteria.groups.length) errors.range = "자료 종류와 범위를 선택해 주세요.";
     else if (criteria.groups.some(g => g.mode === "filter" && needsBook(g.kind) && !g.datasetId)) errors.range = "각 묶음에서 사용할 자료를 선택해 주세요.";
@@ -80,24 +87,30 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   }
   if (editor.mode === "copy" && editor.detail?.version.scopeStatus === "confirmed" && !editor.detail.version.includedCount) errors.range = "저장된 범위가 비어 있습니다. 먼저 범위를 수정해 주세요.";
   if (editor.mode === "use" && criteria.scopeStatus !== "confirmed") errors.range = "단어장을 만들려면 사용할 범위를 먼저 확정해 주세요.";
-  const mutations = useLibraryCommand(viewerId, result => {
+  const mutations = useLibraryCommand(viewerId, (result, command) => {
     openRequest.current?.abort();
-    templates.reload(); setDirty(false); setTab("saved"); setEditorRevision(n => n + 1);
+    templates.reload(); setDirty(false); setEditorRevision(n => n + 1);
+    if (command.action === "metadata" && "template" in result && "templateKind" in result.template) {
+      const template = result.template;
+      setEditor(current => current.detail ? { mode: "summary", detail: { ...current.detail, template } } : current);
+      setMetadata(template.metadata); setTemplateKind(template.templateKind); setRangeDirty(false); setActiveGroupId(null); setTab("sources");
+    } else setTab("saved");
     setNotice("deleted" in result ? "템플릿을 삭제했습니다. 기존 단어장과 학생 시험은 그대로 유지됩니다." : result.createdBook
       ? result.createdBook.dataset.isAssignable && result.createdBook.dataset.isActive && result.createdBook.dataset.availableQuestionModes.length
         ? "단어장을 만들었습니다. 시험 범위와 문항 수를 설정해 주세요." : "단어장은 저장됐지만 현재 출제 가능한 문제가 부족해 배정할 수 없습니다. 범위를 추가한 뒤 다시 만들어 주세요."
       : "템플릿을 저장했습니다.");
-  }, reportError, onSaved);
+  }, reportError, onSaved, onLibraryChanged, enabled && !authenticationFailed);
   const locked = !enabled || mutations.locked || opening, scopesLocked = locked || !rangeEditable;
-  const canSave = !!viewerId && !authenticationFailed && !conflictingDetail && !Object.keys(errors).length && (!rangeEditable || valid && preview.status === "ready")
-    && (editor.mode !== "use" || !shown?.difference?.changed || changeConfirmed === shown.contentHash);
+  const canSave = editor.mode !== "summary" && !!viewerId && !authenticationFailed && !conflictingDetail && !Object.keys(errors).length && (!needsPreview || valid && preview.status === "ready")
+    && (metadataOnly || editor.mode !== "use" || !shown?.difference?.changed || changeConfirmed === shown.contentHash);
   function edit(change: () => void) {
     if (locked) return;
     mutations.reset(); setDirty(true); setNotice(""); setChangeConfirmed(null); change();
   }
+  function editRange(change: () => void) { edit(() => { setRangeDirty(true); change(); }); }
   function changeGroup(change: (g: LibraryCriteriaGroup) => LibraryCriteriaGroup) {
     if (!activeGroup || scopesLocked) return;
-    edit(() => setCriteria(c => ({ ...c, groups: c.groups.map(g => g.id === activeGroup.id ? change(g) : g) })));
+    editRange(() => setCriteria(c => ({ ...c, groups: c.groups.map(g => g.id === activeGroup.id ? change(g) : g) })));
   }
   async function open(template: LibraryTemplateSummary, version: LibraryVersionSummary, mode: Exclude<Mode, "create">) {
     if (locked || !viewerId) return;
@@ -106,9 +119,9 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
       const detail = await readLibraryPage({ kind: "detail", templateId: template.id, versionId: version.id }, request.signal, viewerId);
       if (request.signal.aborted) return;
       const restored = detail.criteria ?? fixedLibraryCriteria(detail.recipe);
-      setLegacyTags(detail.template.metadata.tags.filter(t => !detail.automaticTags.includes(t)));
+      setTemplateKind(detail.template.templateKind); setRangeDirty(false);
       setEditor({ mode, detail }); setMetadata({ ...detail.template.metadata, title: mode === "copy" ? `${detail.template.metadata.title.slice(0, 95)} 복사` : detail.template.metadata.title });
-      setTitleEdited(true); setCriteria(restored); setActiveGroupId(restored.groups[0]?.id ?? null); setDirty(false); setChangeConfirmed(null); setConflictingDetail(null); setTab("sources"); setEditorRevision(n => n + 1); mutations.reset();
+      setTitleEdited(true); setCriteria(restored); setActiveGroupId(null); setDirty(false); setChangeConfirmed(null); setConflictingDetail(null); setTab("sources"); setEditorRevision(n => n + 1); mutations.reset();
     } catch (error) { if (!request.signal.aborted) { reportError(error); setOpenError(error instanceof Error ? error.message : "템플릿을 불러오지 못했습니다."); } }
     finally { if (!request.signal.aborted) setOpening(false); }
   }
@@ -117,27 +130,31 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     if (mutations.state.uncertain) { void mutations.run(); return; }
     if (!canSave) return;
     const requestId = crypto.randomUUID(), t = editor.detail?.template, v = editor.detail?.version;
-    let command: LibraryCommandV2;
-    if (editor.mode === "metadata" && t) command = { action: "metadata", requestId, templateId: t.id, expectedRevision: t.revision, metadata };
-    else if (editor.mode === "copy" && v) command = { action: "copy", requestId, sourceVersionId: v.id, metadata };
+    let command: LibraryWriteCommand;
+    if ((editor.mode === "metadata" || metadataOnly) && t) command = { action: "metadata", protocolVersion: 3, templateKind, requestId, templateId: t.id, expectedRevision: t.revision, metadata };
+    else if (editor.mode === "copy" && v && templateKind) command = { action: "copy", protocolVersion: 3, templateKind, requestId, sourceVersionId: v.id, metadata };
     else if (editor.mode === "use" && t && v && !shown?.difference?.changed && JSON.stringify(metadata) === JSON.stringify(t.metadata)
-      && JSON.stringify(criteria) === JSON.stringify(editor.detail?.criteria ?? fixedLibraryCriteria(editor.detail!.recipe))) command = { action: "materialize", requestId, templateId: t.id, versionId: v.id, contentHash: v.contentHash };
+      && JSON.stringify(criteria) === JSON.stringify(editor.detail?.criteria ?? fixedLibraryCriteria(editor.detail!.recipe))) command = { action: "materialize", protocolVersion: 3, requestId, templateId: t.id, versionId: v.id, contentHash: v.contentHash };
     else {
       if (!shown) return;
       const range = { recipe: shown.recipe, criteria, previewHash: shown.contentHash };
-      command = editor.mode !== "create" && t ? { action: "version", requestId, templateId: t.id, expectedRevision: t.revision, expectedContentHash: t.latestVersion.contentHash, metadata, ...range }
-        : { action: "create", requestId, metadata, ...range };
+      if (editor.mode === "create" && !templateKind) return;
+      command = editor.mode !== "create" && t ? { action: "version", protocolVersion: 3, templateKind, requestId, templateId: t.id, expectedRevision: t.revision, expectedContentHash: t.latestVersion.contentHash, metadata, ...range }
+        : { action: "create", protocolVersion: 3, templateKind: templateKind!, requestId, metadata, ...range };
     }
-    void mutations.run(command, editor.mode === "use");
+    void mutations.run(command, editor.mode === "use", command.action === "metadata" && v ? { id: v.id, contentHash: v.contentHash } : undefined);
   }
-  return { enabled, viewerId, reportError, templates, tab, search, editor, editorRevision, metadata, criteria, activeGroup, preview, dirty, errors, canSave,
+  return { enabled, viewerId, reportError, templates, tab, search, templateKind, savedKindFilter, sourceTags, currentTargetTags, metadataOnly, rangeDirty, editor, editorRevision, metadata, criteria, activeGroup, preview, dirty, errors, canSave,
     authenticationFailed, opening, openError, notice, locked, scopesLocked, saveState: mutations.state, changeConfirmed, conflictingDetail,
     actions: {
-      setSearch, setTab: (value: "saved" | "sources") => { if (!locked) setTab(value); }, open, save,
+      setSearch, setSavedKindFilter,
+      selectTemplateKind: (kind: TemplateKind) => edit(() => { if (metadata.title) { setMetadata(m => ({ ...m, title: metadata.title })); setTitleEdited(true); } setTemplateKind(kind); setActiveGroupId(null); setTab("sources"); if (editor.mode === "summary") setEditor(e => ({ ...e, mode: "metadata" })); }),
+      editSummary: (mode: "metadata" | "version" | "use") => { if (!locked) { setEditor(e => ({ ...e, mode })); setActiveGroupId(null); } },
+      setTab: (value: "saved" | "sources") => { if (!locked) setTab(value); }, open, save,
       reload: () => { if (!enabled) return; templates.reload(); preview.reload();
         if (editor.detail && viewerId && !locked) {
           openRequest.current?.abort(); const request = new AbortController(); openRequest.current = request;
-          void readLibraryPage({ kind: "detail", templateId: editor.detail.template.id }, request.signal, viewerId).then(detail => {
+          void readLibraryPage({ kind: "detail", templateId: editor.detail.template.id, versionId: editor.detail.version.id }, request.signal, viewerId).then(detail => {
             if (!request.signal.aborted && detail.template.revision !== editor.detail?.template.revision) setConflictingDetail(detail);
           }).catch(error => { if (!request.signal.aborted) reportError(error); });
         }
@@ -146,24 +163,26 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
       setMetadata: (value: TemplateMetadata) => edit(() => { if (value.title !== metadata.title) setTitleEdited(true); setMetadata(value); }),
       suggestTitle: () => edit(() => setTitleEdited(false)),
       confirmChange: (yes: boolean) => setChangeConfirmed(yes ? shown?.contentHash ?? null : null),
-      addGroup: (kind: LibraryKind) => { if (!scopesLocked) edit(() => { const g = newCriteriaGroup(kind, crypto.randomUUID()); setCriteria(c => ({ ...c, scopeStatus: "confirmed", groups: [...c.groups, g] })); setActiveGroupId(g.id); }); },
-      selectGroup: (id: string) => { if (!locked) setActiveGroupId(id); },
-      removeGroup: (id: string) => { if (!scopesLocked) edit(() => { const groups = criteria.groups.filter(g => g.id !== id); setCriteria(c => ({ ...c, groups })); if (activeGroupId === id) setActiveGroupId(groups[0]?.id ?? null); }); },
+      addGroup: (kind: LibraryKind) => { if (!scopesLocked) editRange(() => { const g = newCriteriaGroup(kind, crypto.randomUUID()); setCriteria(c => ({ ...c, scopeStatus: "confirmed", groups: [...c.groups, g] })); setActiveGroupId(g.id); }); },
+      selectGroup: (id: string | null) => { if (!locked) setActiveGroupId(id); },
+      removeGroup: (id: string) => { if (!scopesLocked) editRange(() => { const groups = criteria.groups.filter(g => g.id !== id); setCriteria(c => ({ ...c, groups })); if (activeGroupId === id) setActiveGroupId(null); }); },
       setFilters: (filters: LibraryFilters) => changeGroup(g => { const next = kindFilters(g.kind, filters);
         if (next.yearFrom !== g.filters.yearFrom || next.yearTo !== g.filters.yearTo) next.years = [];
         else if (JSON.stringify(next.years) !== JSON.stringify(g.filters.years)) { next.yearFrom = null; next.yearTo = null; }
         if (JSON.stringify(next.types) !== JSON.stringify(g.filters.types)) next.questions = [];
         return { ...g, mode: "filter", scopes: [], filters: next }; }),
       setDataset: (datasetId: string | null) => changeGroup(g => ({ ...g, datasetId, mode: "filter", scopes: [], excludedScopeKeys: [], filters: kindFilters(g.kind) })),
-      setScopeStatus: (scopeStatus: LibraryCriteria["scopeStatus"]) => { if (!scopesLocked) edit(() => { setCriteria(scopeStatus === "unconfirmed" ? { groups: [], excludedOccurrenceKeys: [], scopeStatus } : { ...criteria, scopeStatus }); setActiveGroupId(null); }); },
+      setScopeStatus: (scopeStatus: LibraryCriteria["scopeStatus"]) => { if (!scopesLocked) editRange(() => { setCriteria(scopeStatus === "unconfirmed" ? { groups: [], excludedOccurrenceKeys: [], scopeStatus } : { ...criteria, scopeStatus }); setActiveGroupId(null); }); },
       toggle: (scope: LibraryScopeHeader, include: boolean) => changeGroup(g => toggleCriteriaScope(g, scope, include)),
       toggleVisible: (scopes: LibraryScopeHeader[], include: boolean) => changeGroup(g => scopes.reduce((value, scope) => toggleCriteriaScope(value, scope, include), g)),
-      exclude: (key: string) => { if (!scopesLocked) edit(() => setCriteria(c => ({ ...c, excludedOccurrenceKeys: c.excludedOccurrenceKeys.includes(key) ? c.excludedOccurrenceKeys.filter(k => k !== key) : [...c.excludedOccurrenceKeys, key] }))); },
-      clearOrphans: () => edit(() => setCriteria(c => ({ ...c, excludedOccurrenceKeys: c.excludedOccurrenceKeys.filter(k => !shown?.orphanedExclusions.includes(k)) }))),
-      move: (id: string, offset: -1 | 1) => { if (!scopesLocked && shown) edit(() => { const refs = [...shown.recipe.scopes], from = refs.findIndex(r => r.id === id), to = from + offset;
+      exclude: (key: string) => { if (!scopesLocked) editRange(() => setCriteria(c => { const base = metadataOnly && editor.detail ? fixedLibraryCriteria(editor.detail.recipe) : c;
+        return { ...base, excludedOccurrenceKeys: base.excludedOccurrenceKeys.includes(key) ? base.excludedOccurrenceKeys.filter(k => k !== key) : [...base.excludedOccurrenceKeys, key] }; })); },
+      clearOrphans: () => editRange(() => setCriteria(c => ({ ...c, excludedOccurrenceKeys: c.excludedOccurrenceKeys.filter(k => !shown?.orphanedExclusions.includes(k)) }))),
+      move: (id: string, offset: -1 | 1) => { if (!scopesLocked && shown) editRange(() => { const recipe = metadataOnly && editor.detail ? editor.detail.recipe : shown.recipe;
+        const refs = [...recipe.scopes], from = refs.findIndex(r => r.id === id), to = from + offset;
         if (from < 0 || to < 0 || to >= refs.length) return; [refs[from], refs[to]] = [refs[to]!, refs[from]!];
-        const next = fixedLibraryCriteria({ ...shown.recipe, scopes: refs }); setCriteria(next); setActiveGroupId(next.groups[0]?.id ?? null); }); },
-      newTemplate: () => { if (!locked) { openRequest.current?.abort(); mutations.reset(); setEditor({ mode: "create" }); setEditorRevision(n => n + 1); setMetadata({ ...emptyMetadata(), ...initialTarget }); setLegacyTags([]); setTitleEdited(false); setCriteria(emptyLibraryCriteria()); setActiveGroupId(null); setDirty(false); setNotice(""); setTab("sources"); setChangeConfirmed(null); setConflictingDetail(null); } },
+        const next = fixedLibraryCriteria({ ...recipe, scopes: refs }); setCriteria(next); setActiveGroupId(null); }); },
+      newTemplate: () => { if (!locked) { openRequest.current?.abort(); mutations.reset(); setEditor({ mode: "create" }); setEditorRevision(n => n + 1); setMetadata({ ...emptyMetadata(), ...initialTarget }); setTemplateKind(null); setRangeDirty(false); setTitleEdited(false); setCriteria(emptyLibraryCriteria()); setActiveGroupId(null); setDirty(false); setNotice(""); setTab("sources"); setChangeConfirmed(null); setConflictingDetail(null); } },
       deleteTemplate: (t: LibraryTemplateSummary) => { if (!locked) void mutations.run({ action: "delete", requestId: crypto.randomUUID(), templateId: t.id, expectedRevision: t.revision }); },
       refreshEditor: () => { if (editor.detail) void open(editor.detail.template, editor.detail.version, editor.mode === "create" ? "version" : editor.mode); },
     },

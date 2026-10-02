@@ -5,14 +5,15 @@ import { DialogBody, DialogFooter, DialogFrame, DialogHeader } from "@/design-sy
 import { Field, FieldError, FieldHelp, FieldLabel, Input, Select } from "@/design-system/primitives/form/field";
 import type { TemplateMetadata } from "../contracts/library";
 import { gradeLabel } from "../domain/library-editor";
+import type { TemplateKind } from "../contracts/library-v3";
 import styles from "./wordbook-library.module.css";
 
-export function LibraryTargetFields({ value, onChange, disabled, errors }: { value: TemplateMetadata; onChange: (m: TemplateMetadata) => void; disabled: boolean; errors: Record<string, string> }) {
+export function LibraryTargetFields({ value, templateKind, onChange, disabled, errors }: { value: TemplateMetadata; templateKind: TemplateKind | null; onChange: (m: TemplateMetadata) => void; disabled: boolean; errors: Record<string, string> }) {
   return <>
-    <Field><FieldLabel htmlFor="library-meta-purpose">용도 (선택)</FieldLabel><Input id="library-meta-purpose" disabled={disabled} value={value.purpose ?? ""} maxLength={240}
-      placeholder="예: 직전 대비, 유형별 학습" onChange={e => onChange({ ...value, purpose: e.target.value || null })} />
-      <FieldHelp>직전 대비에는 교과서와 모의고사 등 여러 자료를 함께 넣을 수 있습니다.</FieldHelp></Field>
-    <details open={!!(value.school || value.assessment || value.targetGrade || value.schoolYear || value.semester) || undefined}><summary>학교 시험의 대상 지정 (선택)</summary>
+    <Field><FieldLabel htmlFor="library-meta-purpose">종류 설명 (선택)</FieldLabel><Input id="library-meta-purpose" disabled={disabled} value={value.purpose ?? ""} maxLength={240}
+      placeholder="예: 말하기 평가, 기말 범위 복습" onChange={e => onChange({ ...value, purpose: e.target.value || null })} />
+      <FieldHelp>보충 설명입니다. 선택한 종류를 바꾸지는 않습니다.</FieldHelp></Field>
+    {templateKind !== "mock_exam" && templateKind !== "other" ? <details open><summary>{templateKind === "performance_assessment" ? "평가 대상" : "학교 시험의 대상 지정"} (선택)</summary>
       <div className={styles.metadata}>
         <Field><FieldLabel htmlFor="library-meta-school">학교</FieldLabel><Input id="library-meta-school" disabled={disabled} value={value.school ?? ""} maxLength={240} onChange={e => onChange({ ...value, school: e.target.value || null })} /></Field>
         <Field><FieldLabel htmlFor="library-meta-targetGrade">사용 대상 학년</FieldLabel><Select id="library-meta-targetGrade" disabled={disabled} value={value.targetGrade ?? ""} onChange={e => onChange({ ...value, targetGrade: e.target.value || null })}>
@@ -24,9 +25,9 @@ export function LibraryTargetFields({ value, onChange, disabled, errors }: { val
           {errors.schoolYear ? <FieldError id="library-year-error">{errors.schoolYear}</FieldError> : null}</Field>
         <Field><FieldLabel htmlFor="library-semester">학기</FieldLabel><Select id="library-semester" value={value.semester ?? ""} disabled={disabled} onChange={e => onChange({ ...value, semester: e.target.value ? Number(e.target.value) as 1 | 2 : null })}>
           <option value="">지정 안 함</option><option value="1">1학기</option><option value="2">2학기</option></Select></Field>
-        <Field><FieldLabel htmlFor="library-meta-assessment">시험</FieldLabel><Input id="library-meta-assessment" disabled={disabled} value={value.assessment ?? ""} maxLength={240} placeholder="예: 기말고사" onChange={e => onChange({ ...value, assessment: e.target.value || null })} /></Field>
+        <Field><FieldLabel htmlFor="library-meta-assessment">{templateKind === "performance_assessment" ? "평가명" : "시험"}</FieldLabel><Input id="library-meta-assessment" disabled={disabled} value={value.assessment ?? ""} maxLength={240} placeholder={templateKind === "performance_assessment" ? "예: 말하기 평가" : "예: 중간·기말고사"} onChange={e => onChange({ ...value, assessment: e.target.value || null })} /></Field>
       </div>
-    </details>
+    </details> : null}
   </>;
 }
 

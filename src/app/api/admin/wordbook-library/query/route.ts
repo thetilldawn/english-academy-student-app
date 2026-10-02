@@ -10,7 +10,7 @@ export const POST = withAuthenticationFailureResponse(async function POST(reques
     if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
     const viewer = request.headers.get("X-Wordbook-Viewer");
     if (viewer !== null && viewer !== admin.userId) return privateJsonError("관리자 로그인이 필요합니다.", 403);
-    return libraryJsonResponse(await queryLibrary(await request.json().catch(() => null), admin));
+    return libraryJsonResponse(await queryLibrary(await request.json().catch(() => null), admin, request.headers.get("X-Wordbook-Contract") === "3"));
   }
   catch (error) {
     const status = error instanceof LibraryCommandError ? error.status : 503;

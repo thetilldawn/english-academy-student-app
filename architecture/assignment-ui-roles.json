@@ -596,7 +596,7 @@
     {
       "path": "vocab-assignment-planner.tsx",
       "role": "assembly",
-      "reason": "배정 조건과 미확정 저장 복구/이탈 보호를 조합한다. 계산·완성 요청 보관·저장은 controller/application 경계에 둔다.",
+      "reason": "배정 조건·미확정 복구/이탈 보호를 조합한다. M07 표시정보 갱신은 전용 controller의 덮개만 받으며 전체 준비·범위·문항 설정을 재생성하지 않는다.",
       "allowedImports": [
         "../catalog-types",
         "../client/controllers/use-assignment-dataset-picker",
@@ -628,7 +628,8 @@
         "@/lib/admin/student-profile-requirements",
         "@/lib/ui/motion",
         "react",
-        "sonner"
+        "sonner",
+        "../controller/use-assignment-dataset-metadata"
       ]
     },
     {

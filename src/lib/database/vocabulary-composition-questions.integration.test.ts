@@ -3,6 +3,7 @@ import type { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
 import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
 import { EMPTY_LIBRARY_FILTERS, libraryCatalogSchema, libraryCommandResultSchema, type LibraryTemplate } from "@/features/wordbook-compositions/contracts/library";
+import { libraryCommandV3ResultSchema, classifiedDetailSchema } from "@/features/wordbook-compositions/contracts/library-v3";
 import { compositionPreparationSchema, compositionQuestionInputSchema, compositionCompletionSummarySchema, type CompositionPreparation } from "@/features/wordbook-compositions/contracts/library-materialization";
 import { planCompositionQuestions } from "@/features/wordbook-compositions/server/use-cases/composition-question-plan";
 import { planLibraryUnits } from "@/features/wordbook-compositions/domain/library-selection";
@@ -427,6 +428,32 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
       .toEqual({ name: "가짜 새 이름", school: "가짜학교", semester: 2 });
     expect(await scalar("select jsonb_agg(title order by id) value from public.assignments where dataset_id=$1", [prepared.datasetId])).toEqual(sourceTitles);
     expect((await db.query("select * from public.list_vocabulary_unit_source_classifications_v1($1)", [prepared.datasetId])).rows).toEqual([]);
+  });
+  it("updates all four official kinds across generated books without changing learning data or student records", async () => {
+    await db.exec("reset role;begin");
+    try {
+      const preserve = async () => {
+        const tables=["private.vocabulary_library_versions","private.vocabulary_composition_items","private.vocabulary_composition_entries","private.vocabulary_learning_value_versions","private.vocabulary_learning_value_bindings","public.vocab_entries","public.students","public.assignments","public.assignment_questions","public.quiz_attempts","public.quiz_questions"];
+        return Promise.all(tables.map(table=>scalar(`select md5(coalesce(jsonb_agg(row_value order by row_value::text),'[]')::text) value from (select to_jsonb(t) row_value from ${table} t) x`)));
+      };
+      const before=await preserve(), v=template.versions[0]!;
+      const otherCatalog=await scalar("select jsonb_agg(to_jsonb(c) order by dataset_id) value from public.vocab_dataset_catalog c where dataset_id<>$1",[prepared.datasetId]);
+      let revision=await scalar<number>("select revision value from private.vocabulary_library_templates where id=$1",[template.id]);
+      for(const templateKind of ["performance_assessment","exam_prep","mock_exam","other"] as const){
+        await admin();
+        await scalar("select public.save_vocabulary_library_template_v3($1::jsonb) value",[JSON.stringify({action:"metadata",protocolVersion:3,templateKind,requestId:randomUUID(),templateId:template.id,expectedRevision:revision++,metadata:{...template.metadata,title:"가짜 분류 변경",purpose:"자유 설명"}})]);
+        const summary=libraryCommandV3ResultSchema.parse(await scalar("select public.get_vocabulary_composition_summary_v3($1) value",[v.id]));
+        expect(summary.template.templateKind).toBe(templateKind);expect(summary.createdBook?.dataset).toMatchObject({templateKind,purpose:templateKind==="exam_prep"?"exam_prep":null});
+        const detail=await scalar<Record<string,unknown>>("select public.query_vocabulary_library_v2($1::jsonb) value",[JSON.stringify({kind:"detail",templateId:template.id,versionId:v.id})]);
+        const {classifications:_,...detailFields}=detail;void _;
+        const parsed=classifiedDetailSchema.parse({...detailFields,automaticTags:[],sourceTags:[]});
+        expect(parsed.quantities.questionCounts?.find(q=>q.mode==="book_meaning_choice")).toMatchObject({englishToKorean:6,koreanToEnglish:6});
+        await db.exec("reset role");
+        expect(await scalar("select metadata->>'templateKind' value from public.vocab_dataset_catalog where dataset_id=$1",[prepared.datasetId])).toBe(templateKind);
+        expect(await preserve()).toEqual(before);
+        expect(await scalar("select jsonb_agg(to_jsonb(c) order by dataset_id) value from public.vocab_dataset_catalog c where dataset_id<>$1",[prepared.datasetId])).toEqual(otherCatalog);
+      }
+    } finally {await db.exec("rollback");await admin();}
   });
   it("keeps historical full snapshots and their exact hashes readable, copyable and materializable", async () => {
     await db.exec("reset role");

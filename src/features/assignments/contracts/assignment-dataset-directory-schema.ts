@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DATASET_CATALOG_GROUPS } from "@/lib/admin/dataset-catalog";
+import { DATASET_CATALOG_GROUPS, TEMPLATE_KINDS } from "@/lib/admin/dataset-catalog";
 
 // Validate the existing directory contract before an empty response becomes a successful empty list.
 export const assignmentDatasetDirectorySchema = z.object({
@@ -14,6 +14,7 @@ export const assignmentDatasetDirectorySchema = z.object({
     schoolName: z.string().trim().min(1).max(120).nullable().optional(),
     schoolClassification: z.enum(["school", "common", "unclassified"]).optional(),
     purpose: z.literal("exam_prep").nullable().optional(),
+    templateKind: z.enum(TEMPLATE_KINDS).nullable().optional(),
     semester: z.union([z.literal(1), z.literal(2)]).nullable().optional(),
   })),
 });

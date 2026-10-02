@@ -1,0 +1,449 @@
+{
+  "task": "APP-20261003-01",
+  "at": "2026-10-02T17:20:38.681Z",
+  "environment": "isolated loopback React harness with actual application CSS; fake HTTP data only",
+  "productionWrites": 0,
+  "evidence": [
+    {
+      "width": 1280,
+      "label": "저장 목록",
+      "sizes": {
+        "viewport": 1280,
+        "html": 1265,
+        "body": 1265,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 1280,
+      "label": "미분류 요약",
+      "sizes": {
+        "viewport": 1280,
+        "html": 1265,
+        "body": 1265,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 1280,
+      "label": "자료 편집",
+      "sizes": {
+        "viewport": 1280,
+        "html": 1265,
+        "body": 1265,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 1280,
+      "label": "종류 전환 초안",
+      "sizes": {
+        "viewport": 1280,
+        "html": 1265,
+        "body": 1265,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 1280,
+      "label": "저장 확정 뒤 복구",
+      "sizes": {
+        "viewport": 1280,
+        "html": 1265,
+        "body": 1265,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 1280,
+      "label": "삭제 확인",
+      "sizes": {
+        "viewport": 1280,
+        "html": 1265,
+        "body": 1265,
+        "dialogs": [
+          {
+            "client": 438,
+            "scroll": 438
+          }
+        ]
+      }
+    },
+    {
+      "width": 1280,
+      "label": "조회 실패",
+      "sizes": {
+        "viewport": 1280,
+        "html": 1265,
+        "body": 1265,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 1280,
+      "commands": [
+        {
+          "action": "create",
+          "requestId": "aa31becb-9f4a-4142-ba87-a08600bfcdad",
+          "metadata": {
+            "title": "가짜 긴 이름에서도 범위와 학교를 그대로 보존하는 구성",
+            "tags": [
+              "가짜 긴 학교명",
+              "모의고사",
+              "원자료 고3",
+              "2024·2025년 모고",
+              "9월",
+              "주제"
+            ],
+            "school": "가짜 긴 학교명",
+            "targetGrade": null,
+            "schoolYear": null,
+            "semester": null,
+            "assessment": null,
+            "purpose": null
+          },
+          "recipe": {
+            "filters": {
+              "search": "",
+              "kinds": [],
+              "years": [],
+              "yearFrom": null,
+              "yearTo": null,
+              "months": [],
+              "types": [],
+              "questions": [],
+              "sourceGrades": [],
+              "dayFrom": null,
+              "dayTo": null,
+              "lessons": [],
+              "schools": [],
+              "targetGrades": [],
+              "semesters": [],
+              "assessments": [],
+              "purposes": []
+            },
+            "scopes": [
+              {
+                "id": "00000000-0000-4000-8000-000000000001",
+                "version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "id": "00000000-0000-4000-8000-000000000002",
+                "version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            ],
+            "excludedOccurrenceKeys": [],
+            "scopeStatus": "confirmed"
+          },
+          "criteria": {
+            "groups": [
+              {
+                "id": "2deab14a-e6bb-4522-aa1b-c1ea812c75ba",
+                "kind": "mock",
+                "datasetId": null,
+                "mode": "filter",
+                "filters": {
+                  "search": "",
+                  "kinds": [
+                    "mock"
+                  ],
+                  "years": [],
+                  "yearFrom": null,
+                  "yearTo": null,
+                  "months": [],
+                  "types": [],
+                  "questions": [],
+                  "sourceGrades": [],
+                  "dayFrom": null,
+                  "dayTo": null,
+                  "lessons": [],
+                  "schools": [],
+                  "targetGrades": [],
+                  "semesters": [],
+                  "assessments": [],
+                  "purposes": []
+                },
+                "scopes": [],
+                "excludedScopeKeys": []
+              }
+            ],
+            "excludedOccurrenceKeys": [],
+            "scopeStatus": "confirmed"
+          },
+          "previewHash": "4112414e3e3e7b97cbf0d325bf7cea99c065557c2f91d5a257577009aaf4c423",
+          "protocolVersion": 3,
+          "templateKind": "performance_assessment"
+        },
+        {
+          "action": "metadata",
+          "requestId": "29952015-4f76-4f01-8c30-bc9abcc571fe",
+          "templateId": "00000000-0000-4000-8000-000000000400",
+          "expectedRevision": 1,
+          "metadata": {
+            "title": "표시만 변경",
+            "tags": [
+              "가짜 긴 학교명",
+              "모의고사",
+              "원자료 고3",
+              "2024·2025년 모고",
+              "9월",
+              "주제"
+            ],
+            "school": "가짜 긴 학교명",
+            "targetGrade": null,
+            "schoolYear": null,
+            "semester": null,
+            "assessment": null,
+            "purpose": null
+          },
+          "protocolVersion": 3,
+          "templateKind": "performance_assessment"
+        }
+      ],
+      "callbackRetries": 3,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "label": "저장 목록",
+      "sizes": {
+        "viewport": 390,
+        "html": 375,
+        "body": 375,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 390,
+      "label": "미분류 요약",
+      "sizes": {
+        "viewport": 390,
+        "html": 375,
+        "body": 375,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 390,
+      "label": "자료 편집",
+      "sizes": {
+        "viewport": 390,
+        "html": 375,
+        "body": 375,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 390,
+      "label": "종류 전환 초안",
+      "sizes": {
+        "viewport": 390,
+        "html": 375,
+        "body": 375,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 390,
+      "label": "저장 확정 뒤 복구",
+      "sizes": {
+        "viewport": 390,
+        "html": 375,
+        "body": 375,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 390,
+      "label": "삭제 확인",
+      "sizes": {
+        "viewport": 390,
+        "html": 375,
+        "body": 375,
+        "dialogs": [
+          {
+            "client": 335,
+            "scroll": 335
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "label": "조회 실패",
+      "sizes": {
+        "viewport": 390,
+        "html": 375,
+        "body": 375,
+        "dialogs": []
+      }
+    },
+    {
+      "width": 390,
+      "motion": {
+        "reduced": true,
+        "durations": [
+          "0s",
+          "0s",
+          "0s",
+          "0s",
+          "0s",
+          "0s",
+          "0s",
+          "0s",
+          "0s"
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "commands": [
+        {
+          "action": "create",
+          "requestId": "5b773739-e317-421d-8bb5-1d16a1842354",
+          "metadata": {
+            "title": "가짜 긴 이름에서도 범위와 학교를 그대로 보존하는 구성",
+            "tags": [
+              "가짜 긴 학교명",
+              "모의고사",
+              "원자료 고3",
+              "2024·2025년 모고",
+              "9월",
+              "주제"
+            ],
+            "school": "가짜 긴 학교명",
+            "targetGrade": null,
+            "schoolYear": null,
+            "semester": null,
+            "assessment": null,
+            "purpose": null
+          },
+          "recipe": {
+            "filters": {
+              "search": "",
+              "kinds": [],
+              "years": [],
+              "yearFrom": null,
+              "yearTo": null,
+              "months": [],
+              "types": [],
+              "questions": [],
+              "sourceGrades": [],
+              "dayFrom": null,
+              "dayTo": null,
+              "lessons": [],
+              "schools": [],
+              "targetGrades": [],
+              "semesters": [],
+              "assessments": [],
+              "purposes": []
+            },
+            "scopes": [
+              {
+                "id": "00000000-0000-4000-8000-000000000001",
+                "version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "id": "00000000-0000-4000-8000-000000000002",
+                "version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            ],
+            "excludedOccurrenceKeys": [],
+            "scopeStatus": "confirmed"
+          },
+          "criteria": {
+            "groups": [
+              {
+                "id": "96452d12-c976-4406-ba80-8b91d51e0066",
+                "kind": "mock",
+                "datasetId": null,
+                "mode": "filter",
+                "filters": {
+                  "search": "",
+                  "kinds": [
+                    "mock"
+                  ],
+                  "years": [],
+                  "yearFrom": null,
+                  "yearTo": null,
+                  "months": [],
+                  "types": [],
+                  "questions": [],
+                  "sourceGrades": [],
+                  "dayFrom": null,
+                  "dayTo": null,
+                  "lessons": [],
+                  "schools": [],
+                  "targetGrades": [],
+                  "semesters": [],
+                  "assessments": [],
+                  "purposes": []
+                },
+                "scopes": [],
+                "excludedScopeKeys": []
+              }
+            ],
+            "excludedOccurrenceKeys": [],
+            "scopeStatus": "confirmed"
+          },
+          "previewHash": "4112414e3e3e7b97cbf0d325bf7cea99c065557c2f91d5a257577009aaf4c423",
+          "protocolVersion": 3,
+          "templateKind": "performance_assessment"
+        },
+        {
+          "action": "metadata",
+          "requestId": "b9595f53-6d18-4250-b44b-39a195e87208",
+          "templateId": "00000000-0000-4000-8000-000000000400",
+          "expectedRevision": 1,
+          "metadata": {
+            "title": "표시만 변경",
+            "tags": [
+              "가짜 긴 학교명",
+              "모의고사",
+              "원자료 고3",
+              "2024·2025년 모고",
+              "9월",
+              "주제"
+            ],
+            "school": "가짜 긴 학교명",
+            "targetGrade": null,
+            "schoolYear": null,
+            "semester": null,
+            "assessment": null,
+            "purpose": null
+          },
+          "protocolVersion": 3,
+          "templateKind": "performance_assessment"
+        }
+      ],
+      "callbackRetries": 3,
+      "pageErrors": []
+    }
+  ],
+  "files": [
+    {
+      "name": "1280_오류.png",
+      "sha256": "3b3883b4219aea1540aba1018853ca85d7c9e87b8f7e4f4b8b7f7480443ec55b"
+    },
+    {
+      "name": "1280_요약.png",
+      "sha256": "8bb38959990af82b16a22d917f1aa9512a8b4684fd8f0381b1aff421febfd40d"
+    },
+    {
+      "name": "1280_작성.png",
+      "sha256": "0b132076fed5f9255b89478068eda3700b78929efed101931d1d46cecc49805a"
+    },
+    {
+      "name": "390_오류.png",
+      "sha256": "588dd3e80c8a2cfd4ea80491a0aef71696216de69585bd41b5e8d6a67892aacd"
+    },
+    {
+      "name": "390_요약.png",
+      "sha256": "0b8f31428608756d120772e8a82abf2a1a99f325c48dac29fa5678075fdb814e"
+    },
+    {
+      "name": "390_작성.png",
+      "sha256": "21a64892ea0e65555be105d1de2a7d49fe286edb4831179e5e482ce7a47d1a50"
+    }
+  ]
+}

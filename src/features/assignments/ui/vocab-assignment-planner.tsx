@@ -32,6 +32,7 @@ import { useDirectReviewAssignmentController } from "../controller/use-direct-re
 import { useMixedMistakeAssignmentController } from "../controller/use-mixed-mistake-assignment-controller";
 import { MixedMistakeAssignmentSections } from "./mixed-mistake-assignment-sections";
 import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
+import { useAssignmentDatasetMetadata, type RefreshDatasetMetadata } from "../controller/use-assignment-dataset-metadata";
 import { useAssignmentAuthenticationFailure } from "../controller/assignment-authentication-boundary";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { AssignmentDatasetPicker } from "./assignment-dataset-picker";
@@ -55,6 +56,7 @@ function VocabAssignmentPlannerSession({
   data,
   initialDatasetId = "",
   interactionAllowed = true,
+  refreshDatasetMetadata,
   onClose,
   onSuccess,
   selectionMode,
@@ -64,6 +66,7 @@ function VocabAssignmentPlannerSession({
   data: VocabAssignmentScreenData;
   initialDatasetId?: string;
   interactionAllowed?: boolean;
+  refreshDatasetMetadata?: RefreshDatasetMetadata;
   onClose: () => void;
   onSuccess: (
     assignmentCount: number,
@@ -78,6 +81,10 @@ function VocabAssignmentPlannerSession({
     "range",
   );
   const [composedDatasets, setComposedDatasets] = useState<AssignmentDatasetItem[]>([]);
+  const displayedCatalog = useAssignmentDatasetMetadata(
+    [...data.datasets.filter(book => !composedDatasets.some(updated => updated.id === book.id)), ...composedDatasets],
+    interactionAllowed, refreshDatasetMetadata,
+  );
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerStarted, setComposerStarted] = useState(false);
   const [composerLocked, setComposerLocked] = useState(false);
@@ -87,7 +94,7 @@ function VocabAssignmentPlannerSession({
   const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
   const controller = useVocabAssignmentScreen({
     audienceMode: selectionMode,
-    data: { ...data, datasets: [...data.datasets.filter(book => !composedDatasets.some(updated => updated.id === book.id)), ...composedDatasets], units: unitCatalog.units },
+    data: { ...data, datasets: displayedCatalog.datasets, units: unitCatalog.units },
     enabled: interactionAllowed && assignmentPurpose === "range",
     genericErrorMessage: "단어 시험 배정을 저장하지 못했습니다.",
     initialDatasetId,
@@ -420,7 +427,7 @@ function VocabAssignmentPlannerSession({
       </DialogHeader>
       <DialogBody>
         {composerStarted ? <div hidden={!composerOpen}>
-          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} enabled={interactionAllowed && !editingLocked} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
+          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} enabled={interactionAllowed && !editingLocked} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onLibraryChanged={displayedCatalog.refreshMetadata} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
         </div> : null}
         {datasetPicker.open && !composerOpen ? (
           <>

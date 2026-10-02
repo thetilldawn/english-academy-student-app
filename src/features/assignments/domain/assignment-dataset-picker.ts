@@ -1,7 +1,7 @@
 export type DatasetPickerStage = "all" | "middle" | "high" | "unclassified";
 export type DatasetPickerKind =
   | "all" | "textbook" | "wordbook" | "exam_collection"
-  | "exam_prep" | "supplement" | "unclassified";
+  | "exam_prep" | "performance_assessment" | "mock_exam" | "other" | "supplement" | "unclassified";
 export type DatasetPickerFilters = {
   query: string;
   stage: DatasetPickerStage;

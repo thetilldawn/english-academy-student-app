@@ -1,4 +1,9 @@
 .library { display: grid; gap: 1rem; min-width: 0; }
+.kindTabs { flex-wrap: wrap; }
+.kindTabs [role="tab"] { white-space: nowrap; }
+.library [role="tabpanel"] { display: grid; gap: 1rem; min-width: 0; }
+.library h4, .library p { overflow-wrap: anywhere; }
+.library select, .library input { max-width: 100%; min-width: 0; }
 .library h3, .library h4, .library p { margin: 0; }
 .buttons { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
 .filters { display: grid; gap: .75rem; }
@@ -27,4 +32,4 @@
 .groupEditor { border-top: 1px solid var(--border); padding-top: 1rem; }
 .step[data-range-error="true"]:focus { outline: 2px solid var(--fail); outline-offset: 2px; }
 .library select[aria-invalid="true"] { border-color: var(--fail); background-color: var(--no-bg); }
-@media (max-width: 600px) { .metadata { grid-template-columns: 1fr; } .card, .summary { padding: .75rem; } .buttons { gap: .3rem; } }
+@media (max-width: 600px) { .kindTabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .metadata { grid-template-columns: 1fr; } .card, .summary { padding: .75rem; } .buttons { gap: .3rem; } }

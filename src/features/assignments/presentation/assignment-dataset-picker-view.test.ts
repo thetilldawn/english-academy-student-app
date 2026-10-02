@@ -7,6 +7,17 @@ import { datasetPickerFilterButtons, datasetPickerKind, datasetPickerMetadata, d
 const catalog: DatasetCatalogRow = { dataset_id: "fake", display_name: "공용 단어", catalog_group: "high", material_kind: "wordbook", grade_code: "g10", publisher: null,
   series_title: null, academic_year: null, curriculum_revision: null, edition_label: null, is_assignable: true, sort_index: 0 };
 const book = (id: string, metadata: unknown, grade = "g10") => ({ dataset: { ...cataloguedDatasetFromMetadata({ id, title: "심석고 제목만" }, catalogMetadata({ ...catalog, grade_code: grade, metadata })), rowCount: 100, isActive: true, status: "ready" as const } });
+it("공식 네 종류와 미분류를 자유 설명보다 우선하며 왕복과 검색에서 보존한다", () => {
+  for (const [templateKind, label] of [["performance_assessment", "수행평가"], ["exam_prep", "직전대비"], ["mock_exam", "모의고사"], ["other", "기타"]] as const) {
+    const dataset = book(templateKind, { templateKind, purpose: "exam_prep" }).dataset;
+    const parsed = assignmentDatasetDirectorySchema.parse({ datasets: [dataset] }).datasets[0]!;
+    expect(datasetPickerKind({ ...dataset, ...parsed })).toBe(templateKind);
+    expect(datasetPickerMetadata({ ...dataset, ...parsed })).toContain(label);
+    expect(filterDatasetPickerOptions([{ dataset }], { ...EMPTY_DATASET_FILTERS, kind: templateKind, query: label })).toHaveLength(1);
+  }
+  expect(datasetPickerKind(book("old", { templateKind: null, purpose: "exam_prep" }).dataset)).toBe("unclassified");
+  expect(() => book("bad", { templateKind: "made_up" })).toThrow("분류 정보를 확인하지 못했습니다");
+});
 it("공식 태그에서 학교/공통만 투영하고 원문 경로나 임의 메타를 노출하지 않는다", () => {
   const dataset = book("school", { school: " 심석고등학교 ", sourcePath: "private-path", secret: "do-not-send" }).dataset;
   expect(dataset).toMatchObject({ schoolName: "심석고등학교", schoolClassification: "school" });

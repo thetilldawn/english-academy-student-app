@@ -1,7 +1,8 @@
 import { libraryCatalogSchema, libraryCommandResultSchema, type LibraryCommand } from "../../contracts/library";
 import { compositionProgressSchema } from "../../contracts/library-materialization";
-import { libraryQueryResultSchema, type LibraryQuery, type LibraryQueryResultOf } from "../../contracts/library-query";
-import { libraryCommandV2ResultSchema, type LibraryCommandV2 } from "../../contracts/library-command-v2";
+import { type LibraryQuery } from "../../contracts/library-query";
+import { libraryCommandV2ResultSchema } from "../../contracts/library-command-v2";
+import { classifiedQueryResultSchema, libraryCommandV3ResultSchema, type ClassifiedQueryResultOf, type LibraryWriteCommand } from "../../contracts/library-v3";
 import { adminLearningText } from "@/content/ko/admin-learning";
 
 export class LibraryRequestError extends Error {
@@ -50,16 +51,16 @@ export async function sendLibraryCommand(command: LibraryCommand, viewerId: stri
 }
 
 export async function readLibraryPage<K extends LibraryQuery["kind"]>(query: Extract<LibraryQuery, { kind: K }>, signal: AbortSignal, viewerId?: string) {
-  const response = await fetch(`${endpoint}/query`, { method: "POST", headers: { "Content-Type": "application/json", ...(viewerId ? { "X-Wordbook-Viewer": viewerId } : {}) },
+  const response = await fetch(`${endpoint}/query`, { method: "POST", headers: { "Content-Type": "application/json", "X-Wordbook-Contract": "3", ...(viewerId ? { "X-Wordbook-Viewer": viewerId } : {}) },
     body: JSON.stringify(query), signal: AbortSignal.any([signal, AbortSignal.timeout(65000)]), cache: "no-store" });
   if (!response.ok) throw failure(response.status, false);
-  const parsed = libraryQueryResultSchema.safeParse(await response.json());
+  const parsed = classifiedQueryResultSchema.safeParse(await response.json());
   if (!parsed.success || parsed.data.kind !== query.kind) throw failure(503, false);
   if (viewerId && parsed.data.viewerId !== viewerId) throw failure(403, false);
-  return parsed.data as LibraryQueryResultOf<K>;
+  return parsed.data as ClassifiedQueryResultOf<K>;
 }
 
-export async function sendLibraryCommandV2(command: LibraryCommandV2, viewerId: string) {
+export async function sendLibraryCommandV2(command: LibraryWriteCommand, viewerId: string) {
   let datasetId: string | undefined, previousProgress: string | undefined;
   for (let attempt = 0; attempt < 160; attempt++) {
     const response = await fetch(`${endpoint}/commands`, { method: "POST", headers: { "Content-Type": "application/json", "X-Wordbook-Viewer": viewerId },
@@ -73,7 +74,7 @@ export async function sendLibraryCommandV2(command: LibraryCommandV2, viewerId: 
         (datasetId && datasetId !== p.datasetId) || signature === previousProgress) throw failure(503, true);
       datasetId = p.datasetId; previousProgress = signature; continue;
     }
-    const parsed = libraryCommandV2ResultSchema.safeParse(body);
+    const parsed = ("protocolVersion" in command ? libraryCommandV3ResultSchema : libraryCommandV2ResultSchema).safeParse(body);
     if (!parsed.success) throw failure(503, true);
     if (command.action === "delete") {
       if (!("deleted" in parsed.data) || parsed.data.deleted.templateId !== command.templateId || parsed.data.deleted.revision !== command.expectedRevision + 1) throw failure(503, true);

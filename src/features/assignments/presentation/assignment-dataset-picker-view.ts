@@ -19,6 +19,7 @@ export function datasetPickerStage(dataset: AssignmentDatasetItem): Exclude<Data
 }
 
 export function datasetPickerKind(dataset: AssignmentDatasetItem): Exclude<DatasetPickerKind, "all"> {
+  if ("templateKind" in dataset) return dataset.templateKind ?? "unclassified";
   if (dataset.purpose === "exam_prep") return "exam_prep";
   return dataset.materialKind ?? "unclassified";
 }
@@ -82,6 +83,7 @@ export function filterDatasetPickerOptions(
       dataset.publisher, dataset.seriesTitle, dataset.academicYear,
       dataset.curriculumRevision, dataset.editionLabel, dataset.gradeCode,
       dataset.schoolName,
+      kindLabels[datasetPickerKind(dataset)],
       dataset.semester ? `${dataset.semester}학기` : null,
     ].filter((part) => part !== null && part !== undefined).join(" "));
     return terms.every((term) => text.includes(term));
@@ -94,6 +96,7 @@ const stageLabels: Record<DatasetPickerStage, string> = {
 const kindLabels: Record<DatasetPickerKind, string> = {
   all: "전체", wordbook: "단어장", textbook: "교과서",
   exam_collection: "모의고사·문제집", exam_prep: "직전대비",
+  performance_assessment: "수행평가", mock_exam: "모의고사", other: "기타",
   supplement: "보충 자료", unclassified: "미분류",
 };
 const gradeLabels: Record<string, string> = {

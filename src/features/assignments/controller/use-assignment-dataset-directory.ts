@@ -62,6 +62,29 @@ export function useAssignmentDatasetDirectory() {
   }, [cancel, captureAuthenticationFailure]);
   const ensure = useCallback(() => load(false), [load]);
   const retry = useCallback(() => load(true), [load]);
+  const refreshMetadata = useCallback(async (signal: AbortSignal) => {
+    signal.throwIfAborted();
+    cancel();
+    const version = versionRef.current, abort = new AbortController();
+    abortRef.current = abort;
+    const abortThisRequest = () => abort.abort();
+    signal.addEventListener("abort", abortThisRequest, { once: true });
+    const reportAuthenticationFailure = captureAuthenticationFailure();
+    try {
+      const result = await loadAssignmentDatasetDirectory(abort.signal);
+      signal.throwIfAborted(); abort.signal.throwIfAborted();
+      if (versionRef.current !== version) throw new DOMException("Superseded", "AbortError");
+      statusRef.current = "ready";
+      setState({ datasets: result.datasets, error: "", status: "ready" });
+      return result.datasets;
+    } catch (error) {
+      if (!signal.aborted && !abort.signal.aborted && versionRef.current === version) reportAuthenticationFailure(error);
+      throw error;
+    } finally {
+      signal.removeEventListener("abort", abortThisRequest);
+      if (versionRef.current === version) abortRef.current = null;
+    }
+  }, [cancel, captureAuthenticationFailure]);
 
   useEffect(() => cancel, [cancel]);
 
@@ -70,6 +93,7 @@ export function useAssignmentDatasetDirectory() {
     actions: {
       ensure,
       retry,
+      refreshMetadata,
     },
   };
 }

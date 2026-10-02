@@ -5,6 +5,7 @@ vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () =
 import { EMPTY_LIBRARY_FILTERS } from "../contracts/library";
 import { queryLibrary } from "./queries/library-query";
 import { saveLibraryTemplateV2 } from "./commands/library-command-v2";
+import { saveLibraryTemplateV3 } from "./commands/library-command-v3";
 import { POST as queryRoute } from "@/app/api/admin/wordbook-library/query/route";
 import { POST as commandRoute } from "@/app/api/admin/wordbook-library/commands/route";
 import { readLibraryPage, sendLibraryCommandV2 } from "../client/transport/library-transport";
@@ -22,6 +23,18 @@ const request = (value: unknown, actor: string | null = viewerId) => new Request
 beforeEach(()=>{vi.resetAllMocks();mocks.requireAdmin.mockResolvedValue({userId:viewerId});mocks.getAdminContextOrThrow.mockResolvedValue({userId:viewerId});});
 afterEach(()=>vi.unstubAllGlobals());
 describe("paged library server contracts",()=>{
+  it("dispatches explicit new saves and reads without accepting a missing kind in responses",async()=>{
+    const next={...create,protocolVersion:3,templateKind:"performance_assessment"};
+    mocks.rpc.mockResolvedValue({data:{template:{...template,templateKind:"performance_assessment"}},error:null});
+    expect((await commandRoute(request(next))).status).toBe(200);expect(mocks.rpc).toHaveBeenLastCalledWith("save_vocabulary_library_template_v3",{p_request:next});
+    for(const candidate of [template,{...template,templateKind:"other"}]){mocks.rpc.mockResolvedValue({data:{template:candidate},error:null});await expect(saveLibraryTemplateV3(next)).rejects.toMatchObject({status:503});}
+    mocks.rpc.mockResolvedValue({data:{kind:"templates",viewerId,items:[{...template,templateKind:null}],nextCursor:null},error:null});
+    const req=request({kind:"templates",search:"",templateKind:"unclassified"});req.headers.set("X-Wordbook-Contract","3");
+    expect((await queryRoute(req)).status).toBe(200);expect(mocks.rpc).toHaveBeenLastCalledWith("query_vocabulary_library_v2",{p_query:{kind:"templates",search:"",templateKind:"unclassified",cursor:null,limit:20}});
+    mocks.rpc.mockResolvedValue({data:{kind:"templates",viewerId,items:[template],nextCursor:null},error:null});
+    await expect(queryLibrary({kind:"templates",search:""},undefined,true)).rejects.toMatchObject({status:503});
+    await expect(queryLibrary({kind:"templates",search:"",templateKind:"all"})).rejects.toMatchObject({status:422});
+  });
   it.each(["UPSTREAM_TIMEOUT", "AUTH_UPSTREAM_UNAVAILABLE"])("keeps %s recoverable before any database operation", async (code) => {
     mocks.getAdminContextOrThrow.mockRejectedValue(Object.assign(new Error("private-auth-upstream"), { code }));
     for (const response of [await queryRoute(request({ kind: "templates", search: "" })), await commandRoute(request(create))]) {
