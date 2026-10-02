@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 139,
-      "pathSetSha256": "9e946393ac04b910c957445b7e85a75a0481f0e0ada53e68a5f8ee2c3a78e64e"
+      "fileCount": 140,
+      "pathSetSha256": "a518f9a20a86d5912e5ea27e6ca4aae1879e3a638faf2dfa5398e9fdaeaae371"
     },
     {
       "path": "src/lib/deploy",
@@ -3058,6 +3058,11 @@
     },
     {
       "path": "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
     }
@@ -8194,7 +8199,8 @@
           "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
           "supabase/migrations/20261002155950_classify_wordbook_templates.sql",
-          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql"
+          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
+          "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -8235,7 +8241,8 @@
           "src/design-system/primitives/tabs/tabs.test.tsx",
           "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx",
           "scripts/verify-wordbook-kinds-browser.ts",
-          "src/lib/database/historical-learning-migration.integration.test.ts"
+          "src/lib/database/historical-learning-migration.integration.test.ts",
+          "src/lib/database/reviewed-bundle-archive.integration.test.ts"
         ]
       },
       "requiredImportEdges": [],
