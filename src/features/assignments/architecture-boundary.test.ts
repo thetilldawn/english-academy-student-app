@@ -37,6 +37,7 @@ const migratedControllerFiles = [
   "use-assignment-preview.ts",
   "use-bulk-assignment-controller.ts",
   "use-direct-review-assignment-controller.ts",
+  "use-mixed-mistake-assignment-controller.ts",
   "use-debounced-assignment-preview.ts",
   "use-assignment-controller-runtime.ts",
   "single-assignment-controller-actions.ts",

@@ -42,6 +42,8 @@ export const commonText = {
   filters: {
     wrongAvailability: "오답 유무",
     all: "전체",
+    currentWrong: "현재 오답 있음",
+    currentRepeatedWrong: "현재 2회 이상 오답",
     hasWrong: "오답 있음",
     repeatedWrong: "2회 이상 오답",
     retryNeeded: "재시험 필요",

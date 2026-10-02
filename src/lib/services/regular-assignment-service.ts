@@ -709,7 +709,7 @@ export async function createRegularAssignment(
     });
     const reason = isAssignmentPersistenceInvariantFailure(error ?? {})
       ? "database"
-      : error?.code === "40001"
+      : error?.code === "40001" || error?.code === "PT409"
         ? "conflict"
         : ["22023", "23503", "23505"].includes(error?.code ?? "")
           ? "invalid_selection"

@@ -16,6 +16,8 @@ const wrongFilters: ReadonlyArray<
   readonly [StudentDirectoryWrongFilter, string]
 > = [
   ["all", commonText.filters.all],
+  ["current_wrong", commonText.filters.currentWrong],
+  ["current_repeated", commonText.filters.currentRepeatedWrong],
   ["wrong", commonText.filters.hasWrong],
   ["repeated", commonText.filters.repeatedWrong],
   ["retry", commonText.filters.retryNeeded],
@@ -86,7 +88,11 @@ export function AssignmentWorkspaceFilters({
           ) : null}
           {filters.wrong !== "all" ? (
             <MetaTag tone="warning">
-              {filters.wrong === "wrong"
+              {filters.wrong === "current_wrong"
+                ? commonText.filters.currentWrong
+                : filters.wrong === "current_repeated"
+                  ? commonText.filters.currentRepeatedWrong
+                  : filters.wrong === "wrong"
                 ? commonText.filters.hasWrong
                 : filters.wrong === "repeated"
                   ? commonText.filters.repeatedWrong

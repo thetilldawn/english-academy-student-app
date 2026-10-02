@@ -261,10 +261,10 @@ describe("resolveReviewCandidate", () => {
 });
 
 describe("mixedAssignmentDatabaseErrorReason", () => {
-  it("대기열·canonical 경합은 새로고침 가능한 충돌로 분류한다", () => {
+  it.each(["40001", "PT409"])("대기열·canonical 경합 %s는 새로고침 가능한 충돌로 분류한다", (code) => {
     expect(
       mixedAssignmentDatabaseErrorReason({
-        code: "40001",
+        code,
         message: "mixed_review_queue_snapshot_changed",
       }),
     ).toBe("conflict");

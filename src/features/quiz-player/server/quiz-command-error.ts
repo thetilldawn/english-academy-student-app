@@ -15,9 +15,12 @@ export function quizExpirationError(error: { code?: string; message?: string }):
   if (["attempt_not_found", "practice_not_found"].includes(name ?? "")) return new QuizCommandError(404, {
     error: "시험을 찾을 수 없습니다.", code: "attempt_not_found", retryable: false, outcome: "not_applied",
   });
-  // Practice business exceptions can use 40001 too; classify them before SQLSTATE.
+  // Legacy business exceptions can use 40001 too; classify them before SQLSTATE.
   if (["attempt_not_expired", "attempt_not_active", "attempt_phase_mismatch", "attempt_review_not_timed", "quiz_not_expired",
     "practice_expire_too_early", "practice_already_finished"].includes(name ?? "")) return new QuizCommandError(409, {
+    error: "시험 상태를 다시 확인해 주세요.", code: "attempt_state_changed", retryable: false, outcome: "not_applied",
+  });
+  if (error.code === "PT409") return new QuizCommandError(409, {
     error: "시험 상태를 다시 확인해 주세요.", code: "attempt_state_changed", retryable: false, outcome: "not_applied",
   });
   if (["57014", "40P01", "40001", "55P03"].includes(error.code ?? "")) return new QuizCommandError(503, {

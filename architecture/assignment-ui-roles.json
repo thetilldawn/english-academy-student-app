@@ -598,14 +598,15 @@
       "role": "assembly",
       "reason": "배정 조건과 미확정 저장 복구/이탈 보호를 조합한다. 계산·완성 요청 보관·저장은 controller/application 경계에 둔다.",
       "allowedImports": [
-        "@/components/use-route-exit-guard",
         "../catalog-types",
         "../client/controllers/use-assignment-dataset-picker",
         "../contracts/assignment-grade-review",
         "../controller/assignment-authentication-boundary",
         "../controller/use-assignment-dataset-unit-catalog",
         "../controller/use-direct-review-assignment-controller",
+        "../controller/use-mixed-mistake-assignment-controller",
         "../controller/use-vocab-assignment-screen",
+        "../domain/assignment-student-context",
         "./assignment-dataset-picker",
         "./assignment-discard-dialog",
         "./assignment-editor-shell",
@@ -613,20 +614,21 @@
         "./assignment-submit-action",
         "./direct-review-assignment-sections",
         "./focus-invalid-assignment-field",
+        "./mixed-mistake-assignment-sections",
         "./vocab-assignment-planner.module.css",
         "./vocab-range-assignment-sections",
+        "@/components/guarded-link",
+        "@/components/use-route-exit-guard",
+        "@/design-system/patterns/feedback/feedback",
         "@/design-system/primitives/badge/badge",
         "@/design-system/primitives/button/button",
         "@/design-system/primitives/dialog/dialog",
         "@/features/wordbook-compositions/public-contracts",
         "@/features/wordbook-compositions/public-ui",
+        "@/lib/admin/student-profile-requirements",
         "@/lib/ui/motion",
         "react",
-        "sonner",
-        "@/components/guarded-link",
-        "@/design-system/patterns/feedback/feedback",
-        "@/lib/admin/student-profile-requirements",
-        "../domain/assignment-student-context"
+        "sonner"
       ]
     },
     {
@@ -792,6 +794,27 @@
         "../controller/use-notebook-assignment",
         "./exam-condition-fields",
         "./notebook-assignment.module.css"
+      ]
+    },
+    {
+      "path": "mixed-mistake-assignment-sections.tsx",
+      "role": "assembly",
+      "reason": "혼합 배정 제어기와 좁은 범위·조건·시간 표시를 연결하며 뜻별 제외·분할 확인을 조합한다.",
+      "allowedImports": [
+        "../catalog-types",
+        "../controller/use-mixed-mistake-assignment-controller",
+        "../domain/model",
+        "./assignment-dataset-trigger",
+        "./assignment-deadline-fields",
+        "./assignment-section",
+        "./exam-condition-fields",
+        "./exam-timing-fields",
+        "./vocab-assignment-planner.module.css",
+        "./vocab-range-fields",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/form/numeric-input"
       ]
     }
   ]

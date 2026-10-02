@@ -36,7 +36,14 @@ export type StudentCurrentWrongSummary = {
   wrongWordCount: number;
 };
 
+export type StudentCurrentMistakeSummary = {
+  basis: "current_meaning_cards_v1";
+  wordCount: number;
+  repeatedWordCount: number;
+};
+
 export type StudentDetailInitial = {
+  currentMistakeSummary: StudentCurrentMistakeSummary;
   history: StudentHistoryPage;
   learningSources: StudentLearningSourceItem[];
   snapshotAt: string;

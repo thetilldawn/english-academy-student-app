@@ -5,5 +5,5 @@ export class LibraryCommandError extends Error {
 }
 
 export function isVocabularySourceError(error: { code?: string; message?: string }) {
-  return (error.code === "40001" || error.code === "22023") && /^vocabulary_[a-z_]+$/.test(error.message ?? "");
+  return (error.code === "40001" || error.code === "PT409" || error.code === "22023") && /^vocabulary_[a-z_]+$/.test(error.message ?? "");
 }

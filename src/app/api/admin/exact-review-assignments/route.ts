@@ -24,7 +24,7 @@ export const POST = withAuthenticationFailureResponse(async function POST(reques
       commandNowMilliseconds,
     });
     return Response.json(
-      { assignmentId },
+      typeof assignmentId === "string" ? { assignmentId } : assignmentId,
       {
         status: 201,
         headers: { "Cache-Control": "private, no-store" },

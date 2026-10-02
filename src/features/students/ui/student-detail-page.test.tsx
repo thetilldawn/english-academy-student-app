@@ -86,6 +86,7 @@ const initial: StudentDetailInitial = {
   },
   vocabBookHistory: [],
   wrongSummary: { repeatedWrongWordCount: 0, wrongWordCount: 0 },
+  currentMistakeSummary: { basis: "current_meaning_cards_v1", wordCount: 0, repeatedWordCount: 0 },
 };
 
 function renderPage() {

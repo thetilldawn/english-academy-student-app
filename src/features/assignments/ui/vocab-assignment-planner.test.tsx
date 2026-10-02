@@ -599,7 +599,7 @@ describe("오답 단일 배정 제출", () => {
   it("계산이 끝난 1문항 오답 시험을 정확히 한 번 제출하고 닫는다", async () => {
     const onClose = vi.fn();
     const onSuccess = vi.fn();
-    mocks.reviewSubmit.mockResolvedValue({ ok: true, result: {} });
+    mocks.reviewSubmit.mockResolvedValue({ ok: true, result: { assignmentId: "00000000-0000-4000-8000-000000000099" } });
     mocks.useReview.mockReturnValue(reviewController("ready", true));
 
     render(
@@ -812,11 +812,12 @@ describe("오답 단일 배정 제출", () => {
     expect(screen.getByText("1명 선택")).toBeVisible();
     expect(screen.getByRole("tab", { name: "오답 시험" }))
       .toHaveAccessibleDescription(
-        "오답 시험은 단일 배정에서만 사용할 수 있습니다.",
+        "오답 시험과 범위+오답은 단일 배정에서만 사용할 수 있습니다.",
       );
     expect(screen.getByRole("tab", { name: "오답 시험" })).toBeDisabled();
     expect(
-      screen.getByText("오답 시험은 단일 배정에서만 사용할 수 있습니다."),
+      screen.getByText("오답 시험과 범위+오답은 단일 배정에서만 사용할 수 있습니다."),
     ).toBeVisible();
+    expect(screen.getByRole("tab", { name: "범위+오답" })).toBeDisabled();
   });
 });

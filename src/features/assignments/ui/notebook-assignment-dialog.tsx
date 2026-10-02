@@ -7,7 +7,7 @@ import {useNotebookAssignment} from '../controller/use-notebook-assignment';
 import {ExamConditionFields} from './exam-condition-fields';
 import styles from './notebook-assignment.module.css';
 
-export function NotebookAssignmentDialog({students,audienceMode,onClose,onSuccess,interactionAllowed=true}:{students:{id:string;displayName:string}[];audienceMode:'single'|'bulk';onClose:()=>void;onSuccess:(count:number)=>void;interactionAllowed?:boolean}){
+export function NotebookAssignmentDialog({students,audienceMode,onClose,onSuccess,interactionAllowed=true}:{students:{id:string;displayName:string}[];audienceMode:'single'|'bulk';onClose:()=>void;onSuccess:(counts:{studentCount:number;assignmentCount:number})=>void;interactionAllowed?:boolean}){
  const c=useNotebookAssignment(students.map(s=>s.id),audienceMode,onSuccess,interactionAllowed),[visible,setVisible]=useState(10);
  const locked=c.busy||!!c.sent||!interactionAllowed,settings=c.settings,filters=c.filters;
  return <DialogFrame aria-labelledby="notebook-assignment-title" onRequestClose={onClose} closeDisabled={!c.denied&&locked} size="wide" layout="body-footer" fullScreenMobile>
@@ -15,6 +15,7 @@ export function NotebookAssignmentDialog({students,audienceMode,onClose,onSucces
   <DialogBody><div className={styles.content}>
    {!c.denied&&interactionAllowed?<>
     <div className={styles.summary}><strong>{c.ids.length}명</strong><span>포인트 제외</span>{c.ids.length!==students.length?<Button disabled={locked} onClick={c.restore} size="small">제외한 학생 복원</Button>:null}</div>
+    <p>현재 해결하지 못한 뜻만 배정합니다. 서로 다른 뜻이나 문제 종류를 함께 담을 수 없으면 시험을 나누며, 전체 시간은 나눈 시험에 배분합니다.</p>
     <fieldset disabled={locked} className={styles.fields}>
      <label>틀린 횟수(이상)<NumericInput min={1} value={filters.minWrongCount??null} onValueChange={value=>c.changeFilters({...filters,minWrongCount:value??undefined})}/></label>
      <label>틀린 횟수(이하)<NumericInput min={1} value={filters.maxWrongCount??null} onValueChange={value=>c.changeFilters({...filters,maxWrongCount:value??undefined})}/></label>
@@ -36,6 +37,7 @@ export function NotebookAssignmentDialog({students,audienceMode,onClose,onSucces
       <div className={styles.summary}><strong>{row.displayName||students.find(s=>s.id===row.studentId)?.displayName}</strong><Button disabled={locked} size="small" variant="quiet" onClick={()=>c.exclude(row.studentId)}>제외</Button></div>
       {'availableCount'in row?<>
        <p>{row.words.length}문항 · 출제 가능 {row.availableCount}개 / 전체 {row.totalCount}개</p>
+       {row.banks&&row.banks.length>1?<ul aria-label="나누어 배정할 시험">{row.banks.map(bank=><li key={bank.index}>시험 {bank.index+1}: {bank.questionCount}문항{bank.timeLimitSeconds!==null?` · ${bank.timeLimitSeconds}초`:''}</li>)}</ul>:null}
        {row.error?<p role="alert">{row.error}</p>:null}
        {row.mismatchingSources.length?<label className={styles.grade}><input type="checkbox" disabled={locked} checked={c.confirmed.includes(row.studentId)} onChange={e=>c.confirm(row.studentId,e.target.checked)}/><span>학년이 다른 단어장 포함: {row.mismatchingSources.map(d=>d.label).join(' · ')}</span></label>:null}
        {row.words.length?<details><summary>출제 단어 {row.words.length}개</summary><ul className={styles.words}>{row.words.map(word=><li key={word.key}><span lang="en">{word.headword}</span><span>{word.primaryMeaning}</span></li>)}</ul></details>:null}

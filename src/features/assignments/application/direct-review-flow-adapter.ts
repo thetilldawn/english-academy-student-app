@@ -6,10 +6,11 @@ import {
   directReviewSubmissionFingerprint,
 } from "../api/request-adapters";
 import {
-  parseAssignmentCreationResponse,
+  parseMistakeAssignmentCreationResponse,
   parseDirectReviewDatasetSummariesResponse,
   parseDirectReviewPreviewResponse,
   type AssignmentCreationResponse,
+  type MistakeAssignmentCreationResponse,
   type DirectReviewDatasetSummariesResponse,
   type DirectReviewPreviewResponse,
 } from "../api/response-adapters";
@@ -104,7 +105,7 @@ export function prepareDirectReviewSubmission(
     selection?: { selectionFingerprint: string; excludeUnavailableConfirmed: boolean };
   },
   nowMilliseconds: number,
-): AssignmentSubmissionPreparationResult<AssignmentCreationResponse> {
+): AssignmentSubmissionPreparationResult<AssignmentCreationResponse | MistakeAssignmentCreationResponse> {
   const issues = resolveDirectReviewSubmissionIssues(input, nowMilliseconds);
   if (issues.length > 0) {
     const issue = issues[0];
@@ -122,7 +123,7 @@ export function prepareDirectReviewSubmission(
     value: {
       fallback: SUBMISSION_FALLBACK,
       fingerprint: directReviewSubmissionFingerprint(input.draft, input.selection),
-      parse: parseAssignmentCreationResponse,
+      parse: parseMistakeAssignmentCreationResponse,
       recoveryForResponse: (response) => {
         if (response.status !== 409) return undefined;
         return responseCode(response.data) === "idempotency_key_reused"

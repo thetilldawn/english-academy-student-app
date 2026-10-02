@@ -64,6 +64,7 @@ export function useQuizExpiration(input: {
         }
         if (response.payload.attempt.id !== input.attemptId) { state.current.retryable = false; return null; }
         if (quizResultIsConfirmed(response.payload)) {
+          input.transport.studentStateConfirmed?.();
           finish(); return "terminal";
         }
         return response;

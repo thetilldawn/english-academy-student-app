@@ -16,6 +16,37 @@ const mount = () => render(<PracticeLauncher keys={["word:a", "word:b"]} filters
 beforeEach(() => { vi.resetAllMocks(); mocks.preview.mockResolvedValue(preview); });
 afterEach(cleanup);
 describe("자율연습 시작창", () => {
+  it("세션 확인 중에는 창을 가리고 저장 사본과 확인된 이동을 보존한다",async()=>{
+    let finish!:(value:{preparationId:string})=>void;mocks.start.mockReturnValueOnce(new Promise(resolve=>{finish=resolve;}));
+    const props={keys:["word:a"],filters,totalCount:1,disabled:false};
+    const view=render(<PracticeLauncher {...props} privacyReady/>);
+    await click("선택 연습");await click("연습할 단어 확인");await click("연습 시작");
+    view.rerender(<PracticeLauncher {...props} privacyReady={false}/>);
+    expect(screen.queryByRole("dialog")).toBeNull();expect(screen.queryByRole("button",{name:"시작 결과 확인"})).toBeNull();
+    await act(async()=>finish({preparationId:"saved-preparation"}));expect(mocks.push).not.toHaveBeenCalled();
+    view.rerender(<PracticeLauncher {...props} privacyReady/>);
+    expect(mocks.push).toHaveBeenCalledOnce();expect(mocks.push).toHaveBeenCalledWith("/student/practice/saved-preparation");
+    view.rerender(<PracticeLauncher {...props} privacyReady={false}/>);
+    view.rerender(<PracticeLauncher {...props} privacyReady/>);
+    expect(mocks.push).toHaveBeenCalledOnce();
+    expect(mocks.start).toHaveBeenCalledOnce();
+  });
+  it.each([new PracticeRequestError(503,"응답 유실"),new PracticeRequestError(409,"응답 확인 필요"),new TypeError("network")])(
+    "뜻별 연습 시작 결과가 불명확하면 화면 조건이 바뀌어도 최초 요청 전체를 보존한다: %s", async failure => {
+    const mistakes={mode:'mistakes' as const,view:'current' as const,stateVersion:'4',meanings:[{wordKey:'word:a',meaningKey:'a'.repeat(64),episodeId:'00000000-0000-4000-8000-000000000001'}]};
+    mocks.start.mockRejectedValueOnce(failure).mockResolvedValueOnce({preparationId:'saved-preparation'});
+    const changed=vi.fn();
+    const mounted=render(<PracticeLauncher mistakes={mistakes} filters={{...filters,view:'current'}} totalCount={25} disabled={false} onSourceChanged={changed}/>);
+    await click('선택 연습');await click('연습할 단어 확인');await click('연습 시작');
+    mounted.rerender(<PracticeLauncher mistakes={{...mistakes,view:'history',stateVersion:'5',meanings:[]}} filters={{...filters,view:'history'}} totalCount={0} disabled={true} onSourceChanged={changed}/>);
+    expect(screen.getByRole('button',{name:'닫기'})).toBeDisabled();
+    expect(screen.getByRole('spinbutton',{name:'문항 수'})).toBeDisabled();
+    await click('시작 결과 확인');
+    expect(mocks.preview).toHaveBeenCalledOnce();expect(changed).not.toHaveBeenCalled();
+    expect(mocks.start.mock.calls[1][0]).toEqual(mocks.start.mock.calls[0][0]);
+    expect(mocks.start.mock.calls[1][0].selection).toEqual(mistakes);
+    expect(mocks.push).toHaveBeenCalledWith('/student/practice/saved-preparation');
+  });
   it("선택 연습과 조건 전체를 구별하며 첫10개 키를 전체로 보내지 않는다", async () => {
     mount(); await click("조건 전체 연습"); await click("연습할 단어 확인");
     expect(mocks.preview.mock.calls[0][0].selection).toEqual({ mode: "filtered", filters });

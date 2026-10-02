@@ -215,6 +215,7 @@ describe("createDirectReviewAssignment", () => {
   it.each([
     ["lookup", "23505", "idempotency_key_reused"],
     ["create", "40001", "review_candidates_changed"],
+    ["create", "PT409", "review_candidates_changed"],
   ] as const)("%s 충돌 원인을 구조화해 구분한다", async (
     stage,
     code,

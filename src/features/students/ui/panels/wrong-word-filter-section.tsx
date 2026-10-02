@@ -19,6 +19,7 @@ export function WrongWordFilterSection({
   onLevelFilterChange,
   onQueryChange,
   query,
+  view,
 }: {
   datasetFilter: string;
   datasetOptions: readonly { id: string; label: string }[];
@@ -27,6 +28,7 @@ export function WrongWordFilterSection({
   onLevelFilterChange: (value: WrongWordLevelFilter) => void;
   onQueryChange: (value: string) => void;
   query: string;
+  view: "current" | "history";
 }) {
   const copy = adminStudentsText.learning.wrongWordsPanel;
 
@@ -54,6 +56,7 @@ export function WrongWordFilterSection({
             value={datasetFilter}
           >
             <option value="">{copy.allWordbooks}</option>
+            {datasetFilter && !datasetOptions.some(dataset => dataset.id === datasetFilter) && <option value={datasetFilter}>선택한 단어장</option>}
             {datasetOptions.map((dataset) => (
               <option key={dataset.id} value={dataset.id}>
                 {dataset.label}
@@ -70,8 +73,8 @@ export function WrongWordFilterSection({
         {(
           [
             ["all", copy.all],
-            ["once", copy.once],
-            ["repeated", copy.repeated],
+            ["once", view === "current" ? copy.currentOnce : copy.once],
+            ["repeated", view === "current" ? copy.currentRepeated : copy.repeated],
           ] as const
         ).map(([value, label]) => (
           <Button

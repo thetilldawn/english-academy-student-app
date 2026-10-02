@@ -55,6 +55,15 @@ function question(
   };
 }
 
+it("혼합 연습의 영영풀이 문항은 부모 시험 유형보다 문항 유형으로 표시와 음성을 정한다", () => {
+  const q = { ...question("english_to_korean"), quizContentMode: "canonical_headword_to_definition" as const };
+  expect(quizAudioPresentation(q, "book_meaning_choice")).toEqual({ promptAudioUrl: availablePronunciation.audioUrl, choiceAudioEnabled: false });
+  expect(quizChoiceAudioUrls(q, "book_meaning_choice")).toEqual([]);
+  expect(quizAnswerAudioUrl(q, 0, "book_meaning_choice")).toBeNull();
+  const example = { ...question("korean_to_english"), quizContentMode: "canonical_example_to_headword" as const };
+  expect(quizAudioPresentation(example, "book_meaning_choice")).toEqual({ promptAudioUrl: null, choiceAudioEnabled: true });
+});
+
 function attempt(): QuizAttempt {
   return {
     assignmentTitle: "Quiz",

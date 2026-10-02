@@ -1,7 +1,15 @@
 import { z } from "zod";
-import { notebookFiltersSchema } from "@/features/students/public-contracts";
+import { notebookFiltersSchema, mistakeFiltersSchema } from "@/features/students/public-contracts";
 
 export const practiceSelectionSchema = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("mistake_filters"), filters: mistakeFiltersSchema,
+    stateVersion: z.string().regex(/^\d{1,19}$/).refine(value => BigInt(value) <= BigInt("9223372036854775807")),
+  }).strict(),
+  z.object({ mode: z.literal("mistakes"), view: z.enum(["current", "history"]),
+    stateVersion: z.string().regex(/^\d{1,19}$/).refine(value => BigInt(value) <= BigInt("9223372036854775807")),
+    meanings: z.array(z.object({ wordKey: z.string().min(1).max(1000), meaningKey: z.string().regex(/^[a-f0-9]{64}$/), episodeId: z.uuid().nullable() }).strict())
+      .min(1).max(500).refine(values => new Set(values.map(value => value.meaningKey)).size === values.length),
+  }).strict(),
   z.object({ mode: z.literal("selected"), keys: z.array(z.string().min(1).max(1000)).min(1).max(500).refine(keys => new Set(keys).size === keys.length) }).strict(),
   z.object({ mode: z.literal("filtered"), filters: notebookFiltersSchema }).strict(),
 ]);

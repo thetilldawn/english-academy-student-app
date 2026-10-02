@@ -11,6 +11,9 @@ import { getStudentWrongWordPage, WrongWordPageForbiddenError } from "@/features
 import { WrongWordCursorError } from "@/features/students/server/wrong-word-cursor";
 import { wrongWordFiltersFromSearchParams } from "@/features/students/contracts/wrong-word-filters";
 import { queueWrongWordsSchema } from "@/lib/validation";
+import { mistakeFiltersSchema, queueMistakesSchema } from "@/features/students/contracts/mistake-episode";
+import { getAdminMistakePage, MistakeReadError } from "@/features/students/server/queries/mistake-episode-query";
+import { queueStudentMistakes, QueueMistakesError } from "@/features/students/server/commands/queue-mistakes";
 
 export const GET = withAuthenticationFailureResponse(async function GET(
   request: Request,
@@ -30,7 +33,11 @@ export const GET = withAuthenticationFailureResponse(async function GET(
     const params = new URL(request.url).searchParams;
     const filters = wrongWordFiltersFromSearchParams(params);
     if (!filters.success) return jsonError("오답 조회 조건을 확인해 주세요.", 400);
-    const page = await getStudentWrongWordPage(id, { filters: filters.data, cursor: params.get("cursor") }, admin);
+    const mistakeFilters = params.has("view") ? mistakeFiltersSchema.safeParse({ ...filters.data, view: params.get("view"), sort: params.get("sort") ?? "count" }) : null;
+    if (mistakeFilters && !mistakeFilters.success) return jsonError("오답 조회 조건을 확인해 주세요.", 400);
+    const page = mistakeFilters?.success
+      ? await getAdminMistakePage(id, { filters: mistakeFilters.data, cursor: params.get("cursor") }, admin)
+      : await getStudentWrongWordPage(id, { filters: filters.data, cursor: params.get("cursor") }, admin);
     if (!page) {
       return jsonError("학생을 찾지 못했습니다.", 404);
     }
@@ -43,6 +50,8 @@ export const GET = withAuthenticationFailureResponse(async function GET(
       },
     );
   } catch (error) {
+    if (error instanceof MistakeReadError) return jsonError(error.message, error.reason === "changed" ? 409
+      : error.reason === "invalid" ? 400 : error.reason === "unauthenticated" ? 401 : error.reason === "forbidden" ? 403 : 503);
     if (error instanceof WrongWordPageForbiddenError) return jsonError(error.message, 403);
     if (error instanceof WrongWordCursorError) return jsonError(error.message, 400);
     return jsonError("오답 단어 이력을 불러오지 못했습니다.", 500);
@@ -64,20 +73,21 @@ export const POST = withAuthenticationFailureResponse(async function POST(
 
   const [{ id }, input] = await Promise.all([
     context.params,
-    parseJson(request, queueWrongWordsSchema),
+    parseJson(request, z.union([queueMistakesSchema, queueWrongWordsSchema])),
   ]);
   if (!z.uuid().safeParse(id).success || !input) {
     return jsonError("학생과 선택한 오답 단어를 확인해 주세요.", 400);
   }
 
   try {
-    const queueIds = await queueStudentWrongWords(
+    const queueIds = 'targets' in input ? await queueStudentMistakes(id, input.targets, admin) : await queueStudentWrongWords(
       id,
       input.questionIds,
       admin,
     );
-    return Response.json({ queueIds });
+    return Response.json({ queueIds }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
+    if (error instanceof QueueMistakesError) return jsonError(error.message, error.status);
     if (
       error instanceof WrongWordQueueError &&
       error.reason === "forbidden"

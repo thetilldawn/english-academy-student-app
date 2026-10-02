@@ -21,7 +21,9 @@ export const GET = withAuthenticationFailureResponse(async function GET(
   }
 
   try {
-    const summaries = await listStudentDirectReviewDatasetSummaries(id, admin);
+    const summaries = new URL(_request.url).searchParams.get("plan") === "meaning-episode-v1"
+      ? await listStudentDirectReviewDatasetSummaries(id, admin, undefined, "meaning-episode-v1")
+      : await listStudentDirectReviewDatasetSummaries(id, admin);
     return Response.json(
       { summaries },
       { headers: { "Cache-Control": "private, no-store" } },

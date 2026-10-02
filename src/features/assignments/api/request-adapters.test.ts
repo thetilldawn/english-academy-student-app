@@ -336,6 +336,7 @@ describe("assignment request adapters", () => {
     const request = buildDirectReviewAssignmentRequest(
       immediate,
       assignmentContractIds.idempotencyKey,
+      { selectionFingerprint: "a".repeat(64), excludeUnavailableConfirmed: false },
     );
 
     expect(request.body).toMatchObject({
@@ -343,6 +344,8 @@ describe("assignment request adapters", () => {
       availableUntil: null,
       datasetId: assignmentContractIds.dataset,
       idempotencyKey: assignmentContractIds.idempotencyKey,
+      selectionFingerprint: "a".repeat(64),
+      excludeUnavailableConfirmed: false,
       questionTimeLimitSeconds: null,
       reviewLevels: [1, 2],
       studentId: assignmentContractIds.studentA,
@@ -368,6 +371,7 @@ describe("assignment request adapters", () => {
         },
       },
       assignmentContractIds.idempotencyKey,
+      { selectionFingerprint: "a".repeat(64), excludeUnavailableConfirmed: false },
     );
     expect(scheduled.body.availableFrom).toBe("2026-08-17T00:00:00.000Z");
     expect(scheduled.body.availableUntil).toBe("2026-08-17T12:00:00.000Z");
@@ -379,6 +383,7 @@ describe("assignment request adapters", () => {
       directionRatio: immediate.exam.directionRatio,
     });
     expect(directReviewPreviewSchema.parse(preview.body)).toStrictEqual({
+      planVersion: "meaning-episode-v1",
       datasetId: assignmentContractIds.dataset,
       englishToKoreanRatio: 50,
       reviewLevels: [1, 2],

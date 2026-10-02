@@ -63,7 +63,7 @@ export function QuizPlayer({
   const promptDensity = quizPromptDensity(
     currentQuestion.prompt,
     currentQuestion.direction,
-    state.attempt.quizContentMode,
+    currentQuestion.quizContentMode ?? state.attempt.quizContentMode,
   );
   const choose = (index: number) => {
     void controller.submitChoice(index);

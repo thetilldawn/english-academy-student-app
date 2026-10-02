@@ -108,7 +108,7 @@ export const adminStudentsText = {
     worksheetWrongWordHelp:
       "선택한 오답을 한 번에 50개까지 학생의 학교·학년·해석 진도와 함께 앱에 저장하고, 연결된 비공개 Google Drive의 AI 입력 파일을 직접 업데이트합니다.",
     wrongHistoryRefreshHelp:
-      "첫 시험이 끝나는 즉시 오답 이력과 현재 오답 단어를 반영합니다.",
+      "정규 시험의 답이 저장되면 반영합니다. 해당 뜻을 맞히면 현재 오답에서 빠지고 지난 이력에 남습니다. 현재 횟수는 마지막 해결 이후, 누적 횟수는 보관된 전체 기록입니다.",
     activitySections: {
       open: "응시할 시험",
       needsAttention: "미응시 · 미통과",
@@ -215,6 +215,7 @@ export const adminStudentsText = {
         current: "현재 오답 단어",
         once: "누적 1회",
         repeated: "누적 2회 이상",
+        currentRepeated: "현재 2회 이상",
         pending: "다음 시험 대기",
         times: "{count}회",
         count: "{count}개",
@@ -238,6 +239,8 @@ export const adminStudentsText = {
       all: "전체",
       once: "누적 1회",
       repeated: "누적 2회 이상",
+      currentOnce: "현재 1회",
+      currentRepeated: "현재 2회 이상",
       purposeAria: "오답 단어 작업",
       nextExam: "다음 시험",
       worksheet: "해석 시험지 범위",

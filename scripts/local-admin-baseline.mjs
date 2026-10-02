@@ -12,6 +12,8 @@ import { prepareLocalPractice, closeLocalPractice, localPracticeFixture, isLocal
 import { prepareLocalNotebookAssignment, localNotebookAssignmentFixture, isLocalNotebookAssignmentRequest } from "./local-notebook-assignment-data.mjs";
 import { SCHOOL_FAKE_KEY } from "./local-school-search-data.mjs";
 import { vocabularyLibraryFixture } from "./local-vocabulary-library-data.mjs";
+import { localMixedUiFixture } from "./local-mistake-ui-data.mjs";
+import { localMistakeNotebookFixture, isLocalMistakeNotebookRead } from "./local-mistake-notebook-data.mjs";
 import { isLocalQuizRequest, localQuizSummary, localQuizWave, resetLocalQuizzes } from "./local-quiz-feedback-data.mjs";
 import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwnedChild, assertMayStart, isRestorationSafe, shouldSimulateCapacityFailure } from "./local-admin-baseline-guard.mjs";
 
@@ -91,7 +93,7 @@ const dataServer = http.createServer(async (req, res) => {
   try {
     const request = { url: DATA_ORIGIN + req.url, method: req.method,
       headers: new Headers(req.headers), body: await readBody(req), quizFeedback, studentProfile, schoolSchedules, mockWordbooks };
-    const source = (notebookAssignment ? await localNotebookAssignmentFixture(request) : null) ?? (practice ? await localPracticeFixture(request) : null) ?? (notebook ? localNotebookFixture(request) : null) ?? (vocabularyLibrary ? vocabularyLibraryFixture(request) : null) ?? fixtureResponse(request);
+    const source = (notebookAssignment ? await localNotebookAssignmentFixture(request) : null) ?? (practice ? await localPracticeFixture(request) : null) ?? (notebook ? localMistakeNotebookFixture(request) ?? localNotebookFixture(request) : null) ?? (vocabularyLibrary ? vocabularyLibraryFixture(request) : null) ?? fixtureResponse(request);
     const result = notebook ? notebookDisplaySamples(request, source) : source;
     if (process.argv.includes("--layout-delay") && ["directory", "history", "auth", "student-auth", "student-dashboard"].includes(result.category)) await new Promise(resolve => setTimeout(resolve, 800));
     if(quizFeedback && result.delayMs > 0 && result.delayMs <= 4000) await new Promise(resolve=>setTimeout(resolve,result.delayMs));
@@ -113,6 +115,12 @@ if (notebook) allowedApi.add("/api/student/notebook");
 const proxy = http.createServer(async (req, res) => {
   if (req.headers.host !== new URL(APP_ORIGIN).host) return json(res, { error: "Local host required" }, 403);
   const url = new URL(req.url, APP_ORIGIN);
+  if(process.argv.includes('--mistake-ui') && ['/api/admin/mixed-assignments','/api/admin/mixed-assignments/preview'].includes(url.pathname)){
+    let body;try{body=JSON.parse(await readBody(req));}catch{return json(res,{error:'Invalid local fixture request'},400);}
+    const result=localMixedUiFixture({path:url.pathname,method:req.method,origin:req.headers.origin,body});
+    metrics.http.push({path:url.pathname,method:req.method,status:result.status,category:'fake-mixed-ui-only',at:Date.now()});
+    return json(res,result.body,result.status);
+  }
   if (url.pathname === "/__baseline/student" && req.method === "GET") {
     // The real app still validates this token against the isolated fixture backend.
     res.writeHead(303, { location: notebook ? "/student/wordbook" : "/student", "cache-control": "no-store",
@@ -170,6 +178,7 @@ const proxy = http.createServer(async (req, res) => {
     return json(res, { error: "Local capacity read failure fixture" }, 503);
   }
   if (url.pathname.startsWith("/api/") && (!allowedApi.has(url.pathname) &&
+      !(notebook && isLocalMistakeNotebookRead(url.pathname,req.method)) &&
       !(quizFeedback && isLocalQuizRequest(url.pathname, req.method)) &&
       !(practice && isLocalPracticeRequest(url.pathname, req.method)) &&
       !(notebookAssignment && isLocalNotebookAssignmentRequest(url.pathname, req.method)) &&
@@ -273,5 +282,5 @@ try {
   await listen(proxy, 3037);
   assertMayStart(stopRequested);
   console.log(JSON.stringify({ url: APP_ORIGIN + "/admin/login", account: ACCOUNT,
-    note: notebookAssignment ? "가짜 학생 배정·응시만 격리 메모리 DB에 저장. 외부·실제 DB 요청은 차단됩니다." : practice ? "가짜 학생 연습만 격리 메모리 DB에 저장. 외부·실제 DB 요청은 차단됩니다." : studentProfile ? "가짜 로그인. 지정된 가짜 학생 프로필만 메모리 안에서 수정 가능. 외부·실제 DB 요청은 차단됩니다." : "가짜 로그인/읽기 전용. 실제 인증·DB 비용 검증 아님. 등록/배정/수정/삭제 금지." }));
+    note: process.argv.includes('--mistake-ui') ? "혼합 배정 UI 응답과 복구를 가짜 자료로 검사합니다. 가짜 저장 결과는 이 프로세스의 메모리에만 있으며 DB에는 쓰지 않습니다." : notebookAssignment ? "가짜 학생 배정·응시만 격리 메모리 DB에 저장. 외부·실제 DB 요청은 차단됩니다." : practice ? "가짜 학생 연습만 격리 메모리 DB에 저장. 외부·실제 DB 요청은 차단됩니다." : studentProfile ? "가짜 로그인. 지정된 가짜 학생 프로필만 메모리 안에서 수정 가능. 외부·실제 DB 요청은 차단됩니다." : "가짜 로그인/읽기 전용. 실제 인증·DB 비용 검증 아님. 등록/배정/수정/삭제 금지." }));
 } catch (error) { await stop(); throw error; }

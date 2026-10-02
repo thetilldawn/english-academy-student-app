@@ -11,7 +11,7 @@ export async function saveLibraryTemplateV2(input: unknown, admin?: AdminContext
   const command = parsed.data;
   const client = await createServerSupabaseClient();
   const { data, error } = await client.rpc("save_vocabulary_library_template_v2", { p_request: command });
-  if (error) throw new LibraryCommandError(error.code === "42501" ? 403 : error.code === "P0002" ? 404 : error.code === "40001" ? 409 : ["22023", "22P02", "22003"].includes(error.code) ? 422 : 503);
+  if (error) throw new LibraryCommandError(error.code === "42501" ? 403 : error.code === "P0002" ? 404 : (error.code === "40001" || error.code === "PT409") ? 409 : ["22023", "22P02", "22003"].includes(error.code) ? 422 : 503);
   const result = libraryCommandV2ResultSchema.safeParse(data);
   if (!result.success) throw new LibraryCommandError(503);
   if (command.action === "delete") {

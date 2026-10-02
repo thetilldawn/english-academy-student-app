@@ -27,6 +27,7 @@ function validateReviewLevels(
 export const directReviewPreviewSchema = z
   .object({
     studentId: z.uuid(),
+    planVersion: z.literal("meaning-episode-v1").optional(),
     datasetId: z.uuid(),
     reviewLevels: z.array(reviewLevelSchema).min(1).max(2),
     englishToKoreanRatio: z.union([
@@ -44,6 +45,7 @@ const directReviewAssignmentBaseSchema = z
   .object({
     idempotencyKey: z.uuid(),
     studentId: z.uuid(),
+    planVersion: z.literal("meaning-episode-v1").optional(),
     datasetId: z.uuid(),
     reviewLevels: z.array(reviewLevelSchema).min(1).max(2),
     englishToKoreanRatio: z.union([
@@ -76,6 +78,7 @@ const directReviewAssignmentBaseSchema = z
 export const directReviewAssignmentSchema = directReviewAssignmentBaseSchema
   .superRefine((value, context) => {
     validateRetrySettings(value, context);
+    if (value.planVersion && !value.selectionFingerprint) context.addIssue({ code: "custom", path: ["selectionFingerprint"], message: "오답 구성을 먼저 확인해 주세요." });
     validateReviewLevels(value.reviewLevels, context);
     if (value.totalQuestionCount > 400) {
       context.addIssue({

@@ -26,7 +26,7 @@ import {
   Input,
 } from "@/design-system/primitives/form/field";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
-import { requestStudentLogin } from "@/features/session/api/session";
+import { requestStudentLogin } from "@/features/session/public-client";
 
 import styles from "./login-form.module.css";
 

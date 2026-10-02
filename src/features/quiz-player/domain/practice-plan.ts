@@ -14,9 +14,9 @@ const candidate = z.object({ entryId: z.number().int().positive(), datasetId: z.
 });
 export const practiceSourceSchema = z.object({ sourceHash: z.string().regex(/^[a-f0-9]{64}$/), words: z.array(sourceWord).max(10000), candidates: z.array(candidate).max(20000) });
 export type PracticeSource = z.infer<typeof practiceSourceSchema>;
-export type PracticeEntry = QuizVocabularyEntry & { entryId: number; key?: string; raw?: PracticeSource["words"][number] };
+export type PracticeEntry = QuizVocabularyEntry & { entryId: number; key?: string; raw?: { headword: string; [key: string]: unknown } };
 
-function seededRandom(seed: string) {
+export function seededRandom(seed: string) {
   let state = 2166136261;
   for (const char of seed) state = Math.imul(state ^ char.charCodeAt(0), 16777619);
   return () => { state += 0x6D2B79F5; let value = Math.imul(state ^ state >>> 15, 1 | state); value ^= value + Math.imul(value ^ value >>> 7, 61 | value); return ((value ^ value >>> 14) >>> 0) / 4294967296; };

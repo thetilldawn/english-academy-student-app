@@ -16,7 +16,7 @@ export async function practiceRpc(name: string, parameters: Record<string, unkno
     const code = error.message?.split(/[\s:]/)[0];
     if (error.code === "42501") throw new PracticeError(403, "다시 로그인해 주세요.");
     if (code === "practice_not_found") throw new PracticeError(404, "연습을 찾을 수 없습니다.");
-    if (code === "practice_source_changed") throw new PracticeError(409, "단어가 달라졌습니다. 다시 확인해 주세요.", "source_changed");
+    if (["practice_source_changed", "wrong_history_changed"].includes(code)) throw new PracticeError(409, "단어가 달라졌습니다. 다시 확인해 주세요.", "source_changed");
     if (code === "practice_range_too_large") throw new PracticeError(422, "단어장이나 횟수로 범위를 좁혀 주세요.");
     if (["practice_request_conflict", "practice_answer_conflict", "practice_answer_outdated", "practice_question_not_ready", "practice_already_finished", "practice_timeout_too_early", "practice_expire_too_early"].includes(code))
       throw new PracticeError(409, "연습 상태를 다시 확인해 주세요.");

@@ -8,7 +8,7 @@ import {
   createWrongWordWorksheetRequest,
   WrongWordWorksheetError,
 } from "@/lib/services/wrong-word-worksheet-service";
-import { createWrongWordWorksheetRequestSchema } from "@/lib/validation";
+import { createWrongWordWorksheetRequestSchema } from "@/features/students/public-contracts";
 
 export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
@@ -34,7 +34,7 @@ export const POST = withAuthenticationFailureResponse(async function POST(
   try {
     const worksheetRequest = await createWrongWordWorksheetRequest(
       id,
-      input.questionIds,
+      "targets" in input ? input.targets : input.questionIds,
       admin,
     );
     const sync = await syncStudentReadingContext({
@@ -58,6 +58,7 @@ export const POST = withAuthenticationFailureResponse(async function POST(
       if (error.reason === "not_found") {
         return jsonError("활성 학생을 찾지 못했습니다.", 404);
       }
+      if (error.reason === "history_changed") return jsonError("오답 목록이 바뀌었습니다. 최신 목록에서 다시 선택해 주세요.", 409);
       if (error.reason === "invalid_selection") {
         return jsonError("현재 미해결 상태인 오답 단어만 선택해 주세요.", 409);
       }

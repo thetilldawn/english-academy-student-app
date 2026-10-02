@@ -89,7 +89,7 @@ export function QuizFrame({
   timedOut: boolean;
   timingMode: "none" | "total" | "per_question";
 }) {
-  const roles = questionSemantics(quizContentMode, currentQuestion.direction);
+  const roles = questionSemantics(currentQuestion.quizContentMode ?? quizContentMode, currentQuestion.direction);
   const isEnglishPrompt = roles.prompt !== "korean_meaning";
   const isEnglishChoice = roles.choice === "headword";
   const showPromptPronunciation = roles.prompt === "headword";

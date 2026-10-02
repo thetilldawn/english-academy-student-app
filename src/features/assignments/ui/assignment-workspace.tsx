@@ -84,7 +84,7 @@ export function AssignmentWorkspace({
       {notebook ? <NotebookAssignmentDialog {...notebook} interactionAllowed={interactionAllowed} onClose={() => setNotebook(null)} onSuccess={count => {
         announceStudentDirectoryRefresh();
         if (notebook.audienceMode === "bulk") controller.actions.clearBulkStudents();
-        setNotebook(null); toast.success(`${count}명에게 개인 오답 시험을 배정했습니다.`);
+        setNotebook(null); toast.success(`${count.studentCount}명에게 개인 오답 시험 ${count.assignmentCount}개를 배정했습니다.`);
         if (!cacheEnabled) controller.actions.refreshDirectory();
       }} /> : null}
 

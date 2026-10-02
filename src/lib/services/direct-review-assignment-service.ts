@@ -1,3 +1,4 @@
+import { previewDirectMistakeAssignment, saveDirectMistakeAssignment, NotebookAssignmentError } from "@/features/assignments/public-server";
 import "server-only";
 import { STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 
@@ -32,6 +33,12 @@ export class DirectReviewAssignmentError extends Error {
     super(message);
     this.name = "DirectReviewAssignmentError";
   }
+}
+
+function mapMistakeError(error: unknown): never {
+  if(error instanceof NotebookAssignmentError) throw new DirectReviewAssignmentError(error.status===403?"forbidden":error.status===409?"conflict":error.status===422?"invalid_selection":"database",
+    error.message,undefined,error.code==="request_conflict"?"idempotency_key_reused":error.code);
+  throw error;
 }
 
 function directReviewRequestSha256(input: DirectReviewAssignmentInput) {
@@ -109,6 +116,7 @@ export async function previewDirectReviewAssignment(
   authenticatedAdmin?: AdminContext,
 ) {
   const admin = authenticatedAdmin ?? await requireAdmin();
+  if(input.planVersion) { try { return await previewDirectMistakeAssignment(admin.userId,input); } catch(error) { return mapMistakeError(error); } }
   const supabase = await createServerSupabaseClient();
   try {
     return await calculateDirectReviewPreview(
@@ -128,8 +136,9 @@ export async function createDirectReviewAssignment(
   input: DirectReviewAssignmentInput,
   authenticatedAdmin?: AdminContext,
   options?: { commandNowMilliseconds?: number },
-): Promise<string> {
+): Promise<string | Awaited<ReturnType<typeof saveDirectMistakeAssignment>>> {
   const admin = authenticatedAdmin ?? await requireAdmin();
+  if(input.planVersion) { try { return await saveDirectMistakeAssignment(admin.userId,input); } catch(error) { return mapMistakeError(error); } }
   const commandNowMilliseconds =
     options?.commandNowMilliseconds ?? Date.now();
 
@@ -226,7 +235,7 @@ export async function createDirectReviewAssignment(
       ? "database"
       : error.code === "42501"
         ? "forbidden"
-        : error.code === "40001" || error.code === "23505"
+        : (error.code === "40001" || error.code === "PT409") || error.code === "23505"
           ? "conflict"
           : ["22023", "P0002", "23503", "23505"].includes(error.code)
             ? "invalid_selection"
@@ -243,7 +252,7 @@ export async function createDirectReviewAssignment(
         : undefined,
       error.code === "23505"
         ? "idempotency_key_reused"
-        : error.code === "40001"
+        : (error.code === "40001" || error.code === "PT409")
           ? "review_candidates_changed"
           : undefined,
     );

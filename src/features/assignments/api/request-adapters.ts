@@ -14,6 +14,10 @@ import type {
 } from "@/lib/admin/direct-review-assignment-request";
 import type { MixedAssignmentInput } from "@/lib/admin/mixed-assignment-request";
 import type { AssignmentInput } from "@/lib/admin/regular-assignment-request";
+import {
+  mixedMistakePreviewInputSchema, mixedMistakeSaveSchema,
+  type MixedMistakePreviewInput, type MixedMistakeSave,
+} from "../contracts/mixed-mistake-assignment";
 
 import { assignmentRequestFingerprint } from "../domain/fingerprint";
 import type {
@@ -64,7 +68,7 @@ export type DirectReviewPreviewRequest = {
 };
 
 export type DirectReviewSummariesRequest = {
-  endpoint: `/api/admin/students/${string}/direct-review-summaries`;
+  endpoint: `/api/admin/students/${string}/direct-review-summaries?plan=meaning-episode-v1`;
   method: "GET";
 };
 
@@ -131,7 +135,7 @@ export function buildDirectReviewSummariesRequest(
   studentId: string,
 ): DirectReviewSummariesRequest {
   return {
-    endpoint: `/api/admin/students/${studentId}/direct-review-summaries`,
+    endpoint: `/api/admin/students/${studentId}/direct-review-summaries?plan=meaning-episode-v1`,
     method: "GET",
   };
 }
@@ -162,6 +166,7 @@ export function buildDirectReviewAssignmentRequest(
     method: "POST",
     body: {
       idempotencyKey,
+      planVersion: "meaning-episode-v1",
       studentId: draft.studentId,
       datasetId: draft.datasetId,
       reviewLevels: [...draft.reviewLevels],
@@ -203,6 +208,7 @@ export function buildDirectReviewPreviewRequest(
     endpoint: "/api/admin/exact-review-assignments/preview",
     method: "POST",
     body: {
+      planVersion: "meaning-episode-v1",
       studentId: input.studentId,
       datasetId: input.datasetId,
       reviewLevels: [...input.reviewLevels],
@@ -259,6 +265,24 @@ function examSettingsToApi(exam: ExamSettings) {
     questionOrderMode: exam.questionOrderMode,
     ...retry,
   };
+}
+
+export function buildMixedMistakePreviewRequest(draft: SingleAssignmentDraft, resolved: ResolvedSingleAssignment) {
+  if (draft.operation.mode !== "create" || draft.review.mode !== "pending" || draft.availability.mode !== "immediate") {
+    throw new Error("혼합 배정 조건을 다시 확인해 주세요.");
+  }
+  const body: MixedMistakePreviewInput = mixedMistakePreviewInputSchema.parse({
+    planVersion: "meaning-episode-v1", studentId: draft.studentId, datasetId: draft.range.datasetId,
+    primaryUnitIds: [...draft.range.orderedUnitIds], reviewLevels: [...draft.review.levels].toSorted(),
+    reviewScope: draft.review.scope, totalQuestionCount: resolved.questionCount, title: resolved.submissionTitle,
+    ...examSettingsToApi(draft.exam), availableUntil: deadlineToIso(draft.deadline),
+  });
+  return { endpoint: "/api/admin/mixed-assignments/preview", method: "POST" as const, body };
+}
+
+export function buildMixedMistakeSaveRequest(body: Omit<MixedMistakeSave, "idempotencyKey">, idempotencyKey: string) {
+  return { endpoint: "/api/admin/mixed-assignments", method: "POST" as const,
+    body: mixedMistakeSaveSchema.parse({ ...body, idempotencyKey }) };
 }
 
 function reviewPolicyToCapacityApi(review: ReviewPolicy) {

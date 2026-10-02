@@ -123,7 +123,7 @@ export function StudentDetailContent({
             historyController={history}
             student={initial.student}
             wrongCache={wrongCache}
-            wrongSummary={initial.wrongSummary}
+            currentMistakeSummary={initial.currentMistakeSummary}
           />
         </div>
       ) : null}

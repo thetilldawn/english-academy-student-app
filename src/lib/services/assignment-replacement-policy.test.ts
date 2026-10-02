@@ -83,6 +83,9 @@ function replacementInput(
 }
 
 describe("assignment replacement policy", () => {
+  it.each(["40001", "PT409"])("maps a guarded state conflict %s without treating it as an unknown failure", code => {
+    expect(mapAssignmentReplacementDatabaseFailure({ code, message: "review_meaning_changed" }).reason).toBe("conflict");
+  });
   it("reuses existing questions only while the question identity is unchanged", () => {
     expect(canReuseSourceQuestions(source, replacementInput())).toBe(true);
     expect(

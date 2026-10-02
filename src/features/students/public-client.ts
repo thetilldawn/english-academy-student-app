@@ -1,4 +1,5 @@
 "use client";
+export { MistakeEpisodeHistory } from "./ui/panels/mistake-episode-history";
 
 export { StudentDirectoryCacheProvider, useStudentDirectoryCache } from "./controller/student-directory-cache-provider";
 export { useCachedStudentDirectory } from "./controller/use-cached-student-directory";

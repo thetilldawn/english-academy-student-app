@@ -7,7 +7,7 @@ import {notebookFiltersSchema,type NotebookFilters} from '@/features/students/pu
 import {notebookAssignmentInputSchema,type NotebookAssignmentInput,type NotebookAssignmentPreview,type NotebookAssignmentSave,type NotebookAssignmentSettings} from '../contracts/notebook-assignment';
 import {NotebookRequestError,previewNotebook,saveNotebook} from '../transport/notebook-assignment';
 
-export function useNotebookAssignment(studentIds:string[],audienceMode:'single'|'bulk',onSuccess:(count:number)=>void,interactionAllowed=true){
+export function useNotebookAssignment(studentIds:string[],audienceMode:'single'|'bulk',onSuccess:(counts:{studentCount:number;assignmentCount:number})=>void,interactionAllowed=true){
  const [ids,setIds]=useState(studentIds),[filters,setFilters]=useState<NotebookFilters>(()=>notebookFiltersSchema.parse({}));
  const [settings,setSettings]=useState<NotebookAssignmentSettings>({questionCount:10,englishToKoreanRatio:50,timingMode:'none',timeLimitSeconds:null,questionTimeLimitSeconds:null,passingScore:80,retryEnabled:false,retryPassingScore:null});
  const [preview,setPreview]=useState<NotebookAssignmentPreview|null>(null),[input,setInput]=useState<NotebookAssignmentInput|null>(null),[confirmed,setConfirmed]=useState<string[]>([]);
@@ -34,7 +34,7 @@ export function useNotebookAssignment(studentIds:string[],audienceMode:'single'|
  }
  async function check(){
   if(pending.current||sentRef.current||denied||!interactionAllowed)return;
-  const parsed=notebookAssignmentInputSchema.safeParse({requestKey:crypto.randomUUID(),studentIds:ids,audienceMode,filters,settings});
+  const parsed=notebookAssignmentInputSchema.safeParse({requestKey:crypto.randomUUID(),studentIds:ids,audienceMode,filters,settings,selectionVersion:2});
   if(!parsed.success){setError(parsed.error.issues[0]?.message.includes('10,000')?parsed.error.issues[0].message:'학생, 문항 수와 시험 조건을 확인해 주세요.');return;}
   const token=++generation.current;request.current=new AbortController();pending.current=true;setBusy(true);setError('');
   try{const result=await previewNotebook(parsed.data,request.current.signal);if(active.current&&token===generation.current){setPreview(result);setInput(parsed.data);setConfirmed([]);}}
@@ -46,7 +46,7 @@ export function useNotebookAssignment(studentIds:string[],audienceMode:'single'|
   if(preview.students.some(s=>s.mismatchingSources.length&&!confirmed.includes(s.studentId))){setError('학년이 다른 단어장을 포함할지 확인해 주세요.');return;}
   const value=sentRef.current??{...input,confirmation:preview.confirmation,gradeConfirmedStudentIds:confirmed};
   sentRef.current=value;setSent(value);pending.current=true;setBusy(true);setError('');request.current=new AbortController();const token=++generation.current;
-  try{const result=await saveNotebook(value,request.current.signal);if(active.current&&token===generation.current)exitGuard.forceExit(()=>{if(!active.current)return false;sentRef.current=null;setSent(null);onSuccess(result.length);});}
+  try{const result=await saveNotebook(value,request.current.signal);if(active.current&&token===generation.current)exitGuard.forceExit(()=>{if(!active.current)return false;sentRef.current=null;setSent(null);onSuccess({studentCount:new Set(result.map(row=>row.studentId)).size,assignmentCount:result.length});});}
   catch(value){if(active.current&&token===generation.current){failure(value);if(value instanceof NotebookRequestError&&value.code==='source_changed'){sentRef.current=null;setSent(null);invalidate();setError(value.message);}}}
   finally{if(token===generation.current){pending.current=false;if(active.current)setBusy(false);}}
  }

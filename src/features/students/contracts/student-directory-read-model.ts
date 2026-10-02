@@ -9,6 +9,8 @@ export const studentDirectoryWrongFilters = [
   "wrong",
   "repeated",
   "retry",
+  "current_wrong",
+  "current_repeated",
 ] as const;
 
 export type StudentDirectoryStatus =

@@ -47,7 +47,11 @@ export function StudentDirectoryFilters({
   const classGroup = options.classGroups.find(
     (option) => option.id === filters.classGroupId,
   );
-  const wrongLabel = filters.wrong === "wrong"
+  const wrongLabel = filters.wrong === "current_wrong"
+    ? commonText.filters.currentWrong
+    : filters.wrong === "current_repeated"
+      ? commonText.filters.currentRepeatedWrong
+      : filters.wrong === "wrong"
     ? commonText.filters.hasWrong
     : filters.wrong === "repeated"
       ? commonText.filters.repeatedWrong
@@ -132,6 +136,8 @@ export function StudentDirectoryFilters({
       <FilterWorkspaceGroup label={commonText.filters.wrongAvailability}>
         {([
           ["all", commonText.filters.all],
+          ["current_wrong", commonText.filters.currentWrong],
+          ["current_repeated", commonText.filters.currentRepeatedWrong],
           ["wrong", commonText.filters.hasWrong],
           ["repeated", commonText.filters.repeatedWrong],
           ["retry", commonText.filters.retryNeeded],

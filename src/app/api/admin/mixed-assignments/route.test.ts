@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => {
   return {
     getAdminContext: vi.fn(),
     createMixedAssignment: vi.fn(),
+    saveMixedMistakeAssignment: vi.fn(),
+    NotebookAssignmentError: class extends Error { constructor(public status:number,message:string,public code?:string){super(message);} },
     MixedAssignmentError: MockMixedAssignmentError,
   };
 });
@@ -29,6 +31,7 @@ vi.mock("@/lib/services/mixed-assignment-service", () => ({
   createMixedAssignment: mocks.createMixedAssignment,
   MixedAssignmentError: mocks.MixedAssignmentError,
 }));
+vi.mock("@/features/assignments/public-server", () => ({ saveMixedMistakeAssignment:mocks.saveMixedMistakeAssignment,NotebookAssignmentError:mocks.NotebookAssignmentError }));
 
 import { POST } from "@/app/api/admin/mixed-assignments/route";
 
@@ -76,6 +79,23 @@ describe("POST /api/admin/mixed-assignments", () => {
     mocks.createMixedAssignment.mockResolvedValue(
       "44444444-4444-4444-8444-444444444444",
     );
+  });
+
+  it("뜻별 혼합 배정만 새 저장 경로와 여러 시험 결과를 사용한다",async()=>{
+    const input={...validInput,planVersion:'meaning-episode-v1',idempotencyKey:'55555555-5555-4555-8555-555555555555',selectionFingerprint:'a'.repeat(64),excludeUnavailableConfirmed:true,banksConfirmed:true};
+    const result={planVersion:'meaning-episode-v1',kind:'mistake_batch',assignments:[{studentId:validInput.studentId,assignmentId:'44444444-4444-4444-8444-444444444444',questionCount:10}]};
+    mocks.saveMixedMistakeAssignment.mockResolvedValueOnce(result);
+    const response=await POST(request(input));expect(response.status).toBe(201);expect(response.headers.get('cache-control')).toBe('private, no-store');expect(await response.json()).toEqual(result);
+    expect(mocks.createMixedAssignment).not.toHaveBeenCalled();expect(mocks.saveMixedMistakeAssignment).toHaveBeenCalledWith('admin-id',expect.objectContaining(input));
+  });
+  it("알 수 없는 새 버전과 확인값 누락을 구형 저장으로 우회하지 않는다",async()=>{
+    for(const input of [{...validInput,planVersion:'unknown'},{...validInput,planVersion:'meaning-episode-v1'}])expect((await POST(request(input))).status).toBe(400);
+    expect(mocks.createMixedAssignment).not.toHaveBeenCalled();expect(mocks.saveMixedMistakeAssignment).not.toHaveBeenCalled();
+  });
+  it.each([409,422,503])("뜻별 저장 %i 오류는 정해진 메시지만 전달한다",async status=>{
+    const input={...validInput,planVersion:'meaning-episode-v1',idempotencyKey:'55555555-5555-4555-8555-555555555555',selectionFingerprint:'a'.repeat(64),excludeUnavailableConfirmed:true,banksConfirmed:true};
+    mocks.saveMixedMistakeAssignment.mockRejectedValueOnce(status===503?new Error('private password should not leak'):new mocks.NotebookAssignmentError(status,'다시 확인해 주세요.','source_changed'));
+    const response=await POST(request(input));expect(response.status).toBe(status);expect(await response.text()).not.toContain('private password');
   });
 
   it("same-origin 관리자 입력만 받아 private 201로 반환한다", async () => {

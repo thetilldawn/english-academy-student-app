@@ -8,6 +8,11 @@ import { readingCurriculumStages } from "@/lib/admin/reading-curriculum";
 const timestampSchema = z.iso.datetime({ offset: true });
 
 export const studentDetailInitialRowSchema = z.object({
+  currentMistakeSummary: z.object({
+    basis: z.literal("current_meaning_cards_v1"),
+    wordCount: z.coerce.number().int().nonnegative(),
+    repeatedWordCount: z.coerce.number().int().nonnegative(),
+  }),
   history: z.object({
     items: z.array(z.object({
       effectiveAt: timestampSchema,

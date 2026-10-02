@@ -1,6 +1,8 @@
+import { z } from "zod";
 import { wrongWordPageSchema, type WrongWordPageFilters } from "../contracts/wrong-word-page";
 import { wrongWordFilterSearchParams, wrongWordFiltersSchema } from "../contracts/wrong-word-filters";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
+import { adminMistakePageSchema, mistakeFiltersSchema, queueMistakesSchema, type MistakeFilters, type MistakeTarget } from "../contracts/mistake-episode";
 
 async function requestJson<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, options);
@@ -50,12 +52,28 @@ export function queueStudentWrongWords(
   );
 }
 
+export async function loadStudentMistakes(studentId: string, signal: AbortSignal, filters: MistakeFilters, cursor?: string | null) {
+  const input = mistakeFiltersSchema.safeParse(filters);
+  if (!input.success) throw new WrongWordRequestError("오답 조회 조건을 확인해 주세요.", 400);
+  const { view, sort, ...base } = input.data, params = wrongWordFilterSearchParams(base);
+  params.set("view", view); params.set("sort", sort); if (cursor) params.set("cursor", cursor);
+  const response = await requestJson<{ page?: unknown }>(`/api/admin/students/${studentId}/wrong-words?${params}`, { cache: "no-store", signal });
+  const parsed = adminMistakePageSchema.safeParse(response.page);
+  if (!parsed.success) throw new WrongWordRequestError("오답 목록을 불러오지 못했습니다. 다시 시도해 주세요.", 502);
+  return parsed.data;
+}
+export async function queueStudentMistakes(studentId: string, targets: readonly MistakeTarget[]) {
+  const payload = await requestJson<unknown>(`/api/admin/students/${studentId}/wrong-words`, jsonPost(queueMistakesSchema.parse({ targets })));
+  const parsed = z.object({ queueIds: z.array(z.uuid()).length(targets.length) }).strict().safeParse(payload);
+  if (!parsed.success || new Set(parsed.data.queueIds).size !== targets.length) throw new WrongWordRequestError("저장 결과를 확인하지 못했습니다. 목록을 다시 확인해 주세요.", 502);
+  return parsed.data;
+}
+
 export function createStudentWorksheetRequest(
   studentId: string,
   input: {
     curriculumStage: ReadingCurriculumStage;
-    questionIds: readonly string[];
-  },
+  } & ({ questionIds: readonly string[] } | { targets: readonly MistakeTarget[] }),
 ) {
   return requestJson<{
     request?: { itemCount: number; reused: boolean };

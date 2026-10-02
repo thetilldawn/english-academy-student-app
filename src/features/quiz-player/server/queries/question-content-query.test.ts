@@ -38,8 +38,8 @@ describe("권한 문맥을 사용하는 공용 문항 조회", () => {
     mocks.rpc.mockResolvedValue({ data: envelope("student_preparation", [{ id: id(10), assignment_question: assignment }]), error: null });
     expect((await getPreparationQuestionContents(id(1), id(2), [id(10)])).get(id(10))?.assignment_question.exam_use_snapshot).toEqual(exam);
   });
-  it("준비 경합만 복구 대상으로 구분하고 깨진 참조는 그대로 실패한다", async () => {
-    mocks.rpc.mockResolvedValueOnce({ data: null, error: { code: "40001", message: "preparation_unavailable" } })
+  it.each(["40001", "PT409"])("준비 경합 %s만 복구 대상으로 구분하고 깨진 참조는 그대로 실패한다", async code => {
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { code, message: "preparation_unavailable" } })
       .mockResolvedValueOnce({ data: null, error: { code: "55000", message: "private binding changed" } });
     await expect(getPreparationQuestionContents(id(1), id(2), [id(10)])).rejects.toBeInstanceOf(QuestionContentPreparationChangedError);
     await expect(getPreparationQuestionContents(id(1), id(2), [id(10)])).rejects.toThrow("문항 내용을 불러오지 못했습니다.");

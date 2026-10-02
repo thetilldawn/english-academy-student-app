@@ -23,6 +23,7 @@ export async function recoverQuizSubmission(input: {
     const { attempt } = snapshot.payload;
     const feedback = recoveredQuizAnswerFeedback({ attempt, ...input });
     if (!feedback) return null;
+    if (confirmation === 0) input.transport.studentStateConfirmed?.();
     const visibleUntil = input.showFeedback(feedback);
     const terminal = attempt.status !== "in_progress" || attempt.phase === "review" || attempt.phase === "completed";
     if (terminal) {

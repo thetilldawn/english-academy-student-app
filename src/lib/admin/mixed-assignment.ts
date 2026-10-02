@@ -72,7 +72,7 @@ export function mixedAssignmentDatabaseErrorReason(
   error: MixedAssignmentDatabaseError,
 ): MixedAssignmentFailureReason {
   if (error.code === "42501") return "forbidden";
-  if (error.code === "40001") return "conflict";
+  if ((error.code === "40001" || error.code === "PT409")) return "conflict";
   if (
     error.code === "22023" &&
     /mixed_regular_target_already_pending_review|review_target_canonical_mapping_changed/.test(

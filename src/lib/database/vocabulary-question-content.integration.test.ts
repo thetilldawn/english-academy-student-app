@@ -41,6 +41,25 @@ describe.sequential("frozen question content: actual storage constraints", () =>
     await db.exec("reset role");
     return result;
   }
+  async function importRawMeaningScope() {
+    await db.exec("reset role");
+    const meta=(await rows<{version:string;file_hash:string}>(`select lower(d.source_sha256) version,lower(s.source_sha256) file_hash
+      from public.vocab_datasets d join word_index.dataset_source ds on ds.dataset_id=d.id join word_index.source s on s.source_id=ds.source_id
+      where d.id=$1 and s.source_id=$2`,[dataset,id(41)]))[0];
+    const sourceRows=await rows<{source_row:number;row_hash:string}>("select source_row,lower(row_sha256) row_hash from vocab_entries where dataset_id=$1 order by source_row",[dataset]);
+    const selected={schemaVersion:"vocabulary-resource-snapshot-v1",sourceFields:{},proofs:{},
+      pronunciation:{displayKo:null,variantId:null,audioUrl:null,available:false},lexicalPos:null,dictionary:null,senseId:null,definitionEn:null,exampleEn:null,exampleKo:null};
+    const input=JSON.stringify({schemaVersion:"vocabulary-library-import-v1",sourceCatalogHash:"b".repeat(64),linksHash:"c".repeat(64),referenceCatalogHash:"d".repeat(64),
+      scopes:[{key:"m03-raw-positive",name:"가짜 일반 출제 범위",sourceTitle:"가짜 일반 단어장",
+        source:{datasetId:dataset,unitId:unit,kind:"legacy_vocab",releaseId:null,releaseVersion:meta.version,fileHash:meta.file_hash,locator:"fake-ordinary.json"},
+        classification:{kind:"wordbook",sourceGrade:"g11",exam:null,lesson:null,day:1,publisher:null,school:null,targetGrade:null,schoolYear:null,semester:null,assessment:null,purpose:null},
+        rows:sourceRows.map(r=>({sourceRow:r.source_row,rowHash:r.row_hash,resources:{entryHash:r.row_hash,linkRecordHash:"f".repeat(64),selected}}))}]});
+    const project="wojxpruvbjzbhrpmsbuy";
+    await db.query("select set_config('request.jwt.claims',$1,true)",[JSON.stringify({ref:project})]);
+    await db.query(`insert into private.vocabulary_library_import_approvals(target_project_ref,file_sha256,content_sha256,scope_count,approval_id)
+      values($1,encode(extensions.digest(convert_to($2::text,'UTF8'),'sha256'),'hex'),private.reviewed_exam_sha256_v1($2::jsonb),1,'fake-m03-raw-positive')`,[project,input]);
+    return (await service<{value:{scopes:{id:string}[]}}>("select public.import_vocabulary_library_v1($1) value",[input]))[0].value.scopes[0].id;
+  }
   // This intentionally seeds legacy-shaped rows to isolate storage guards. It
   // is not evidence for a public assignment creator or its approval checks.
   async function seedBank(n: number) {
@@ -65,7 +84,7 @@ describe.sequential("frozen question content: actual storage constraints", () =>
       insert into word_index.index_build(build_id,schema_version,builder_version,source_root_label,input_file_count,input_snapshot_sha256,started_at_utc,completed_at_utc,status,summary_json)
         values('${id(40)}','fixture','fixture','fake',1,repeat('B',64),now(),now(),'complete','{}');
       insert into word_index.source(source_id,source_key,source_type,title,source_sha256,status)
-        values('${id(41)}','fake-m02-ordinary','wordbook','Fake source',repeat('A',64),'ready');
+        values('${id(41)}','fake-m02-ordinary','wordbook','Fake source',repeat('E',64),'ready');
       insert into word_index.dataset_source(dataset_id,source_id,build_id,source_role,dataset_source_sha256)
         values('${dataset}','${id(41)}','${id(40)}','primary',repeat('A',64));
       insert into word_index.vocab_entry_link(vocab_entry_id,dataset_id,entry_row_sha256,source_id,mapping_status,mapping_method,mapping_rule_version,candidate_count,evidence,mapped_at_utc)
@@ -81,12 +100,27 @@ describe.sequential("frozen question content: actual storage constraints", () =>
       rule_version:'fixture',evaluated_at_utc:new Date().toISOString(),details:{packageSnapshotSha256:'C'.repeat(64)},
     }])]);
     expect((await rows("select status,capabilities_payload_sha256 is not null hashed from word_index.vocab_link_import_run where dataset_id=$1",[dataset]))[0]).toEqual({status:'complete',hashed:true});
+    const scopeId=await importRawMeaningScope();
     const entries=await rows<{id:number;source_row:number}>('select id,source_row from public.vocab_entries where dataset_id=$1 order by source_row',[dataset]);
     const plan=entries.map(e=>({vocab_entry_id:e.id,base_order_index:e.source_row,direction:'english_to_korean',choice_vocab_entry_ids:entries.map(x=>x.id)}));
     await db.exec(`select set_config('request.jwt.claim.sub','${admin}',true);select set_config('request.jwt.claim.role','authenticated',true);set local role authenticated`);
     const create=()=>rows<{id:string}>(`select public.create_assignment_with_delivery_v7('Fake ordinary exam',$1,array[$2]::uuid[],4,100::smallint,300,80::smallint,false,null::smallint,'fixed',null,array[$3]::uuid[],'none',null,$4) id`,[dataset,unit,id(2),JSON.stringify(plan)]);
     const assignment=(await create())[0].id;
     await db.exec('reset role');
+    const linked=await rows(`select sr.resources#>>'{selected,schemaVersion}' storage_version,
+      sr.entry_snapshot=private.compact_vocabulary_source_snapshot_v1(to_jsonb(e),'entry') entry_exact,
+      b.payload#>>'{originalHashes,entrySnapshotHash}'=private.reviewed_exam_sha256_v1(to_jsonb(e)) original_hash_exact,
+      mi.value->>'identityKind' identity_kind,mi.value->>'meaningKey'=b.payload#>>'{learningIdentity,key}' meaning_equal,
+      mi.value#>>'{sourceBinding,bindingId}'=b.binding_id::text binding_equal,
+      b.payload#>>'{source,version}' source_version,b.payload#>>'{source,fileHash}' file_hash
+      from public.assignment_questions q join public.vocab_entries e on e.id=q.vocab_entry_id
+      join private.vocabulary_library_scope_rows sr on sr.scope_id=$2 and sr.source_entry_id=e.id
+      join private.vocabulary_learning_value_bindings b on b.binding_id::text=sr.resources#>>'{selectionBinding,bindingId}'
+        and b.binding_sha256=sr.resources#>>'{selectionBinding,bindingHash}'
+      cross join lateral(select private.assignment_vocabulary_meaning_v1(q.id) value) mi
+      where q.assignment_id=$1 order by q.base_order_index`,[assignment,scopeId]);
+    expect(linked).toEqual(Array.from({length:4},()=>({storage_version:"vocabulary-resource-ref-v2",entry_exact:true,original_hash_exact:true,
+      identity_kind:"source-occurrence-v1",meaning_equal:true,binding_equal:true,source_version:"a".repeat(64),file_hash:"e".repeat(64)})));
     expect((await rows('select question_bank_version,provenance_status,generator_version from public.assignments where id=$1',[assignment]))[0])
       .toEqual({question_bank_version:2,provenance_status:'verified_v2',generator_version:'book-choice-cache-v2'});
     expect((await rows('select count(*)::int n from public.assignment_questions where assignment_id=$1 and content_version_id is not null and prompt is null and choices is null',[assignment]))[0].n).toBe(4);

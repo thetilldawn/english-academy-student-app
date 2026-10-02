@@ -29,7 +29,7 @@ async function read<T extends { id: string }>(context: Context, actorId: string,
       p_context: context, p_actor_id: actorId, p_context_id: contextId, p_question_ids: requested,
     });
     if (error) {
-      if (context === "student_preparation" && error.code === "40001" &&
+      if (context === "student_preparation" && ["40001", "PT409"].includes(error.code ?? "") &&
         ["preparation_unavailable", "preparation_changed"].includes(error.message?.split(/[\s:]/)[0])) {
         throw new QuestionContentPreparationChangedError("preparation_changed");
       }

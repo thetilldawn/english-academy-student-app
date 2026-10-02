@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useRef, useState } from "react"
 import { flushSync } from "react-dom";
 import { navigateDocument } from "@/components/document-navigation";
 import { requestAdminLogout } from "./admin-session-commands";
-import { requestStudentLogout } from "../api/session";
+import { requestStudentLogout } from "./student-session-commands";
 type LogoutState = "idle" | "pending" | "failed" | "leaving";
 export type LogoutTransition = { state: LogoutState; logout: () => Promise<boolean> };
 export const LogoutContext = createContext<LogoutTransition | null>(null);

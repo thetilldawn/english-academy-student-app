@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 
+import type { MistakeTarget } from "../contracts/mistake-episode";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 
 import { createStudentWorksheetRequest } from "../api/wrong-word-transport";
@@ -20,12 +21,12 @@ export function useStudentWrongWordWorksheetAction({
   const [worksheetRequesting, setWorksheetRequesting] = useState(false);
 
   const requestWorksheet = useCallback(async (input: {
-    questionIds: readonly string[];
     curriculumStage: ReadingCurriculumStage;
-  }) => {
+  } & ({ questionIds: readonly string[] } | { targets: readonly MistakeTarget[] })
+  ) => {
     if (
-      input.questionIds.length === 0 ||
-      input.questionIds.length > 50 ||
+      ("targets" in input ? input.targets : input.questionIds).length === 0 ||
+      ("targets" in input ? input.targets : input.questionIds).length > 50 ||
       !start()
     ) {
       return null;

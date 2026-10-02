@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { timingModes } from "@/lib/admin/assignment-settings";
-import { readingCurriculumStages } from "@/lib/admin/reading-curriculum";
 
 export const adminLoginSchema = z.object({
   email: z.email().max(254),
@@ -88,21 +87,6 @@ export const createVocabTimeTemplateSchema = z
 export const queueWrongWordsSchema = z
   .object({
     questionIds: z.array(z.uuid()).min(1).max(500),
-  })
-  .strict()
-  .refine(
-    (value) =>
-      new Set(value.questionIds).size === value.questionIds.length,
-    {
-      message: "같은 오답 단어를 두 번 선택할 수 없습니다.",
-      path: ["questionIds"],
-    },
-  );
-
-export const createWrongWordWorksheetRequestSchema = z
-  .object({
-    questionIds: z.array(z.uuid()).min(1).max(50),
-    curriculumStage: z.enum(readingCurriculumStages),
   })
   .strict()
   .refine(

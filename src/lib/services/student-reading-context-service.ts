@@ -251,22 +251,16 @@ export async function syncStudentReadingContext(input: {
     .maybeSingle();
   if (error || !data) throw new Error("student_reading_context_not_found");
   const student = data as StudentReadingContextRow;
-  const { data: wrongCountRows, error: wrongCountError } = await supabase
-    .from("worksheet_request_items")
-    .select("item_identity, wrong_count_snapshot")
-    .eq("request_id", input.requestId);
-  if (wrongCountError) {
-    throw new Error("student_reading_context_wrong_counts_failed");
+  const wrongCountByIdentity = new Map<string, number>();
+  if (worksheet.schema_version === "wrong-word-worksheet-request-v1") {
+    const { data: wrongCountRows, error: wrongCountError } = await supabase
+      .from("worksheet_request_items").select("item_identity, wrong_count_snapshot").eq("request_id", input.requestId);
+    if (wrongCountError) throw new Error("student_reading_context_wrong_counts_failed");
+    for (const row of wrongCountRows ?? []) wrongCountByIdentity.set(row.item_identity, row.wrong_count_snapshot);
   }
-  const wrongCountByIdentity = new Map(
-    (wrongCountRows ?? []).map((row) => [
-      row.item_identity,
-      row.wrong_count_snapshot,
-    ]),
-  );
 
   const payloadWithoutHash = {
-    schema_version: "student-reading-context-v1" as const,
+    schema_version: worksheet.schema_version === "wrong-word-worksheet-request-v1" ? "student-reading-context-v1" : "student-reading-context-v2",
     student_ref: student.id,
     student: {
       name: student.display_name,
@@ -282,7 +276,13 @@ export async function syncStudentReadingContext(input: {
       selected_at_utc: worksheet.created_at_utc,
       item_count: worksheet.item_count,
     },
-    wrong_words: worksheet.items.map((item) => ({
+    wrong_words: worksheet.schema_version === "wrong-word-worksheet-request-v2" ? worksheet.items.map(item => ({
+      dictionary_id: item.dictionary_id, headword: item.headword, tested_field: item.testedField, selected_text: item.selectedText,
+      primary_meaning: item.primaryMeaning, meaning_key: item.meaningKey, episode_id: item.episodeId,
+      current_wrong_count: item.currentWrongCount, lifetime_wrong_count: item.lifetimeWrongCount, legacy_wrong_count: item.legacyWrongCount,
+      current_missed_count: item.currentMissedCount, count_quality: item.countQuality,
+      source_metadata: item.source_metadata, generation_status: item.generation_status, identity_kind: item.identityKind,
+    })) : worksheet.items.map((item) => ({
       dictionary_id: item.dictionary_id,
       sense_id: item.sense_id,
       occurrence_id: item.occurrence_id,

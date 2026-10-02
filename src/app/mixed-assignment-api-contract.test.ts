@@ -19,10 +19,11 @@ describe("mixed assignment API contract", () => {
     expect(route).not.toContain('dynamic = "force-dynamic"');
     expect(route).toContain("isSameOriginRequest(request)");
     expect(route).toContain("getAdminContext()");
-    expect(route).toContain(
-      "parseJson(request, mixedAssignmentSchema)",
-    );
-    expect(route).toContain("createMixedAssignment(input, admin)");
+    expect(route).toContain('"planVersion" in raw');
+    expect(route).toContain("mixedMistakeSaveSchema.safeParse(raw)");
+    expect(route).toContain("saveMixedMistakeAssignment(admin.userId, parsed.data)");
+    expect(route).toContain("mixedAssignmentSchema.safeParse(raw)");
+    expect(route).toContain("createMixedAssignment(input.data, admin)");
     expect(route).toContain('"Cache-Control": "private, no-store"');
     expect(validation).toContain(
       "export const mixedAssignmentSchema",

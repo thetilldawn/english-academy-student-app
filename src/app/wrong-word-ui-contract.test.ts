@@ -20,7 +20,7 @@ describe("wrong-word admin UI contract", () => {
     expect(route).toContain('"Cache-Control": "private, no-store"');
   });
 
-  it("queues only selected question ids through the authenticated admin session", () => {
+  it("accepts strict selected meaning targets alongside the legacy question-id endpoint", () => {
     const route = source(
       "src/app/api/admin/students/[id]/wrong-words/route.ts",
     );
@@ -29,7 +29,8 @@ describe("wrong-word admin UI contract", () => {
     );
     const validation = source("src/lib/validation.ts");
     expect(route).toContain("isSameOriginRequest(request)");
-    expect(route).toContain("parseJson(request, queueWrongWordsSchema)");
+    expect(route).toContain("parseJson(request, z.union([queueMistakesSchema, queueWrongWordsSchema]))");
+    expect(route).toContain("queueStudentMistakes(id, input.targets, admin)");
     expect(route).toContain(
       "queueStudentWrongWords(\n      id,\n      input.questionIds,\n      admin,",
     );
@@ -74,7 +75,7 @@ describe("wrong-word admin UI contract", () => {
 
     expect(panel).toContain("async function queueSelectedWords()");
     expect(queueFunction).toContain("queueWords(");
-    expect(queueFunction).toContain("selection.selectedQueuedIds,");
+    expect(queueFunction).toContain("selection.selectedQueuedTargets,");
     expect(queueFunction).toContain("selection.actions.clearQueuedSelection()");
     expect(queueFunction).toContain("refreshHistory()");
     expect(queueFunction).not.toContain("selectedWorksheetIds");
@@ -87,7 +88,7 @@ describe("wrong-word admin UI contract", () => {
     expect(selectionController).toContain(
       "keepSelectableQuestionIds(queuedQuestionIds, selectableQueuedIds)",
     );
-    expect(queueAction).toContain("queueStudentWrongWords(studentId, questionIds)");
+    expect(queueAction).toContain("queueStudentWrongWords(studentId, questionIds as readonly string[])");
     expect(actions).toContain("actionInFlightRef.current = true");
     expect(panel).not.toContain("createReviewAssignmentDraft(");
     expect(panel).not.toContain("router.push(");
@@ -213,10 +214,10 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.refresh",
     );
-    expect(panel).toContain("useWrongWordPanelSelection({");
-    expect(panel).toContain("initialDatasetId }");
+    expect(panel).toContain("useStudentMistakeSelection({");
+    expect(panel).toContain("initialDatasetId, studentId }");
     expect(selectionController).toContain("useState(initialDatasetId)");
-    expect(filter).toContain('["repeated", copy.repeated]');
+    expect(filter).toContain('["repeated", view === "current" ? copy.currentRepeated : copy.repeated]');
     expect(list).toContain("<Checkbox");
     expect(list).toContain(
       'nextExamTarget?.scheduling === "queued"',
@@ -288,13 +289,14 @@ describe("wrong-word admin UI contract", () => {
       "adminStudentsText.learning.worksheetWrongWordHelp",
     );
     expect(worksheetFunction).toContain(
-      "questionIds: selection.selectedWorksheetIds",
+      "targets: selection.selectedWorksheetTargets",
     );
     expect(worksheetFunction).toContain("requestWorksheet({");
     expect(actions).toContain("useStudentWrongWordWorksheetAction");
     expect(worksheetAction).toContain("createStudentWorksheetRequest(studentId, input)");
     expect(worksheetFunction).toContain("selection.actions.clearWorksheetSelection()");
-    expect(worksheetFunction).not.toContain("refreshHistory()");
+    expect(worksheetFunction).toContain("requestError.status === 409");
+    expect(worksheetFunction).toContain("handlePermissionFailure(requestError)");
     expect(requestRoute).not.toContain('export const dynamic = "force-dynamic"');
     expect(requestRoute).toContain("isSameOriginRequest(request)");
     expect(requestRoute).toContain("getAdminContext()");

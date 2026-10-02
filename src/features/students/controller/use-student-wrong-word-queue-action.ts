@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react";
 
-import { queueStudentWrongWords } from "../api/wrong-word-transport";
+import type { MistakeTarget } from "../contracts/mistake-episode";
+import { queueStudentMistakes, queueStudentWrongWords } from "../api/wrong-word-transport";
 
 export function useStudentWrongWordQueueAction({
   finish,
@@ -17,13 +18,13 @@ export function useStudentWrongWordQueueAction({
 }) {
   const [queueing, setQueueing] = useState(false);
 
-  const queueWords = useCallback(async (questionIds: readonly string[]) => {
+  const queueWords = useCallback(async (questionIds: readonly string[] | readonly MistakeTarget[]) => {
     if (questionIds.length === 0 || !start()) return null;
     setQueueing(true);
     try {
-      const payload = await queueStudentWrongWords(studentId, questionIds);
+      const payload = typeof questionIds[0] === "string" ? await queueStudentWrongWords(studentId, questionIds as readonly string[]) : await queueStudentMistakes(studentId, questionIds as readonly MistakeTarget[]);
       if (!payload.queueIds) {
-        throw new Error(payload.error ?? queueErrorMessage);
+        throw new Error(("error" in payload ? payload.error : undefined) ?? queueErrorMessage);
       }
       return payload.queueIds;
     } finally {

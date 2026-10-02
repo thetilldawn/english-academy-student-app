@@ -82,5 +82,6 @@ export async function getStudentDetailInitial(
     student: { ...parsed.data.student, schoolSchedule: (await getAdminSchoolScheduleMap([studentId], [parsed.data.student]))[studentId] },
     vocabBookHistory,
     wrongSummary: parsed.data.wrongSummary,
+    currentMistakeSummary: parsed.data.currentMistakeSummary,
   };
 }

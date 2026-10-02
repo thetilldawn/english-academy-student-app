@@ -9,7 +9,7 @@ import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
 
 import type {
-  StudentCurrentWrongSummary,
+  StudentCurrentMistakeSummary,
   StudentDetailProfile,
 } from "../../contracts/student-detail-read-model";
 import type { StudentHistoryPageController } from "../../controller/use-student-history-page";
@@ -23,13 +23,13 @@ export function StudentHistoryPanel({
   historyController,
   student,
   wrongCache,
-  wrongSummary,
+  currentMistakeSummary,
 }: {
   active: boolean;
   historyController: StudentHistoryPageController;
   student: StudentDetailProfile;
   wrongCache: StudentWrongWordCacheController;
-  wrongSummary: StudentCurrentWrongSummary;
+  currentMistakeSummary: StudentCurrentMistakeSummary;
 }) {
   const [wrongExpanded, setWrongExpanded] = useState(false);
   return (
@@ -47,14 +47,14 @@ export function StudentHistoryPanel({
               {adminStudentsText.learning.wrongWordsPanel.summary.current}{" "}
               {formatContentText(
                 adminStudentsText.learning.wrongWordsPanel.summary.count,
-                { count: wrongSummary.wrongWordCount },
+                { count: currentMistakeSummary.wordCount },
               )}
             </MetaTag>
             <MetaTag>
-              {adminStudentsText.learning.wrongWordsPanel.summary.repeated}{" "}
+              {adminStudentsText.learning.wrongWordsPanel.summary.currentRepeated}{" "}
               {formatContentText(
                 adminStudentsText.learning.wrongWordsPanel.summary.count,
-                { count: wrongSummary.repeatedWrongWordCount },
+                { count: currentMistakeSummary.repeatedWordCount },
               )}
             </MetaTag>
           </MetaTagList>

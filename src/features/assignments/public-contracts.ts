@@ -14,3 +14,4 @@ export type {
   SingleAssignmentResult,
   SingleAssignmentSubmitPresentation,
 } from "./contracts/single-assignment-editor-contract";
+export { mixedMistakePreviewInputSchema, mixedMistakeSaveSchema, mixedMistakePreviewSchema, mixedMistakeResultSchema } from "./contracts/mixed-mistake-assignment";

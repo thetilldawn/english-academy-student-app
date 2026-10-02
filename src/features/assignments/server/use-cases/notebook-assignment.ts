@@ -3,6 +3,7 @@ import {freezePracticeQuestions,practiceHash} from '@/features/quiz-player/publi
 import {notebookAssignmentInputSchema,notebookAssignmentSaveSchema,notebookAssignmentResultSchema,type NotebookAssignmentInput,type NotebookAssignmentSave,type NotebookAssignmentPreview} from '../../contracts/notebook-assignment';
 import {prepareNotebookStudent} from '../planning/notebook-assignment';
 import {NotebookAssignmentError,notebookAssignmentRpc} from '../persistence/notebook-assignment';
+import {previewNotebookMistakeAssignment,saveNotebookMistakeAssignment} from './notebook-mistake-assignment';
 
 async function prepare(adminId:string,input:NotebookAssignmentInput){
  const prepared:Awaited<ReturnType<typeof prepareNotebookStudent>>[]=[],students:NotebookAssignmentPreview['students']=[];
@@ -17,9 +18,10 @@ async function prepare(adminId:string,input:NotebookAssignmentInput){
  const confirmation=students.some(s=>s.error)?null:practiceHash({adminId,input,plans:prepared.map(p=>({sourceHash:p.source.sourceHash,questions:p.plan.questions}))});
  return{prepared,preview:{confirmation,students}};
 }
-export async function previewNotebookAssignment(adminId:string,value:NotebookAssignmentInput){return(await prepare(adminId,notebookAssignmentInputSchema.parse(value))).preview;}
+export async function previewNotebookAssignment(adminId:string,value:NotebookAssignmentInput){const input=notebookAssignmentInputSchema.parse(value);return input.selectionVersion===2?previewNotebookMistakeAssignment(adminId,input):(await prepare(adminId,input)).preview;}
 export async function saveNotebookAssignment(adminId:string,value:NotebookAssignmentSave){
  const parsed=notebookAssignmentSaveSchema.parse(value),{confirmation,gradeConfirmedStudentIds,...input}=parsed;
+ if(parsed.selectionVersion===2)return saveNotebookMistakeAssignment(adminId,parsed);
  if(new Set(gradeConfirmedStudentIds).size!==gradeConfirmedStudentIds.length||gradeConfirmedStudentIds.some(id=>!input.studentIds.includes(id)))throw new NotebookAssignmentError(422,'학년 확인 대상을 다시 확인해 주세요.');
  const requestHash=practiceHash(parsed);
  const previous=await notebookAssignmentRpc('get_notebook_assignment_result_v1',{p_admin_id:adminId,p_request_key:input.requestKey,p_request_hash:requestHash});

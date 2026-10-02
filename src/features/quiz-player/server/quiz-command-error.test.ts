@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { quizExpirationError, quizCommandErrorResponse } from "./quiz-command-error";
+import { quizAnswerError, quizExpirationError, quizCommandErrorResponse } from "./quiz-command-error";
 
 describe("safe expiry errors", () => {
+  it.each([quizExpirationError, quizAnswerError])("returns a terminal conflict for the new domain SQLSTATE", classify => {
+    expect(classify({ code: "PT409", message: "private constraint detail" })).toMatchObject({
+      status: 409, payload: { retryable: false, outcome: "not_applied" },
+    });
+    expect(classify({ code: "PT409" }).message).not.toContain("private");
+  });
   it.each(["57014", "40P01", "40001", "55P03"])("identifies aborted transaction %s", code => {
     expect(quizExpirationError({ code, message: "private SQL detail" })).toMatchObject({
       status: 503, payload: { retryable: true, outcome: "not_applied" },

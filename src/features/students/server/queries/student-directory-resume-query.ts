@@ -14,7 +14,9 @@ const rowSchema = z.object({ id: z.uuid(), student_point_totals: z.union([totalS
 
 export async function getStudentDirectoryCacheRead(input: DirectoryCacheRequest, admin: AdminContext): Promise<DirectoryCacheResponse> {
   const identity = studentDirectoryCacheIdentity(admin);
-  if (identity && input.identity === identity && input.studentIds) {
+  // Solving an answer changes membership without changing the administrator session.
+  const needsCurrentMistakes = input.filters.wrong === "current_wrong" || input.filters.wrong === "current_repeated";
+  if (!needsCurrentMistakes && identity && input.identity === identity && input.studentIds) {
     const ids = input.studentIds;
     if (ids.length === 0) return { kind: "resume", identity, userId: admin.userId, points: [] };
     const supabase = await createServerSupabaseClient();

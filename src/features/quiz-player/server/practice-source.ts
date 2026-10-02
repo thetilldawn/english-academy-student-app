@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { hydrateNotebookRows } from "@/features/students/public-server";
+import { hydratePronunciationRows } from "@/features/students/public-server";
 import { buildPracticePlan, practiceSourceSchema, type PracticeEntry, type PracticeSource } from "../domain/practice-plan";
 import type { PracticeInput } from "../contracts/practice";
 import type { QuizPronunciation } from "../model";
@@ -17,23 +17,21 @@ export async function preparePractice(studentId: string, input: PracticeInput) {
     words: plan.selected.slice(0, input.settings.questionCount).map(w => ({ key: w.key!, headword: w.headword, primaryMeaning: w.primaryMeaning })),
     excluded: plan.excluded, error: plan.error } };
 }
-function pronunciationRow(entry: PracticeEntry, source: PracticeSource) {
+function pronunciationRow(entry: PracticeEntry, source: Pick<PracticeSource, "candidates">) {
   if (entry.raw) return entry.raw;
   const row = source.candidates.find(candidate => candidate.entryId === entry.entryId)!;
-  return { key: `candidate:${entry.entryId}`, headword: entry.headword, primaryMeaning: entry.primaryMeaning, wrongCount: 0,
-    lastWrongAt: "2000-01-01T00:00:00Z", occurrences: [{ datasetId: row.datasetId, vocabEntryId: row.entryId, datasetLabel: "",
-      headword: row.headword, primaryMeaning: row.primaryMeaning, provenanceStatus: "legacy_backfill" }],
+  return { headword: entry.headword,
     studySource: { entryId: row.entryId, currentHeadword: row.headword, snapshotDisplayKo: null, dictionaryId: null, releaseId: null,
       displayKo: row.displayKo, pronunciationSnapshot: null, compositionPronunciation: null, definition: null, example: null, exampleKo: null } };
 }
-export async function freezePracticeQuestions(prepared: {source: PracticeSource; plan: ReturnType<typeof buildPracticePlan>}, preserveStudyPronunciation = false) {
+export async function freezePracticeQuestions(prepared: {source: Pick<PracticeSource, "candidates">; plan: Pick<ReturnType<typeof buildPracticePlan>, "candidates" | "questions">}, preserveStudyPronunciation = false) {
   const byId = new Map(prepared.plan.candidates.map(entry => [entry.id, entry]));
   const used = new Set(prepared.plan.questions.flatMap(q => [q.vocabEntryId, ...q.choiceVocabEntryIds]));
   const entries = [...used].map(id => byId.get(id)!);
   const pronunciation = new Map<number, QuizPronunciation>();
   for (let offset = 0; offset < entries.length; offset += 200) {
     const page = entries.slice(offset, offset + 200);
-    const hydrated = await hydrateNotebookRows(page.map(entry => pronunciationRow(entry, prepared.source)));
+    const hydrated = await hydratePronunciationRows(page.map(entry => pronunciationRow(entry, prepared.source)));
     page.forEach((entry, index) => pronunciation.set(entry.id, hydrated[index].pronunciation));
   }
   return prepared.plan.questions.map(q => ({ wordKey: byId.get(q.vocabEntryId)!.key,

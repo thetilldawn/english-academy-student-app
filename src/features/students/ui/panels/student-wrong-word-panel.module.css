@@ -263,3 +263,14 @@
     animation: none;
   }
 }
+
+.mistakeCard { min-width:0; padding:16px 0; border-bottom:1px solid var(--line); }
+.mistakeHeading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; align-items:baseline; }
+.mistakeHeading strong { font-size:23px; overflow-wrap:anywhere; }
+.mistakeHeading span,.mistakeNote { color:var(--text-secondary); font-size:14px; line-height:1.6; }
+.mistakeMeaning { padding:12px 0; min-width:0; }
+.mistakeMeaning + .mistakeMeaning { border-top:1px solid var(--line); }
+.mistakeChoice { display:flex; align-items:center; gap:10px; min-height:44px; line-height:1.6; overflow-wrap:anywhere; cursor:pointer; }
+.mistakeChoice small { color:var(--text-secondary); font-size:14px; }
+.mistakeFacts { display:flex; gap:8px 14px; flex-wrap:wrap; font-size:14px; line-height:1.65; padding-top:8px; }
+.mistakeMeaning details { padding:12px 0; font-size:14px; line-height:1.6; }

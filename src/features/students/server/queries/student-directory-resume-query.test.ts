@@ -10,6 +10,12 @@ const admin = { userId: "00000000-0000-4000-8000-000000000999", displayName: "�
 const input = { mode: "cache" as const, filters, identity: studentDirectoryCacheIdentity(admin)!, studentIds: [id] };
 beforeEach(() => { vi.clearAllMocks(); mocks.from.mockReturnValue({ select: mocks.select }); mocks.select.mockReturnValue({ in: mocks.in }); mocks.in.mockReturnValue({ is: mocks.is }); mocks.initial.mockResolvedValue({ marker: "fresh" }); });
 describe("학생 목록 재방문 현재 포인트", () => {
+  it.each(["current_wrong", "current_repeated"] as const)("현재 오답 필터 %s는 같은 세션이어도 새 목록으로 바꾼다", async wrong => {
+    const next = { ...input, filters: { ...filters, wrong } };
+    expect(await getStudentDirectoryCacheRead(next, admin)).toMatchObject({ kind: "snapshot" });
+    expect(mocks.initial).toHaveBeenCalledWith({ filters: next.filters }, admin);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
   it("현재 인증과 삭제 제외 조건으로만 조회한다", async () => {
     mocks.is.mockResolvedValue({ data: [{ id, student_point_totals: { total_points: "17" } }], error: null });
     expect(await getStudentDirectoryCacheRead(input, admin)).toMatchObject({ kind: "resume", points: [{ id, rawPoints: 17 }] });

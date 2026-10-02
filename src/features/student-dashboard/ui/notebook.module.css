@@ -38,5 +38,15 @@
 .facts { margin:0; display:grid; gap:8px; font-size:14px; line-height:1.6; }
 .facts dt { color:var(--text-secondary); }.facts dd { margin:0 0 6px; overflow-wrap:anywhere; }.facts p { margin:2px 0 10px; }
 .standalone { max-width:640px; margin:auto; }
+.viewNote { font-size:14px; line-height:1.65; color:var(--text-secondary); margin:12px 0 20px; }
+.meaningList { display:grid; gap:16px; }
+.meaningItem { border-top:1px solid var(--line); padding-top:16px; font-size:14px; line-height:1.65; }
+.meaningItem p { margin:8px 0; overflow-wrap:anywhere; }
+.meaningHeading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.meaningHeading label { display:flex; align-items:center; gap:8px; min-height:44px; cursor:pointer; }
+.meaningHeading input { width:18px; height:18px; accent-color:var(--ink); }
+.sourceLabels,.legacyNote { color:var(--text-secondary); font-size:13px; }
+.episodeList { padding-left:20px; }
+.wrongCount small { display:block; font-size:13px; line-height:1.4; font-weight:400; margin-top:4px; }
 @container(min-width:681px) { .columns { grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr); }.columns:has(.standalone) { grid-template-columns:minmax(0,1fr); }.previewPane { display:block; } }
 @media(max-width:480px) { .workspace { padding:20px 14px 80px; }.row { gap:4px; }.heading h1 { font-size:25px; }.selection button { font-size:13px; padding:8px; }.detailBody { padding:16px; } }

@@ -15,7 +15,7 @@ export async function queryLibrary(input: unknown, admin?: AdminContext) {
   if (!query.success) throw new LibraryCommandError(422);
   const client = await createServerSupabaseClient();
   const response = await client.rpc("query_vocabulary_library_v1", { p_query: query.data });
-  if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : response.error.code === "P0002" ? 404 : response.error.code === "40001" ? 409 : ["22023", "22P02", "22003"].includes(response.error.code) ? 422 : 503);
+  if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : response.error.code === "P0002" ? 404 : (response.error.code === "40001" || response.error.code === "PT409") ? 409 : ["22023", "22P02", "22003"].includes(response.error.code) ? 422 : 503);
   let data: unknown = response.data;
   if (query.data.kind === "preview") {
     const parsed = previewRpcSchema.safeParse(data);

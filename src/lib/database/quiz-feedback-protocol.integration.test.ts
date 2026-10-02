@@ -34,16 +34,16 @@ from vocab_entries where dataset_id='${id(4)}';
 `;
 describe.sequential("total feedback protocol against the final database", () => {
   let db: PGlite;
-  let beforeSecurity: unknown;
+  let beforeSecurity: Record<string, unknown>[];
   const security = `select proacl,prosecdef,proconfig,provolatile from pg_proc where oid='public.answer_quiz_question_v2(uuid,uuid,uuid,text,smallint,boolean)'::regprocedure`;
   beforeAll(async () => {
     db = await createFinalSchemaDatabase({ beforeMigration: async (database, name) => {
-      if(name === "20260927080438_declare_quiz_feedback_protocol.sql") beforeSecurity = (await database.query(security)).rows;
+      if(name === "20260927080438_declare_quiz_feedback_protocol.sql") beforeSecurity = (await database.query<Record<string, unknown>>(security)).rows;
     }});
   }, 60_000);
   afterAll(async () => { await db?.close(); });
-  it("preserves the existing function privileges and security attributes", async () => {
-    expect((await db.query(security)).rows).toEqual(beforeSecurity);
+  it("preserves grants and search path while routing grading through the private receipt coordinator", async () => {
+    expect((await db.query(security)).rows).toEqual(beforeSecurity.map(attributes => ({ ...attributes, prosecdef: true })));
   });
   it.each([["total", null], ["per_question", 5], ["per_question", 8], ["per_question", 10]] as const)(
     "declares the real v2 contract and preserves %s/%s over three questions", async (mode, limit) => {

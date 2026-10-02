@@ -162,7 +162,8 @@ export async function getStudentAttempt(
 
 
 /** Shared by prepared and running attempts; pronunciation precedence must stay identical. */
-export async function hydrateQuizQuestions(rows: QuestionRow[], quizContentMode: QuizContentMode): Promise<AttemptState["questions"]> {
+export async function hydrateQuizQuestions(rows: QuestionRow[], quizContentMode: QuizContentMode,
+  options: { preserveStudyPronunciation?: boolean; strictPronunciation?: boolean } = {}): Promise<AttemptState["questions"]> {
   const registryIds = rows.flatMap((question) => {
     const bankQuestion = oneRelation(question.assignment_question);
     if (compositionQuestionPronunciation(bankQuestion, question.choices.length)) return [];
@@ -219,14 +220,14 @@ export async function hydrateQuizQuestions(rows: QuestionRow[], quizContentMode:
     entrySourceRegistry,
     audioCorrections,
   ] = await Promise.all([
-    loadVocabPronunciationRegistry(registryIds),
-    loadSyntheticPronunciationRegistry(syntheticBindings),
-    loadVocabPronunciationDisplayRegistry(registryIds),
-    loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds),
-    loadActiveVocabPronunciationReleaseRegistry(registryIds),
-    loadEntryApprovedKoreanPronunciationRegistry(registryIds),
-    loadEntrySourcePronunciationRegistry(registryIds),
-    loadPronunciationAudioCorrections(),
+    loadVocabPronunciationRegistry(registryIds, options.strictPronunciation),
+    loadSyntheticPronunciationRegistry(syntheticBindings, options.strictPronunciation),
+    loadVocabPronunciationDisplayRegistry(registryIds, options.strictPronunciation),
+    loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds, options.strictPronunciation),
+    loadActiveVocabPronunciationReleaseRegistry(registryIds, options.strictPronunciation),
+    loadEntryApprovedKoreanPronunciationRegistry(registryIds, options.strictPronunciation),
+    loadEntrySourcePronunciationRegistry(registryIds, options.strictPronunciation),
+    loadPronunciationAudioCorrections(options.strictPronunciation),
   ]);
   return rows.map((question) => {
       const roles = questionSemantics(quizContentMode, question.direction);
@@ -333,7 +334,7 @@ export async function hydrateQuizQuestions(rows: QuestionRow[], quizContentMode:
         prompt: question.prompt,
         choices: question.choices,
         // A target-only audio URL would identify the correct English choice.
-        pronunciation: roles.prompt === "headword" || answered
+        pronunciation: roles.prompt === "headword" || answered || options.preserveStudyPronunciation
           ? withCorrectedPronunciationAudio(pronunciation,
               roles.prompt === "headword" ? question.prompt : question.choices[question.correct_choice_index],
               audioCorrections) : unavailablePronunciation(),

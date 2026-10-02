@@ -191,3 +191,38 @@ export function resolveSingleAssignmentDraft(
     questionCount: draft.questionCount.value,
   };
 }
+
+export function createInitialSingleAssignmentDraft({
+  deadline = { mode: "none" },
+  datasetId,
+  exam = {
+    directionRatio: 50,
+    passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
+    questionOrderMode: "random",
+    timeLimitEnabled: true,
+    timing: { mode: "total", totalSeconds: 300 },
+  },
+  orderedUnitIds,
+  studentId,
+}: {
+  deadline?: AssignmentDeadline;
+  datasetId: string;
+  exam?: SingleAssignmentDraft["exam"];
+  orderedUnitIds: readonly string[];
+  studentId: string;
+}): SingleAssignmentDraft {
+  return {
+    kind: "single",
+    operation: { mode: "create" },
+    studentId,
+    title: { mode: "automatic" },
+    range: { datasetId, orderedUnitIds: [...orderedUnitIds] },
+    questionCount: { mode: "automatic", value: 20 },
+    exam,
+    availability: { mode: "immediate" },
+    deadline,
+    review: { mode: "none", scope: "dataset", levels: [1, 2] },
+  };
+}

@@ -108,7 +108,7 @@ export function quizChoicePresentation(
   mode: QuizContentMode = "book_meaning_choice",
 ): QuizChoicePresentation {
   const text = question.choices[choiceIndex] ?? "";
-  const role = questionSemantics(mode, question.direction).choice;
+  const role = questionSemantics(question.quizContentMode ?? mode, question.direction).choice;
   if (role !== "headword") {
     return { kind: role === "english_definition" ? "english-definition" : "korean-meaning", text, audioUrl: null };
   }
@@ -125,7 +125,7 @@ export function quizAudioPresentation(
   question: QuizQuestion,
   mode: QuizContentMode = "book_meaning_choice",
 ): QuizAudioPresentation {
-  const roles = questionSemantics(mode, question.direction);
+  const roles = questionSemantics(question.quizContentMode ?? mode, question.direction);
   const promptAudioUrl =
     roles.prompt === "headword" &&
     question.pronunciation.available
@@ -141,7 +141,7 @@ export function quizAudioPresentation(
 }
 
 export function quizChoiceAudioUrls(question: QuizQuestion, mode: QuizContentMode = "book_meaning_choice") {
-  return questionSemantics(mode, question.direction).choice === "headword"
+  return questionSemantics(question.quizContentMode ?? mode, question.direction).choice === "headword"
     ? question.choicePronunciations.flatMap((pronunciation) =>
         pronunciation.available && pronunciation.audioUrl
           ? [pronunciation.audioUrl]
@@ -157,7 +157,7 @@ export function quizAnswerAudioUrl(
 ) {
   if (
     choiceIndex === null ||
-    questionSemantics(mode, question.direction).choice !== "headword"
+    questionSemantics(question.quizContentMode ?? mode, question.direction).choice !== "headword"
   ) {
     return null;
   }

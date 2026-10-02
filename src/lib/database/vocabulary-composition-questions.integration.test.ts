@@ -341,19 +341,52 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     expect(choices).toHaveLength(4);
     const plan = choices.slice(0, count).map((q, index) => ({ ...q, base_order_index: index + 1 }));
     const source = await scalar<string>(`select private.create_exact_review_assignment_with_delivery_v1('가짜 오답 출처',$1::uuid,$2::uuid[],4,100::smallint,300,80::smallint,'fixed',null,array['${studentId}']::uuid[],'none',null,$3::jsonb) value`, [schoolPrepared.datasetId, [...new Set(schoolPrepared.entries.map(e => e.unitId))], JSON.stringify(choices.map((q, i) => ({ ...q, base_order_index: i + 1 })))]);
+    await db.query("select private.configure_assignment_retry_v1($1,false,null::smallint)", [source]);
     const attempt = await startAttempt(studentId, source);
-    const queueIds: string[] = [];
-    for (const q of plan) queueIds.push(await scalar<string>(`insert into public.student_vocab_review_queue(student_id,dataset_id,vocab_entry_id,source_attempt_id,source_question_id,reason_level,status,queued_by)
-      select $1,$2,$3,$4,qq.id,1,'pending',$5 from public.quiz_questions qq where qq.attempt_id=$4 and qq.vocab_entry_id=$3 returning id value`, [studentId, schoolPrepared.datasetId, q.vocab_entry_id, attempt, adminId]));
+    await db.exec("reset role");
+    const selectedEntryIds = plan.map(q => q.vocab_entry_id);
+    const sourceQuestions = (await db.query<{ id: string; vocab_entry_id: number; correct_choice_index: number }>(
+      "select id,vocab_entry_id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index", [attempt])).rows;
+    expect(sourceQuestions).toHaveLength(4);
+    for (const q of sourceQuestions) {
+      await db.exec("reset role");
+      await db.query("update public.quiz_attempts set current_question_started_at=clock_timestamp()-interval '20 seconds' where id=$1", [attempt]);
+      await service();
+      await db.query("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)",
+        [studentId, attempt, q.id, selectedEntryIds.includes(q.vocab_entry_id) ? (q.correct_choice_index + 1) % 4 : q.correct_choice_index]);
+    }
+    await db.exec("reset role");
+    expect(await scalar("select status value from public.quiz_attempts where id=$1", [attempt])).toBe("completed");
+    const targets = await scalar<Record<string, unknown>[]>(`select jsonb_agg(jsonb_build_object(
+      'sourceQuestionId',r.quiz_question_id,'sourcePhase',r.phase,'meaningKey',r.meaning_key,'episodeId',s.episode_id,'stateVersion',v.version::text)
+      order by array_position($3::bigint[],q.vocab_entry_id)) value from private.vocabulary_answer_receipts r
+      join public.quiz_questions q on q.id=r.quiz_question_id
+      join private.student_vocabulary_meaning_states s on s.student_id=r.student_id and s.meaning_key=r.meaning_key
+      join private.student_vocabulary_versions v on v.student_id=r.student_id
+      where r.student_id=$1 and r.attempt_id=$2 and r.phase='initial' and r.outcome='wrong' and q.vocab_entry_id=any($3::bigint[])
+      and s.unresolved and s.episode_id=r.episode_id`, [studentId, attempt, selectedEntryIds]);
+    expect(targets).toHaveLength(count);
+    await admin();
+    const queueIds = await scalar<string[]>("select public.queue_student_vocabulary_mistakes_v1($1,$2::jsonb) value", [studentId, JSON.stringify(targets)]);
+    expect(queueIds).toHaveLength(count);
+    await db.exec("reset role");
     await db.query("update public.assignments set status='closed' where id=$1", [source]);
     const original = await scalar<string>(`select private.create_exact_review_assignment_v5($1::uuid,$2::uuid,$3::uuid[],'가짜 오답',100::smallint,300,80::smallint,'fixed',null,'none',null,$4::jsonb) value`, [studentId, schoolPrepared.datasetId, queueIds, JSON.stringify(plan)]);
+    const reviewSnapshot = await scalar<{ queueIds: string[]; levels: number[] }>(`select jsonb_build_object(
+      'queueIds',jsonb_agg(t.review_queue_id order by aq.base_order_index),
+      'levels',to_jsonb(array_agg(distinct q.reason_level order by q.reason_level))) value
+      from public.assignment_review_targets t join public.assignment_questions aq on aq.id=t.assignment_question_id
+      join public.student_vocab_review_queue q on q.id=t.review_queue_id
+      where t.assignment_id=$1 and t.student_id=$2 and t.released_at is null`,[original,studentId]);
+    expect(reviewSnapshot.queueIds).toEqual(queueIds);
+    expect(reviewSnapshot.levels).toEqual(count===1?[1]:[1,2]);
     const snapshot = async (id: string) => (await db.query("select vocab_entry_id,base_order_index,direction,prompt,choices,choice_vocab_entry_ids,correct_choice_index,composition_pronunciation_snapshot from private.assignment_question_contents_v1 where assignment_id=$1 order by base_order_index", [id])).rows;
     const before = await snapshot(original);
-    const sql = `select public.replace_student_assignment_v7($1::uuid,$2::uuid,$3::uuid,$4::text,'review','preserve','가짜 오답 수정',$5::uuid,'{}'::uuid[],$6::int,100::smallint,300,85::smallint,false,null,'fixed',null,null,'none',null,array[1]::smallint[],'dataset',$7::uuid[],$8::jsonb) value`;
+    const sql = `select public.replace_student_assignment_v7($1::uuid,$2::uuid,$3::uuid,$4::text,'review','preserve','가짜 오답 수정',$5::uuid,'{}'::uuid[],$6::int,100::smallint,300,85::smallint,false,null,'fixed',null,null,'none',null,$9::smallint[],'dataset',$7::uuid[],$8::jsonb) value`;
     const altered = structuredClone(plan); [altered[0]!.choice_vocab_entry_ids[0], altered[0]!.choice_vocab_entry_ids[1]] = [altered[0]!.choice_vocab_entry_ids[1]!, altered[0]!.choice_vocab_entry_ids[0]!];
-    await expect(db.query(sql, [original, studentId, randomUUID(), hash("bad-frozen-edit"), schoolPrepared.datasetId, count, queueIds, JSON.stringify(altered)])).rejects.toThrow();
+    await expect(db.query(sql, [original, studentId, randomUUID(), hash("bad-frozen-edit"), schoolPrepared.datasetId, count, queueIds, JSON.stringify(altered),reviewSnapshot.levels])).rejects.toThrow();
     expect(await scalar("select status value from public.assignments where id=$1", [original])).toBe("active");
-    const args = [original, studentId, randomUUID(), hash(`review-edit:${count}`), schoolPrepared.datasetId, count, queueIds, JSON.stringify(plan)];
+    const args = [original, studentId, randomUUID(), hash(`review-edit:${count}`), schoolPrepared.datasetId, count, queueIds, JSON.stringify(plan),reviewSnapshot.levels];
     const result = await scalar<{ replacementAssignmentId: string }>(sql, args);
     const total = await scalar("select count(*)::int value from public.assignments");
     expect(await scalar(sql, args)).toEqual({ ...result, idempotent: true }); expect(await scalar("select count(*)::int value from public.assignments")).toBe(total);

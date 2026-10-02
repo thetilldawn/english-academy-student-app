@@ -1,0 +1,1300 @@
+{
+  "work": "APP-20261002-01",
+  "capturedAt": "2026-10-02T10:28:25.0364857+09:00",
+  "baseline": "7275b71716c2951e2210239e0e7ad673d70ee76f",
+  "gate": "design",
+  "verification": null,
+  "remoteMigrationApplied": false,
+  "previewApproval": "pending_after_auto_review_rejection",
+  "productionWrites": 0,
+  "deployment": 0,
+  "wholeMaintenanceComplete": false,
+  "tests": {
+    "fullCheckpoint": {
+      "passed": 4781,
+      "files": 601,
+      "failed": 0,
+      "existingSkipped": 1
+    },
+    "latestFocused": {
+      "passed": 52,
+      "files": 4,
+      "failed": 0
+    },
+    "changedLintFiles": 175,
+    "typecheck": "passed",
+    "featureMap": "passed",
+    "uiArchitecture": "passed",
+    "recordDesign": "passed",
+    "webpack": "passed"
+  },
+  "localBrowser": {
+    "http200": 37,
+    "fakeDataOnly": true,
+    "mobileWidth": 390,
+    "documentWidth": 375,
+    "data200": 33,
+    "originalBuildRestored": true,
+    "serverStopped": true,
+    "studentAndAdminHistory": "20 then 1; no duplicate"
+  },
+  "inputs": [
+    {
+      "path": "src/app/wrong-word-ui-contract.test.ts",
+      "sha256": "0065e1d6b60e44bcd5e13d20717ebf7e3d00b3735df60785e8747e5c9d685f74"
+    },
+    {
+      "path": "src/app/student-reading-context-contract.test.ts",
+      "sha256": "1b8e5262f600087e803e71e176c6921a467928f71932fcd49df5e5675557c58a"
+    },
+    {
+      "path": "src/app/mixed-assignment-api-contract.test.ts",
+      "sha256": "6ead3f40e39544d44881501a0f6c4aeee82e4a8803a6ba255cf53b48a42b551d"
+    },
+    {
+      "path": "src/app/exact-review-assignment-ui-contract.test.ts",
+      "sha256": "e3328359c1cbd60521105d6e7f6561159acb5224ae7c488d81d370b1933ac264"
+    },
+    {
+      "path": "src/lib/services/wrong-word-worksheet-service.ts",
+      "sha256": "a1f05ae872278c8a95a9f8c6822c9e779391dcb22c1ff03f7165f0acc626612f"
+    },
+    {
+      "path": "src/lib/services/wrong-word-query.ts",
+      "sha256": "e940fc21263054b8d9e0ea445e2b24aec1f9add6eff5d69da895f707c449926d"
+    },
+    {
+      "path": "src/lib/services/wrong-word-command.ts",
+      "sha256": "ad36123b595c221cd2eafcc1403ef54174dc506cc23b753dcbb7a6db3f9d1100"
+    },
+    {
+      "path": "src/lib/services/student-reading-context-service.ts",
+      "sha256": "0edb68a3b18ff547c753a4cadd84c080a80987cfd5aad13fe877e29de2f4fb54"
+    },
+    {
+      "path": "src/lib/services/review-assignment-service.ts",
+      "sha256": "30751009d197029c1515ff73b482036255eb4d224a49c7bf050384249b57bc46"
+    },
+    {
+      "path": "src/lib/services/review-assignment-draft-query.ts",
+      "sha256": "eb4b0d7fcbc9120a3d66fbf037451ca94d1264f0c6ff71d1b902627ddbd55b14"
+    },
+    {
+      "path": "src/lib/services/quiz-rpc-compatibility.ts",
+      "sha256": "696fec6229dd29c023e13a34065f5a4e4770a5e3d657f2611424bbf2adb47a60"
+    },
+    {
+      "path": "src/lib/services/quiz-rpc-compatibility.test.ts",
+      "sha256": "68c19369482e23463199a1d7d1e1854903fb798d38bbbb92946929219e44969e"
+    },
+    {
+      "path": "src/app/api/student/wrong-words/route.ts",
+      "sha256": "041cbc20e04398df1c1fabf70094373fbf4e9196f94de5aa132fafab6ab5c7af"
+    },
+    {
+      "path": "src/app/api/student/wrong-words/route.test.ts",
+      "sha256": "ccd14d896210acc961d14e736d43e3ad40a4e9817b254d07e9590da574c914ca"
+    },
+    {
+      "path": "src/lib/admin/wrong-word-history.ts",
+      "sha256": "208051c4fe4c3dc3d0f9fa93fc92c599a64225f38737a9fbef842e9298c0765c"
+    },
+    {
+      "path": "src/lib/admin/wrong-word-history.test.ts",
+      "sha256": "8f7bdd5f770f3cb127fd6fefad317b182b423a4dfb5579ecc449f3e5502d59d6"
+    },
+    {
+      "path": "src/lib/admin/review-assignment.ts",
+      "sha256": "3568c7f7b79600d1b6ea35a02047374bf576a9fe270fc7424a01c54f11d0de57"
+    },
+    {
+      "path": "src/lib/admin/mixed-assignment.ts",
+      "sha256": "71d916a5f173048f2d45c0c0df84c116b43c37816e7d041d9201b5786ad12545"
+    },
+    {
+      "path": "src/lib/admin/mixed-assignment.test.ts",
+      "sha256": "e06aa066de2fb5311027877c6bd477b015ef70ae5bb518b8c3e7682921b70a73"
+    },
+    {
+      "path": "src/lib/admin/mixed-assignment-request.ts",
+      "sha256": "eebd68bf781980e9144cf4159c076a04082c7bf9466d8221a205f7fb11d6e723"
+    },
+    {
+      "path": "src/lib/admin/direct-review-assignment-request.ts",
+      "sha256": "0af5fa148c4e4dfa3ee2d78f6774528bbd59020794e886544f1ed15744bf73ea"
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-command.ts",
+      "sha256": "620219691bd861eafd9950ec28b719e7c4dc0dee79bdd72d281e314d84123640"
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-command.test.ts",
+      "sha256": "97d3ee07ec47aacb2088fa08424c79871b7716f9d14db4023f38b35d9d78d27b"
+    },
+    {
+      "path": "src/lib/services/mixed-assignment-service.ts",
+      "sha256": "2e1ecfcaf9f01823aae13bf179eed9823a5b6de74afe8c7e3a38be5092c07f55"
+    },
+    {
+      "path": "src/lib/services/direct-review-assignment-service.ts",
+      "sha256": "ef853cde84f56260d4c112ce15eb0f51a2e631fdcc1e3ae423db2f5de0bea443"
+    },
+    {
+      "path": "src/lib/services/direct-review-assignment-service.test.ts",
+      "sha256": "1130b641d2ee258f2387ec5b684edec754f7161f238a2077f913c49284da8b33"
+    },
+    {
+      "path": "src/lib/services/active-review-assignment-service.ts",
+      "sha256": "3ab5b1b0489aaa7e0aa3a7e0c205d9c1cd3a083b1ed7375acef635a547f84c45"
+    },
+    {
+      "path": "src/lib/database/exact-review-assignment-snapshot-migration-contract.test.ts",
+      "sha256": "30a3962705fcbc4d7c9493966841c032b8d48d3124de9c0ce966bdc09c5f8ed3"
+    },
+    {
+      "path": "src/lib/database/exact-review-assignment-migration-contract.test.ts",
+      "sha256": "8bbe31e629e37b429b9e40c0ee4cb031cdce9839e0936334a2085b5ca0e15a88"
+    },
+    {
+      "path": "src/lib/database/current-vocab-wrong-summary.integration.test.ts",
+      "sha256": "52c0a7d98e330597ce99ceeba94484ac875fa7bd089c23fdbe3024ef4aa3636d"
+    },
+    {
+      "path": "src/lib/database/current-vocab-wrong-summary-migration-contract.test.ts",
+      "sha256": "af9f5a63ac88671d5d341a45f36426f4bf26464b206b2416329f5600132ee958"
+    },
+    {
+      "path": "src/lib/database/notebook-study.integration.test.ts",
+      "sha256": "467146423e8ac914e2a0afe1889765fcdf2511c0d92564f99090a454e8a04dc7"
+    },
+    {
+      "path": "src/lib/database/notebook-query-cost.integration.test.ts",
+      "sha256": "ce633ab1587713944b758c6539e53b0661d4afc8d4f53be297bce1a1b364d591"
+    },
+    {
+      "path": "src/lib/database/notebook-assignment.integration.test.ts",
+      "sha256": "2fc32a28e84cbfebdd356d8275b3394420e8bf86bec0c4f49c6fa8c9c00e91c8"
+    },
+    {
+      "path": "src/lib/database/mixed-review-assignment-migration-contract.test.ts",
+      "sha256": "417c22dcb55939678121923fcb9022775b1ee0cca61a1bb8ad200298f348a915"
+    },
+    {
+      "path": "src/lib/database/review-assignment-foundation-migration-contract.test.ts",
+      "sha256": "f94486866f48ccf2657377797c5b1b6c31578456c621c0689fb16a9814fd50fb"
+    },
+    {
+      "path": "src/lib/database/review-assignment-final-schema.integration.test.ts",
+      "sha256": "7fb20d5a8d0b4167975a9ce995448fe291b45a8a8870320e53d4bd03feff6d06"
+    },
+    {
+      "path": "src/lib/database/review-assignment-draft-rpc-migration-contract.test.ts",
+      "sha256": "dc12c852377574594f618f5f4c844d05e0d8ddac8a19436067578fcec93884c1"
+    },
+    {
+      "path": "src/lib/database/small-review-assignment-migration-contract.test.ts",
+      "sha256": "bae08804fa010b3cad825216085b624911269e5bbec4c3ae20530c09fbb65f2d"
+    },
+    {
+      "path": "src/lib/database/small-direct-review-assignment-migration-contract.test.ts",
+      "sha256": "e47d0fb38d1b35cf4b56ac2abfaf08a27ffd1dfa24b47043c3e63cd0297c3413"
+    },
+    {
+      "path": "src/lib/database/student-reading-context-migration-contract.test.ts",
+      "sha256": "27daf50bed4098734fc9a62beb815d62f2f8e02753aaa2f7c7b5dc3b4cf045ec"
+    },
+    {
+      "path": "src/lib/database/student-word-practice.integration.test.ts",
+      "sha256": "626967330e3ed910e9e69750d810da41091cf0cdd95819646fe26ce6b40ecf7e"
+    },
+    {
+      "path": "src/lib/database/wrong-word-worksheet-migration-contract.test.ts",
+      "sha256": "fd469732425a66b92a8a62f2e1851534f8f5b60a7920bdf50004da29a65283b5"
+    },
+    {
+      "path": "src/lib/database/wrong-word-page.integration.test.ts",
+      "sha256": "9a700612fa66d5f65b8e54bc2191bca83e41a56d3f3642223cd581ef0c7c1abf"
+    },
+    {
+      "path": "src/lib/database/wrong-word-notebook.integration.test.ts",
+      "sha256": "614c18b879a994ab149f18d3b2046ebbf6df3715d3b374d9705e0eff901541e8"
+    },
+    {
+      "path": "src/app/api/student/notebook/route.ts",
+      "sha256": "95d91e0115b6755554b8948f563900f9f0d97ae08eb77222d473f8ffd6f024a3"
+    },
+    {
+      "path": "src/app/api/student/notebook/route.test.ts",
+      "sha256": "827b83a59c04c19c2de41717f48841d50a8a1d6e8da86a0b693b73cedf07e68b"
+    },
+    {
+      "path": "src/features/students/contracts/wrong-word-page.ts",
+      "sha256": "cf9a1037061a67fb90c4010d6d629349293e3642192a0ee506968a39fe407bdd"
+    },
+    {
+      "path": "src/features/students/contracts/wrong-word-notebook.ts",
+      "sha256": "9455dcc5c9e1b283f4a1d98a0d5053bebccd6d742756095f8f9b24cfd82ca7f3"
+    },
+    {
+      "path": "src/features/students/contracts/wrong-word-filters.ts",
+      "sha256": "d5792346ad55c3d1dc20e55af33b08600c95744a91829f6f329f89d60c6e1726"
+    },
+    {
+      "path": "src/features/students/contracts/wrong-word-filters.test.ts",
+      "sha256": "9ece38d394fc04ca8b94adc61d691790cdc5cca8130569388de8193d323da9f0"
+    },
+    {
+      "path": "src/features/students/contracts/notebook-study.ts",
+      "sha256": "2d3d6a83739b39b8818e69a912ec1e4300c4afe032485a6227ac5abcc0697354"
+    },
+    {
+      "path": "src/features/students/server/wrong-word-cursor.ts",
+      "sha256": "7671e101fdff16db10eedc283ce12d6d64e9a6bcef9fa672b9a57faeabc750bd"
+    },
+    {
+      "path": "src/features/students/server/wrong-word-cursor.test.ts",
+      "sha256": "6f2678b22cffe5417d82cba980ef2fba683ccf929ec4567a7e80fc4952f6dc3a"
+    },
+    {
+      "path": "src/features/students/domain/wrong-word-selection.ts",
+      "sha256": "ae4795a49677fb5f1aedbd36ebc504b924cfe7ee1e9e25135b9441eb3b454a47"
+    },
+    {
+      "path": "src/features/students/domain/wrong-word-selection.test.ts",
+      "sha256": "f91b9df708e52d79cfaa529166de45ef6fc8b6c26aa55c90aac71690ff75c125"
+    },
+    {
+      "path": "src/features/students/api/wrong-word-transport.ts",
+      "sha256": "45cd08dbe45fffb8501a135b4d0cadd5475227899bf05bcc313169ab4b7081e2"
+    },
+    {
+      "path": "src/features/students/api/wrong-word-transport.test.ts",
+      "sha256": "3ff4c5b6cc26725052db570d6a7e05f2939a2d77e34ac44de43a4c322439c3e2"
+    },
+    {
+      "path": "src/features/students/ui/panels/wrong-word-selection-controls.tsx",
+      "sha256": "0b1e73b7283475943c72cda833afc654b4a5e9bcb65c696bfa49efbc6b666f45"
+    },
+    {
+      "path": "src/features/students/ui/panels/wrong-word-purpose-section.tsx",
+      "sha256": "8c59db7f0442eb0a59786f24d1891a95cacac64d3ff57982f8dac7dcfa075f93"
+    },
+    {
+      "path": "src/features/students/ui/panels/wrong-word-list.tsx",
+      "sha256": "b09fb9fcfe9da961cf8c7c37b00d3a005f94cc021f4f47860e65c5db326cad45"
+    },
+    {
+      "path": "src/features/students/ui/panels/wrong-word-filter-section.tsx",
+      "sha256": "738a5c8c1bffb9c669856e04f45c6f25b073b4078231b551cac50cd332995e49"
+    },
+    {
+      "path": "src/features/students/ui/panels/wrong-word-control-section.tsx",
+      "sha256": "d4d9aacc37b7c4a6a20ff0df47fe9fe991416920ed61a64c94cddd182a069285"
+    },
+    {
+      "path": "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+      "sha256": "c8977d536e0121f8e71e337bc195735149df1a7f139f77a6fa5b9619bc7bb538"
+    },
+    {
+      "path": "src/features/students/ui/panels/student-wrong-word-panel.module.css",
+      "sha256": "f684d56e97c13dbcc50e36b7cbb5f0862e0d42d5931af1abdb636adcdd8af3f9"
+    },
+    {
+      "path": "src/features/students/server/queries/wrong-word-page-query.ts",
+      "sha256": "9294b211799fdcb9e8c13fc63f620d46eedba57148f54e4f9472d17aa0616bb6"
+    },
+    {
+      "path": "src/features/students/server/queries/wrong-word-page-query.test.ts",
+      "sha256": "401ca8ac4763ac64c1c7f036f6d9ed2f29b08f08b53a9ca0af92f3c7c10cd1ff"
+    },
+    {
+      "path": "src/features/students/server/queries/own-wrong-word-query.ts",
+      "sha256": "4af51398d7fa52986ae1ef2c3ef871e6850cee9e20715c089fda9865c0ea70a4"
+    },
+    {
+      "path": "src/features/students/server/queries/own-wrong-word-query.test.ts",
+      "sha256": "fea2f48355bd65a6134e5b7bf980f29871dc3328866d4e456f93577f6ac30b5d"
+    },
+    {
+      "path": "src/features/students/server/queries/notebook-study-query.ts",
+      "sha256": "d7c5241b1e74a144d17062bdf873229dfbf0e4d88991b9efdbf04a7a92dbe35d"
+    },
+    {
+      "path": "src/features/students/server/queries/notebook-study-query.test.ts",
+      "sha256": "8d1480c4f9abb5558503cf3a8fd53b9a3198a2e9644f33c077f83a26d2830f96"
+    },
+    {
+      "path": "src/features/students/server/queries/notebook-pronunciation.test.ts",
+      "sha256": "d117813514f8ce79cfc896e14f91bd126032bab02d819c1aab5516e2aa1f974c"
+    },
+    {
+      "path": "src/features/students/server/notebook-cursor.ts",
+      "sha256": "eb13cca922cab3072f7d0a40450ec4df3fe3eb7af520d937b634c92d3d82ff6b"
+    },
+    {
+      "path": "src/features/students/server/notebook-cursor.test.ts",
+      "sha256": "b99f0202e124bfa006310b1505f123dc4154630cba1b1a614b8a11909eaada05"
+    },
+    {
+      "path": "src/features/students/controller/use-wrong-word-panel-selection.ts",
+      "sha256": "ba087587f495b3f7ef56685d757fe3f151dcf6577f8bf9b24060028416b90794"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-worksheet-action.ts",
+      "sha256": "a2a88041fb6480c3dad70c353cbcb0a337718194a3a9eb770b5676fa29ccaec1"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-queue-action.ts",
+      "sha256": "a0e5a3841825dd9d60ffab621f3f7ef1a4c3f694a8dd62cff09b25233c9f2a8d"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-history.ts",
+      "sha256": "a29ee45dae658bee18482084e9263987d0cddb876be5746162cac7b78fa236a3"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-history.test.tsx",
+      "sha256": "098f971f31e12762a606a88e6af1bc5f3d6eb4364aaf0a6b5e28f9103e31059b"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-draft-action.ts",
+      "sha256": "0d0b6aca26deb17505d39b3480b17bf48ba30bd8da2136e3eafff361800a6d93"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-cache.ts",
+      "sha256": "f5034a83d21058116d68c3bc20a08863cf452c2f9b46cf1e5af7ed8e81c61a2c"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-actions.ts",
+      "sha256": "9a4e926c215c075427f88a6c0524efae2e83720a603af5e1189a77a4bbb5219b"
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-actions.test.tsx",
+      "sha256": "657a7c382d1b7c385dc9e3e961718cdeb5d9e47ceb7561d00c5fd671f4ef0f97"
+    },
+    {
+      "path": "src/features/student-dashboard/ui/notebook.module.css",
+      "sha256": "78179c29cc1d6db80a7c6bafca95537f626d3dd9ddd6b6ca31e60d69e991e936"
+    },
+    {
+      "path": "src/app/api/admin/exact-review-assignments/route.ts",
+      "sha256": "146f9a4113207b0c18d04855ae2034cb14ec14bcdc33df2492319b3c1fca824c"
+    },
+    {
+      "path": "src/app/api/admin/exact-review-assignments/route.test.ts",
+      "sha256": "5cd39efa33d637b1ffb98ec98409c3ecadcb8893e6e6a39df3dc297206c51e60"
+    },
+    {
+      "path": "src/features/assignments/transport/notebook-assignment.ts",
+      "sha256": "f31187f32ce44107107fc781999053245bc501738f57a47e9f8317cc90ba3d1c"
+    },
+    {
+      "path": "src/features/assignments/contracts/notebook-assignment.ts",
+      "sha256": "7d6bfb5c5a0cce4959f5a8a7d394978f44030701c492930e9140fb3e7ad95e61"
+    },
+    {
+      "path": "src/app/api/admin/exact-review-assignments/preview/route.ts",
+      "sha256": "6e6eed83ad461dbfd025bf50fa89d639912b941b85624b999b4a144a5a052ef6"
+    },
+    {
+      "path": "src/app/api/admin/exact-review-assignments/preview/route.test.ts",
+      "sha256": "d5d9a8335eebb87848e62ffd7ce135efd0a85801d9ca88e09071a7669e53c193"
+    },
+    {
+      "path": "src/features/assignments/ui/notebook-assignment.module.css",
+      "sha256": "21b585c5057c041a75b4b914505c8cfdf81c797c73b9c7051733d5b2f6d776c2"
+    },
+    {
+      "path": "src/features/assignments/ui/notebook-assignment-dialog.tsx",
+      "sha256": "461a7ed27ae63558871b58a195a6d8e8ca83bf61f634c8d2f846159b531e3c68"
+    },
+    {
+      "path": "src/features/assignments/ui/notebook-assignment-dialog.test.tsx",
+      "sha256": "4f121d5879496eb7ca74a83a81176eb47b90de845ec02eb2ec9d06e91121953d"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+      "sha256": "ecbde7f75648b0228df8de5960eeac433c57c325fb88ba5edd78b10c296ce845"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-assignment-sections.test.tsx",
+      "sha256": "5b5f4aad719ce8913410b383e8659ac05927f6a77e7c4037cb2c5bfc376fd1b3"
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/notebook-content.tsx",
+      "sha256": "30a60de02eb22612dd30f74ea3161a2ec2c8c02ea7653192cfa7b5097d439e70"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/route.ts",
+      "sha256": "e33b2c68d3b26fbd13ada6d7473a5243b5bbd1a15770072b09b389c0f1e1015e"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/route.test.ts",
+      "sha256": "fbff3995e7624ed9e05fa867aebd12646daed29e304251f7cbaa78022d591f39"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/notebook-assignment.ts",
+      "sha256": "7f2c1bdfec85fdeb3cefa827140cbc9a92d107fd9d97a7cee633df49975343fb"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/notebook-assignment.test.ts",
+      "sha256": "d8ef7211cf4752ea676df570daa789eaa318e015ae90c070bcfe74e094a9a0d0"
+    },
+    {
+      "path": "src/features/assignments/server/planning/notebook-assignment.ts",
+      "sha256": "2a7a089fd64c76974d07c62c673f06e71a13fa2859c93ac13a3a3099bb27a2c7"
+    },
+    {
+      "path": "src/features/student-dashboard/client/transport/notebook-transport.ts",
+      "sha256": "3a4cf6e7618ffc71bf7ab354edf470811a04f1e9d783b992c18c834ee9af41eb"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/review-assignment-drafts/[draftId]/route.ts",
+      "sha256": "c014b82b18642543bd2d638c4958106d4e51e1f097cf2c8d3786001d74b2bdf5"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/review-assignment-drafts/route.ts",
+      "sha256": "8f1099805118d9982c43408c545fdcbe8a7f1ba8b6a333360db467a19027c929"
+    },
+    {
+      "path": "src/features/student-dashboard/client/controllers/use-notebook.ts",
+      "sha256": "15c007cc85a4ebfe1fb132491c85739944cc99d3613b3ab53475519c1592a2b4"
+    },
+    {
+      "path": "src/features/assignments/server/persistence/notebook-assignment.ts",
+      "sha256": "cb3b0f4738f4a19320d63b2143c08ac2be911c6af03fb1a82c06a4ccdf41ba15"
+    },
+    {
+      "path": "src/features/assignments/server/notebook-assignment-http.ts",
+      "sha256": "7fe1a0f9fd8618435cc34d2484c7b40f4fc6a49ac6db64bfda6f854dfbdbc9ad"
+    },
+    {
+      "path": "src/features/assignments/server/notebook-assignment-http.test.ts",
+      "sha256": "69a877864c175bc73f165d9904503f7c3bb315287ef9ec481fdeec2430072841"
+    },
+    {
+      "path": "src/app/api/admin/notebook-assignments/route.ts",
+      "sha256": "bd266f133320695c8fd7d25e981cad89d988c064dacc140f5a0e190fdddf2d63"
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-reader.tsx",
+      "sha256": "2a81224be9978c21a06c61a9a8003f00d8add211548c3107d4a0abf71b16632f"
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-reader.test.tsx",
+      "sha256": "db5f5df91b5aa18243bf64ddbd6089cc2c18410e855b670ab0c9fd12c046ba78"
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "sha256": "8f4ade47e39561ef55209f0dbc94be345cfe0017457c695da532f2dffc7d41b6"
+    },
+    {
+      "path": "src/features/quiz-player/domain/practice-plan.ts",
+      "sha256": "90cc38b23590a624a3b62fa8ed5d3208aab383ca19ff3bf4e94cc4c600e94d78"
+    },
+    {
+      "path": "src/features/quiz-player/domain/practice-plan.test.ts",
+      "sha256": "03d38c53528fe13e67f2d90c68a87979b402bd3a49b93566287142a081da6f29"
+    },
+    {
+      "path": "src/app/api/admin/notebook-assignments/preview/route.ts",
+      "sha256": "b3f60952951dafcf428cae851aa80ec46b91fe706ded028b708bc8ccade3c0ac"
+    },
+    {
+      "path": "src/app/api/admin/review-assignments/route.ts",
+      "sha256": "569ff9e9c51eabe2738ed275e55eec9c99a2ca25d113361f870108b5cba79890"
+    },
+    {
+      "path": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+      "sha256": "4d364d4aeb8533b0a7c34847adeea502fd819288b35aa690efa8755536f25842"
+    },
+    {
+      "path": "src/features/assignments/controller/use-direct-review-assignment-controller.test.tsx",
+      "sha256": "3b92aa9b3d6bebfc9c7f3d2737775017a9e125bab63ac40f392de913d78f45bf"
+    },
+    {
+      "path": "src/features/assignments/controller/use-notebook-assignment.ts",
+      "sha256": "fc88e186df42bda0b42dcf247cdf554a926ecfff6375e16764923d2bd1998eae"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-source.ts",
+      "sha256": "39bea25281394e2ece1852aab3f00d0b1f0142f06181e89ed5c0f748e48360d7"
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/route.ts",
+      "sha256": "24744695e00659aa337c521110f5d312b028df78a0a0ccb94f8dbc4fd70ea552"
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/route.test.ts",
+      "sha256": "6df5a4986d0ae3f54302878402c308fedd1f4080678ec2020568c4cb56d58c1b"
+    },
+    {
+      "path": "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+      "sha256": "0bcb3ad7fd42ee1c9ec820a1313e3b9ddc209b9e13a7bfa78294b02aa439b6cc"
+    },
+    {
+      "path": "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
+      "sha256": "3a95858c5b4c2e30a9c09a6af13e5a0c6b0619e52f6a9ffd25af6eea786a5400"
+    },
+    {
+      "path": "src/features/students/contracts/mistake-episode.ts",
+      "sha256": "20610c6f648ba051a47e4899a6757980e725fb07b15bbe56f3c8a8e9f59bb38f"
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-query.ts",
+      "sha256": "a14fa3b4e46716181182ed5dae8e7f52f09eab6e007796698416b6b32ab549ec"
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "sha256": "b5dfe1c3edf26c923b5cb33d45c227fbe5c11634f98ca17f889c6bc8491f1312"
+    },
+    {
+      "path": "src/features/students/public-server.ts",
+      "sha256": "9173e428b7109c7637538b80c043221b59f6f0fca83777abfd97eb5f160a0ad0"
+    },
+    {
+      "path": "src/features/students/public-contracts.ts",
+      "sha256": "f661c70c7b835455e7fbfcf0e7535a1676f0f0516903a823e84d26b010c59359"
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-query.test.ts",
+      "sha256": "b1555659aff6bb415aee4a2a75fb1d8a3c26722e697c39aa43e65459fdcb5385"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-service.test.ts",
+      "sha256": "ea5f8951b6b6368573ae25942e0f761eb357ac2fd45be36f427bb92b32cc281a"
+    },
+    {
+      "path": "src/features/quiz-player/domain/mistake-practice-plan.ts",
+      "sha256": "f5e9bc9972766eee6502f7469e97ed0f57100acf717cf154dcfd7ff9e33f2d0f"
+    },
+    {
+      "path": "src/features/quiz-player/domain/mistake-practice-plan.test.ts",
+      "sha256": "b244ef97aa5e2d32e9d5da88f3f93fd49146536fa0093c64db97119ed017f845"
+    },
+    {
+      "path": "src/features/quiz-player/server/mistake-practice-source.ts",
+      "sha256": "543c1291d8d98122a218dc12ddc01e2c5376b88d75313ae85d17f9d5f595a617"
+    },
+    {
+      "path": "src/features/quiz-player/contracts/practice.ts",
+      "sha256": "6f261b03159488084ac2f8dad84a399d3459286557c888a62bab000b48d5c4b5"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-service.ts",
+      "sha256": "656e8d131adcf515dea01070fc6d41097cb079e355092df9f3a1c533892be483"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-rpc.ts",
+      "sha256": "42a4aa7a22334a5a0baaf02bbaecffa7ef726305f818207214cc09d3ce4756a0"
+    },
+    {
+      "path": "src/features/quiz-player/api/quiz-attempt.ts",
+      "sha256": "2e240bd860ad4393e272d3e2320729a20a01ea2064c318fa02b9c63064e71a78"
+    },
+    {
+      "path": "src/features/quiz-player/server/attempt-preparation.ts",
+      "sha256": "31746cbd7cda19a02f1684dc76dcb51a0d0272badbb720479188a8c3263e7000"
+    },
+    {
+      "path": "src/features/quiz-player/model.ts",
+      "sha256": "8cf601ea67d2fa403d3de96fddbbbd844f8e1c0984d3281b30c0956cc493ea0b"
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-session.ts",
+      "sha256": "5ca853cd38757ed8b5d683b9777081c561a18a3776cb072616f9417cd7362d98"
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-frame.tsx",
+      "sha256": "1ea3e3cf106f5de662043b6b09233f6828f46beba3cf156d3cea3c703357a2ff"
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.tsx",
+      "sha256": "1894771a4c0dd0564c5c1395b2a3bee86a49fbec1f769b9770d2d450622424a9"
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-session.test.ts",
+      "sha256": "d7865e9ca4acadeb9844e460ecdbd9e8987215084977bf45654ada1d4e9a614a"
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-frame.test.tsx",
+      "sha256": "789a1c8f9f72d33432416cc63bfc1d7a04b558546339d82b8b41dea5065a0741"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/page.tsx",
+      "sha256": "96613c4262dfde4cf5fcf64c93f449c8104bb09f9ca423971691d5c55a69d3e2"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/[id]/page.tsx",
+      "sha256": "cd2d19e20f9764999d6281ea54c811aed5a4e55c14decaeffc75c342dd537da3"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/@detail/(.)[id]/page.tsx",
+      "sha256": "3b3bd1743d89170f6b756ae3a8b0219f296b46b6b58b0434749786648510e170"
+    },
+    {
+      "path": "src/features/quiz-player/client/practice-launcher.tsx",
+      "sha256": "15b8b036622f81ab1f79e7fbe99d22dcc06a356eb57b8c9c782c12416454d23d"
+    },
+    {
+      "path": "src/features/quiz-player/client/practice-launcher.test.tsx",
+      "sha256": "5d5cb62aca37f1d603347a4064df3cdb46109ebe2514e4524df18a280d31871c"
+    },
+    {
+      "path": "src/features/students/server/commands/queue-mistakes.ts",
+      "sha256": "2b6c7b8eaf166daaa9681695495c7ec76dd0b6ed83781cf6d67d6d6e7fbfa80a"
+    },
+    {
+      "path": "src/features/students/server/commands/queue-mistakes.test.ts",
+      "sha256": "29afa1baee21d728a2ae20b317df28e126c46ca167dd9000e6f63dbeba2fc1a7"
+    },
+    {
+      "path": "src/lib/database/quiz-feedback-protocol.integration.test.ts",
+      "sha256": "cf0436778a67b1eed1c5eb5fc18777ff120be2308f1bee5575d09918352b6c15"
+    },
+    {
+      "path": "src/features/students/controller/use-student-mistake-history.ts",
+      "sha256": "b1a32a96460339a96d8f1b760c7f71a287d28c07d29b5881ffcc8fed9f4dc8f2"
+    },
+    {
+      "path": "src/features/students/controller/use-student-mistake-selection.ts",
+      "sha256": "042252d793fbbbed33c5172ac7dcd8e4b4a5b01a3c34f54a5e3c4914faac6c82"
+    },
+    {
+      "path": "src/features/students/domain/mistake-selection.ts",
+      "sha256": "0d1f21ed05acbddf9b0c1cd3deacb19c1fef11720fdfb961090ba1615c3ae6a6"
+    },
+    {
+      "path": "src/features/students/ui/panels/mistake-list.tsx",
+      "sha256": "f2950b2443811ab76f5b5e2750d34d3a7f00a22923a74573b0dc7e7a9b31796e"
+    },
+    {
+      "path": "src/features/students/controller/use-student-mistake-history.test.tsx",
+      "sha256": "fecde3a0b3e25e41e2e8e0f47944e5f2e742ee2333e61e825512c97fa53a4f8d"
+    },
+    {
+      "path": "src/features/students/domain/mistake-selection.test.ts",
+      "sha256": "c63b9b17f2464eb69f7903c9d4010820853234aefb2b475496ec0f514b126125"
+    },
+    {
+      "path": "src/features/students/controller/use-student-mistake-selection.test.tsx",
+      "sha256": "5efeda7437467ce35b8be6e032c552edef3fa8aa4a3bff0c9b08bf7fbd269878"
+    },
+    {
+      "path": "src/features/students/ui/panels/student-wrong-word-panel.test.tsx",
+      "sha256": "eea21c55fc4046180c52f3ff9707667b08f46d88e8a21188bdf063b63029f493"
+    },
+    {
+      "path": "src/lib/validation.ts",
+      "sha256": "3df1671d219b833632e42c98f8f329cb4a61c926e6000b19cd37054169be3960"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/worksheet-requests/route.ts",
+      "sha256": "cef2c128bd4ad834fbc587c9eef9e0140043b6d6e263d5ada557d3a9757454d0"
+    },
+    {
+      "path": "src/lib/validation.test.ts",
+      "sha256": "8f2cafd82ead27c73881a24ad7dda9a9bebcbc5b3db6055fca546d7479d755bf"
+    },
+    {
+      "path": "src/lib/database/vocabulary-composition-questions.integration.test.ts",
+      "sha256": "7e875cbbcb6a5909cc445a395c0c20ae9ce4bde402b7fc25c2a933b82fc51fc8"
+    },
+    {
+      "path": "src/lib/database/exam-use-dictionary-projection.integration.test.ts",
+      "sha256": "e8b9adf48bf5ecf71793d1e8bf4880ad7223291afad0611a12fc27131636c343"
+    },
+    {
+      "path": "src/features/students/controller/mistake-test-fixtures.ts",
+      "sha256": "1d9360cb031b7c4671b177e9be578c8d22dfbcc54304730643050ddedb2abf99"
+    },
+    {
+      "path": "src/features/assignments/server/planning/notebook-mistake-assignment.ts",
+      "sha256": "8fdb2e022dbbdbdf6f03168e103f6635636e7afee2ac689f1eb09f31feafa39f"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/notebook-mistake-assignment.ts",
+      "sha256": "c5a6e02b6efc87d890074093af90266c379183d8c848f01ef0948e482c4d53f1"
+    },
+    {
+      "path": "src/features/assignments/domain/mistake-assignment-banks.ts",
+      "sha256": "81ea0c13130edff18c42957b11ccf2b791f73c41ba2efd55db51a70f0e7cb479"
+    },
+    {
+      "path": "src/features/assignments/domain/mistake-assignment-banks.test.ts",
+      "sha256": "6dbbccf3b3659be87594ac0df695efa49518b283abbbf686893d95bcfb00010c"
+    },
+    {
+      "path": "src/features/quiz-player/public-server.ts",
+      "sha256": "b1e0d6af7ac90cb2854ec87bb3ae66967055eb82fdf5468b05fcdaadba781324"
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-query.ts",
+      "sha256": "180996ac90b8e7d436414963f27a08c235efbe8b5f88cebe2b35752f3b8f43c5"
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.ts",
+      "sha256": "6f957a90adfb3160ba0e183f1f9bdc95378d0ef3aab2bd8389a4e7b18e3fb128"
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
+      "sha256": "d13149a3301a5914b56acd5c5428088915aa9f279011af19ba9e8c19075b3d80"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.tsx",
+      "sha256": "bd8f1e79a1f5660091157233b355f5cbc37a83b78c55a69a669883f06f0e70e3"
+    },
+    {
+      "path": "src/features/students/contracts/student-directory-read-model.ts",
+      "sha256": "48b795f39d5c2921f39d718223a1a793a4f764451d51ffa7bf406557163e3c7f"
+    },
+    {
+      "path": "src/features/students/contracts/student-detail-read-model.ts",
+      "sha256": "2bc7960e4e79b1dc86d46818076686ae612521b4f6de0b4719147fc637cb78b2"
+    },
+    {
+      "path": "src/features/students/server/queries/student-detail-row-schema.ts",
+      "sha256": "e14cd2832749365b0cce3e999f81b02c0c01267aff2f52c982949e513b26267c"
+    },
+    {
+      "path": "src/features/students/server/queries/student-detail-query.ts",
+      "sha256": "6ab23eac4194f7828f6a49113abe9bc568d2f2614f8cc472be61eec11e09aef6"
+    },
+    {
+      "path": "src/features/students/ui/student-detail-content.tsx",
+      "sha256": "62f9427d9994ff1227a283440af16579975ffbe1dc9ff18a8cc3a55808ed8e6a"
+    },
+    {
+      "path": "src/features/students/ui/panels/student-history-panel.tsx",
+      "sha256": "166c3c75e55a4c2fd3cb83ffcbab7a3b9ab3489160551f9e3b23c10b906479f8"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-resume-query.ts",
+      "sha256": "90b003c84ad03be4af01ecf35bc992553ab02dc1bb4704f29656405fd7ce59ca"
+    },
+    {
+      "path": "src/features/students/ui/student-directory-filters.tsx",
+      "sha256": "51c706702ba6459dc8eb0e51636caa1e8f9a121b970d5c9d9047a3ebdec40e91"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace-filters.tsx",
+      "sha256": "14b9b7e3126e631c8bab2dffd61ae284e3123cfe5de934486fddb3557e036767"
+    },
+    {
+      "path": "src/features/assignments/presentation/bulk-student-selection-summary.ts",
+      "sha256": "84a27ae8b336e680e2a783f605287fae64d8c89270ca9e8e8c4b41ad4eb0ee7e"
+    },
+    {
+      "path": "src/content/ko/common.ts",
+      "sha256": "83c09f3b075c910f3206832b275d5cb671c4d631983c715789c3550e333cae52"
+    },
+    {
+      "path": "src/features/students/ui/student-detail-page.test.tsx",
+      "sha256": "77ee853bfd2d48c941d49ce8c946edca43ba7e47931e5acf99976504f5573a38"
+    },
+    {
+      "path": "src/features/students/ui/panels/student-history-panel.test.tsx",
+      "sha256": "4a46d89236a993329eb6502496bdd67180570a45a00827a90956f776b6131755"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-resume-query.test.ts",
+      "sha256": "868b89301af886576025b7ae3b4a2d9817066652d43984fb78474670a95defc7"
+    },
+    {
+      "path": "src/features/assignments/presentation/bulk-student-selection-summary.test.ts",
+      "sha256": "a2ab0ae602f12c90302889168d50095be705c168bcd3cc1860c693f612f56d6b"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/direct-mistake-assignment.ts",
+      "sha256": "3d34d05061db3e1fa279c2fa10f2e32260b3f6ba3e9abf564eef8452d2b37372"
+    },
+    {
+      "path": "src/features/assignments/api/request-adapters.ts",
+      "sha256": "940939211d8debf5f1558564892d2ca6b3c9df25bbb1a218e0b810552c1d654c"
+    },
+    {
+      "path": "src/features/assignments/api/response-adapters.ts",
+      "sha256": "11dc7346eae21fc3858ff2af6de879a6b86369c87dea018677ad081b61c4f2d2"
+    },
+    {
+      "path": "src/features/assignments/application/direct-review-flow-adapter.ts",
+      "sha256": "1250d6018136465859c45f725fe56fc4898f3b4a0cf5b9746f6148ee0618a4e6"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-preview.tsx",
+      "sha256": "81138d85ff43ecea5ddc2769466ff75ec72e40d91cdd8df1b8cc894223808bc1"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "sha256": "9a5fa9b2e0ac5414bf6cdc13bf799789a9e553e1c18849c3c5c279418fd40bad"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
+      "sha256": "2223f547bc5db62cbc188c905544a10f3a0952f24d11bc6206dac7ed9817d6e6"
+    },
+    {
+      "path": "src/lib/services/direct-review-candidate-service.ts",
+      "sha256": "eedbd98921bc5ef7fa1f5ad533b49da095ba8a9d667c89cc4385b3a879242e95"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/direct-mistake-assignment.test.ts",
+      "sha256": "fb85379df4156bf8a8a8088c8bfff2bd8d54da9f95c9c84b66330c86bfab1cdb"
+    },
+    {
+      "path": "src/features/assignments/public-server.ts",
+      "sha256": "edb01bfd4fd1ba8d76a2ac12904f8d239e2db53d5551579d286a7999129d936e"
+    },
+    {
+      "path": "src/features/assignments/api/request-adapters.test.ts",
+      "sha256": "36a1f4eff1b4e01a7e67a594dd33d717ee684ae65f7b48b35455a0304b7392bc"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.test.tsx",
+      "sha256": "447b1f7774aa4e9f5866da32cf77ad38790a31274949c196521ff4082222d053"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/direct-review-summaries/route.test.ts",
+      "sha256": "7b668a5c85b87832483d0aed5f782c878c075d2d5464e1c70a99f4db282aa484"
+    },
+    {
+      "path": "src/features/session/controller/student-private-cache-events.ts",
+      "sha256": "6f06c944f27e1ed4fc31030d96a1ad32b8e81500342046594a6b91ba6eaeae92"
+    },
+    {
+      "path": "src/features/session/controller/student-session-commands.ts",
+      "sha256": "15c270d1e959ec268451681f50cb559992e4d4ba89cc44463b8ea9f5b3782784"
+    },
+    {
+      "path": "src/features/session/controller/use-private-list-entry.ts",
+      "sha256": "894c00576ae2f037f0a2f7bb05566e3a647aaefaf97769a589b9b7581e14773c"
+    },
+    {
+      "path": "src/features/session/controller/use-logout-transition.ts",
+      "sha256": "ae9e2928ec6d25528290a50ee8dc38d375a86a6d21033e38d818df5de901cf5c"
+    },
+    {
+      "path": "src/features/session/public-client.ts",
+      "sha256": "bfbec2503820bafe416185117c484c6e26f2266d8e146bed44ba40222a53f489"
+    },
+    {
+      "path": "src/lib/auth/private-cache-identity.ts",
+      "sha256": "58d0f2f77cc2df3ca9aa6341db7ba3919ffc2b3b7737268f819e0abf2432c631"
+    },
+    {
+      "path": "src/app/student/(protected)/wordbook/layout.tsx",
+      "sha256": "075e8baae638b36f4895d2cb409eab52a4c170131abd884232f1c1efbaee7634"
+    },
+    {
+      "path": "src/components/student-login-form.tsx",
+      "sha256": "ab0d566e23913a93187371b2805a7433b077d2e11aa42f6dc45c66a33f32c1e7"
+    },
+    {
+      "path": "src/features/quiz-player/api/quiz-transport.ts",
+      "sha256": "55b159f085c955d350e31a357ba11adf2b0c8c73b29a6caa300bf47615b5f386"
+    },
+    {
+      "path": "src/features/quiz-player/controller/recover-quiz-submission.ts",
+      "sha256": "0df2d941478d2a44381410c27c5d338942a14cdd64e2bc67b53080a065f349bb"
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-expiration.ts",
+      "sha256": "5f54efcbe384df36c27424228c4ac8ff12ac487055f976cc615e386a9d409d1c"
+    },
+    {
+      "path": "src/features/student-dashboard/AGENTS.md",
+      "sha256": "e0ea6326c961a0e35eb1529a45247f8d9938969391db5f1a71b27d92ebf62927"
+    },
+    {
+      "path": "src/features/session/AGENTS.md",
+      "sha256": "c11962f32c8b9b7641a2d1ae3e312a6676391259da4481106cc0e214300480d3"
+    },
+    {
+      "path": "src/features/quiz-player/AGENTS.md",
+      "sha256": "ae5c112159b2abcd89947148e4a7851272147013f09aa9857a72108c3f80e136"
+    },
+    {
+      "path": "src/features/quiz-player/api/quiz-transport.test.ts",
+      "sha256": "0c63a7f336f64d82484d665b238e68a8effef3c0c0901d2e753102f502911802"
+    },
+    {
+      "path": "src/features/session/controller/student-private-cache-events.test.ts",
+      "sha256": "c277a681effbea2c58a660a733986980134ff20101ee4a3cdd99eae2c47a6e17"
+    },
+    {
+      "path": "src/features/student-dashboard/client/transport/notebook-transport.test.ts",
+      "sha256": "7a428b7cd11d150dc541b8240a9aff6350c516745cc51bd9980708ab72a5c091"
+    },
+    {
+      "path": "src/app/api/student/notebook/[id]/route.ts",
+      "sha256": "5a5a9421f39c06e6c61e5fa1f14326ff6bea1d6a0a1b48663342f7c52fe0096b"
+    },
+    {
+      "path": "src/app/api/student/notebook/[id]/route.test.ts",
+      "sha256": "5965ddb1973be23e1a1e7753b8625c352186e181599415084b5455691edf035b"
+    },
+    {
+      "path": "src/features/student-dashboard/client/controllers/use-notebook-detail.ts",
+      "sha256": "75bbe3f317f3c72ee2b325d09af2e34cd3dbd87aa4b204cfc9d931446f606812"
+    },
+    {
+      "path": "src/features/student-dashboard/client/controllers/use-notebook-detail.test.tsx",
+      "sha256": "4e2e819a1583bc3ba00c0f87a528eb85e4ae48c03b63128451fd3f5e27d60085"
+    },
+    {
+      "path": "src/features/students/contracts/wrong-word-worksheet.ts",
+      "sha256": "54ce1069dba065a8906bac2e1bc5187558311a7ae06b06e91491e81f1924d158"
+    },
+    {
+      "path": "src/features/students/contracts/mistake-episode-history.ts",
+      "sha256": "079907ed44969f412c1a26837ee86d4563af3939a0213ce6de28b4d93b2769c8"
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-history-query.ts",
+      "sha256": "75cdcb31adc173b782b00464eb85ebd681481dd51e60f597562603f9c5b84a4c"
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-history-query.test.ts",
+      "sha256": "9f447b5dc818a0aca5cd7ba5423cfb29d99e8da6c049c6b6ce172612bf99c080"
+    },
+    {
+      "path": "src/features/students/transport/mistake-episode-history.ts",
+      "sha256": "e1946e0c0748b0df6e174972cfc2d5a277f8b1f04b495f18b47a926ac2b23bc4"
+    },
+    {
+      "path": "src/features/students/transport/mistake-episode-history.test.ts",
+      "sha256": "f6df8a3f9acf4a7a6ad585e3d51701e9d7ec98ff2f6e9872515d4a0d26cfdc90"
+    },
+    {
+      "path": "src/features/students/controller/use-mistake-episode-history.ts",
+      "sha256": "47cf7b9264ab1fc2173e1994c42a28a5ded5be34ae6be3b21b890a17b2b35094"
+    },
+    {
+      "path": "src/features/students/controller/use-mistake-episode-history.test.tsx",
+      "sha256": "4910f0be61b8956ede2042bf461f712916c6c79c180f2a7417314fdaf2395c7f"
+    },
+    {
+      "path": "src/features/students/ui/panels/mistake-episode-history.tsx",
+      "sha256": "25b3b9c5fbd98ccbb4b7be7be559f091efc0512a207a2358f9f0de9e63ed350b"
+    },
+    {
+      "path": "src/app/api/student/notebook/episodes/route.ts",
+      "sha256": "ba51e74a84486f1d7d69cd049e159c8ff58f16f31638b0bad087eefec987c573"
+    },
+    {
+      "path": "src/app/api/student/notebook/episodes/route.test.ts",
+      "sha256": "c4c62fdfaaea4dfe920df9484820dad942e90575781f9873b74a088b0a9c60b8"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/episodes/route.ts",
+      "sha256": "f48b7ae924baa739b8d692fdb289462a911c52fba8a1286cee2371d534336e58"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/episodes/route.test.ts",
+      "sha256": "2490f9aee5325698b59a19077eec5676459ca19e29f68570d3ddaf41f07b91a2"
+    },
+    {
+      "path": "src/features/students/public-client.ts",
+      "sha256": "b51accf148749e218d0a8df9ad6f2ba35ac63a3ade5e371ecd590c1726e97254"
+    },
+    {
+      "path": "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
+      "sha256": "8745e0a5f20fb29672ec47301b251231b37610ec85528567fd1ce817fd43411c"
+    },
+    {
+      "path": "src/lib/database/vocabulary-mixed-primary.integration.test.ts",
+      "sha256": "955355674cbab6346f3f0bb09c63b90dba5609635d337d08d2df13815aa07276"
+    },
+    {
+      "path": "src/features/assignments/contracts/mixed-mistake-assignment.ts",
+      "sha256": "e64caaf5b0240ea8f8e19b3fcf41f345a3530252809f6411456deeb307dba2c0"
+    },
+    {
+      "path": "src/features/assignments/contracts/mixed-mistake-assignment.test.ts",
+      "sha256": "67405f5956f5b0f5ce72feb0a5973636358e91a7d14d331b481762e178a3a10a"
+    },
+    {
+      "path": "src/features/assignments/domain/mixed-mistake-primary-plan.ts",
+      "sha256": "da6b873a972eebf7d2b507ffa3b5e97cecd8f901a629ca24c827b6c0c9e2a4f9"
+    },
+    {
+      "path": "src/features/assignments/domain/mixed-mistake-primary-plan.test.ts",
+      "sha256": "0f8e0f397e79028ee4fa427b1091e89e4c0efdb32a8a63a321cd10e6b56deb0f"
+    },
+    {
+      "path": "src/features/assignments/server/planning/mixed-mistake-assignment.ts",
+      "sha256": "b1028b70bc8a1b414c099808be9d1998f1c46354ac6b8af1e96942606daafb54"
+    },
+    {
+      "path": "src/features/assignments/server/planning/mixed-mistake-assignment.test.ts",
+      "sha256": "e1882c86fc522a54c02695930ee492f453bc6c2f652f0583491c8fcde2a5af58"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
+      "sha256": "8f6e92d19e267351f215b13f764e3215bf9b34aca69ed17a8523f838c590701a"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/mixed-mistake-assignment.test.ts",
+      "sha256": "a06c9bbc558377c792aa1cc5ac9106e916c38ccfdb298f44d4dec9c95109b038"
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/preview/route.ts",
+      "sha256": "38c9076066d6fc702726607dd05377e4082a34bf6620f75916b242829bcfc25f"
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/preview/route.test.ts",
+      "sha256": "7827eecfabf0bb7503f488b383a2104e27f00e67d603ddbc30a7c340b159fc2d"
+    },
+    {
+      "path": "src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts",
+      "sha256": "6f13ab7f6b8d0f8e606f4691a9315878f94c0e001c34c1d2927795416bfc5e2c"
+    },
+    {
+      "path": "src/features/assignments/controller/use-mixed-mistake-assignment-controller.test.tsx",
+      "sha256": "2bb8f07f6da8c26ffff3653c87aea14e78b25cb3e5b99fc77e79189dc9bee153"
+    },
+    {
+      "path": "src/features/assignments/application/mixed-mistake-flow-adapter.ts",
+      "sha256": "688704ef3e035ec65378e1f7f47608c0ea8fd645d72b0c6c49e9a43ec3f12f4f"
+    },
+    {
+      "path": "src/features/assignments/ui/mixed-mistake-assignment-sections.tsx",
+      "sha256": "b94ce995950c5bda2371662b078cb5eba9416918c556ae1994db5ec21e832ef0"
+    },
+    {
+      "path": "src/features/assignments/domain/single-draft.ts",
+      "sha256": "0cd759d11395127fc5454912c8a610fd8fcee3340fe7ec224f2fd72b7be7d961"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-controller.ts",
+      "sha256": "3d3718c585b80ab85a486e447a3ecd6c9888a5a11cd4609714360e5b6dfcc9a6"
+    },
+    {
+      "path": "src/features/assignments/architecture-boundary.test.ts",
+      "sha256": "8f5d79d3d04184c6fc171052e21205e7288af93507e7d05a486c29c7ed583cd3"
+    },
+    {
+      "path": "scripts/local-admin-baseline.mjs",
+      "sha256": "d9c6b45c106906b63786820ef9c708fa09cab0aa78484d0fa115bfd8892b08dc"
+    },
+    {
+      "path": "scripts/local-mistake-ui-data.mjs",
+      "sha256": "33ef37027e269d7ec51a106a04ab2645fbc54f27c40bd961f0228e756bf4abd0"
+    },
+    {
+      "path": "architecture/assignment-ui-roles.json",
+      "sha256": "2942b09a0641899ac5cbdeb13a466a2ccaf6553c72d1621f7e509dbb6f0e9578"
+    },
+    {
+      "path": "scripts/local-admin-baseline-data.mjs",
+      "sha256": "3d8dc9ea018c9e42c475bad8174f43ea77780c9da3c0b683f170f73d0b53ce0d"
+    },
+    {
+      "path": "src/features/assignments/AGENTS.md",
+      "sha256": "5b34ef5677839b48edfea4a675a63a188c36244133f77fd6006d9baa182de203"
+    },
+    {
+      "path": "src/app/api/admin/AGENTS.md",
+      "sha256": "ff938e4eeefdeb7e2ff803bb068b80bf1567316fcccc27f431d78f71db6e295b"
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "sha256": "0138a314e547aa1fd0165749596833415cd9e10b9e0cb170d567242bc6c1ea58"
+    },
+    {
+      "path": "src/test-support/local-mistake-ui-data.test.mjs",
+      "sha256": "1e74371c78b472029d359969300673ad402ea49e4b803e7ba48af82025f97729"
+    },
+    {
+      "path": "src/app/api/admin/worksheet-requests/[id]/export/route.ts",
+      "sha256": "e4d97c92bafad900e79e75ea14b927c4ecaf7fc7621e9f7a779014af9e021b5f"
+    },
+    {
+      "path": "src/features/assignments/public-contracts.ts",
+      "sha256": "a715322e659654dfdb765111bf553d1f6c3b7ab89d252393ed70a11968b51d01"
+    },
+    {
+      "path": "src/features/quiz-player/api/quiz-attempt.test.ts",
+      "sha256": "e4ff906c726991ce6a1ad7fb94d95c72121e8c01fd7ccc5db12476f74c892573"
+    },
+    {
+      "path": "src/features/quiz-player/server/attempt-preparation.test.ts",
+      "sha256": "958db1c6ad11a177f2b45904b5a619f26e2f4f56e9537617a2d380e4fcf1ccfb"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-http.test.ts",
+      "sha256": "dbfd636dad6b395e40934b2a43255fb703790e78e437ae2dc1542e00cb115087"
+    },
+    {
+      "path": "src/features/quiz-player/server/practice-http.ts",
+      "sha256": "ae40ad10fc5317387a52f16804ab7c137600c421b4c90a8257c03dd73db325ca"
+    },
+    {
+      "path": "src/features/quiz-player/server/queries/question-content-query.test.ts",
+      "sha256": "acba5db362842f0256ba017f227d5c293792b16954e59c57d5fd1db36b7a9eb9"
+    },
+    {
+      "path": "src/features/quiz-player/server/queries/question-content-query.ts",
+      "sha256": "0c254d5d56d313d8e0b051fc08270518272e2ade6b9d5635a7d63df6d751bcde"
+    },
+    {
+      "path": "src/features/quiz-player/server/quiz-command-error.test.ts",
+      "sha256": "6dfe942be436e843040ba4374c57dd2d6b6ca4672b40946f7b64907f99638dc8"
+    },
+    {
+      "path": "src/features/quiz-player/server/quiz-command-error.ts",
+      "sha256": "aa1ef2a15183c09c8baeb8e4449ecc3c3f5d95c7aefdf119c36d4af1be0253c7"
+    },
+    {
+      "path": "src/lib/database/vocabulary-question-content.integration.test.ts",
+      "sha256": "e6ddd7a9a3c36715c5b52f1290281b621948913cfb3074e6463fea953d60c654"
+    },
+    {
+      "path": "src/lib/quiz/choice-policy.ts",
+      "sha256": "1ef10b7d6c5da40385da4ae389afc788d62a8d15d9f7a246ea98908666c47cc4"
+    },
+    {
+      "path": "src/lib/quiz/choice-safety.test.ts",
+      "sha256": "2257809286f3baf076c183c134c8f8816844a26171d41e7c54aee0a2a0b464eb"
+    },
+    {
+      "path": "src/lib/quiz/choice-safety.ts",
+      "sha256": "d3c00cbcbadc855f287b9d98bf0c491ed04f8e87ddd6c556080bbe5dbbd15ffc"
+    },
+    {
+      "path": "src/lib/quiz/entry-source-pronunciation.test.ts",
+      "sha256": "68fa7119e92165db78746f953c7b24f3b6ba5940c58a8d0b943ad321262762de"
+    },
+    {
+      "path": "src/lib/quiz/entry-source-pronunciation.ts",
+      "sha256": "1c2d2086f62075067113e526713d8a68edfaeca0f3fc99991ede9bbd8b88176b"
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
+      "sha256": "c4c0bbae59be2b187782025ec518699b935209452d0219366cb2602bd1efa8e9"
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-snapshot.ts",
+      "sha256": "f72d9b910956074f152cd0da2787c371a92897809a0573bc589da0d229ee141e"
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-storage.test.ts",
+      "sha256": "853d024ea8e61ffad858ed474b7c34a805c61661983c04e7437b92ecd1b88505"
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-storage.ts",
+      "sha256": "a400e9657d32d08ba7a2cbc4743c879e0baac8fe23c99b5ccb696e99f66c4669"
+    },
+    {
+      "path": "src/lib/quiz/question-generator.ts",
+      "sha256": "9de699ab6b73a51d47148799ff7bcced748a9cc45fdeaee9e6ed4119b9594ae7"
+    },
+    {
+      "path": "src/lib/quiz/question-semantics.test.ts",
+      "sha256": "a7a4ebbeeca5574729bf55ee399cc30e1277fdf303e9bba47644e02c7b863a14"
+    },
+    {
+      "path": "src/lib/quiz/question-semantics.ts",
+      "sha256": "b879a885579c0bd6411241d39c7bc873af8d3f913c3abb06a6f36bf1dbbb5e1b"
+    },
+    {
+      "path": "src/lib/services/quiz/question-snapshot.test.ts",
+      "sha256": "914195504b98d1283159608bb4eab267b2c62a6256ae7042b308ab92d2c88aba"
+    },
+    {
+      "path": "src/lib/services/quiz/question-snapshot.ts",
+      "sha256": "c1fbab61874e722f493dcf83ed45dbfc8af95f4fec787cd6276558bcf1b57e92"
+    },
+    {
+      "path": "scripts/local-mistake-notebook-data.mjs",
+      "sha256": "0462ed0456e370d36f3c85732819db9c5b49b7d2bebaab3eca4db4b027f48dc0"
+    },
+    {
+      "path": "src/content/ko/admin-students.ts",
+      "sha256": "fed1c532406d3d1211886d1255e376ce8e9a6ae3a4693cfd65b3fa214cd3d248"
+    },
+    {
+      "path": "src/features/students/AGENTS.md",
+      "sha256": "460899909333943a5d7d36c9cc0a9bbcae94ec479457413aa2f963251efce5ed"
+    }
+  ],
+  "logs": [
+    {
+      "path": ".codex-tmp/m03-full-final.log",
+      "sha256": "0221fdc56fd79107f4c1a4ba1ca87d209e8d3396c648406811561e2a9af6c51f"
+    },
+    {
+      "path": ".codex-tmp/m03-privacy-fixture-final.log",
+      "sha256": "45390288ee31a671bd2ac69869e1e1a9602c36baa148b4ba77f25eb0e529d185"
+    },
+    {
+      "path": ".codex-tmp/m03-screen-final.log",
+      "sha256": "4974bbbb2f2c210e57ea5744562d1ba94328f808388d5e32be50092b82c17ccb"
+    },
+    {
+      "path": ".codex-tmp/m03-lint-notebook-final.log",
+      "sha256": "c3e92d32e2a5b5052606576f08250fe0774f7d1b4415fa8cb4f9c1ebbfcb12bb"
+    },
+    {
+      "path": ".codex-tmp/m03-type-notebook-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex-tmp/m03-map-notebook-final.log",
+      "sha256": "c5e330edac8cad02512838cbce0cc2014d00eb084bcfe9cd5d25b0df2cb5c438"
+    },
+    {
+      "path": ".codex-tmp/m03-ui-notebook-final.log",
+      "sha256": "dba0af74c04a5d457421463de29f8d25e7a5159620355496d8bafb97138f0084"
+    },
+    {
+      "path": ".codex-tmp/m03-record-notebook-final.log",
+      "sha256": "6c00f8451b3edbad22c7dfbb585c83f7e504edd82f9cf7cbe745f76e9ef47721"
+    },
+    {
+      "path": ".codex-tmp/m03-notebook-browser-final.log",
+      "sha256": "7ce8b5352fc1a00af8f73f8d3005ab6466fbc8d53783778377477333b312e12e"
+    },
+    {
+      "path": ".codex-tmp/m03-notebook-browser-metrics.json",
+      "sha256": "6f7a582a4b4f6775e20c3ce98c4b5d1766bcb110f2c8d6c1bf2fdbd1032943f3"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "docs/verification/APP-20261002-01_관리자오답_모바일.jpg",
+      "bytes": 25088,
+      "sha256": "c2b96034f59f390d22150604df1faa661dbce2e35b0acb4a8554f72c02b208f5"
+    },
+    {
+      "path": "docs/verification/APP-20261002-01_관리자오답_PC.jpg",
+      "bytes": 40544,
+      "sha256": "69f5d34baec3923b4c0e6c0bae2f1c69813c4e97c16056da7599be6d7cf240ed"
+    },
+    {
+      "path": "docs/verification/APP-20261002-01_복구후_모바일.jpg",
+      "bytes": 30990,
+      "sha256": "51f00585f1edb690c2627fa149e8128bcc4964fa590379fabfa26da5fb858d6e"
+    },
+    {
+      "path": "docs/verification/APP-20261002-01_저장복구_모바일.jpg",
+      "bytes": 32866,
+      "sha256": "53f16f93f8d8266bf75fbaf73d37bfb7ef614ceb1ea5326c3f23aa051bffb7ff"
+    },
+    {
+      "path": "docs/verification/APP-20261002-01_학생오답_모바일.jpg",
+      "bytes": 25088,
+      "sha256": "a552fec79a8160983bffb61df85ddffcc7ad685dca0d0fb04458b07bbdf21916"
+    },
+    {
+      "path": "docs/verification/APP-20261002-01_혼합배정_PC.jpg",
+      "bytes": 50557,
+      "sha256": "8f0f8486ba617229728dae5bd43a31dc0fe165e25338686d7e806d8cfa0f5e56"
+    }
+  ],
+  "remaining": [
+    "Preview exact migration approval and application",
+    "70-table and function metadata preservation checks",
+    "Local fixture setup and retirement proof",
+    "Seven real two-connection race cases",
+    "Verification gate completion"
+  ]
+}

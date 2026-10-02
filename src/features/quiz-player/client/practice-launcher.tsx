@@ -2,24 +2,33 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
-import { DialogBody, DialogFooter, DialogFrame, DialogHeader } from "@/design-system/primitives/dialog/dialog";
-import type { NotebookFilters } from "@/features/students/public-contracts";
+import { DialogBody, DialogFooter, DialogFrame, DialogHeader, DialogVisibilityBoundary } from "@/design-system/primitives/dialog/dialog";
+import type { NotebookFilters, MistakeFilters } from "@/features/students/public-contracts";
 import { practiceSettingsSchema, type PracticeInput, type PracticePreview, type PracticeSelection, type PracticeSettings, type PracticeStartInput } from "../contracts/practice";
 import { PracticeRequestError, requestPracticePreview, requestPracticeStart } from "../api/practice-transport";
 import styles from "../ui/practice.module.css";
 
-export function PracticeLauncher({ keys, filters, totalCount, disabled }: { keys: string[]; filters: NotebookFilters; totalCount: number; disabled: boolean }) {
+type LauncherProps = { totalCount: number; disabled: boolean; privacyReady?: boolean; onSourceChanged?: () => void } & (
+  { keys: string[]; filters: NotebookFilters } |
+  { mistakes: Extract<PracticeSelection, { mode: "mistakes" }>; filters: MistakeFilters }
+);
+export function PracticeLauncher(props: LauncherProps) {
+  const { filters, totalCount, disabled } = props;
+  const selectedCount = "mistakes" in props ? props.mistakes.meanings.length : props.keys.length;
   const [selection, setSelection] = useState<PracticeSelection | null>(null);
   const [initialCount, setInitialCount] = useState(10);
   function open(value: PracticeSelection, count: number) { setInitialCount(Math.min(10, count)); setSelection(value); }
   return <div className={styles.actions}>
-    <Button disabled={disabled || !keys.length || keys.length > 500} onClick={() => open({ mode: "selected", keys }, keys.length)}>선택 연습</Button>
-    <Button disabled={disabled || !totalCount} onClick={() => open({ mode: "filtered", filters }, totalCount)}>조건 전체 연습</Button>
+    <Button disabled={disabled || !selectedCount || selectedCount > 500} onClick={() => open("mistakes" in props ? props.mistakes : { mode: "selected", keys: props.keys }, selectedCount)}>선택 연습</Button>
+    <Button disabled={disabled || !totalCount} onClick={() => open("mistakes" in props ? { mode: "mistake_filters", filters: props.filters, stateVersion: props.mistakes.stateVersion } : { mode: "filtered", filters }, totalCount)}>조건 전체 연습</Button>
     <ButtonLink href="/student/practice" prefetch={false}>연습 내역</ButtonLink>
-    {selection ? <PracticeSetup selection={selection} initialCount={initialCount} onClose={() => setSelection(null)} /> : null}
+    <DialogVisibilityBoundary visible={props.privacyReady !== false}>
+      {selection ? <PracticeSetup privacyReady={props.privacyReady !== false} selection={selection} initialCount={initialCount} onClose={() => setSelection(null)}
+        onSourceChanged={() => { if (props.onSourceChanged) { props.onSourceChanged(); setSelection(null); } }} /> : null}
+    </DialogVisibilityBoundary>
   </div>;
 }
-function PracticeSetup({ selection, initialCount, onClose }: { selection: PracticeSelection; initialCount: number; onClose: () => void }) {
+function PracticeSetup({ selection, initialCount, onClose, onSourceChanged, privacyReady }: { selection: PracticeSelection; initialCount: number; onClose: () => void; onSourceChanged: () => void; privacyReady: boolean }) {
   const router = useRouter();
   const [settings, setSettings] = useState<PracticeSettings>({ questionCount: initialCount, englishToKoreanRatio: 50, timingMode: "none", timeLimitSeconds: null, questionTimeLimitSeconds: null });
   const [preview, setPreview] = useState<PracticePreview | null>(null);
@@ -27,15 +36,24 @@ function PracticeSetup({ selection, initialCount, onClose }: { selection: Practi
   const [sent, setSent] = useState<PracticeStartInput | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [denied, setDenied] = useState(false);
+  const [destination, setDestination] = useState<string | null>(null);
+  const navigatedDestination = useRef<string | null>(null);
+  useEffect(() => {
+    if (privacyReady && destination && navigatedDestination.current !== destination) {
+      navigatedDestination.current = destination;
+      router.push(destination);
+    }
+  }, [privacyReady, destination, router]);
   const request = useRef<AbortController | null>(null), active = useRef(true), pending = useRef(false);
   useEffect(() => { active.current = true; return () => { active.current = false; request.current?.abort(); }; }, []);
   function change(next: PracticeSettings) { request.current?.abort(); setSettings(next); setPreview(null); setInput(null); setError(""); }
   function failed(failure: unknown) {
     if (failure instanceof PracticeRequestError && [401, 403].includes(failure.status)) { setDenied(true); setPreview(null); }
     setError(failure instanceof PracticeRequestError ? failure.message : "응답을 확인하지 못했습니다. 다시 시도해 주세요.");
+    if (failure instanceof PracticeRequestError && failure.code === "source_changed") onSourceChanged();
   }
   async function check() {
-    if (pending.current) return;
+    if (!privacyReady || pending.current) return;
     const parsed = practiceSettingsSchema.safeParse(settings);
     if (!parsed.success) { setError("문항 수와 시간을 확인해 주세요."); return; }
     const next: PracticeInput = { requestKey: crypto.randomUUID(), selection, settings: parsed.data };
@@ -45,10 +63,10 @@ function PracticeSetup({ selection, initialCount, onClose }: { selection: Practi
     finally { pending.current = false; if (active.current) setBusy(false); }
   }
   async function start() {
-    if (pending.current || !input || !preview?.confirmation) return;
+    if (!privacyReady || pending.current || !input || !preview?.confirmation) return;
     const next = sent ?? { ...input, confirmation: preview.confirmation };
     setSent(next); pending.current = true; setBusy(true); setError(""); request.current = new AbortController();
-    try { const value = await requestPracticeStart(next, request.current.signal); if (active.current) router.push("preparationId" in value ? `/student/practice/${value.preparationId}` : value.attempt.status === "in_progress" ? `/student/practice/${value.attempt.id}` : `/student/practice/${value.attempt.id}/result`); }
+    try { const value = await requestPracticeStart(next, request.current.signal); if (active.current) setDestination("preparationId" in value ? `/student/practice/${value.preparationId}` : value.attempt.status === "in_progress" ? `/student/practice/${value.attempt.id}` : `/student/practice/${value.attempt.id}/result`); }
     catch (failure) { if (active.current) {
       failed(failure);
       if (failure instanceof PracticeRequestError && failure.code === "source_changed") { setSent(null); setInput(null); setPreview(null); }

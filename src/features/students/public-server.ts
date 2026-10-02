@@ -1,5 +1,7 @@
 import "server-only";
-export { getNotebookPage, getNotebookWord, hydrateNotebookRows } from "./server/queries/notebook-study-query";
+export { getOwnMistakeEpisodeHistory, getAdminMistakeEpisodeHistory } from "./server/queries/mistake-episode-history-query";
+export { getNotebookPage, getNotebookWord, hydrateNotebookRows, hydratePronunciationRows } from "./server/queries/notebook-study-query";
+export { getOwnMistakePage, getAdminMistakePage, getMistakeStudyPage, getMistakeStudyWord, MistakeReadError } from "./server/queries/mistake-episode-query";
 export { getOwnWrongWordPage, OwnWrongWordReadError } from "./server/queries/own-wrong-word-query";
 export { WrongWordCursorError } from "./server/wrong-word-cursor";
 

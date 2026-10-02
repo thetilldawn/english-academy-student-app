@@ -2,6 +2,8 @@ import { commonText } from "@/content/ko/common";
 import type { StudentDirectoryFilters } from "@/features/students/public-contracts";
 
 function wrongWordFilterLabel(value: StudentDirectoryFilters["wrong"]) {
+  if (value === "current_wrong") return commonText.filters.currentWrong;
+  if (value === "current_repeated") return commonText.filters.currentRepeatedWrong;
   if (value === "wrong") return commonText.filters.hasWrong;
   if (value === "repeated") return commonText.filters.repeatedWrong;
   if (value === "retry") return commonText.filters.retryNeeded;

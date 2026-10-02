@@ -28,6 +28,8 @@ const directReviewPreviewResponseSchema = z
     wrongEligible: nonNegativeInteger,
     wrongLevel1Eligible: nonNegativeInteger,
     wrongLevel2Eligible: nonNegativeInteger,
+    planVersion: z.literal("meaning-episode-v1").optional(),
+    banks: z.array(z.object({questionCount:z.number().int().positive(),quizContentMode:z.string(),englishToKoreanRatio:z.union([z.literal(0),z.literal(50),z.literal(100)])})).max(400).optional(),
     candidateCount: nonNegativeInteger.optional(),
     unavailableCount: nonNegativeInteger.optional(),
     unavailableItems: z.array(directReviewUnavailableItemSchema).max(400).optional(),
@@ -56,6 +58,16 @@ const directReviewPreviewResponseSchema = z
 const assignmentCreationResponseSchema = z
   .object({ assignmentId: z.uuid() })
   .strict();
+
+const mistakeAssignmentCreationResponseSchema=z.object({kind:z.literal("mistake_batch"),assignments:z.array(z.object({
+  studentId:z.uuid(),assignmentId:z.uuid(),questionCount:z.number().int().min(1).max(500),
+}).strict()).min(1).max(500)}).strict().superRefine((value,ctx)=>{
+  if(new Set(value.assignments.map(a=>a.assignmentId)).size!==value.assignments.length)ctx.addIssue({code:"custom",message:"같은 배정 결과가 중복되었습니다."});
+});
+export type MistakeAssignmentCreationResponse=z.infer<typeof mistakeAssignmentCreationResponseSchema>;
+export function parseMistakeAssignmentCreationResponse(value:unknown):AssignmentCreationResponse|MistakeAssignmentCreationResponse{
+  return z.union([assignmentCreationResponseSchema,mistakeAssignmentCreationResponseSchema]).parse(value);
+}
 
 const directReviewDatasetSummariesResponseSchema = z
   .object({

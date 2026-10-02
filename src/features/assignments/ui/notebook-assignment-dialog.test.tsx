@@ -22,7 +22,7 @@ describe('개인 오답 배정 화면',()=>{
  it('일괄 1명에서도 포함 확인 뒤 같은 조건으로 배정한다',async()=>{
   fetchMock.mockResolvedValueOnce(Response.json(preview([id(1)],true))).mockResolvedValueOnce(Response.json([{studentId:id(1),assignmentId:id(20),questionCount:1}]));
   open();await check();const button=screen.getByRole('button',{name:'배정'});expect(button).toBeDisabled();
-  fireEvent.click(screen.getByRole('checkbox',{name:/학년이 다른 단어장 포함/}));expect(button).toBeEnabled();fireEvent.click(button);await waitFor(()=>expect(success).toHaveBeenCalledWith(1));
+  fireEvent.click(screen.getByRole('checkbox',{name:/학년이 다른 단어장 포함/}));expect(button).toBeEnabled();fireEvent.click(button);await waitFor(()=>expect(success).toHaveBeenCalledWith({studentCount:1,assignmentCount:1}));
   const saved=JSON.parse(fetchMock.mock.calls[1][1].body);expect(saved).toMatchObject({audienceMode:'bulk',gradeConfirmedStudentIds:[id(1)],settings:{questionCount:1}});
  });
  it('학생 제외는 기존 배정을 건드리지 않고 새 미리보기를 요구한다',async()=>{

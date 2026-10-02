@@ -113,8 +113,8 @@
     },
     {
       "path": "src/app/api/admin/mixed-assignments/route.ts",
-      "status": "legacy-compatibility",
-      "reason": "새 독립 오답 화면 경로가 아니며 예전 mixed 자료 호환용이다."
+      "status": "partial-active",
+      "reason": "meaning-episode-v1은 새 범위+오답 화면의 뜻·구간별 원자 저장이며 버전 없는 입력만 기존 mixed 호환 저장으로 처리한다."
     },
     {
       "path": "src/app/api/admin/review-assignments/route.ts",
@@ -129,7 +129,7 @@
     {
       "path": "src/features/assignments/server",
       "status": "active-partial",
-      "reason": "R5에서 작업공간 읽기와 일괄 배정 서버 흐름을 옮겼다. 일반·혼합·독립 오답·수정 호환 서비스는 후속 배치까지 src/lib/services에 남는다."
+      "reason": "새 일반·일괄·뜻별 오답·혼합 배정은 기능 서버가 담당한다. 버전 없는 구형 혼합 저장은 기존 서비스로 위임한다."
     }
   ],
   "retiredPathOwners": [
@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 21,
-      "pathSetSha256": "b030d693fd33aaca6743e64b46c93cdd128753404afd947470a330df53a51e9c"
+      "fileCount": 22,
+      "pathSetSha256": "58e3e5b3fa0c89e0dab7c0c4e178924591ec0d54d8f8e575707757e47aaaca31"
     }
   ],
   "pageOwners": [
@@ -867,6 +867,22 @@
     {
       "path": "src/app/api/student/attempts/[id]/expire/route.test.ts",
       "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/notebook/[id]/route.test.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/student/notebook/episodes/route.test.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/episodes/route.test.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/preview/route.test.ts",
+      "owner": "assignments"
     }
   ],
   "routeOwners": [
@@ -1120,6 +1136,22 @@
     },
     {
       "path": "src/app/api/admin/notebook-assignments/preview/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/student/notebook/[id]/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/student/notebook/episodes/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/episodes/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/preview/route.ts",
       "owner": "assignments"
     }
   ],
@@ -2070,8 +2102,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 130,
-      "pathSetSha256": "943a3a0b19e636f92ef040c3acf0e8495fe8d7d8c48758b1e172c124e924127d"
+      "fileCount": 133,
+      "pathSetSha256": "24b848ca183dd0f09403566750656b4520c8465b32f4478dd8da6dae4b63eea4"
     },
     {
       "path": "src/lib/deploy",
@@ -2467,6 +2499,42 @@
     {
       "path": "src/features/quiz-player/server/queries/question-content-query.ts",
       "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/assignments/server/planning/notebook-mistake-assignment.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/direct-mistake-assignment.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/notebook-mistake-assignment.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/quiz-player/server/mistake-practice-source.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/students/server/commands/queue-mistakes.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-history-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/assignments/server/planning/mixed-mistake-assignment.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
+      "owner": "assignments"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2902,6 +2970,21 @@
       "path": "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+      "owner": "students",
+      "flow": "student-wrong-word-read"
+    },
+    {
+      "path": "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+      "owner": "students",
+      "flow": "student-wrong-word-read"
+    },
+    {
+      "path": "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+      "owner": "students",
+      "flow": "student-wrong-word-read"
     }
   ],
   "features": [
@@ -2931,7 +3014,9 @@
         "src/app/api/admin/assignment-workspace/datasets/[datasetId]/units/route.ts",
         "src/app/api/admin/assignment-workspace/previous-exam/route.ts",
         "src/app/api/admin/notebook-assignments/route.ts",
-        "src/app/api/admin/notebook-assignments/preview/route.ts"
+        "src/app/api/admin/notebook-assignments/preview/route.ts",
+        "src/app/api/admin/mixed-assignments/preview/route.ts",
+        "src/app/api/admin/mixed-assignments/route.ts"
       ]
     },
     {
@@ -3591,6 +3676,90 @@
       "to": "src/features/quiz-player/public-server-queries.ts",
       "reason": "APP-20261001-07: 확인된 학생·관리자 문맥으로 고정 문항 본문을 복원",
       "removeIn": "조회 전용 공개 경계로 유지"
+    },
+    {
+      "from": "src/features/assignments/server/planning/notebook-mistake-assignment.ts",
+      "to": "src/features/quiz-player/public-server.ts",
+      "reason": "뜻별 원문 복원과 출제·고정 검증을 공개 계획 경계로 재사용",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/assignments/server/use-cases/direct-mistake-assignment.ts",
+      "to": "src/features/quiz-player/public-server.ts",
+      "reason": "뜻별 원문 복원과 출제·고정 검증을 공개 계획 경계로 재사용",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/assignments/server/use-cases/notebook-mistake-assignment.ts",
+      "to": "src/features/quiz-player/public-server.ts",
+      "reason": "뜻별 원문 복원과 출제·고정 검증을 공개 계획 경계로 재사용",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/quiz-player/api/quiz-transport.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "현재 인증과 확정된 시험 변경에 따라 개인 표시를 폐기하거나 다시 조회",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "to": "src/features/session/public-client.ts",
+      "reason": "현재 인증과 확정된 시험 변경에 따라 개인 표시를 폐기하거나 다시 조회",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/client/controllers/use-notebook.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "현재 인증과 확정된 시험 변경에 따라 개인 표시를 폐기하거나 다시 조회",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/client/controllers/use-notebook-detail.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "현재 인증과 확정된 시험 변경에 따라 개인 표시를 폐기하거나 다시 조회",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/students/controller/use-mistake-episode-history.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "현재 인증과 확정된 시험 변경에 따라 개인 표시를 폐기하거나 다시 조회",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/students/controller/use-student-mistake-history.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "현재 인증과 확정된 시험 변경에 따라 개인 표시를 폐기하거나 다시 조회",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+      "to": "src/features/session/public-client.ts",
+      "reason": "현재 인증과 확정된 시험 변경에 따라 개인 표시를 폐기하거나 다시 조회",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/client/controllers/use-notebook-detail.ts",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "뜻과 오답 구간을 포함한 상세 응답을 공개 계약으로 검증",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "to": "src/features/students/public-client.ts",
+      "reason": "학생과 교사의 뜻별 이력 더보기를 같은 소유 기능의 표시·조회 경계로 재사용",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/assignments/server/planning/mixed-mistake-assignment.ts",
+      "to": "src/features/quiz-player/public-server.ts",
+      "reason": "혼합 배정의 뜻별 출제와 원문항 고정을 기존 공개 계획 경계로 재사용",
+      "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
+      "to": "src/features/quiz-player/public-server.ts",
+      "reason": "혼합 배정의 뜻별 출제와 원문항 고정을 기존 공개 계획 경계로 재사용",
+      "removeIn": "공개 경계로 유지"
     }
   ],
   "currentLibToFeatureImports": [
@@ -3659,6 +3828,18 @@
       "to": "src/features/quiz-player/public-server-queries.ts",
       "reason": "APP-20261001-07: 확인된 학생·관리자 문맥으로 고정 문항 본문을 복원",
       "removeIn": "조회 전용 공개 경계로 유지"
+    },
+    {
+      "from": "src/lib/services/direct-review-assignment-service.ts",
+      "to": "src/features/assignments/public-server.ts",
+      "reason": "구형 재전송 경로를 보존하며 신규 뜻별 배정을 소유 기능으로 위임",
+      "removeIn": "기존 직접 배정 서비스의 기능 서버 이전"
+    },
+    {
+      "from": "src/lib/services/wrong-word-worksheet-service.ts",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "문제지 선택을 소유 기능의 뜻·구간·버전 계약으로 검증",
+      "removeIn": "문제지 서비스의 기능 서버 이전"
     }
   ],
   "currentFeatureToLibBridges": [
@@ -3697,6 +3878,12 @@
       "to": "src/lib/services/quiz/attempt-query.ts",
       "reason": "APP-20261001-07: 준비·진행의 동일 문항 표시 복원을 재사용",
       "removeIn": "기존 시험 조회의 기능 server 이동 때 재검토"
+    },
+    {
+      "from": "src/features/quiz-player/server/mistake-practice-source.ts",
+      "to": "src/lib/services/quiz/attempt-query.ts",
+      "reason": "같은 기능의 기존 문항 복원으로 원 발음·본문 검증을 보존",
+      "removeIn": "기존 시험 조회의 기능 서버 이전"
     }
   ],
   "currentFeatureViaLibToFeatureImports": [
@@ -3794,6 +3981,26 @@
       ],
       "reason": "APP-20261001-07: 확인된 학생·관리자 문맥으로 고정 문항 본문을 복원",
       "removeIn": "조회 전용 공개 경계로 유지"
+    },
+    {
+      "from": "src/features/quiz-player/server/mistake-practice-source.ts",
+      "to": "src/features/wordbook-compositions/public-contracts.ts",
+      "reason": "뜻별 원문 문항의 공용 자료·승인 발음을 기존 복원기로 검증",
+      "removeIn": "기존 시험 조회의 기능 서버 이전",
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/question-snapshot.ts"
+      ]
+    },
+    {
+      "from": "src/features/quiz-player/server/mistake-practice-source.ts",
+      "to": "src/features/wordbook-compositions/public-server.ts",
+      "reason": "뜻별 원문 문항의 공용 자료·승인 발음을 기존 복원기로 검증",
+      "removeIn": "기존 시험 조회의 기능 서버 이전",
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/pronunciation-registry.ts"
+      ]
     }
   ],
   "crossLayerFlows": [
@@ -4007,7 +4214,7 @@
     },
     {
       "id": "assignment-range-create",
-      "name": "일반 단일·일괄 범위 배정",
+      "name": "일반 단일·일괄 및 범위+오답 배정",
       "status": "active",
       "owner": "assignments",
       "participants": [
@@ -4043,7 +4250,8 @@
           "src/app/api/admin/bulk-assignments/preview/route.ts",
           "src/app/api/admin/bulk-assignments/route.ts",
           "src/app/api/admin/assignments/route.ts",
-          "src/app/api/admin/mixed-assignments/route.ts"
+          "src/app/api/admin/mixed-assignments/route.ts",
+          "src/app/api/admin/mixed-assignments/preview/route.ts"
         ],
         "serverComponent": [],
         "ui": [
@@ -4074,7 +4282,8 @@
           "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
           "src/features/assignments/ui/exam-condition-fields.tsx",
           "src/features/assignments/ui/vocab-question-fields.tsx",
-          "src/styles/reset.css"
+          "src/styles/reset.css",
+          "src/features/assignments/ui/mixed-mistake-assignment-sections.tsx"
         ],
         "clientState": [
           "src/features/assignments/controller/use-vocab-assignment-screen.ts",
@@ -4082,7 +4291,8 @@
           "src/features/assignments/controller/use-bulk-assignment-controller.ts",
           "src/features/assignments/controller/use-debounced-assignment-preview.ts",
           "src/features/assignments/controller/use-assignment-controller-runtime.ts",
-          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts"
+          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts",
+          "src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts"
         ],
         "application": [
           "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
@@ -4090,7 +4300,8 @@
           "src/features/assignments/application/execute-assignment-request.ts",
           "src/features/assignments/application/preview-flow.ts",
           "src/features/assignments/application/submission-flow.ts",
-          "src/features/assignments/application/request-lifecycle.ts"
+          "src/features/assignments/application/request-lifecycle.ts",
+          "src/features/assignments/application/mixed-mistake-flow-adapter.ts"
         ],
         "domain": [
           "src/features/assignments/domain/vocab-assignment-contract.ts",
@@ -4100,7 +4311,10 @@
           "src/features/assignments/domain/unit-selection-label.ts",
           "src/lib/assignment/question-planner.ts",
           "src/features/assignments/domain/assignment-question-mode-policy.ts",
-          "src/features/assignments/domain/validation.ts"
+          "src/features/assignments/domain/validation.ts",
+          "src/features/assignments/domain/mixed-mistake-primary-plan.ts",
+          "src/features/assignments/domain/mistake-assignment-banks.ts",
+          "src/features/assignments/domain/single-draft.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
@@ -4114,7 +4328,8 @@
           "src/features/assignments/contracts/assignment-grade-review.ts",
           "src/features/assignments/contracts/bulk-assignment-request.ts",
           "src/features/assignments/contracts/bulk-assignment-response.ts",
-          "src/features/assignments/contracts/vocab-time-template-contract.ts"
+          "src/features/assignments/contracts/vocab-time-template-contract.ts",
+          "src/features/assignments/contracts/mixed-mistake-assignment.ts"
         ],
         "transport": [
           "src/features/assignments/transport/assignment-transport.ts"
@@ -4137,7 +4352,13 @@
           "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
           "src/features/assignments/server/use-cases/bulk-assignment-series-preparation.ts",
           "src/features/assignments/server/queries/bulk-assignment-planning-query.ts",
-          "src/features/assignments/server/use-cases/canonical-assignment-preview.ts"
+          "src/features/assignments/server/use-cases/canonical-assignment-preview.ts",
+          "src/features/assignments/server/planning/mixed-mistake-assignment.ts",
+          "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
+          "src/features/assignments/public-server.ts",
+          "src/features/assignments/server/persistence/notebook-assignment.ts",
+          "src/features/quiz-player/public-server.ts",
+          "src/features/quiz-player/server/mistake-practice-source.ts"
         ],
         "database": [
           "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
@@ -4159,12 +4380,16 @@
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
           "supabase/migrations/20260914085457_allow_school_handout_meaning_only.sql",
           "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+          "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
           "src/app/api/admin/bulk-assignments/route.ts",
-          "src/app/api/admin/mixed-assignments/route.ts"
+          "src/app/api/admin/mixed-assignments/route.ts",
+          "src/app/api/admin/mixed-assignments/preview/route.ts"
         ],
         "tests": [
           "src/features/assignments/application/submission-recovery.test.ts",
@@ -4206,7 +4431,13 @@
           "src/lib/database/example-assignment-sequence.integration.test.ts",
           "src/lib/database/school-handout-reviewed.integration.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
-          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts"
+          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
+          "src/app/api/admin/mixed-assignments/preview/route.test.ts",
+          "src/features/assignments/controller/use-mixed-mistake-assignment-controller.test.tsx",
+          "src/features/assignments/server/planning/mixed-mistake-assignment.test.ts",
+          "src/features/assignments/server/use-cases/mixed-mistake-assignment.test.ts",
+          "src/features/assignments/domain/mixed-mistake-primary-plan.test.ts",
+          "src/lib/database/vocabulary-mixed-primary.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4414,6 +4645,61 @@
           "from": "src/features/assignments/ui/vocab-question-fields.tsx",
           "to": "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
           "reason": "수량 조립부에서 좁은 입력/표시 변환으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/mixed-mistake-assignment-sections.tsx",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts",
+          "to": "src/features/assignments/application/mixed-mistake-flow-adapter.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/application/mixed-mistake-flow-adapter.ts",
+          "to": "src/features/assignments/api/request-adapters.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/application/mixed-mistake-flow-adapter.ts",
+          "to": "src/features/assignments/contracts/mixed-mistake-assignment.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/public-server.ts",
+          "to": "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
+          "to": "src/features/assignments/server/planning/mixed-mistake-assignment.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
+          "to": "src/features/assignments/server/persistence/notebook-assignment.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/server/planning/mixed-mistake-assignment.ts",
+          "to": "src/features/assignments/domain/mixed-mistake-primary-plan.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
+        },
+        {
+          "from": "src/features/assignments/server/planning/mixed-mistake-assignment.ts",
+          "to": "src/features/assignments/domain/mistake-assignment-banks.ts",
+          "reason": "범위+오답의 실제 상태·검증·저장 소유 경계를 연결한다."
         }
       ],
       "notApplicable": {
@@ -4448,7 +4734,9 @@
       ],
       "flowImportExceptions": {
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/direct-review-assignment-sections.tsx": "같은 모달의 오답 시험 탭은 assignment-direct-review-create가 소유한다.",
-        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "요일별 범위 배정에서는 오답 시험 전용 Preview·저장 controller를 실행하지 않는다."
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "요일별 범위 배정에서는 오답 시험 전용 Preview·저장 controller를 실행하지 않는다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts": "같은 모달의 범위+오답 탭은 assignment-range-create가 소유하며 이 흐름에서는 실행하지 않는다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/mixed-mistake-assignment-sections.tsx": "같은 모달의 범위+오답 탭은 assignment-range-create가 소유하며 이 흐름에서는 실행하지 않는다."
       },
       "serverImportExceptions": {},
       "knownGap": "최근 규칙 조회는 학생·단어장별 최근 3개 후보로 줄였지만 전체 조합 수에 비례한다. R3 목적형 읽기 모델에서 선택 학생·단어장 지연 조회로 분리한다.",
@@ -4751,7 +5039,9 @@
       ],
       "flowImportExceptions": {
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/vocab-range-assignment-sections.tsx": "같은 모달의 일반 범위 시험 탭은 assignment-range-create가 소유한다.",
-        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-vocab-assignment-screen.ts": "오답 시험 탭에서는 일반 범위 시험 전용 화면 controller를 실행하지 않는다."
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-vocab-assignment-screen.ts": "오답 시험 탭에서는 일반 범위 시험 전용 화면 controller를 실행하지 않는다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts": "같은 모달의 범위+오답 탭은 assignment-range-create가 소유하며 이 흐름에서는 실행하지 않는다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/mixed-mistake-assignment-sections.tsx": "같은 모달의 범위+오답 탭은 assignment-range-create가 소유하며 이 흐름에서는 실행하지 않는다."
       },
       "entryImportExceptions": {
         "src/app/api/admin/review-assignments/route.ts": "종료된 옛 오답 배정 주소는 인증·동일 출처 확인 뒤 410 안내만 반환하는 폐쇄 진입점이라 현행 배정 실행 경로를 호출하지 않는다."
@@ -4801,7 +5091,9 @@
           "src/features/assignments/domain/direct-review-draft.ts",
           "src/lib/assignment/question-planner.ts",
           "src/features/assignments/domain/assignment-question-mode-policy.ts",
-          "src/lib/assignment/reviewed-question-planner.ts"
+          "src/lib/assignment/reviewed-question-planner.ts",
+          "src/features/assignments/domain/mistake-assignment-banks.ts",
+          "src/features/quiz-player/domain/mistake-practice-plan.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
@@ -4827,7 +5119,12 @@
           "src/lib/services/direct-review-assignment-service.ts",
           "src/lib/services/dataset-catalog-service.ts",
           "src/lib/services/eligible-vocabulary-service.ts",
-          "src/lib/services/reviewed-direct-review-selection.ts"
+          "src/lib/services/reviewed-direct-review-selection.ts",
+          "src/features/assignments/public-server.ts",
+          "src/features/assignments/server/use-cases/direct-mistake-assignment.ts",
+          "src/features/quiz-player/public-server.ts",
+          "src/features/quiz-player/server/mistake-practice-source.ts",
+          "src/lib/services/review-assignment-service.ts"
         ],
         "database": [
           "supabase/migrations/20260822183100_add_direct_review_assignments.sql",
@@ -4840,7 +5137,10 @@
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
           "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
           "supabase/migrations/20260921030000_confirm_partial_wrong_review.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+          "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
@@ -4877,7 +5177,10 @@
           "src/lib/database/reviewed-exam-bank.integration.test.ts",
           "src/lib/services/direct-review-preview-selection.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
-          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts"
+          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
+          "src/features/assignments/server/use-cases/direct-mistake-assignment.test.ts",
+          "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5815,7 +6118,8 @@
         "assignments",
         "session",
         "school-schedules",
-        "wordbook-compositions"
+        "wordbook-compositions",
+        "quiz-player"
       ],
       "dataClass": "private",
       "cachePolicy": "개인 자료 공유 캐시 금지. 개인 브라우저 메모리는 기본ON이며 lib/env.ts가 판정한다. 최초 서버 자료 인계와 현재 인증/포인트 확인을 유지하고15초 이내 목록 재사용도 인증 요청0을 뜻하지 않는다. 동일 인증 진입의 활성 화면은60초 뒤에도 마지막 성공을 보존하며 비활성 항목은120초/20조건 제한이다. 보호 layout children 이동이 인증 진입표/취소 경계이고 @detail 왕복은 배경 목록을 보존한다. 복귀/계정/저장 변경의 인증·폐기는 유지한다.",
@@ -5837,7 +6141,10 @@
           "src/app/api/admin/students/[id]/route.ts",
           "src/app/api/admin/assignment-workspace/datasets/route.ts",
           "src/app/api/admin/schools/search/route.ts",
-          "src/app/api/admin/students/[id]/wrong-words/route.ts"
+          "src/app/api/admin/students/[id]/wrong-words/route.ts",
+          "src/app/api/admin/students/[id]/wrong-words/episodes/route.ts",
+          "src/app/api/admin/students/[id]/worksheet-requests/route.ts",
+          "src/app/api/admin/worksheet-requests/[id]/export/route.ts"
         ],
         "serverComponent": [
           "src/features/students/server/components/student-create-content.tsx",
@@ -5878,7 +6185,9 @@
           "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx",
           "src/features/students/ui/cached-student-directory.tsx",
           "src/features/school-schedules/public-ui.ts",
-          "src/styles/reset.css"
+          "src/styles/reset.css",
+          "src/features/students/ui/panels/mistake-episode-history.tsx",
+          "src/features/students/ui/panels/mistake-list.tsx"
         ],
         "clientState": [
           "src/features/students/controller/student-directory-events.ts",
@@ -5899,11 +6208,15 @@
           "src/features/students/controller/student-directory-cache-provider.tsx",
           "src/features/students/controller/use-cached-student-directory.ts",
           "src/features/session/controller/admin-private-cache-events.ts",
-          "src/features/session/controller/admin-session-commands.ts"
+          "src/features/session/controller/admin-session-commands.ts",
+          "src/features/students/controller/use-mistake-episode-history.ts",
+          "src/features/students/controller/use-student-mistake-history.ts",
+          "src/features/students/controller/use-student-mistake-selection.ts"
         ],
         "application": [],
         "domain": [
-          "src/features/students/domain/wrong-word-selection.ts"
+          "src/features/students/domain/wrong-word-selection.ts",
+          "src/features/students/domain/mistake-selection.ts"
         ],
         "presentation": [],
         "contract": [
@@ -5916,7 +6229,10 @@
           "src/features/assignments/contracts/assignment-workspace-read-error.ts",
           "src/features/students/contracts/student-directory-cache-contract.ts",
           "src/features/students/contracts/wrong-word-page.ts",
-          "src/features/students/contracts/wrong-word-filters.ts"
+          "src/features/students/contracts/wrong-word-filters.ts",
+          "src/features/students/contracts/mistake-episode.ts",
+          "src/features/students/contracts/mistake-episode-history.ts",
+          "src/features/students/contracts/wrong-word-worksheet.ts"
         ],
         "transport": [
           "src/features/students/actions/update-student-profile.ts",
@@ -5930,7 +6246,8 @@
           "src/features/assignments/transport/assignment-workspace-reads.ts",
           "src/features/students/transport/student-directory-cache-read.ts",
           "src/features/students/public-client.ts",
-          "src/features/session/public-client.ts"
+          "src/features/session/public-client.ts",
+          "src/features/students/transport/mistake-episode-history.ts"
         ],
         "server": [
           "src/features/history/public-server.ts",
@@ -5957,7 +6274,12 @@
           "src/features/school-schedules/public-server.ts",
           "src/app/api/admin/students/[id]/wrong-words/route.ts",
           "src/features/students/server/queries/wrong-word-page-query.ts",
-          "src/features/students/server/wrong-word-cursor.ts"
+          "src/features/students/server/wrong-word-cursor.ts",
+          "src/features/students/server/queries/mistake-episode-query.ts",
+          "src/features/students/server/queries/mistake-episode-history-query.ts",
+          "src/features/students/server/commands/queue-mistakes.ts",
+          "src/lib/services/wrong-word-worksheet-service.ts",
+          "src/lib/services/student-reading-context-service.ts"
         ],
         "database": [
           "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
@@ -5966,7 +6288,10 @@
           "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
           "supabase/migrations/20260921020000_page_student_wrong_words.sql",
           "supabase/migrations/20260929140225_share_wrong_word_notebook_reads.sql",
-          "supabase/migrations/20260930152638_require_passed_vocab_points.sql"
+          "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
+          "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+          "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/students/page.tsx",
@@ -6025,7 +6350,18 @@
           "src/lib/database/wrong-word-page.integration.test.ts",
           "src/features/students/contracts/wrong-word-filters.test.ts",
           "src/app/api/admin/students/[id]/wrong-words/route.test.ts",
-          "src/lib/database/wrong-word-notebook.integration.test.ts"
+          "src/lib/database/wrong-word-notebook.integration.test.ts",
+          "src/features/students/server/queries/mistake-episode-query.test.ts",
+          "src/features/students/server/queries/mistake-episode-history-query.test.ts",
+          "src/features/students/controller/use-mistake-episode-history.test.tsx",
+          "src/features/students/transport/mistake-episode-history.test.ts",
+          "src/app/api/admin/students/[id]/wrong-words/episodes/route.test.ts",
+          "src/features/students/server/commands/queue-mistakes.test.ts",
+          "src/features/students/domain/mistake-selection.test.ts",
+          "src/features/students/controller/use-student-mistake-history.test.tsx",
+          "src/features/students/controller/use-student-mistake-selection.test.tsx",
+          "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -6277,7 +6613,9 @@
       "flowImportExceptions": {
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/direct-review-assignment-sections.tsx": "독립 오답 시험은 assignment-direct-review-create가 소유하며 이어지는 일반 범위 회차와 섞지 않는다.",
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "배정된 시험 회차 흐름에서는 독립 오답 시험 전용 Preview·저장 controller를 실행하지 않는다.",
-        "src/features/students/ui/panels/student-history-panel.tsx|src/features/students/ui/panels/student-wrong-word-panel.tsx": "같은 내역 탭의 오답 단어 형제 구역은 assignment-series의 큐 상태와 별개다."
+        "src/features/students/ui/panels/student-history-panel.tsx|src/features/students/ui/panels/student-wrong-word-panel.tsx": "같은 내역 탭의 오답 단어 형제 구역은 assignment-series의 큐 상태와 별개다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts": "같은 모달의 범위+오답 탭은 assignment-range-create가 소유하며 이 흐름에서는 실행하지 않는다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/mixed-mistake-assignment-sections.tsx": "같은 모달의 범위+오답 탭은 assignment-range-create가 소유하며 이 흐름에서는 실행하지 않는다."
       },
       "serverImportExceptions": {},
       "touchpoints": {
@@ -6700,7 +7038,8 @@
         "assignment-queue",
         "students",
         "learning-points",
-        "wordbook-compositions"
+        "wordbook-compositions",
+        "session"
       ],
       "dataClass": "mutation",
       "cachePolicy": "진행 응시·문항·답·오답·포인트는 캐시 금지",
@@ -6847,10 +7186,15 @@
           "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
           "supabase/migrations/20261001014318_prepare_quiz_before_start.sql",
           "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+          "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
-          "src/app/student/(protected)/attempt/[id]/page.tsx"
+          "src/app/student/(protected)/attempt/[id]/page.tsx",
+          "src/features/session/public-client.ts",
+          "src/features/session/controller/student-private-cache-events.ts"
         ],
         "tests": [
           "src/features/quiz-player/api/quiz-attempt.test.ts",
@@ -6903,7 +7247,11 @@
           "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
           "src/lib/database/vocabulary-question-content-sharing.integration.test.ts",
           "src/features/quiz-player/server/attempt-preparation.test.ts",
-          "src/features/quiz-player/server/queries/question-content-query.test.ts"
+          "src/features/quiz-player/server/queries/question-content-query.test.ts",
+          "src/features/session/controller/student-private-cache-events.test.ts",
+          "src/features/quiz-player/api/quiz-transport.test.ts",
+          "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -6983,7 +7331,8 @@
       ],
       "flowImportExceptions": {
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-vocab-assignment-screen.ts": "일반 범위 시험 생성 controller는 assignment-range-create가 소유한다.",
-        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "독립 오답 시험 생성 controller는 assignment-direct-review-create가 소유한다."
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "독립 오답 시험 생성 controller는 assignment-direct-review-create가 소유한다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-mixed-mistake-assignment-controller.ts": "같은 모달의 범위+오답 탭은 assignment-range-create가 소유하며 이 흐름에서는 실행하지 않는다."
       },
       "touchpoints": {
         "route": [
@@ -7446,7 +7795,8 @@
         "assignments",
         "quiz-player",
         "student-dashboard",
-        "results"
+        "results",
+        "students"
       ],
       "dataClass": "mutation",
       "cachePolicy": "관리자 자료 private no-store, 저장 거래 안에서 원출처와 버전 재검증",
@@ -7542,7 +7892,8 @@
           "supabase/migrations/20260921040000_query_vocabulary_library_on_demand.sql",
           "supabase/migrations/20260921050000_save_vocabulary_filter_templates.sql",
           "supabase/migrations/20260921060000_add_reviewed_csat_wordbooks.sql",
-          "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql"
+          "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -7590,18 +7941,19 @@
     },
     {
       "id": "student-wrong-word-read",
-      "name": "학생 본인 누적 오답장 읽기",
+      "name": "학생 본인 현재 오답과 누적 이력 조회",
       "status": "active",
       "owner": "students",
       "participants": [
         "students",
         "student-dashboard",
         "quiz-player",
-        "wordbook-compositions"
+        "wordbook-compositions",
+        "session"
       ],
       "dataClass": "private",
       "cachePolicy": "본인 세션의 최소 학습 자료만 private,no-store. 공유 캐시 없음. 커서는 학생과 모든 조건에 고정.",
-      "streamingPolicy": "학생 세션 확인 뒤 최초 RSC, 조건 변경/10개 더보기만 no-store 조회. 상세 가로채기 왕복은 목록 유지.",
+      "streamingPolicy": "학생 세션 확인 뒤 최초 RSC를 표시하고 재진입·탭 복귀·정규 시험 저장 확정 후 본인 목록과 독립 상세를 다시 확인. 뜻별 이력은 최초 상한을 고정하며 공용 캐시 없음.",
       "closedLocalLayers": [],
       "touchpoints": {
         "route": [
@@ -7611,7 +7963,9 @@
           "src/app/student/(protected)/wordbook/[id]/page.tsx",
           "src/app/student/(protected)/wordbook/@detail/(.)[id]/page.tsx",
           "src/app/student/(protected)/wordbook/@detail/page.tsx",
-          "src/app/student/(protected)/wordbook/@detail/[...catchAll]/page.tsx"
+          "src/app/student/(protected)/wordbook/@detail/[...catchAll]/page.tsx",
+          "src/app/api/student/notebook/[id]/route.ts",
+          "src/app/api/student/notebook/episodes/route.ts"
         ],
         "serverComponent": [
           "src/features/student-dashboard/server/components/notebook-content.tsx"
@@ -7638,10 +7992,15 @@
           "src/app/student/(protected)/wordbook/@detail/(.)[id]/loading.tsx",
           "src/app/student/(protected)/wordbook/@detail/(.)[id]/error.tsx",
           "src/app/student/(protected)/wordbook/@detail/(.)[id]/not-found.tsx",
-          "src/app/student/(protected)/wordbook/[id]/not-found.tsx"
+          "src/app/student/(protected)/wordbook/[id]/not-found.tsx",
+          "src/features/students/ui/panels/mistake-episode-history.tsx"
         ],
         "clientState": [
-          "src/features/student-dashboard/client/controllers/use-notebook.ts"
+          "src/features/student-dashboard/client/controllers/use-notebook.ts",
+          "src/features/students/controller/use-mistake-episode-history.ts",
+          "src/features/student-dashboard/client/controllers/use-notebook-detail.ts",
+          "src/features/session/controller/use-private-list-entry.ts",
+          "src/features/session/controller/student-private-cache-events.ts"
         ],
         "application": [],
         "domain": [
@@ -7655,10 +8014,13 @@
           "src/features/students/contracts/wrong-word-filters.ts",
           "src/features/students/contracts/wrong-word-page.ts",
           "src/features/students/contracts/wrong-word-notebook.ts",
-          "src/features/students/contracts/notebook-study.ts"
+          "src/features/students/contracts/notebook-study.ts",
+          "src/features/students/contracts/mistake-episode.ts",
+          "src/features/students/contracts/mistake-episode-history.ts"
         ],
         "transport": [
-          "src/features/student-dashboard/client/transport/notebook-transport.ts"
+          "src/features/student-dashboard/client/transport/notebook-transport.ts",
+          "src/features/students/transport/mistake-episode-history.ts"
         ],
         "server": [
           "src/features/students/public-server.ts",
@@ -7666,7 +8028,9 @@
           "src/features/students/server/wrong-word-cursor.ts",
           "src/features/students/server/queries/notebook-study-query.ts",
           "src/features/students/server/notebook-cursor.ts",
-          "src/features/student-dashboard/server/components/notebook-content.tsx"
+          "src/features/student-dashboard/server/components/notebook-content.tsx",
+          "src/features/students/server/queries/mistake-episode-query.ts",
+          "src/features/students/server/queries/mistake-episode-history-query.ts"
         ],
         "database": [
           "supabase/migrations/20260929140225_share_wrong_word_notebook_reads.sql",
@@ -7674,10 +8038,17 @@
           "supabase/migrations/20260929165150_expand_student_word_notebook.sql",
           "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql",
           "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+          "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
-          "src/app/api/student/wrong-words/route.ts"
+          "src/app/api/student/wrong-words/route.ts",
+          "src/features/session/public-client.ts",
+          "src/lib/auth/private-cache-identity.ts",
+          "src/app/api/student/notebook/[id]/route.ts",
+          "src/app/api/student/notebook/episodes/route.ts"
         ],
         "tests": [
           "src/app/api/student/wrong-words/route.test.ts",
@@ -7700,7 +8071,17 @@
           "src/lib/quiz/pronunciation-storage.test.ts",
           "src/lib/database/vocabulary-learning-values.integration.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
-          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts"
+          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
+          "src/features/students/server/queries/mistake-episode-query.test.ts",
+          "src/features/students/server/queries/mistake-episode-history-query.test.ts",
+          "src/features/students/controller/use-mistake-episode-history.test.tsx",
+          "src/features/students/transport/mistake-episode-history.test.ts",
+          "src/app/api/student/notebook/[id]/route.test.ts",
+          "src/app/api/student/notebook/episodes/route.test.ts",
+          "src/features/student-dashboard/client/controllers/use-notebook-detail.test.tsx",
+          "src/features/session/controller/student-private-cache-events.test.ts",
+          "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7736,7 +8117,8 @@
         "quiz-player",
         "students",
         "student-dashboard",
-        "wordbook-compositions"
+        "wordbook-compositions",
+        "session"
       ],
       "dataClass": "mutation",
       "cachePolicy": "본인 세션. 연습 자료 private,no-store. 정규 시험/포인트/오답 기록은 읽기만 하고 private 연습 표만 변경.",
@@ -7800,7 +8182,8 @@
           "src/features/quiz-player/domain/practice-plan.ts",
           "src/features/quiz-player/domain/quiz-session.ts",
           "src/features/quiz-player/domain/quiz-player-state.ts",
-          "src/features/quiz-player/domain/quiz-expiration.ts"
+          "src/features/quiz-player/domain/quiz-expiration.ts",
+          "src/features/quiz-player/domain/mistake-practice-plan.ts"
         ],
         "presentation": [],
         "contract": [
@@ -7831,14 +8214,18 @@
           "src/features/students/server/student-directory-cache-identity.ts",
           "src/features/students/server/wrong-word-cursor.ts",
           "src/features/quiz-player/server/attempt-preparation.ts",
-          "src/features/quiz-player/public-server-queries.ts"
+          "src/features/quiz-player/public-server-queries.ts",
+          "src/features/quiz-player/server/mistake-practice-source.ts"
         ],
         "database": [
           "supabase/migrations/20260930034455_add_student_word_practice.sql",
           "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql",
           "supabase/migrations/20261001014318_prepare_quiz_before_start.sql",
           "supabase/migrations/20261001113432_confirm_practice_completion.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+          "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
           "src/features/quiz-player/server/practice-http.ts",
@@ -7875,7 +8262,10 @@
           "src/features/quiz-player/server/attempt-preparation.integration.test.ts",
           "src/features/quiz-player/domain/quiz-expiration.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
-          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts"
+          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
+          "src/features/quiz-player/domain/mistake-practice-plan.test.ts",
+          "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7904,7 +8294,8 @@
         "student-dashboard",
         "history",
         "results",
-        "learning-points"
+        "learning-points",
+        "wordbook-compositions"
       ],
       "dataClass": "mutation",
       "cachePolicy": "관리자 인증 후 private/no-store. 입력 변경은 미리보기 폐기, 저장 유실은 같은 요청 유지. 성공 시 학생/성적 읽기 무효화.",
@@ -7937,7 +8328,9 @@
         ],
         "application": [],
         "domain": [
-          "src/lib/quiz/question-provenance.ts"
+          "src/lib/quiz/question-provenance.ts",
+          "src/features/assignments/domain/mistake-assignment-banks.ts",
+          "src/features/quiz-player/domain/mistake-practice-plan.ts"
         ],
         "presentation": [],
         "contract": [
@@ -7945,7 +8338,8 @@
           "src/features/history/contracts/admin-history-read-model.ts",
           "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
           "src/features/quiz-player/public-contracts.ts",
-          "src/features/students/contracts/wrong-word-page.ts"
+          "src/features/students/contracts/wrong-word-page.ts",
+          "src/features/students/contracts/mistake-episode.ts"
         ],
         "transport": [
           "src/features/assignments/transport/notebook-assignment.ts"
@@ -7966,12 +8360,18 @@
           "src/features/students/server/queries/notebook-study-query.ts",
           "src/features/assignments/server/planning/notebook-assignment.ts",
           "src/lib/services/assignment-replacement-errors.ts",
-          "src/features/quiz-player/public-server-queries.ts"
+          "src/features/quiz-player/public-server-queries.ts",
+          "src/features/assignments/server/planning/notebook-mistake-assignment.ts",
+          "src/features/assignments/server/use-cases/notebook-mistake-assignment.ts",
+          "src/features/quiz-player/server/mistake-practice-source.ts"
         ],
         "database": [
           "supabase/migrations/20260930050611_add_personal_notebook_assignments.sql",
           "supabase/migrations/20260930072000_materialize_notebook_occurrence_keys.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+          "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
         ],
         "cacheStreaming": [
           "src/features/assignments/controller/use-notebook-assignment.ts",
@@ -7988,7 +8388,10 @@
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
-          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts"
+          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
+          "src/features/assignments/domain/mistake-assignment-banks.test.ts",
+          "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

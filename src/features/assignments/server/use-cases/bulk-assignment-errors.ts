@@ -50,7 +50,7 @@ export function bulkDatabaseError(error: { code?: string; message?: string }) {
     return new BulkAssignmentError("database");
   }
   if (
-    error.code === "40001" ||
+    error.code === "40001" || error.code === "PT409" ||
     error.code === "23505" ||
     message.includes("snapshot_changed") ||
     message.includes("selection_changed") ||

@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   createVocabTimeTemplateSchema,
   createReviewAssignmentDraftSchema,
-  createWrongWordWorksheetRequestSchema,
   createStudentSchema,
   updateStudentProfileSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
+import { createWrongWordWorksheetRequestSchema } from "@/features/students/public-contracts";
 import {
   assignmentReplacementPreviewSchema,
   assignmentReplacementSchema,
@@ -66,13 +66,8 @@ describe("오답 해석 시험지 요청 입력 계약", () => {
       (_, index) =>
         `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
     );
-    expect(
-      createWrongWordWorksheetRequestSchema.parse({
-        questionIds,
-        curriculumStage: "undecided",
-      })
-        .questionIds,
-    ).toHaveLength(50);
+    const parsed = createWrongWordWorksheetRequestSchema.parse({ questionIds, curriculumStage: "undecided" });
+    expect("questionIds" in parsed ? parsed.questionIds : null).toHaveLength(50);
   });
 
   it("빈 배열·51개·중복·추가 필드를 거부한다", () => {

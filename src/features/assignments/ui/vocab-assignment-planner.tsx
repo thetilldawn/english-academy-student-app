@@ -29,6 +29,8 @@ import {
   type VocabAssignmentScreenData,
 } from "../controller/use-vocab-assignment-screen";
 import { useDirectReviewAssignmentController } from "../controller/use-direct-review-assignment-controller";
+import { useMixedMistakeAssignmentController } from "../controller/use-mixed-mistake-assignment-controller";
+import { MixedMistakeAssignmentSections } from "./mixed-mistake-assignment-sections";
 import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
 import { useAssignmentAuthenticationFailure } from "../controller/assignment-authentication-boundary";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
@@ -44,7 +46,11 @@ import { resolveInvalidAssignmentFieldFocusTarget } from "./focus-invalid-assign
 import { VocabRangeAssignmentSections } from "./vocab-range-assignment-sections";
 import styles from "./vocab-assignment-planner.module.css";
 
-export function VocabAssignmentPlanner({
+export function VocabAssignmentPlanner(props: Parameters<typeof VocabAssignmentPlannerSession>[0]) {
+  return <VocabAssignmentPlannerSession key={`${props.selectionMode}:${props.students.map(student => student.id).join(',')}`} {...props} />;
+}
+
+function VocabAssignmentPlannerSession({
   bulkFilterLabels = [],
   data,
   initialDatasetId = "",
@@ -68,7 +74,7 @@ export function VocabAssignmentPlanner({
   students: readonly AssignmentStudentItem[];
 }) {
   const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
-  const [assignmentPurpose, setAssignmentPurpose] = useState<"range" | "review">(
+  const [assignmentPurpose, setAssignmentPurpose] = useState<"range" | "review" | "mixed">(
     "range",
   );
   const [composedDatasets, setComposedDatasets] = useState<AssignmentDatasetItem[]>([]);
@@ -88,16 +94,23 @@ export function VocabAssignmentPlanner({
     previewErrorMessage: "배정 후보를 계산하지 못했습니다.",
     students,
   });
+  const mixedController = useMixedMistakeAssignmentController({
+    audienceMode: selectionMode,
+    student: selectionMode === "single" && students.length === 1 ? students[0]! : null,
+    datasets: controller.readyDatasets, units: unitCatalog.units, unitLoadState: unitCatalog.state,
+    enabled: interactionAllowed && assignmentPurpose === "mixed", initialDatasetId,
+  });
+  const activeRangeDatasetId = assignmentPurpose === "mixed" ? mixedController.datasetId : controller.planner.datasetId;
   useEffect(() => {
-    if (!interactionAllowed || assignmentPurpose !== "range") {
+    if (!interactionAllowed || assignmentPurpose === "review") {
       cancelUnitRequest();
       return;
     }
-    void ensureDatasetUnits(controller.planner.datasetId);
+    void ensureDatasetUnits(activeRangeDatasetId);
   }, [
     assignmentPurpose,
     cancelUnitRequest,
-    controller.planner.datasetId,
+    activeRangeDatasetId,
     ensureDatasetUnits,
     interactionAllowed,
   ]);
@@ -109,7 +122,7 @@ export function VocabAssignmentPlanner({
   });
   const selectedDatasetId = assignmentPurpose === "range"
     ? controller.planner.datasetId
-    : reviewController.draft.datasetId;
+    : assignmentPurpose === "mixed" ? mixedController.datasetId : reviewController.draft.datasetId;
   const studentContext = assignmentStudentContext(controller.selectedStudents);
   const incompleteStudents = controller.selectedStudents.filter(student => !hasRequiredStudentProfile(student));
   const datasetPicker = useAssignmentDatasetPicker({
@@ -117,11 +130,12 @@ export function VocabAssignmentPlanner({
     initialFilters: studentContext.filters,
     options: assignmentPurpose === "range"
       ? controller.readyDatasets.map((dataset) => ({ dataset }))
-      : reviewController.datasetOptions.map(({ dataset, count }) => ({ dataset, reviewCount: count })),
+      : assignmentPurpose === "mixed" ? mixedController.datasetOptions.map(dataset => ({ dataset }))
+        : reviewController.datasetOptions.map(({ dataset, count }) => ({ dataset, reviewCount: count })),
     selectedId: selectedDatasetId,
     onSelect: assignmentPurpose === "range"
       ? controller.actions.changeDataset
-      : reviewController.actions.changeDataset,
+      : assignmentPurpose === "mixed" ? mixedController.onDatasetChange : reviewController.actions.changeDataset,
   });
   function receiveCreatedBook(book: CreatedLibraryBook) {
     setComposedDatasets(current => [...current.filter(d => d.id !== book.dataset.id), { ...book.dataset, vocabularyRole: "composition" }]);
@@ -137,9 +151,11 @@ export function VocabAssignmentPlanner({
   const bulk = controller.bulk;
   const busy = assignmentPurpose === "range"
     ? bulk.state.submission.status === "submitting"
-    : reviewController.submitting;
-  const uncertain = bulk.state.submission.status === "uncertain";
-  const editingLocked = busy || uncertain;
+    : assignmentPurpose === "mixed" ? mixedController.busy : reviewController.submitting;
+  const uncertain = assignmentPurpose === "range"
+    ? bulk.state.submission.status === "uncertain" : assignmentPurpose === "mixed" ? mixedController.uncertain : reviewController.uncertain;
+  const editingLocked = busy || uncertain || (assignmentPurpose === "range"
+    ? bulk.state.submission.status === "succeeded" : assignmentPurpose === "mixed" ? mixedController.succeeded : reviewController.succeeded);
   const recoveryPendingRef = useRef(false);
   const successHandledRef = useRef(false);
   const mountedRef = useRef(false);
@@ -150,7 +166,7 @@ export function VocabAssignmentPlanner({
   const exitGuard = useRouteExitGuard({
     // Keep the guard armed until the success continuation removes its history
     // entry; a succeeded render can commit before the awaited handler resumes.
-    busy: assignmentPurpose === "range" && (editingLocked || bulk.state.submission.status === "succeeded"),
+    busy: editingLocked,
     dirty: false,
     idPrefix: "assignment-save",
     confirmMessage: "먼저 저장 결과를 확인해 주세요.",
@@ -166,6 +182,8 @@ export function VocabAssignmentPlanner({
     (!reviewController.exclusionConfirmed || reviewController.capacity.value.wrongEligible === 0);
   const rangeCalculationPending = assignmentPurpose === "range" &&
     bulk.previewLoading;
+  const mixedCalculationBlocked = assignmentPurpose === "mixed" && (mixedController.calculationPending ||
+    mixedController.preview.status === "error" || Boolean(mixedController.value && !mixedController.canSubmit));
   const visibleErrors = submitAttempted ? controller.fieldErrors : {};
   const visibleReviewErrors = submitAttempted
     ? reviewController.fieldErrors
@@ -190,6 +208,8 @@ export function VocabAssignmentPlanner({
   });
   const initialRangeDraftSignatureRef = useRef(rangeDraftSignature);
   const initialReviewDraftSignatureRef = useRef(reviewDraftSignature);
+  const mixedDraftSignature = JSON.stringify(mixedController.draft);
+  const initialMixedDraftSignatureRef = useRef(mixedDraftSignature);
   useEffect(() => {
     if (
       reviewController.summary.status === "ready" &&
@@ -218,7 +238,8 @@ export function VocabAssignmentPlanner({
     const draftChanged =
       composerDirty ||
       rangeDraftSignature !== initialRangeDraftSignatureRef.current ||
-      reviewDraftSignature !== initialReviewDraftSignatureRef.current;
+      reviewDraftSignature !== initialReviewDraftSignatureRef.current ||
+      mixedDraftSignature !== initialMixedDraftSignatureRef.current;
     if (draftChanged) {
       discardConfirmedRef.current = false;
       setDiscardOpen(true);
@@ -231,7 +252,7 @@ export function VocabAssignmentPlanner({
     const key = requestedKey === undefined
       ? assignmentPurpose === "range"
         ? controller.firstFieldKey
-        : reviewController.firstFieldKey
+        : assignmentPurpose === "mixed" ? mixedController.firstFieldKey : reviewController.firstFieldKey
       : requestedKey;
     if (!key) return;
     window.requestAnimationFrame(() => {
@@ -251,7 +272,7 @@ export function VocabAssignmentPlanner({
     setSubmitAttempted(true);
     const canSubmit = assignmentPurpose === "range"
       ? controller.canSubmit
-      : reviewController.canSubmit;
+      : assignmentPurpose === "mixed" ? mixedController.canSubmit : reviewController.canSubmit;
     if (!canSubmit) {
       focusFirstInvalidField();
       return;
@@ -270,7 +291,7 @@ export function VocabAssignmentPlanner({
     setGradeReview(null);
     const outcome = assignmentPurpose === "range"
       ? await controller.actions.submitPlan(gradeReviewToken)
-      : await reviewController.actions.submit();
+      : assignmentPurpose === "mixed" ? await mixedController.submit() : await reviewController.actions.submit();
     if (!mountedRef.current) return;
     if (!outcome.ok) {
       toast.error(outcome.message);
@@ -297,7 +318,8 @@ export function VocabAssignmentPlanner({
         };
         onSuccess(result.assignmentCount, result.studentCount, result.queuedCount);
       } else {
-        onSuccess(1, 1, 0);
+        const result = outcome.result;
+        onSuccess("kind" in result && result.kind === "mistake_batch" ? result.assignments.length : 1, 1, 0);
       }
       onClose();
     });
@@ -307,13 +329,17 @@ export function VocabAssignmentPlanner({
     if (!interactionAllowed || busy || !uncertain || recoveryPendingRef.current || successHandledRef.current) return;
     recoveryPendingRef.current = true;
     try {
-      const outcome = await controller.actions.recoverPlan();
+      const outcome = assignmentPurpose === "range"
+        ? await controller.actions.recoverPlan()
+        : assignmentPurpose === "mixed" ? await mixedController.recover() : await reviewController.actions.recoverSubmission();
       if (!mountedRef.current) return;
       if (!outcome.ok) { toast.error(outcome.message); return; }
       successHandledRef.current = true;
       exitGuard.forceExit(() => {
         if (!mountedRef.current) return false;
-        onSuccess(outcome.result.assignmentCount, outcome.result.studentCount, outcome.result.queuedCount);
+        const result = outcome.result;
+        if ("assignmentCount" in result) onSuccess(result.assignmentCount, result.studentCount, result.queuedCount);
+        else onSuccess("kind" in result && result.kind === "mistake_batch" ? result.assignments.length : 1, 1, 0);
         onClose();
       });
     } finally {
@@ -330,7 +356,7 @@ export function VocabAssignmentPlanner({
 
   const canSubmit = assignmentPurpose === "range"
     ? controller.canSubmit
-    : reviewController.canSubmit;
+    : assignmentPurpose === "mixed" ? mixedController.canSubmit : reviewController.canSubmit;
   const reviewAssignmentAvailable =
     selectionMode === "single" && students.length === 1;
   const singleStudent = selectionMode === "single" ? students[0] ?? null : null;
@@ -353,6 +379,10 @@ export function VocabAssignmentPlanner({
       id: "vocab-assignment-review-tab",
       label: "오답 시험",
       value: "review" as const,
+    },
+    {
+      controls: "vocab-assignment-mixed-panel", id: "vocab-assignment-mixed-tab", label: "범위+오답", value: "mixed" as const,
+      disabled: !reviewAssignmentAvailable, describedBy: !reviewAssignmentAvailable ? "review-assignment-unavailable" : undefined,
     },
   ];
 
@@ -390,11 +420,11 @@ export function VocabAssignmentPlanner({
       </DialogHeader>
       <DialogBody>
         {composerStarted ? <div hidden={!composerOpen}>
-          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} enabled={interactionAllowed} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
+          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} enabled={interactionAllowed && !editingLocked} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
         </div> : null}
         {datasetPicker.open && !composerOpen ? (
           <>
-          {assignmentPurpose === "range" ? <Button onClick={() => { setComposerStarted(true); setComposerOpen(true); }}>템플릿 찾기·범위로 새로 만들기</Button> : null}
+          {assignmentPurpose === "range" ? <Button disabled={editingLocked || !interactionAllowed} onClick={() => { if (editingLocked || !interactionAllowed) return; setComposerStarted(true); setComposerOpen(true); }}>템플릿 찾기·범위로 새로 만들기</Button> : null}
           <AssignmentDatasetPicker
             filters={datasetPicker.filters}
             buttons={datasetPicker.buttons}
@@ -449,7 +479,7 @@ export function VocabAssignmentPlanner({
               className={styles.assignmentKindHint}
               id="review-assignment-unavailable"
             >
-              오답 시험은 단일 배정에서만 사용할 수 있습니다.
+              오답 시험과 범위+오답은 단일 배정에서만 사용할 수 있습니다.
             </p>
           ) : null}
           <AssignmentEditorPanel
@@ -462,16 +492,20 @@ export function VocabAssignmentPlanner({
                 controller={reviewController}
                 datasets={controller.readyDatasets}
                 fieldErrors={visibleReviewErrors}
-                onOpenDatasetPicker={datasetPicker.actions.open}
+                onOpenDatasetPicker={() => { if (interactionAllowed && !editingLocked) datasetPicker.actions.open(); }}
                 datasetTriggerRef={datasetPicker.triggerRef}
                 student={students[0]!}
               />
+            ) : assignmentPurpose === "mixed" ? (
+              <MixedMistakeAssignmentSections controller={mixedController} units={unitCatalog.units} showErrors={submitAttempted}
+                datasetTriggerRef={datasetPicker.triggerRef} onOpenDatasetPicker={() => { if (interactionAllowed && !editingLocked) datasetPicker.actions.open(); }}
+                unitLoadState={unitCatalog.state} onRetryUnits={() => void unitCatalog.actions.retry()} />
             ) : (
               <VocabRangeAssignmentSections
                 busy={editingLocked}
                 controller={controller}
                 fieldErrors={visibleErrors}
-                onOpenDatasetPicker={datasetPicker.actions.open}
+                onOpenDatasetPicker={() => { if (interactionAllowed && !editingLocked) datasetPicker.actions.open(); }}
                 datasetTriggerRef={datasetPicker.triggerRef}
                 unitLoadState={unitCatalog.state}
                 onRetryUnits={() =>
@@ -504,6 +538,7 @@ export function VocabAssignmentPlanner({
               !reviewCalculationPending &&
               !reviewCalculationFailed &&
               !reviewSelectionBlocked &&
+              !mixedCalculationBlocked &&
               (!submitAttempted || canSubmit)
             }
             formId="vocab-assignment-plan-form"

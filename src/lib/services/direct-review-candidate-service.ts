@@ -47,11 +47,12 @@ export async function listStudentDirectReviewDatasetSummaries(
   studentId: string,
   authenticatedAdmin?: AdminContext,
   client?: ServerSupabaseClient,
+  planVersion?: "meaning-episode-v1",
 ): Promise<DirectReviewDatasetSummary[]> {
   if (!authenticatedAdmin) await requireAdmin();
   const supabase = client ?? await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "list_student_direct_review_dataset_summaries_v1",
+    planVersion ? "list_student_direct_mistake_dataset_summaries_v1" : "list_student_direct_review_dataset_summaries_v1",
     { p_student_id: studentId },
   );
   if (error || !Array.isArray(data)) throw candidateError(error);

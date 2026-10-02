@@ -14,19 +14,21 @@ import { wrongWordNotebookItemSchema, wrongWordNotebookSummarySchema } from "../
 import { decodeNotebookCursor, decodeNotebookWordToken, encodeNotebookCursor } from "../notebook-cursor";
 import { OwnWrongWordReadError } from "./own-wrong-word-query";
 
-const sourceSchema = z.object({ entryId: z.number().int().positive(), currentHeadword: z.string(), snapshotDisplayKo: z.string().nullable(), dictionaryId: z.string().nullable(), releaseId: z.string().nullable(),
+export const notebookStudySourceSchema = z.object({ entryId: z.number().int().positive(), currentHeadword: z.string(), snapshotDisplayKo: z.string().nullable(), dictionaryId: z.string().nullable(), releaseId: z.string().nullable(),
   notebookPronunciation: frozenPronunciationSchema.nullable().optional(),
   displayKo: z.string().nullable(), pronunciationSnapshot: z.unknown(), compositionPronunciation: frozenPronunciationSchema.nullable(),
   definition: z.string().nullable(), example: z.string().nullable(), exampleKo: z.string().nullable(),
 });
-const rowSchema = wrongWordNotebookItemSchema.extend({ studySource: sourceSchema });
+const rowSchema = wrongWordNotebookItemSchema.extend({ studySource: notebookStudySourceSchema });
 const responseSchema = z.object({ items: z.array(rowSchema).max(501), eventUpperId: z.string().regex(/^\d{1,19}$/),
   totalCount: z.number().int().nonnegative().nullable(), notebookSummary: wrongWordNotebookSummarySchema.nullable(),
   datasetOptions: z.array(z.object({ id: z.uuid(), label: z.string() })).nullable(),
 });
 
-async function hydrate(rows: z.infer<typeof rowSchema>[]): Promise<NotebookWord[]> {
-  const matches = (row: z.infer<typeof rowSchema>) => normalizeQuizHeadword(row.headword) === normalizeQuizHeadword(row.studySource.currentHeadword);
+type StudyInput = { headword: string; studySource: z.infer<typeof notebookStudySourceSchema> };
+/** The pronunciation pipeline needs frozen study values, not student counts. */
+export async function hydrateStudyRows<T extends StudyInput>(rows: T[]) {
+  const matches = (row: StudyInput) => normalizeQuizHeadword(row.headword) === normalizeQuizHeadword(row.studySource.currentHeadword);
   const legacy = rows.filter(row => !row.studySource.compositionPronunciation && !row.studySource.notebookPronunciation && matches(row)).map(row => row.studySource);
   const ids = [...new Set(legacy.map(row => row.entryId))];
   const [registry, active, synthetic, approved, entryApproved, entrySource, corrections] = await Promise.all([
@@ -46,11 +48,20 @@ async function hydrate(rows: z.infer<typeof rowSchema>[]): Promise<NotebookWord[
   }));
 }
 
+/** Ownership is established by the authenticated caller. This narrow port is
+ * also used for practice distractors, which are not wrong-word records. */
+export async function hydratePronunciationRows(rows: unknown[]) {
+  const parsed = z.array(z.object({ headword: z.string(), studySource: notebookStudySourceSchema })).max(500).parse(rows);
+  const result: Awaited<ReturnType<typeof hydrateStudyRows<StudyInput>>> = [];
+  for (let index = 0; index < parsed.length; index += 200) result.push(...await hydrateStudyRows(parsed.slice(index, index + 200)));
+  return result;
+}
+
 /** Authenticated server callers must establish ownership before supplying rows. */
 export async function hydrateNotebookRows(rows: unknown[]): Promise<NotebookWord[]> {
   const parsed = z.array(rowSchema).max(500).parse(rows);
   const result: NotebookWord[] = [];
-  for (let index = 0; index < parsed.length; index += 200) result.push(...await hydrate(parsed.slice(index, index + 200)));
+  for (let index = 0; index < parsed.length; index += 200) result.push(...await hydrateStudyRows(parsed.slice(index, index + 200)));
   return result;
 }
 
@@ -73,7 +84,7 @@ export async function getNotebookPage(input: { filters: NotebookFilters; cursor?
   if (!cursor && (raw.totalCount === null || raw.notebookSummary === null || raw.datasetOptions === null)) throw new OwnWrongWordReadError();
   const rows = raw.items.slice(0, 10);
   const last = rows.at(-1);
-  return notebookStudyPageSchema.parse({ items: await hydrate(rows), summary: raw.notebookSummary, totalCount: raw.totalCount, datasetOptions: raw.datasetOptions,
+  return notebookStudyPageSchema.parse({ items: await hydrateStudyRows(rows), summary: raw.notebookSummary, totalCount: raw.totalCount, datasetOptions: raw.datasetOptions,
     nextCursor: raw.items.length > 10 && last ? encodeNotebookCursor({ studentId: student.studentId, filters, eventUpperId: raw.eventUpperId,
       key: last.key, wrongCount: last.wrongCount, lastWrongAt: last.lastWrongAt }) : null,
   });

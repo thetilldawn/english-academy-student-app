@@ -102,7 +102,7 @@ export function mapAssignmentReplacementDatabaseFailure(error: {
     return new AssignmentReplacementError("unavailable");
   }
   if (
-    error.code === "40001" ||
+    error.code === "40001" || error.code === "PT409" ||
     /idempotency_key_reused|snapshot_changed|already_active|vocab_assignment_series_edit_unavailable/.test(
       message,
     )

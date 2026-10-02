@@ -59,8 +59,8 @@ export function loadVocabPronunciationRegistry(ids: readonly number[], strict = 
 export function loadActiveVocabPronunciationReleaseRegistry(ids: readonly number[], strict = false) {
   return readMappedEntryResources(ids, values => readActiveVocabPronunciationReleaseRegistry(values, strict));
 }
-export function loadVocabPronunciationDisplayRegistry(ids: readonly number[]) {
-  return readMappedEntryResources(ids, readVocabPronunciationDisplayRegistry);
+export function loadVocabPronunciationDisplayRegistry(ids: readonly number[], strict = false) {
+  return readMappedEntryResources(ids, values => readVocabPronunciationDisplayRegistry(values, strict));
 }
 export async function loadSyntheticPronunciationRegistry(bindings: readonly { releaseId: string; vocabEntryId: number }[], strict = false) {
   if (!bindings.length) return new Map<string, QuizPronunciation>();
@@ -263,6 +263,7 @@ async function readActiveVocabPronunciationReleaseRegistry(
 
 async function readVocabPronunciationDisplayRegistry(
   vocabEntryIds: readonly number[],
+  strict = false,
 ) {
   const result = new Map<number, string>();
   if (vocabEntryIds.length === 0) return result;
@@ -276,6 +277,7 @@ async function readVocabPronunciationDisplayRegistry(
       .select("id, pronunciation_ko")
       .in("id", chunk);
     if (error) {
+      if (strict) throw new Error("발음 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
       console.warn("[quiz-pronunciation] display lookup failed", {
         code: error.code,
       });

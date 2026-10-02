@@ -15,6 +15,9 @@ export type PrivateListEntryContext<Snapshot, Filters, Consumer extends string> 
 const subscribeHydration = () => () => {};
 const clientSnapshot = () => false;
 const serverSnapshot = () => true;
+export function useInitialServerHydration() {
+  return useSyncExternalStore(subscribeHydration, clientSnapshot, serverSnapshot);
+}
 
 export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, Failure>(
   context: PrivateListEntryContext<Snapshot, Filters, Consumer> | null,
@@ -22,7 +25,7 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
   consumer: Consumer, failureFor: (error: unknown) => Failure, expiredFailure: Failure,
   options: { retainActiveSnapshot?: boolean } = {},
 ) {
-  const hydrating = useSyncExternalStore(subscribeHydration, clientSnapshot, serverSnapshot);
+  const hydrating = useInitialServerHydration();
   // Client navigation/restored RSC is not current authorization.
   const [seed] = useState(() => hydrating && initialResponse && context && initialResponse.userId === context.cache.userId
     ? { ticket: context.ticket, response: initialResponse } : null);

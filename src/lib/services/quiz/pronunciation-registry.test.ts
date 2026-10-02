@@ -5,7 +5,7 @@ vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({
   rpc: (name: string, args: unknown) => name === "list_mock_composition_lineage_v1" ? mocks.lineage(args) : mocks.rpc(name, args),
 }) }));
 import { loadEntryApprovedKoreanPronunciationRegistry, loadApprovedKoreanPronunciationRegistry, loadEntrySourcePronunciationRegistry, loadPronunciationAudioCorrections } from "./pronunciation-registry";
-import { getStudentAttempt } from "./attempt-query";
+import { getStudentAttempt, hydrateQuizQuestions, type QuestionRow } from "./attempt-query";
 import { getAttemptQuestionResults } from "./attempt-result-query";
 
 const url = "https://media.merriam-webster.com/audio/prons/en/us/mp3/t/test0001.mp3";
@@ -307,4 +307,34 @@ describe("exact entry pronunciation corrections", () => {
     expect(inverse?.questions[0].pronunciation.displayKo).toBe("승인");
     expect(inverse?.questions[0].choicePronunciations.every(p => !p.available && !p.audioUrl && !p.displayKo)).toBe(true);
   });
+});
+
+const savedVoice={displayKo:"저장 발음",variantId:variant,audioUrl:url,available:true};
+const emptyVoice={displayKo:null,variantId:null,audioUrl:null,available:false};
+function frozenQuestion():QuestionRow {
+  return {id:"frozen-question",vocab_entry_id:7,order_index:1,direction:"korean_to_english",prompt:"The original English text ____.",
+    choices:["other","sample","another","last"],correct_choice_index:1,initial_choice_index:null,initial_is_correct:null,
+    retry_choice_index:null,retry_is_correct:null,prior_wrong_count:0,
+    assignment_question:{vocab_entry_id:7,choice_vocab_entry_ids:[8,7,9,10],headword_snapshot:"sample",primary_meaning_snapshot:"저장 뜻",
+      provenance_status:"notebook_snapshot_v1",composition_pronunciation_snapshot:null,
+      notebook_pronunciation_snapshot:{target:savedVoice,choices:[savedVoice,savedVoice,savedVoice,savedVoice]},exam_use_snapshot:null}};
+}
+it.each(["book_meaning_choice","canonical_definition_to_headword","canonical_example_to_headword"] as const)("%s: 학생 정답 발음 숨김과 관리자 저장 보존을 분리한다",async mode=>{
+  mocks.rpc.mockResolvedValue({data:[],error:null});const q=frozenQuestion(),before=structuredClone(q);
+  const [student]=await hydrateQuizQuestions([q],mode);
+  expect(student.pronunciation).toEqual(emptyVoice);expect(student.revealedCorrectChoiceIndex).toBeNull();
+  expect(student.choicePronunciations).toEqual([savedVoice,savedVoice,savedVoice,savedVoice]);
+  expect(student).not.toHaveProperty("correct_choice_index");expect(student).not.toHaveProperty("correctChoiceIndex");
+  const [admin]=await hydrateQuizQuestions([q],mode,{preserveStudyPronunciation:true,strictPronunciation:true});
+  expect(admin.pronunciation).toEqual(savedVoice);expect(admin.choicePronunciations).toEqual(student.choicePronunciations);
+  expect(admin.revealedCorrectChoiceIndex).toBeNull();expect(admin.initialChoiceIndex).toBeNull();expect(q).toEqual(before);
+  expect((await hydrateQuizQuestions([q],mode))[0].pronunciation).toEqual(emptyVoice);
+});
+it("저장용 발음 조회 실패는 빈 발음으로 바꾸지 않는다",async()=>{
+  mocks.rpc.mockResolvedValue({data:null,error:{message:"private SQL token",code:"08006"}});
+  const q=frozenQuestion();
+  await expect(hydrateQuizQuestions([q],"canonical_example_to_headword",{preserveStudyPronunciation:true,strictPronunciation:true})).rejects.toThrow("발음 정보를 불러오지 못했습니다");
+  const [student]=await hydrateQuizQuestions([q],"canonical_example_to_headword");
+  expect(student.pronunciation).toEqual(emptyVoice);expect(student.choicePronunciations).toEqual([savedVoice,savedVoice,savedVoice,savedVoice]);
+  expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain("private SQL token");
 });

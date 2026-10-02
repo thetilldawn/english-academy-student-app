@@ -9,7 +9,7 @@ vi.mock("./student-learning-history",()=>({StudentLearningHistory:()=>null}));
 vi.mock("@/features/assignment-queue/public-ui",()=>({StudentAssignmentQueueHistory:()=>null}));
 afterEach(cleanup);
 it("starts folded, enables reads only while expanded on the active tab, and keeps the toggle accessible",()=>{
-  const props={active:true,student:{id:"fake",currentVocabDatasetId:null,readingCurriculumStage:"undecided",readingContextSyncStatus:"not_synced"},wrongSummary:{wrongWordCount:24,repeatedWrongWordCount:1},wrongCache:{entry:null,actions:{cache:vi.fn()}},historyController:{actions:{refreshFirstPage:vi.fn()}}} as unknown as ComponentProps<typeof StudentHistoryPanel>;
+  const props={active:true,student:{id:"fake",currentVocabDatasetId:null,readingCurriculumStage:"undecided",readingContextSyncStatus:"not_synced"},currentMistakeSummary:{basis:"current_meaning_cards_v1",wordCount:2,repeatedWordCount:0},wrongCache:{entry:null,actions:{cache:vi.fn()}},historyController:{actions:{refreshFirstPage:vi.fn()}}} as unknown as ComponentProps<typeof StudentHistoryPanel>;
   const {rerender}=render(<StudentHistoryPanel {...props}/>);
   const toggle=screen.getByRole("button",{name:"오답 단어 펼치기"});
   expect(toggle).toHaveAttribute("aria-expanded","false");

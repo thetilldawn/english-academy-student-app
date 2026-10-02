@@ -1,9 +1,13 @@
 "use client";
 
+import { Tabs } from "@/design-system/primitives/tabs/tabs";
+import { Field, FieldLabel, Select } from "@/design-system/primitives/form/field";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 
-import type { WrongWordPageView } from "../../contracts/wrong-word-page";
+import { WrongWordRequestError } from "../../api/wrong-word-transport";
+import type { AdminMistakePageView } from "../../contracts/mistake-episode";
 import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { formatContentText } from "@/content/format";
@@ -12,12 +16,12 @@ import { Notice } from "@/design-system/patterns/feedback/feedback";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 
 import { useStudentWrongWordActions } from "../../controller/use-student-wrong-word-actions";
-import { useStudentWrongWordHistory } from "../../controller/use-student-wrong-word-history";
-import { useWrongWordPanelSelection } from "../../controller/use-wrong-word-panel-selection";
+import { useStudentMistakeHistory } from "../../controller/use-student-mistake-history";
+import { useStudentMistakeSelection } from "../../controller/use-student-mistake-selection";
 import styles from "./student-wrong-word-panel.module.css";
 import { WrongWordControlSection } from "./wrong-word-control-section";
 import { WrongWordFilterSection } from "./wrong-word-filter-section";
-import { WrongWordList } from "./wrong-word-list";
+import { MistakeList } from "./mistake-list";
 import { WrongWordPurposeSection } from "./wrong-word-purpose-section";
 import { WrongWordSelectionControls } from "./wrong-word-selection-controls";
 
@@ -34,7 +38,7 @@ export function StudentWrongWordPanel({
 }: {
   active: boolean;
   cachedAt: number | null;
-  cachedHistory: WrongWordPageView | null;
+  cachedHistory: AdminMistakePageView | null;
   initialDatasetId?: string;
   initialCurriculumStage?: ReadingCurriculumStage;
   initialReadingContextSyncStatus?:
@@ -45,16 +49,16 @@ export function StudentWrongWordPanel({
   onDataUpdated?: () => void;
   onLoaded: (
     studentId: string,
-    history: WrongWordPageView | null,
+    history: AdminMistakePageView | null,
   ) => void;
   studentId: string;
 }) {
-  const selection = useWrongWordPanelSelection({ history: cachedHistory, initialDatasetId });
-  const page = useStudentWrongWordHistory({ active, cachedAt, cachedHistory,
-    filters: { datasetId: selection.datasetFilter, level: selection.levelFilter, query: selection.query },
+  const selection = useStudentMistakeSelection({ history: cachedHistory, initialDatasetId, studentId });
+  const page = useStudentMistakeHistory({ active, cachedAt, cachedHistory,
+    filters: selection.filters,
     loadErrorMessage: adminStudentsText.learning.wrongWordsPanel.loadError, onLoaded, studentId });
   const { error, isRequesting, loading } = page;
-  const history = page.history ?? cachedHistory;
+  const history = page.history;
   function refreshHistory() { selection.actions.clearSelections(); page.refresh(); }
   const {
     busy,
@@ -91,11 +95,17 @@ export function StudentWrongWordPanel({
 
   const activeDrafts = history?.reviewDrafts ?? [];
 
+  function handlePermissionFailure(error: unknown) {
+    if (!(error instanceof WrongWordRequestError) || ![401,403].includes(error.status)) return false;
+    announceAdminPrivateCacheChange("identity");
+    selection.actions.clearSelections(); page.lock(); return true;
+  }
+
   async function queueSelectedWords() {
     if (page.invalidated || page.locked || isRequesting()) return;
     try {
       const queueIds = await queueWords(
-        selection.selectedQueuedIds,
+        selection.selectedQueuedTargets,
       );
       if (!queueIds) return;
       toast.success(
@@ -107,6 +117,7 @@ export function StudentWrongWordPanel({
       selection.actions.clearQueuedSelection();
       refreshHistory();
     } catch (requestError) {
+      if (handlePermissionFailure(requestError)) return;
       toast.error(
         requestError instanceof Error
           ? requestError.message
@@ -120,7 +131,7 @@ export function StudentWrongWordPanel({
     if (page.invalidated || page.locked || isRequesting()) return;
     try {
       const payload = await requestWorksheet({
-        questionIds: selection.selectedWorksheetIds,
+        targets: selection.selectedWorksheetTargets,
         curriculumStage: readingCurriculumStage,
       });
       if (!payload) return;
@@ -159,11 +170,13 @@ export function StudentWrongWordPanel({
         selection.actions.clearWorksheetSelection();
       }
     } catch (requestError) {
+      if (handlePermissionFailure(requestError)) return;
       toast.error(
         requestError instanceof Error
           ? requestError.message
           : adminStudentsText.learning.wrongWordsPanel.worksheetError,
       );
+      if (requestError instanceof WrongWordRequestError && requestError.status === 409) refreshHistory();
     }
   }
 
@@ -177,49 +190,17 @@ export function StudentWrongWordPanel({
       refreshHistory();
       onDataUpdated?.();
     } catch (requestError) {
+      if (handlePermissionFailure(requestError)) return;
       toast.error(
         requestError instanceof Error
           ? requestError.message
           : adminStudentsText.learning.wrongWordsPanel.cancelDraftError,
       );
+      refreshHistory();
     }
   }
 
   if (page.locked) return <Notice tone="danger" role="alert">관리자 로그인을 다시 확인해 주세요.</Notice>;
-
-  if (loading && !history) {
-    return (
-      <section
-        aria-busy="true"
-        className={`${styles.emptyPanel} ${styles.panel}`}
-      >
-        {adminStudentsText.learning.wrongWordsPanel.loading}
-      </section>
-    );
-  }
-
-  if (error && !history) {
-    return (
-      <section className={styles.panel}>
-        <Notice role="alert" tone="danger">
-          {error}
-        </Notice>
-        <Button
-          onClick={refreshHistory}
-        >
-          {adminStudentsText.learning.wrongWordsPanel.retryLoad}
-        </Button>
-      </section>
-    );
-  }
-
-  if (!history) {
-    return (
-      <section className={`${styles.emptyPanel} ${styles.panel}`}>
-        {adminStudentsText.learning.wrongWordsPanel.openToLoad}
-      </section>
-    );
-  }
 
   return (
     <section className={styles.panel}>
@@ -252,59 +233,17 @@ export function StudentWrongWordPanel({
           {error}
         </Notice>
       ) : null}
-      <div className={styles.summaryGrid}>
-        <div>
-          <span>{adminStudentsText.learning.wrongWordsPanel.summary.event}</span>
-          <strong>
-            {formatContentText(
-              adminStudentsText.learning.wrongWordsPanel.summary.times,
-              { count: history.summary.wrongEventCount },
-            )}
-          </strong>
-        </div>
-        <div>
-          <span>
-            {adminStudentsText.learning.wrongWordsPanel.summary.current}
-          </span>
-          <strong>
-            {formatContentText(
-              adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: history.summary.uniqueWordCount },
-            )}
-          </strong>
-        </div>
-        <div>
-          <span>{adminStudentsText.learning.wrongWordsPanel.summary.once}</span>
-          <strong>
-            {formatContentText(
-              adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: history.summary.onceWrongWordCount },
-            )}
-          </strong>
-        </div>
-        <div>
-          <span>
-            {adminStudentsText.learning.wrongWordsPanel.summary.repeated}
-          </span>
-          <strong>
-            {formatContentText(
-              adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: history.summary.repeatedWrongWordCount },
-            )}
-          </strong>
-        </div>
-        <div>
-          <span>
-            {adminStudentsText.learning.wrongWordsPanel.summary.pending}
-          </span>
-          <strong>
-            {formatContentText(
-              adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: history.summary.pendingReviewCount },
-            )}
-          </strong>
-        </div>
-      </div>
+      <Tabs ariaLabel="관리자 오답 보기" value={selection.filters.view}
+        items={[{ value: "current", label: "현재 오답" }, { value: "history", label: "지난 오답 이력" }]}
+        onChange={value => selection.actions.setView(value as "current" | "history")} />
+      {history && <div className={styles.summaryGrid}>
+        <div><span>{history.view === "current" ? "현재 오답 단어" : "이력이 있는 단어"}</span><strong>{history.summary.wordCount}개</strong></div>
+        <div><span>현재 실제 오답</span><strong>{history.summary.currentWrongCount}회</strong></div>
+        <div><span>누적 실제 오답</span><strong>{history.summary.lifetimeWrongCount}회</strong></div>
+        <div><span>현재 시간초과·미제출</span><strong>{history.summary.currentMissedCount}회</strong></div>
+        <div><span>따로 보관한 예전 기록</span><strong>{history.summary.legacyWrongCount}회</strong></div>
+      </div>}
+      <p className={styles.mistakeNote}>같은 단어라도 시험한 뜻이 다르면 각각 선택합니다. 현재 횟수는 마지막 해결 뒤부터, 누적 횟수는 보관된 전체 실제 오답입니다. 배정·대기 상태는 지금 기준입니다.</p>
       {activeDrafts.length > 0 && (
         <Notice>
           <p>
@@ -344,9 +283,10 @@ export function StudentWrongWordPanel({
         </Notice>
       )}
 
-      <p aria-live="polite">{page.history && !page.invalidated ? `최신순 · ${history.totalCount}개 중 ${history.items.length}개 표시` : "선택한 조건의 목록을 다시 확인해 주세요."}</p>
+      <p aria-live="polite">{history && !page.invalidated ? `${selection.filters.sort === "count" ? "오답 많은 순" : "최근 오답 순"} · ${history.totalCount}개 중 ${history.items.length}개 표시` : "선택한 조건의 목록을 다시 확인해 주세요."}</p>
       <div id="wrong-word-aggregate-panel">
         <WrongWordFilterSection
+          view={selection.filters.view}
           datasetFilter={selection.datasetFilter}
           datasetOptions={selection.datasetOptions}
           levelFilter={selection.levelFilter}
@@ -355,6 +295,7 @@ export function StudentWrongWordPanel({
           onQueryChange={selection.actions.setQuery}
           query={selection.query}
         />
+        <Field as="label"><FieldLabel as="span">정렬</FieldLabel><Select value={selection.filters.sort} onChange={event => selection.actions.setSort(event.target.value as "count" | "recent")}><option value="count">오답 많은 순</option><option value="recent">최근 오답 순</option></Select></Field>
         <WrongWordPurposeSection
           onChange={selection.actions.setPurpose}
           value={selection.purpose}
@@ -383,7 +324,10 @@ export function StudentWrongWordPanel({
             selectedCount={selection.selectedIds.length}
             worksheetRequesting={worksheetRequesting}
           />
-          {!page.history ? <Notice role="status">{loading ? "선택한 조건의 오답 단어를 불러오는 중…" : "목록을 확인하지 못했습니다. 다시 불러와 주세요."}</Notice> : <WrongWordList
+          {!page.history || page.invalidated ? <Notice role="status">{loading ? "선택한 조건의 오답 단어를 불러오는 중…" : "목록을 확인하지 못했습니다. 다시 불러와 주세요."}</Notice> : <MistakeList
+            studentId={studentId}
+            onInvalidated={status => { selection.actions.clearSelections(); if (status === 401 || status === 403) page.lock(); else page.refresh(); }}
+            view={selection.filters.view}
             datasetFilter={selection.datasetFilter}
             disabled={loading || busy || page.invalidated}
             onToggleQuestion={(questionId) => {

@@ -14,6 +14,8 @@ import {
 import {
   type DirectReviewDatasetSummariesResponse,
   type DirectReviewPreviewResponse,
+  type MistakeAssignmentCreationResponse,
+  type AssignmentCreationResponse,
 } from "../api/response-adapters";
 import {
   loadDirectReviewSummaries,
@@ -25,6 +27,7 @@ import type { AssignmentOperationError } from "../application/assignment-operati
 import type { AssignmentRequestIdentity } from "../application/request-lifecycle";
 import {
   createAssignmentSubmissionFlow,
+  type AssignmentSubmissionOutcome,
 } from "../application/submission-flow";
 import type {
   AssignmentDatasetItem,
@@ -212,7 +215,7 @@ export function useDirectReviewAssignmentController({
     };
   }, [draft.datasetId, summaryByDatasetId]);
   const [submission, setSubmission] = useState({
-    status: "idle" as "idle" | "submitting" | "succeeded" | "error",
+    status: "idle" as "idle" | "submitting" | "succeeded" | "error" | "uncertain",
     message: "",
   });
   const [userEdited, setUserEdited] = useState(false);
@@ -250,6 +253,7 @@ export function useDirectReviewAssignmentController({
         createIdempotencyKey: () => crypto.randomUUID(),
         createRequestId: () => crypto.randomUUID(),
         fallback: "오답 시험을 배정하지 못했습니다.",
+        retainUncertainSubmission: true,
         session: submissionSession,
         transport,
       }),
@@ -281,7 +285,7 @@ export function useDirectReviewAssignmentController({
     const abortController = new AbortController();
     void (async () => {
       await Promise.resolve();
-      if (abortController.signal.aborted) return;
+      if (abortController.signal.aborted || interactionLockedRef.current) return;
       setCapacity({ status: "idle", value: null, message: "" });
       setSummary({ status: "loading", value: [], message: "" });
       const result = await loadDirectReviewSummaries({
@@ -290,7 +294,7 @@ export function useDirectReviewAssignmentController({
         studentId: student.id,
         transport,
       });
-      if (abortController.signal.aborted) return;
+      if (abortController.signal.aborted || interactionLockedRef.current) return;
       summaryRetryLockedRef.current = false;
       if (result.ok) {
         readySummaryIdentityRef.current = {
@@ -317,7 +321,7 @@ export function useDirectReviewAssignmentController({
   }, [enabled, sourceRefreshVersion, student.id, transport, captureAuthenticationFailure]);
 
   useEffect(() => {
-    if (!enabled || summary.status !== "ready") return;
+    if (!enabled || summary.status !== "ready" || interactionLockedRef.current) return;
     const selectedSummary = summaryByDatasetId.get(draft.datasetId);
     if (selectedSummary) return;
     const nextDatasetId = preferredDatasetId(
@@ -378,6 +382,7 @@ export function useDirectReviewAssignmentController({
     capacity.status === "ready" &&
     capacity.fingerprint === currentPreviewFingerprint;
   const handlePreviewRequested = useCallback((identity: AssignmentRequestIdentity) => {
+    if (interactionLockedRef.current) return;
     if (identity.revision !== previewRevisionRef.current || identity.fingerprint !== currentFingerprintRef.current) return;
     setCapacity((current) => ({
       status: "loading",
@@ -390,6 +395,7 @@ export function useDirectReviewAssignmentController({
       value: DirectReviewPreviewResponse,
       identity: AssignmentRequestIdentity,
     ) => {
+      if (interactionLockedRef.current) return;
       if (identity.revision !== previewRevisionRef.current || identity.fingerprint !== currentFingerprintRef.current) return;
       previewRetryLockedRef.current = false;
       previewRecoveryFingerprintRef.current = null;
@@ -409,6 +415,7 @@ export function useDirectReviewAssignmentController({
       error: AssignmentOperationError,
       identity: AssignmentRequestIdentity,
     ) => {
+      if (interactionLockedRef.current) return;
       if (identity.revision !== previewRevisionRef.current || identity.fingerprint !== currentFingerprintRef.current) return;
       previewRetryLockedRef.current = false;
       if (
@@ -497,6 +504,7 @@ export function useDirectReviewAssignmentController({
     capacity.revision === previewRevision &&
     Object.keys(fieldErrors).length === 0 &&
     submission.status !== "submitting" &&
+    submission.status !== "uncertain" &&
     submission.status !== "succeeded";
 
   function changeDataset(datasetId: string) {
@@ -589,6 +597,7 @@ export function useDirectReviewAssignmentController({
     const alreadySubmitting = interactionLockedRef.current;
     if (
       !enabled ||
+      submissionSession.retained() !== null ||
       !exclusionConfirmed ||
       submission.status === "succeeded" ||
       !assignmentNumbersComplete(draftRef.current) ||
@@ -612,7 +621,7 @@ export function useDirectReviewAssignmentController({
       setSubmission({ status: "submitting", message: "" });
       setSubmissionIssue(null);
     }
-    let outcome: Awaited<ReturnType<typeof submissionFlow.run>>;
+    let outcome: AssignmentSubmissionOutcome<AssignmentCreationResponse | MistakeAssignmentCreationResponse>;
     try {
       outcome = await submissionFlow.run((now) =>
         prepareDirectReviewSubmission(
@@ -623,13 +632,20 @@ export function useDirectReviewAssignmentController({
         )
       );
     } finally {
-      if (!alreadySubmitting) interactionLockedRef.current = false;
+      if (!alreadySubmitting) interactionLockedRef.current = submissionSession.retained() !== null;
     }
     if (outcome.ok) {
+      interactionLockedRef.current = true;
       setSubmission({ status: "succeeded", message: "" });
       return { ok: true as const, result: outcome.value };
     }
     reportAuthenticationFailure(outcome.error);
+    if (outcome.uncertain) {
+      const message = "저장 결과를 확인하지 못했습니다. 같은 요청으로 다시 확인해 주세요.";
+      interactionLockedRef.current = true;
+      setSubmission({ status: "uncertain", message });
+      return { conflict: false, fieldKey: null, message, ok: false as const };
+    }
     if (outcome.error.kind === "busy") {
       return {
         conflict: false,
@@ -658,6 +674,30 @@ export function useDirectReviewAssignmentController({
     };
   }
 
+  const recoveryInFlight = useRef(false);
+  async function recoverSubmission() {
+    if (!enabled || recoveryInFlight.current || !submissionSession.retained()) {
+      return { ok: false as const, conflict: false, message: "확인할 저장 요청이 없거나 확인 중입니다." };
+    }
+    recoveryInFlight.current = true;
+    interactionLockedRef.current = true;
+    setSubmission({ status: "submitting", message: "" });
+    const reportAuthenticationFailure = captureAuthenticationFailure();
+    try {
+      const outcome = await submissionFlow.recover<AssignmentCreationResponse | MistakeAssignmentCreationResponse>();
+      if (outcome.ok) {
+        setSubmission({ status: "succeeded", message: "" });
+        return { ok: true as const, result: outcome.value };
+      }
+      reportAuthenticationFailure(outcome.error);
+      const message = "저장 결과를 아직 확인하지 못했습니다. 같은 요청으로 다시 확인해 주세요.";
+      setSubmission({ status: "uncertain", message });
+      return { ok: false as const, conflict: false, message };
+    } finally {
+      recoveryInFlight.current = false;
+    }
+  }
+
   return {
     actions: {
       confirmUnavailable: (confirmed: boolean) => { if (!interactionLockedRef.current) setConfirmedSelection(confirmed ? confirmationKey : null); },
@@ -684,6 +724,7 @@ export function useDirectReviewAssignmentController({
       retryPreview,
       retrySummary,
       submit,
+      recoverSubmission,
       toggleReviewLevel,
     },
     calculationPending,
@@ -700,6 +741,8 @@ export function useDirectReviewAssignmentController({
     totalAvailableCount,
     message: submission.message || capacity.message || summary.message,
     submitting: submission.status === "submitting",
+    uncertain: submission.status === "uncertain",
+    succeeded: submission.status === "succeeded",
   };
 }
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { getStudentAttempt, hydrateQuizQuestions, type QuestionRow } from "@/lib/services/quiz/attempt-query";
 import { startQuizRetryWithCompatibleRpc } from "@/lib/services/quiz-rpc-compatibility";
-import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
+import { normalizeQuizContentMode, quizContentModes } from "@/lib/quiz/question-content-mode";
 import { millisecondsUntil, currentTimeMilliseconds } from "@/lib/deadline";
 import { preparedQuizSchema, readyQuizSchema, type PreparedQuiz, type ReadyQuiz } from "../contracts/preparation";
 import { attemptResponseSchema } from "../api/quiz-attempt";
@@ -20,7 +20,7 @@ async function rpc(name: string, parameters: Record<string, unknown>) {
   const { data, error } = await getServiceSupabaseClient().rpc(name, parameters);
   if (error) {
     const code = error.message?.split(/[\s:]/)[0];
-    if (["practice_source_changed", "preparation_expired", "preparation_changed", "preparation_not_found",
+    if (["practice_source_changed", "wrong_history_changed", "preparation_expired", "preparation_changed", "preparation_not_found",
       "assignment_unavailable", "assignment_not_owned", "retake_not_allowed"].includes(code) || code?.startsWith("assignment_release_")) {
       throw new QuizPreparationChangedError("시험 준비가 만료되었거나 자료가 바뀌었습니다. 목록에서 다시 시작해 주세요.");
     }
@@ -51,7 +51,7 @@ export async function getQuizPreparation(studentId: string, id: string): Promise
   if (base.begunId) return {resumeId:base.begunId,kind:base.kind};
   if (base.kind === "practice") {
     const plan = z.object({ settings: z.object({ timingMode: z.enum(["none","total","per_question"]), questionTimeLimitSeconds: z.number().nullable() }),
-      questions: z.array(z.object({ direction: z.enum(["english_to_korean","korean_to_english"]), prompt: z.string(), choices: z.array(z.string()).length(4),
+      questions: z.array(z.object({ quizContentMode: z.enum(quizContentModes).optional(), direction: z.enum(["english_to_korean","korean_to_english"]), prompt: z.string(), choices: z.array(z.string()).length(4),
         pronunciation: z.unknown(), choicePronunciations: z.unknown() })) }).parse(base.plan);
     return preparedQuizSchema.parse({
       id, kind: "practice", assignmentTitle: "자율연습", quizContentMode: "book_meaning_choice", phase: "initial",

@@ -334,7 +334,7 @@ async function createFinalSchemaDatabase(
   await database.exec(`
     create role anon nologin;
     create role authenticated nologin;
-    create role service_role nologin;
+    create role service_role nologin bypassrls;
     create schema auth;
     create schema cron;
     create schema extensions;
@@ -650,48 +650,7 @@ async function seedReviewAssignmentScenario(database: PGlite) {
     ) as mode(quiz_mode)
     where entry.dataset_id = '${ids.dataset}';
 
-    set session_replication_role = replica;
-    insert into public.student_vocab_review_queue (
-      id,
-      student_id,
-      dataset_id,
-      vocab_entry_id,
-      canonical_lexeme_id_snapshot,
-      source_attempt_id,
-      source_question_id,
-      reason_level,
-      status,
-      queued_by,
-      queued_at
-    )
-    values
-      (
-        '${ids.selectedQueue}',
-        '${ids.student}',
-        '${ids.dataset}',
-        1,
-        '${ids.lexemes[0]}',
-        '00000000-0000-4000-8000-000000000501',
-        '00000000-0000-4000-8000-000000000601',
-        1,
-        'pending',
-        '${ids.admin}',
-        '2026-01-01T00:00:00Z'
-      ),
-      (
-        '${ids.overlappingQueue}',
-        '${ids.student}',
-        '${ids.dataset}',
-        5,
-        '${ids.lexemes[1]}',
-        '00000000-0000-4000-8000-000000000502',
-        '00000000-0000-4000-8000-000000000602',
-        1,
-        'pending',
-        '${ids.admin}',
-        '2026-01-02T00:00:00Z'
-      );
-    set session_replication_role = origin;
+
   `);
 
   // The v3 bank builder has its own migration contracts. This stub keeps its
@@ -826,6 +785,58 @@ async function seedReviewAssignmentScenario(database: PGlite) {
   `);
 }
 
+
+// These are actual pre-M03 failures with owning questions/attempts. Do not
+// bypass referential checks or attach nonexistent questions to the queue.
+async function createLegacyReviewDatabase() {
+  return createFinalSchemaDatabase({ beforeMigration: async (database, name) => {
+    if (name !== "20261002011000_track_vocabulary_mistake_episodes.sql") return;
+    await seedReviewAssignmentScenario(database);
+    await database.exec(`
+      do $fixture$
+      declare source_assignment uuid; source_attempt uuid:='00000000-0000-4000-8000-000000000501'; plan jsonb;
+      begin
+        select jsonb_agg(jsonb_build_object('vocab_entry_id',n,'base_order_index',n,'direction','english_to_korean',
+          'choice_vocab_entry_ids',case when n=5 then '[1,2,3,5]'::jsonb else '[1,2,3,4]'::jsonb end) order by n)
+          into plan from generate_series(1,5) n;
+        source_assignment:=private.create_assignment_with_question_bank_v3('Legacy review source fixture','${ids.dataset}',
+          array['${ids.units[0]}'::uuid,'${ids.units[4]}'::uuid],5,100::smallint,600,80::smallint,'fixed',null,array['${ids.student}'::uuid],plan);
+        update public.assignments set available_from='2025-12-31T23:40:00Z',created_at='2025-12-31T23:40:00Z' where id=source_assignment;
+        update public.assignment_students set assigned_at='2025-12-31T23:40:00Z' where assignment_id=source_assignment;
+        perform private.finalize_assignment_question_body_refs_v1(source_assignment);
+        insert into public.quiz_attempts(id,student_id,assignment_id,attempt_number,status,phase,started_at,deadline_at,initial_completed_at,retry_started_at,
+          completed_at,question_count_snapshot,time_limit_seconds_snapshot,passing_score_snapshot,passing_basis_snapshot,initial_correct_count,retry_correct_count,
+          unresolved_wrong_count,initial_score,final_score,passed,elapsed_seconds)
+        values(source_attempt,'${ids.student}',source_assignment,1,'completed','completed','2025-12-31T23:50:00Z','2026-01-01T00:00:00Z',
+          '2025-12-31T23:51:00Z','2025-12-31T23:51:10Z','2025-12-31T23:52:00Z',5,600,80,'initial',3,0,2,60,60,false,120);
+        insert into public.quiz_questions(id,attempt_id,assignment_question_id,vocab_entry_id,order_index,direction,prompt,choices,correct_choice_index,
+          initial_choice_index,initial_is_correct,initial_answered_at,retry_choice_index,retry_is_correct,retry_answered_at)
+        select case q.vocab_entry_id when 1 then '00000000-0000-4000-8000-000000000601'::uuid
+          when 5 then '00000000-0000-4000-8000-000000000602'::uuid else extensions.gen_random_uuid() end,
+          source_attempt,q.id,q.vocab_entry_id,q.base_order_index,q.direction,q.prompt,q.choices,q.correct_choice_index,
+          case when q.vocab_entry_id in(1,5) then ((q.correct_choice_index+1)%4)::smallint else q.correct_choice_index end,
+          q.vocab_entry_id not in(1,5),'2025-12-31T23:50:00Z'::timestamptz+q.base_order_index*interval '10 seconds',
+          case when q.vocab_entry_id in(1,5) then ((q.correct_choice_index+1)%4)::smallint end,
+          case when q.vocab_entry_id in(1,5) then false end,
+          case when q.vocab_entry_id in(1,5) then '2025-12-31T23:51:20Z'::timestamptz+q.base_order_index*interval '1 second' end
+        from private.assignment_question_contents_v1 q where q.assignment_id=source_assignment;
+        perform private.record_wrong_events_for_attempt(source_attempt,'${ids.student}'::uuid,'2025-12-31T23:52:00Z'::timestamptz);
+        insert into public.student_vocab_state(student_id,vocab_entry_id,unresolved_wrong_count,last_wrong_at,resolved_at,last_attempt_id,last_evaluated_at)
+        select '${ids.student}'::uuid,q.vocab_entry_id,1,q.retry_answered_at,null,source_attempt,'2025-12-31T23:52:00Z'
+        from public.quiz_questions q where q.attempt_id=source_attempt and q.vocab_entry_id in(1,5);
+        insert into public.student_vocab_review_queue(id,student_id,dataset_id,vocab_entry_id,canonical_lexeme_id_snapshot,source_attempt_id,
+          source_question_id,reason_level,status,queued_by,queued_at) values
+          ('${ids.selectedQueue}','${ids.student}','${ids.dataset}',1,'${ids.lexemes[0]}',source_attempt,
+           '00000000-0000-4000-8000-000000000601',1,'pending','${ids.admin}','2026-01-01T00:00:00Z'),
+          ('${ids.overlappingQueue}','${ids.student}','${ids.dataset}',5,'${ids.lexemes[1]}',source_attempt,
+           '00000000-0000-4000-8000-000000000602',1,'pending','${ids.admin}','2026-01-02T00:00:00Z');
+        update public.assignments set status='closed' where id=source_assignment;
+      end;
+      $fixture$;
+    `);
+  }});
+}
+
 const mixedQuestions = JSON.stringify([
   {
     vocab_entry_id: 2,
@@ -852,6 +863,43 @@ const mixedQuestions = JSON.stringify([
     choice_vocab_entry_ids: [1, 2, 3, 4],
   },
 ]);
+
+
+type ReviewSourceQuestion = { id: string; vocab_entry_id: number; correct_choice_index: number };
+async function answerFixturePhase(db: PGlite, attemptId: string, phase: 'initial'|'retry', qs: ReviewSourceQuestion[], wrong: Set<number>) {
+  const results = new Map<string, unknown>();
+  for (const [index, q] of qs.entries()) {
+    if (index) await studentStartQuery(db, 'select public.resume_quiz_after_feedback_v2($1,$2,$3,$4,0)', [ids.student,attemptId,q.id,phase]);
+    const result = await studentStartQuery<{value: unknown}>(db,
+      'select public.answer_quiz_question_v4($1,$2,$3,$4,$5::smallint,false) value',
+      [ids.student,attemptId,q.id,phase,wrong.has(q.vocab_entry_id)?(q.correct_choice_index+1)%4:q.correct_choice_index])
+      .catch(error => { throw new Error(`Fixture answer ${phase}/${index}: ${error.message}; ${error.where ?? ""}`, { cause: error }); });
+    results.set(q.id,result.rows[0]!.value);
+  }
+  return results;
+}
+async function finishReviewSource(db: PGlite, attemptId: string, wrongEntries: number[]) {
+  const qs=(await db.query<ReviewSourceQuestion>('select id,vocab_entry_id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index',[attemptId])).rows;
+  const wrong=new Set(wrongEntries);
+  expect(qs.filter(q=>wrong.has(q.vocab_entry_id))).toHaveLength(wrongEntries.length);
+  const initialResults=await answerFixturePhase(db,attemptId,'initial',qs,wrong);
+  const state=(await db.query<{phase:string;status:string}>('select phase::text,status::text from public.quiz_attempts where id=$1',[attemptId])).rows[0]!;
+  if(state.phase==='review') {
+    await studentStartQuery(db,'select public.start_quiz_retry_v2($1,$2)',[ids.student,attemptId]);
+    await answerFixturePhase(db,attemptId,'retry',qs.filter(q=>wrong.has(q.vocab_entry_id)),wrong);
+  }
+  expect((await db.query('select status::text,phase::text from public.quiz_attempts where id=$1',[attemptId])).rows)
+    .toEqual([{status:'completed',phase:'completed'}]);
+  return {questions:qs,initialResults};
+}
+async function queueFixtureQuestions(db: PGlite, qs: ReviewSourceQuestion[], entries: number[]) {
+  const questionIds=entries.map(entry=>qs.find(q=>q.vocab_entry_id===entry)!.id);
+  await db.exec('set role authenticated');
+  try {
+    const result=await db.query<{ids:string[]}>('select public.queue_student_vocab_review_words($1,$2::uuid[]) ids',[ids.student,questionIds]);
+    expect(result.rows[0]!.ids).toHaveLength(entries.length);return result.rows[0]!.ids;
+  } finally {await db.exec('reset role');}
+}
 
 async function createRegularPointAttempt(
   database: PGlite,
@@ -2829,12 +2877,7 @@ describe.sequential("final review-assignment database schema", () => {
     const lifecycleDatabase = await createFinalSchemaDatabase();
     try {
       await seedReviewAssignmentScenario(lifecycleDatabase);
-      const extraQueueIds = [
-        "00000000-0000-4000-8000-000000000311",
-        "00000000-0000-4000-8000-000000000312",
-        "00000000-0000-4000-8000-000000000313",
-      ];
-      const reviewOnlyQuestions = JSON.stringify([
+      let reviewOnlyQuestions = JSON.stringify([
         {
           vocab_entry_id: 1,
           base_order_index: 1,
@@ -2886,98 +2929,14 @@ describe.sequential("final review-assignment database schema", () => {
         ) as attempt_id;
       `);
       const sourceAttemptId = sourceAttempt.rows[0]?.attempt_id;
-      const sourceQuestions = await lifecycleDatabase.query<{
-        id: string;
-        vocab_entry_id: number;
-      }>(`
-        select id, vocab_entry_id
-        from public.quiz_questions
-        where attempt_id = '${sourceAttemptId}';
-      `);
-      const sourceQuestionByEntry = new Map(
-        sourceQuestions.rows.map((question) => [
-          question.vocab_entry_id,
-          question.id,
-        ]),
-      );
-      await lifecycleDatabase.exec(`
-        update public.student_vocab_review_queue
-        set
-          status = 'cancelled',
-          cancelled_at = clock_timestamp()
-        where id = '${ids.overlappingQueue}';
-
-        update public.student_vocab_review_queue
-        set
-          source_attempt_id = '${sourceAttemptId}',
-          source_question_id = '${sourceQuestionByEntry.get(1)}'
-        where id = '${ids.selectedQueue}';
-
-        set session_replication_role = replica;
-        insert into public.student_vocab_review_queue (
-          id,
-          student_id,
-          dataset_id,
-          vocab_entry_id,
-          canonical_lexeme_id_snapshot,
-          source_attempt_id,
-          source_question_id,
-          reason_level,
-          status,
-          queued_by,
-          queued_at
-        )
-        values
-          (
-            '${extraQueueIds[0]}',
-            '${ids.student}',
-            '${ids.dataset}',
-            2,
-            '${ids.lexemes[1]}',
-            '${sourceAttemptId}',
-            '${sourceQuestionByEntry.get(2)}',
-            1,
-            'pending',
-            '${ids.admin}',
-            '2026-01-03T00:00:00Z'
-          ),
-          (
-            '${extraQueueIds[1]}',
-            '${ids.student}',
-            '${ids.dataset}',
-            3,
-            '${ids.lexemes[2]}',
-            '${sourceAttemptId}',
-            '${sourceQuestionByEntry.get(3)}',
-            1,
-            'pending',
-            '${ids.admin}',
-            '2026-01-04T00:00:00Z'
-          ),
-          (
-            '${extraQueueIds[2]}',
-            '${ids.student}',
-            '${ids.dataset}',
-            4,
-            '${ids.lexemes[3]}',
-            '${sourceAttemptId}',
-            '${sourceQuestionByEntry.get(4)}',
-            1,
-            'pending',
-            '${ids.admin}',
-            '2026-01-05T00:00:00Z'
-          );
-        set session_replication_role = origin;
-
-        update public.assignments
-        set status = 'closed'
-        where id = '${sourceAssignment.rows[0]?.assignment_id}';
-      `);
-
-      const selectedQueueIds = [
-        ids.selectedQueue,
-        ...extraQueueIds,
-      ];
+      const failed = await finishReviewSource(lifecycleDatabase, sourceAttemptId!, [1,2,3,4]);
+      const queuedIds = await queueFixtureQuestions(lifecycleDatabase, failed.questions, [1,2,3,4]);
+      const queued = (await lifecycleDatabase.query<{id:string;vocab_entry_id:number}>(
+        "select id,vocab_entry_id from student_vocab_review_queue where id=any($1::uuid[]) order by reason_level desc,queued_at,id", [queuedIds])).rows;
+      const selectedQueueIds = queued.map(value => value.id);
+      const questionsByEntry = new Map((JSON.parse(reviewOnlyQuestions) as {vocab_entry_id:number;base_order_index:number}[]).map(value => [value.vocab_entry_id,value]));
+      reviewOnlyQuestions = JSON.stringify(queued.map((value,index) => ({ ...questionsByEntry.get(value.vocab_entry_id),base_order_index:index+1 })));
+      await lifecycleDatabase.query("update assignments set status='closed' where id=$1", [sourceAssignment.rows[0]!.assignment_id]);
       const createV6 = (title: string) =>
         lifecycleDatabase.query<{ assignment_id: string }>(`
           select public.create_mixed_review_assignment_v8(
@@ -3058,7 +3017,7 @@ describe.sequential("final review-assignment database schema", () => {
       await lifecycleDatabase.exec("set role authenticated;");
       await expectPostgresError(
         createV6("Duplicate must fail"),
-        "40001",
+        "PT409",
         "mixed_review_queue_snapshot_changed",
       );
       await lifecycleDatabase.exec("reset role;");
@@ -3148,9 +3107,8 @@ describe.sequential("final review-assignment database schema", () => {
   }, 30_000);
 
   it("creates regular assignments atomically and keeps active wrong targets reserved", async () => {
-    const regularDatabase = await createFinalSchemaDatabase();
+    const regularDatabase = await createLegacyReviewDatabase();
     try {
-      await seedReviewAssignmentScenario(regularDatabase);
       const regularQuestions = JSON.stringify([
         {
           vocab_entry_id: 1,
@@ -3224,13 +3182,13 @@ describe.sequential("final review-assignment database schema", () => {
       `);
       expect(firstState.rows[0]).toEqual({
         timing_mode: "total",
-        active_targets: 2,
+        active_targets: 1,
       });
 
       await regularDatabase.exec("set role authenticated;");
       await expectPostgresError(
         createRegular("Regular duplicate"),
-        "40001",
+        "PT409",
         "review_word_already_assigned",
       );
       await regularDatabase.query(`
@@ -3261,7 +3219,7 @@ describe.sequential("final review-assignment database schema", () => {
         from public.assignments;
       `);
       expect(rollbackState.rows[0]).toEqual({
-        assignments: 1,
+        assignments: 2, // one closed historical source plus the cancelled new assignment
         invalid_audits: 0,
       });
 
@@ -3281,9 +3239,8 @@ describe.sequential("final review-assignment database schema", () => {
   }, 30_000);
 
   it("links one pending queue to the first repeated source occurrence", async () => {
-    const occurrenceDatabase = await createFinalSchemaDatabase();
+    const occurrenceDatabase = await createLegacyReviewDatabase();
     try {
-      await seedReviewAssignmentScenario(occurrenceDatabase);
       const questions = JSON.stringify([
         {
           vocab_entry_id: 2,
@@ -3366,7 +3323,7 @@ describe.sequential("final review-assignment database schema", () => {
       expect(state.rows[0]).toEqual({
         question_count: 4,
         target_count: 1,
-        target_vocab_entry_id: 2,
+        target_vocab_entry_id: 5,
       });
     } finally {
       await occurrenceDatabase.close();
@@ -3503,295 +3460,79 @@ describe.sequential("final review-assignment database schema", () => {
       expect(second.rows[0]?.assignment_id).toMatch(
         /^[0-9a-f-]{36}$/i,
       );
-      const attempt = await studentStartQuery<{
-        attempt_id: string;
-      }>(unlinkedDatabase, `
-        select public.create_quiz_attempt_from_bank(
-          '${ids.student}',
-          '${second.rows[0]?.assignment_id}'
-        ) as attempt_id;
-      `);
-      const attemptQuestion = await unlinkedDatabase.query<{
-        id: string;
-      }>(`
-        select id
-        from public.quiz_questions
-        where attempt_id = '${attempt.rows[0]?.attempt_id}'
-          and vocab_entry_id = 7;
-      `);
-      await unlinkedDatabase.exec(`
-        insert into public.student_vocab_state (
-          student_id,
-          vocab_entry_id,
-          unresolved_wrong_count,
-          last_wrong_at,
-          resolved_at,
-          last_attempt_id,
-          last_evaluated_at
-        )
-        values (
-          '${ids.student}',
-          6,
-          1,
-          '2029-01-01T00:00:00Z',
-          null,
-          '${attempt.rows[0]?.attempt_id}',
-          '2029-01-01T00:00:00Z'
-        );
-
-        insert into public.student_vocab_review_queue (
-          id,
-          student_id,
-          dataset_id,
-          vocab_entry_id,
-          canonical_lexeme_id_snapshot,
-          source_attempt_id,
-          source_question_id,
-          reason_level,
-          status,
-          queued_by
-        )
-        values (
-          '00000000-0000-4000-8000-000000000399',
-          '${ids.student}',
-          '${ids.dataset}',
-          6,
-          null,
-          '${attempt.rows[0]?.attempt_id}',
-          '${attemptQuestion.rows[0]?.id}',
-          1,
-          'pending',
-          '${ids.admin}'
-        );
-
-        update public.quiz_questions
-        set
-          initial_choice_index = 0,
-          initial_is_correct = true,
-          initial_answered_at = '2030-01-01T00:00:00Z'
-        where id = '${attemptQuestion.rows[0]?.id}';
-      `);
-      const resolvedUnlinked = await unlinkedDatabase.query<{
-        unresolved_wrong_count: number;
-        queue_status: string;
-      }>(`
-        select
-          state.unresolved_wrong_count,
-          queue.status as queue_status
-        from public.student_vocab_state as state
-        join public.student_vocab_review_queue as queue
-          on queue.id =
-            '00000000-0000-4000-8000-000000000399'
-        where state.student_id = '${ids.student}'
-          and state.vocab_entry_id = 6;
-      `);
-      expect(resolvedUnlinked.rows[0]).toEqual({
-        unresolved_wrong_count: 0,
-        queue_status: "cancelled",
-      });
+      const firstAttempt = await studentStartQuery<{id:string}>(unlinkedDatabase,
+        'select public.create_quiz_attempt_from_bank($1,$2) id',[ids.student,first.rows[0]!.assignment_id]);
+      const source=await finishReviewSource(unlinkedDatabase,firstAttempt.rows[0]!.id,[6]);
+      const [queueId]=await queueFixtureQuestions(unlinkedDatabase,source.questions,[6]);
+      const secondAttempt=await studentStartQuery<{id:string}>(unlinkedDatabase,
+        'select public.create_quiz_attempt_from_bank($1,$2) id',[ids.student,second.rows[0]!.assignment_id]);
+      const question=(await unlinkedDatabase.query<ReviewSourceQuestion>(
+        'select id,vocab_entry_id,correct_choice_index from public.quiz_questions where attempt_id=$1 and vocab_entry_id=7',
+        [secondAttempt.rows[0]!.id])).rows[0]!;
+      await answerFixturePhase(unlinkedDatabase,secondAttempt.rows[0]!.id,'initial',[question],new Set());
+      // A shared spelling is insufficient proof of the same tested meaning.
+      const state=await unlinkedDatabase.query(
+        `select s.current_wrong_count,s.unresolved,q.status,
+          q.meaning_key_snapshot<>(private.quiz_vocabulary_meaning_v1($2)->>'meaningKey') as separate_meaning
+        from public.student_vocab_review_queue q join private.student_vocabulary_meaning_states s
+          on s.student_id=q.student_id and s.meaning_key=q.meaning_key_snapshot where q.id=$1`,[queueId,question.id]);
+      expect(state.rows).toEqual([{current_wrong_count:2,unresolved:true,status:'pending',separate_meaning:true}]);
     } finally {
       await unlinkedDatabase.close();
     }
   }, 30_000);
 
-  it("resolves canonical aliases together without letting an older answer erase newer wrong state", async () => {
-    const resolutionDatabase = await createFinalSchemaDatabase();
+  it("keeps different meanings separate and replays old correct answers without erasing newer mistakes", async () => {
+    const db=await createFinalSchemaDatabase();
     try {
-      await seedReviewAssignmentScenario(resolutionDatabase);
-      const questions = JSON.stringify([
-        {
-          vocab_entry_id: 1,
-          base_order_index: 1,
-          direction: "english_to_korean",
-          choice_vocab_entry_ids: [1, 2, 3, 4],
-        },
-        {
-          vocab_entry_id: 2,
-          base_order_index: 2,
-          direction: "english_to_korean",
-          choice_vocab_entry_ids: [1, 2, 3, 4],
-        },
-        {
-          vocab_entry_id: 3,
-          base_order_index: 3,
-          direction: "korean_to_english",
-          choice_vocab_entry_ids: [1, 2, 3, 4],
-        },
-        {
-          vocab_entry_id: 4,
-          base_order_index: 4,
-          direction: "korean_to_english",
-          choice_vocab_entry_ids: [1, 2, 3, 4],
-        },
+      await seedReviewAssignmentScenario(db);
+      const createBank=async(title:string,alternate=false)=>{
+        const entries=alternate?[1,5,3,4]:[1,2,3,4];
+        const questions=entries.map((vocab_entry_id,index)=>({vocab_entry_id,base_order_index:index+1,
+          direction:index<2?'english_to_korean':'korean_to_english',choice_vocab_entry_ids:alternate?[1,3,4,5]:[1,2,3,4]}));
+        await db.exec('set role authenticated');
+        try {return (await db.query<{id:string}>(`select public.create_assignment_with_delivery_v6(
+          $1,$2,array[$3::uuid,$4::uuid],4,50::smallint,600,80::smallint,'fixed',null,
+          array[$5::uuid],'total',null,$6::jsonb) id`,
+          [title,ids.dataset,ids.units[0],ids.units[4],ids.student,JSON.stringify(questions)])).rows[0]!.id;}
+        finally {await db.exec('reset role');}
+      };
+      const startBank=async(bankId:string)=>(await studentStartQuery<{id:string}>(db,
+        'select public.create_quiz_attempt_from_bank($1,$2) id',[ids.student,bankId])).rows[0]!.id;
+      const oldAttempt=await startBank(await createBank('Old correct result'));
+      const old=await finishReviewSource(db,oldAttempt,[]);
+      const oldQuestion=old.questions.find(q=>q.vocab_entry_id===2)!;
+      const failed=await finishReviewSource(db,await startBank(await createBank('New mistake')),[2]);
+      const [queue2]=await queueFixtureQuestions(db,failed.questions,[2]);
+      const different=await finishReviewSource(db,await startBank(await createBank('Another meaning',true)),[5]);
+      const [queue5]=await queueFixtureQuestions(db,different.questions,[5]);
+      const replacement=await createBank('Resolve only selected meaning');
+      expect((await db.query(`select vocab_entry_id from public.assignment_review_targets
+        where assignment_id=$1 and released_at is null`,[replacement])).rows).toEqual([{vocab_entry_id:2}]);
+      const snapshot=async()=> (await db.query(`select jsonb_build_object(
+        'states',(select jsonb_agg(to_jsonb(s) order by meaning_key) from private.student_vocabulary_meaning_states s),
+        'receipts',(select jsonb_agg(to_jsonb(r) order by quiz_question_id,phase) from private.vocabulary_answer_receipts r),
+        'versions',(select jsonb_agg(to_jsonb(v) order by student_id) from private.student_vocabulary_versions v),
+        'queues',(select jsonb_agg(to_jsonb(q) order by id) from public.student_vocab_review_queue q),
+        'targets',(select jsonb_agg(to_jsonb(t) order by id) from public.assignment_review_targets t)) value`)).rows[0];
+      const before=await snapshot();
+      const replay=await answerFixturePhase(db,oldAttempt,'initial',[oldQuestion],new Set());
+      expect(replay.get(oldQuestion.id)).toEqual(old.initialResults.get(oldQuestion.id));
+      expect(await snapshot()).toEqual(before);
+      const newAttempt=await startBank(replacement);
+      const firstTwo=(await db.query<ReviewSourceQuestion>('select id,vocab_entry_id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index limit 2',[newAttempt])).rows;
+      await answerFixturePhase(db,newAttempt,'initial',firstTwo,new Set());
+      const states=await db.query(`select q.vocab_entry_id,q.status,s.current_wrong_count,s.unresolved,
+        (select count(*)::integer from public.assignment_review_targets t where t.review_queue_id=q.id and release_reason='resolved') as resolved_targets
+        from public.student_vocab_review_queue q join private.student_vocabulary_meaning_states s
+          on s.student_id=q.student_id and s.meaning_key=q.meaning_key_snapshot
+        where q.id=any($1::uuid[]) order by q.vocab_entry_id`,[[queue2,queue5]]);
+      expect(states.rows).toEqual([
+        {vocab_entry_id:2,status:'cancelled',current_wrong_count:0,unresolved:false,resolved_targets:1},
+        {vocab_entry_id:5,status:'pending',current_wrong_count:2,unresolved:true,resolved_targets:0},
       ]);
-
-      await resolutionDatabase.exec("set role authenticated;");
-      const assignment = await resolutionDatabase.query<{
-        assignment_id: string;
-      }>(`
-        select public.create_assignment_with_delivery_v6(
-          'Canonical resolution',
-          '${ids.dataset}',
-          array[
-            '${ids.units[0]}'::uuid,
-            '${ids.units[4]}'::uuid
-          ],
-          4,
-          50::smallint,
-          600,
-          80::smallint,
-          'fixed',
-          null,
-          array['${ids.student}']::uuid[],
-          'total',
-          null,
-          $questions$${questions}$questions$::jsonb
-        ) as assignment_id;
-      `);
-      await resolutionDatabase.exec("reset role;");
-      const attempt = await studentStartQuery<{
-        attempt_id: string;
-      }>(resolutionDatabase, `
-        select public.create_quiz_attempt_from_bank(
-          '${ids.student}',
-          '${assignment.rows[0]?.assignment_id}'
-        ) as attempt_id;
-      `);
-      const attemptId = attempt.rows[0]?.attempt_id;
-
-      await resolutionDatabase.exec(`
-        update public.student_vocab_review_queue
-        set
-          source_attempt_id = '${attemptId}',
-          source_question_id = (
-            select id
-            from public.quiz_questions
-            where attempt_id = '${attemptId}'
-              and vocab_entry_id = 2
-          )
-        where id = '${ids.overlappingQueue}';
-
-        insert into public.student_vocab_state (
-          student_id,
-          vocab_entry_id,
-          unresolved_wrong_count,
-          last_wrong_at,
-          resolved_at,
-          last_attempt_id,
-          last_evaluated_at
-        )
-        values
-          (
-            '${ids.student}',
-            2,
-            1,
-            '2030-01-01T00:00:00Z',
-            null,
-            '${attemptId}',
-            '2030-01-01T00:00:00Z'
-          ),
-          (
-            '${ids.student}',
-            5,
-            1,
-            '2030-01-01T00:00:00Z',
-            null,
-            '${attemptId}',
-            '2030-01-01T00:00:00Z'
-          )
-        on conflict (student_id, vocab_entry_id)
-        do update set
-          unresolved_wrong_count = excluded.unresolved_wrong_count,
-          last_wrong_at = excluded.last_wrong_at,
-          resolved_at = null,
-          last_attempt_id = excluded.last_attempt_id,
-          last_evaluated_at = excluded.last_evaluated_at;
-
-        update public.quiz_questions
-        set
-          initial_choice_index = 0,
-          initial_is_correct = true,
-          initial_answered_at = '2029-01-01T00:00:00Z'
-        where attempt_id = '${attemptId}'
-          and vocab_entry_id = 2;
-      `);
-      const staleAnswerState = await resolutionDatabase.query<{
-        unresolved_entries: number;
-        queue_status: string;
-        active_target: number;
-      }>(`
-        select
-          (
-            select count(*)::integer
-            from public.student_vocab_state
-            where student_id = '${ids.student}'
-              and vocab_entry_id in (2, 5)
-              and unresolved_wrong_count > 0
-          ) as unresolved_entries,
-          (
-            select status
-            from public.student_vocab_review_queue
-            where id = '${ids.overlappingQueue}'
-          ) as queue_status,
-          (
-            select count(*)::integer
-            from public.assignment_review_targets
-            where assignment_id = '${assignment.rows[0]?.assignment_id}'
-              and canonical_lexeme_id_snapshot = '${ids.lexemes[1]}'
-              and released_at is null
-          ) as active_target;
-      `);
-      expect(staleAnswerState.rows[0]).toEqual({
-        unresolved_entries: 2,
-        queue_status: "pending",
-        active_target: 1,
-      });
-
-      await resolutionDatabase.exec(`
-        update public.quiz_questions
-        set
-          retry_choice_index = 0,
-          retry_is_correct = true,
-          retry_answered_at = '2031-01-01T00:00:00Z'
-        where attempt_id = '${attemptId}'
-          and vocab_entry_id = 2;
-      `);
-      const resolvedState = await resolutionDatabase.query<{
-        resolved_entries: number;
-        queue_status: string;
-        released_target: number;
-      }>(`
-        select
-          (
-            select count(*)::integer
-            from public.student_vocab_state
-            where student_id = '${ids.student}'
-              and vocab_entry_id in (2, 5)
-              and unresolved_wrong_count = 0
-              and resolved_at = '2031-01-01T00:00:00Z'
-          ) as resolved_entries,
-          (
-            select status
-            from public.student_vocab_review_queue
-            where id = '${ids.overlappingQueue}'
-          ) as queue_status,
-          (
-            select count(*)::integer
-            from public.assignment_review_targets
-            where assignment_id = '${assignment.rows[0]?.assignment_id}'
-              and canonical_lexeme_id_snapshot = '${ids.lexemes[1]}'
-              and release_reason = 'resolved'
-          ) as released_target;
-      `);
-      expect(resolvedState.rows[0]).toEqual({
-        resolved_entries: 2,
-        queue_status: "cancelled",
-        released_target: 1,
-      });
-    } finally {
-      await resolutionDatabase.close();
-    }
-  }, 30_000);
+    } finally {await db.close();}
+  },30_000);
 
   it("keeps mixed queue consumption and exact-review regression atomic", async () => {
     await seedReviewAssignmentScenario(database);
@@ -5435,31 +5176,17 @@ describe.sequential("admin deletion controls", () => {
           '${ids.student}', '${queueSourceAssignmentId}'
         ) as attempt_id;
       `);
-      const queueQuestion = await mixedReplacementDatabase.query<{
-        id: string;
-      }>(`
-        select id from public.quiz_questions
-        where attempt_id = '${queueAttempt.rows[0]!.attempt_id}'
-          and vocab_entry_id = 1;
-      `);
-      await mixedReplacementDatabase.exec(`
-        update public.student_vocab_review_queue
-        set
-          source_attempt_id = '${queueAttempt.rows[0]!.attempt_id}',
-          source_question_id = '${queueQuestion.rows[0]!.id}'
-        where id = '${ids.selectedQueue}';
-        update public.assignments
-        set status = 'closed'
-        where id = '${queueSourceAssignmentId}';
-        set role authenticated;
-      `);
+      const failed = await finishReviewSource(mixedReplacementDatabase, queueAttempt.rows[0]!.attempt_id, [1]);
+      const [selectedQueueId] = await queueFixtureQuestions(mixedReplacementDatabase, failed.questions, [1]);
+      await mixedReplacementDatabase.query("update assignments set status='closed' where id=$1", [queueSourceAssignmentId]);
+      await mixedReplacementDatabase.exec('set role authenticated');
       const source = await mixedReplacementDatabase.query<{
         assignment_id: string;
       }>(`
         select public.create_mixed_review_assignment_v8(
           '${ids.student}', '${ids.dataset}', array[1]::smallint[],
           'dataset',
-          array['${ids.selectedQueue}'::uuid], 'Mixed source',
+          array['${selectedQueueId}'::uuid], 'Mixed source',
           array['${ids.units[4]}'::uuid], 100::smallint, 600,
           80::smallint, 'fixed', null, 'total', null,
           $questions$${mixedQuestions}$questions$::jsonb
@@ -5503,7 +5230,7 @@ describe.sequential("admin deletion controls", () => {
           100::smallint, 600, 80::smallint, true, 80::smallint,
           'fixed', null, null, 'total', null, array[1]::smallint[],
           'dataset',
-          array['${ids.selectedQueue}'::uuid],
+          array['${selectedQueueId}'::uuid],
           $questions$${sourceQuestions}$questions$::jsonb
         ) as result;
       `);
@@ -5554,7 +5281,7 @@ describe.sequential("admin deletion controls", () => {
         join public.audit_events as audit
           on audit.event_type = 'assignment.student.replaced'
          and audit.details ->> 'sourceAssignmentId' = '${sourceAssignmentId}'
-        where queue.id = '${ids.selectedQueue}';
+        where queue.id = '${selectedQueueId}';
       `);
       expect(state.rows[0]).toMatchObject({
         source_cancelled: true,
@@ -5562,8 +5289,8 @@ describe.sequential("admin deletion controls", () => {
         replacement_active_targets: 1,
         queue_status: "pending",
         queue_consumed_assignment: null,
-        before_queues: [ids.selectedQueue],
-        after_queues: [ids.selectedQueue],
+        before_queues: [selectedQueueId],
+        after_queues: [selectedQueueId],
       });
       expect(state.rows[0]!.before_hash).toBe(state.rows[0]!.after_hash);
 
@@ -5585,7 +5312,7 @@ describe.sequential("admin deletion controls", () => {
             100::smallint, 600, 80::smallint, true, 80::smallint,
             'fixed', null, null, 'total', null, array[1]::smallint[],
             'dataset',
-            array['${ids.selectedQueue}'::uuid],
+            array['${selectedQueueId}'::uuid],
             $questions$${invalidQuestions}$questions$::jsonb
           );
         `),
@@ -5611,7 +5338,7 @@ describe.sequential("admin deletion controls", () => {
           ) as active_targets,
           (
             select status from public.student_vocab_review_queue
-            where id = '${ids.selectedQueue}'
+            where id = '${selectedQueueId}'
           ) as queue_status,
           (
             select count(*)::integer
@@ -5654,7 +5381,7 @@ describe.sequential("admin deletion controls", () => {
             '${ids.dataset}', array['${ids.units[4]}'::uuid], 1,
             100::smallint, 600, 80::smallint, true, 80::smallint,
             'fixed', null, null, 'total', null, array[1]::smallint[],
-            'dataset', array['${ids.selectedQueue}'::uuid],
+            'dataset', array['${selectedQueueId}'::uuid],
             $questions$${oneReviewQuestion}$questions$::jsonb
           );
         `),
@@ -5669,11 +5396,6 @@ describe.sequential("admin deletion controls", () => {
 
   it("replaces exact-review assignments with 1, 2, and 3 targets without losing their queue snapshot", async () => {
     const exactReplacementDatabase = await createFinalSchemaDatabase();
-    const queueIds = [
-      "00000000-0000-4000-8000-000000000321",
-      "00000000-0000-4000-8000-000000000322",
-      "00000000-0000-4000-8000-000000000323",
-    ];
     try {
       await seedReviewAssignmentScenario(exactReplacementDatabase);
       await exactReplacementDatabase.exec(`
@@ -5716,55 +5438,9 @@ describe.sequential("admin deletion controls", () => {
         ) as attempt_id;
       `);
       const queueSourceAttemptId = queueSourceAttempt.rows[0]!.attempt_id;
-      const queueSourceQuestions = await exactReplacementDatabase.query<{
-        id: string;
-        vocab_entry_id: number;
-      }>(`
-        select id, vocab_entry_id
-        from public.quiz_questions
-        where attempt_id = '${queueSourceAttemptId}';
-      `);
-      const sourceQuestionByEntry = new Map(
-        queueSourceQuestions.rows.map((question) => [
-          question.vocab_entry_id,
-          question.id,
-        ]),
-      );
-
-      await exactReplacementDatabase.exec(`
-        insert into public.student_vocab_review_queue (
-          id, student_id, dataset_id, vocab_entry_id,
-          canonical_lexeme_id_snapshot, source_attempt_id,
-          source_question_id, reason_level, status, queued_by, queued_at
-        )
-        values
-          (
-            '${queueIds[0]}', '${ids.student}', '${ids.dataset}', 1,
-            '${ids.lexemes[0]}',
-            '${queueSourceAttemptId}',
-            '${sourceQuestionByEntry.get(1)}',
-            1, 'pending', '${ids.admin}', '2026-01-11T00:00:00Z'
-          ),
-          (
-            '${queueIds[1]}', '${ids.student}', '${ids.dataset}', 2,
-            '${ids.lexemes[1]}',
-            '${queueSourceAttemptId}',
-            '${sourceQuestionByEntry.get(2)}',
-            1, 'pending', '${ids.admin}', '2026-01-12T00:00:00Z'
-          ),
-          (
-            '${queueIds[2]}', '${ids.student}', '${ids.dataset}', 3,
-            '${ids.lexemes[2]}',
-            '${queueSourceAttemptId}',
-            '${sourceQuestionByEntry.get(3)}',
-            1, 'pending', '${ids.admin}', '2026-01-13T00:00:00Z'
-          );
-
-        update public.assignments
-        set status = 'closed'
-        where id = '${queueSourceAssignmentId}';
-      `);
-
+      const failed = await finishReviewSource(exactReplacementDatabase, queueSourceAttemptId, [1,2,3]);
+      const queueIds = await queueFixtureQuestions(exactReplacementDatabase, failed.questions, [1,2,3]);
+      await exactReplacementDatabase.query("update assignments set status='closed' where id=$1", [queueSourceAssignmentId]);
       for (const targetCount of [1, 2, 3]) {
         const replacementKey =
           `00000000-0000-4000-8000-00000000082${targetCount}`;
@@ -6596,7 +6272,7 @@ describe.sequential("assignment retry rules", () => {
 
     const answerDefinition = await database.query<{ definition: string }>(`
       select pg_get_functiondef(
-        'public.answer_quiz_question_v4(uuid,uuid,uuid,text,smallint,boolean)'::regprocedure
+        'private.grade_vocabulary_v4(uuid,uuid,uuid,text,smallint,boolean)'::regprocedure
       ) as definition;
     `);
     expect(answerDefinition.rows[0]?.definition).toContain(
@@ -7846,9 +7522,8 @@ describe.sequential("assignment retry rules", () => {
   }, 60_000);
 
   it("creates a one-question direct review assignment and starts its quiz attempt", async () => {
-    const directReviewDatabase = await createFinalSchemaDatabase();
+    const directReviewDatabase = await createLegacyReviewDatabase();
     try {
-      await seedReviewAssignmentScenario(directReviewDatabase);
       const privileges = await directReviewDatabase.query<{
         anon_execute: boolean;
         authenticated_execute: boolean;

@@ -27,6 +27,7 @@ const pronunciationSchema = z.object({
 
 const questionSchema = z.object({
   id: z.string().min(1),
+  quizContentMode: z.enum(quizContentModes).optional(),
   orderIndex: z.number().int().positive(),
   direction: z.enum(["english_to_korean", "korean_to_english"]),
   prompt: z.string(),

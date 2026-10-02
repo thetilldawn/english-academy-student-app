@@ -88,7 +88,7 @@ export async function cancelStudentReviewAssignmentDraft(
         ? "forbidden"
         : error.code === "P0002"
           ? "not_found"
-          : error.code === "40001"
+          : (error.code === "40001" || error.code === "PT409")
             ? "unavailable"
             : "database",
     );
@@ -179,7 +179,7 @@ export async function createExactReviewAssignment(
       ? "database"
       : error.code === "42501"
         ? "forbidden"
-        : error.code === "40001"
+        : (error.code === "40001" || error.code === "PT409")
           ? "conflict"
           : ["22023", "P0002", "23503", "23505"].includes(error.code)
             ? "invalid_selection"

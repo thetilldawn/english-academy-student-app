@@ -129,11 +129,11 @@ describe("materialized book response and recovery", () => {
     expect(response.status).toBe(409); expect(await response.text()).not.toContain("secret SQL");
     expect(mocks.rpc).not.toHaveBeenCalledWith("get_vocabulary_composition_summary_v1", expect.anything());
   });
-  it.each([POST, commandRoute])("returns a safe repair instruction for broken shared references through both routes", async route => {
+  it.each([POST, commandRoute].flatMap(route => ["40001", "PT409"].map(code => [route, code] as const)))("returns a safe repair instruction for broken shared references through both routes", async (route, code) => {
     const viewer = "00000000-0000-4000-8000-000000000099";
     mocks.getAdminContextOrThrow.mockResolvedValue({ userId: viewer });
     mocks.rpc.mockReset().mockResolvedValueOnce({ data: { ...step, stage: "entries", done: 500, total: 1000 }, error: null })
-      .mockResolvedValueOnce({ data: null, error: { code: "40001", message: "vocabulary_binding_unavailable" } });
+      .mockResolvedValueOnce({ data: null, error: { code, message: "vocabulary_binding_unavailable" } });
     const response = await route(new Request("http://localhost", { method: "POST", headers: { "X-Wordbook-Viewer": viewer }, body: JSON.stringify(command) }));
     expect(response.status).toBe(409);
     expect(response.headers.get("X-Wordbook-Source")).toBe("unavailable");

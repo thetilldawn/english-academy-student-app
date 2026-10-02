@@ -111,6 +111,7 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
   }
   if (method === "POST" && table.startsWith("rpc/")) {
     const rpc = table.slice(4);
+    if(rpc === "list_vocabulary_unit_source_classifications_v1" && [uid(10),uid(11)].includes(input.p_dataset_id)) return respond([], "local-unit-classifications");
     if (schoolSchedules && rpc === "get_admin_school_schedules_v1") return respond(localSchoolSchedulePayload(students,input.p_student_ids),"school-schedule");
     if (schoolSchedules && ["get_admin_school_schedule_editor_v1", "save_admin_school_schedule_event_v1", "get_admin_school_schedule_edit_result_v1"].includes(rpc)) {
       const result = localSchoolScheduleEdit(students, rpc, input);

@@ -1,4 +1,5 @@
 import "server-only";
+import { mistakeTargetSchema, type MistakeTarget } from "@/features/students/public-contracts";
 
 import { z } from "zod";
 
@@ -74,7 +75,7 @@ const worksheetItemSchema = z
     }
   });
 
-const worksheetExportSchema = z
+const legacyWorksheetExportSchema = z
   .object({
     schema_version: z.literal("wrong-word-worksheet-request-v1"),
     request_id: z.uuid(),
@@ -114,6 +115,37 @@ const worksheetExportSchema = z
     }
   });
 
+const worksheetMistakeItemSchema = z.object({
+  position: z.number().int().min(1).max(50), item_id: z.string().min(3).max(500),
+  dictionary_id: z.string().nullable(), dataset_id: z.uuid(), vocab_entry_id: z.number().int().positive(),
+  headword: z.string().min(1), testedField: z.enum(["primary_meaning","definition","example"]), selectedText: z.string().min(1),
+  primaryMeaning: z.string().nullable(), meaningKey: mistakeTargetSchema.shape.meaningKey, episodeId: z.uuid(),
+  sourceQuestionId: z.uuid(), sourcePhase: mistakeTargetSchema.shape.sourcePhase, stateVersion: mistakeTargetSchema.shape.stateVersion,
+  contentVersionId: z.uuid(), contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  currentWrongCount: z.number().int().nonnegative(), lifetimeWrongCount: z.number().int().nonnegative(),
+  legacyWrongCount: z.number().int().nonnegative(), currentMissedCount: z.number().int().nonnegative(),
+  countQuality: z.enum(["exact","legacy-continuation"]), identityKind: z.string(),
+  generation_status: z.enum(["ready","needs_dictionary_link","needs_meaning_review"]),
+  source_metadata: z.record(z.string(),z.unknown()),
+}).strict().superRefine((item, context) => {
+  if (item.generation_status === "ready" && (item.testedField !== "primary_meaning" || !item.dictionary_id
+    || item.source_metadata.dictionaryId !== item.dictionary_id || !item.source_metadata.occurrenceId
+    || item.source_metadata.provenanceStatus !== "reviewed_for_preview_v1"
+    || typeof item.source_metadata.occurrenceContentHash !== "string" || !/^[a-f0-9]{64}$/i.test(item.source_metadata.occurrenceContentHash))) {
+    context.addIssue({ code: "custom", message: "자동 생성 가능 항목의 출처 근거가 불완전합니다.", path: ["generation_status"] });
+  }
+});
+const worksheetExportSchema = z.union([legacyWorksheetExportSchema, z.object({ ...legacyWorksheetExportSchema.shape,
+  schema_version: z.literal("wrong-word-worksheet-request-v2"),
+  items: z.array(worksheetMistakeItemSchema).min(1).max(50),
+}).strict().superRefine((value, context) => {
+  if (value.item_count !== value.items.length || value.items.some((item, index) => item.position !== index + 1)
+    || new Set(value.items.map(item => item.item_id)).size !== value.items.length
+    || new Set(value.items.map(item => item.meaningKey)).size !== value.items.length) {
+    context.addIssue({ code: "custom", message: "요청 문항의 수·순서·뜻 식별자를 확인해 주세요.", path: ["items"] });
+  }
+})]);
+
 export type WrongWordWorksheetExport = z.infer<
   typeof worksheetExportSchema
 >;
@@ -131,6 +163,7 @@ export class WrongWordWorksheetError extends Error {
       | "forbidden"
       | "invalid_selection"
       | "not_found"
+      | "history_changed"
       | "database",
   ) {
     super(reason);
@@ -139,6 +172,7 @@ export class WrongWordWorksheetError extends Error {
 }
 
 function worksheetErrorReason(code: string | undefined) {
+  if (code === "40001" || code === "PT409") return "history_changed" as const;
   if (code === "42501") return "forbidden" as const;
   if (code === "P0002") return "not_found" as const;
   if (["22023", "23503", "23505"].includes(code ?? "")) {
@@ -149,7 +183,7 @@ function worksheetErrorReason(code: string | undefined) {
 
 export async function createWrongWordWorksheetRequest(
   studentId: string,
-  questionIds: string[],
+  questionIds: string[] | MistakeTarget[],
   authenticatedAdmin?: AdminContext,
 ): Promise<WrongWordWorksheetRequestResult> {
   if (!authenticatedAdmin) {
@@ -158,11 +192,9 @@ export async function createWrongWordWorksheetRequest(
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_wrong_word_worksheet_request_v1",
-    {
-      p_student_id: studentId,
-      p_question_ids: questionIds,
-    },
+    typeof questionIds[0] === "string" ? "create_wrong_word_worksheet_request_v1" : "create_wrong_word_worksheet_request_v2",
+    typeof questionIds[0] === "string" ? { p_student_id: studentId, p_question_ids: questionIds }
+      : { p_student_id: studentId, p_targets: z.array(mistakeTargetSchema).min(1).max(50).parse(questionIds) },
   );
 
   if (error) {
@@ -233,7 +265,7 @@ export async function exportWrongWordWorksheetRequest(
 export function wrongWordWorksheetFilename(
   worksheet: WrongWordWorksheetExport,
 ) {
-  return `wrong-word-worksheet-request-v1_${worksheet.content_sha256
+  return `${worksheet.schema_version}_${worksheet.content_sha256
     .slice(0, 8)
     .toLocaleLowerCase("en-US")}.json`;
 }

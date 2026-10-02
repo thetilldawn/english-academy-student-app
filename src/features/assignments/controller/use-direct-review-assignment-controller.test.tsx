@@ -72,7 +72,7 @@ describe("direct review assignment controller", () => {
     const writes: unknown[] = [];
     let revision=0;
     const transport: AssignmentTransport=vi.fn(async request=>{
-      if(request.url.endsWith("/direct-review-summaries")) return {data:summaryResponse,ok:true,status:200};
+      if(request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) return {data:summaryResponse,ok:true,status:200};
       if(request.url.endsWith("/preview")) return {data:{...capacityResponse,candidateCount:3,unavailableCount:1,selectionFingerprint:(++revision%2?"a":"b").repeat(64),unavailableItems:[{sourceQuestionId:"00000000-0000-4000-8000-000000000061",vocabEntryId:3,headword:"unavailable",primaryMeaning:null,reason:"target_unavailable"}]},ok:true,status:200};
       writes.push(request.body);return {data:{assignmentId:ids.assignment},ok:true,status:201};
     });
@@ -96,7 +96,7 @@ describe("direct review assignment controller", () => {
     let previewCount = 0, writes = 0;
     let release!: (value: { data: typeof capacityResponse; ok: boolean; status: number }) => void;
     const transport: AssignmentTransport = vi.fn(async request => {
-      if (request.url.endsWith("/direct-review-summaries")) return { data: summaryResponse, ok: true, status: 200 };
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) return { data: summaryResponse, ok: true, status: 200 };
       if (request.url.endsWith("/preview")) {
         previewCount += 1;
         if (previewCount === 1) return { data: capacityResponse, ok: true, status: 200 };
@@ -130,7 +130,7 @@ describe("direct review assignment controller", () => {
     const requests: Parameters<AssignmentTransport>[0][] = [];
     const transport: AssignmentTransport = vi.fn(async (request) => {
       requests.push(request);
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       return { data: capacityResponse, ok: true, status: 200 };
@@ -154,7 +154,7 @@ describe("direct review assignment controller", () => {
 
     expect(
       requests.filter((request) =>
-        request.url.endsWith("/direct-review-summaries")
+        request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")
       ),
     ).toHaveLength(1);
     expect(requests.find((request) =>
@@ -173,7 +173,7 @@ describe("direct review assignment controller", () => {
     await act(async () => Promise.resolve());
     expect(
       requests.filter((request) =>
-        request.url.endsWith("/direct-review-summaries")
+        request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")
       ),
     ).toHaveLength(1);
   });
@@ -186,7 +186,7 @@ describe("direct review assignment controller", () => {
       value: { data: unknown; ok: boolean; status: number },
     ) => void;
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         summaryCalls += 1;
         if (summaryCalls === 1) {
           return { data: { error: "일시 오류" }, ok: false, status: 503 };
@@ -250,7 +250,7 @@ describe("direct review assignment controller", () => {
       value: { data: unknown; ok: boolean; status: number },
     ) => void;
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       previewCalls += 1;
@@ -299,7 +299,7 @@ describe("direct review assignment controller", () => {
     );
     const exactBodies: Record<string, unknown>[] = [];
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       if (request.url === "/api/admin/exact-review-assignments/preview") {
@@ -330,20 +330,28 @@ describe("direct review assignment controller", () => {
         ok: false,
       });
     });
+    expect(result.current.uncertain).toBe(true);
+    expect(result.current.canSubmit).toBe(false);
+    const draft=result.current.draft;
+    act(()=>{result.current.actions.changeDirection(100);result.current.actions.changeDataset("different");result.current.actions.changeOrder("descending");});
+    expect(result.current.draft).toBe(draft);
     await act(async () => {
-      expect(await result.current.actions.submit()).toMatchObject({
+      expect((await result.current.actions.submit()).ok).toBe(false);
+      expect(exactBodies).toHaveLength(1);
+      expect(await result.current.actions.recoverSubmission()).toMatchObject({
         ok: true,
       });
     });
 
     expect(exactBodies).toHaveLength(2);
+    expect(exactBodies[1]).toEqual(exactBodies[0]);
     expect(exactBodies[0]?.idempotencyKey).toBe(ids.idempotency);
     expect(exactBodies[1]?.idempotencyKey).toBe(ids.idempotency);
   });
 
   it("400개 제한으로 이번 후보에 없는 단계도 전체 요약에 남으면 유지한다", async () => {
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return {
           data: {
             summaries: [{
@@ -393,7 +401,7 @@ describe("direct review assignment controller", () => {
     const requests: Parameters<AssignmentTransport>[0][] = [];
     const transport: AssignmentTransport = vi.fn(async (request) => {
       requests.push(request);
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       return { data: capacityResponse, ok: true, status: 200 };
@@ -438,7 +446,7 @@ describe("direct review assignment controller", () => {
     let previewCalls = 0;
     let submitCalls = 0;
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         summaryCalls += 1;
         return { data: summaryResponse, ok: true, status: 200 };
       }
@@ -483,7 +491,7 @@ describe("direct review assignment controller", () => {
     let summaryCalls = 0;
     let previewCalls = 0;
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         summaryCalls += 1;
         return { data: summaryResponse, ok: true, status: 200 };
       }
@@ -519,7 +527,7 @@ describe("direct review assignment controller", () => {
     ) => void;
     let previewCalls = 0;
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       previewCalls += 1;
@@ -571,7 +579,7 @@ describe("direct review assignment controller", () => {
     ) => void;
     let submitCalls = 0;
     const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       if (request.url === "/api/admin/exact-review-assignments/preview") {
@@ -625,7 +633,7 @@ describe("direct review assignment controller", () => {
     ) => void;
     const idempotencyKeys: string[] = [];
     const firstTransport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       if (request.url === "/api/admin/exact-review-assignments/preview") {
@@ -643,7 +651,7 @@ describe("direct review assignment controller", () => {
       });
     });
     const secondTransport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/direct-review-summaries")) {
+      if (request.url.endsWith("/direct-review-summaries?plan=meaning-episode-v1")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
       if (request.url === "/api/admin/exact-review-assignments/preview") {
@@ -691,9 +699,10 @@ describe("direct review assignment controller", () => {
       releaseFirst({ data: { error: "일시 오류" }, ok: false, status: 503 });
       await expect(first).resolves.toMatchObject({ ok: false });
     });
-    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    await waitFor(() => expect(result.current.uncertain).toBe(true));
+    expect(result.current.canSubmit).toBe(false);
     await act(async () => {
-      await expect(result.current.actions.submit()).resolves.toMatchObject({
+      await expect(result.current.actions.recoverSubmission()).resolves.toMatchObject({
         ok: true,
       });
     });

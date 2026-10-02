@@ -12,6 +12,7 @@ export type QuizAttemptPhase =
 
 export type QuizQuestion = {
   id: string;
+  quizContentMode?: QuizContentMode;
   orderIndex: number;
   direction: QuizDirection;
   prompt: string;

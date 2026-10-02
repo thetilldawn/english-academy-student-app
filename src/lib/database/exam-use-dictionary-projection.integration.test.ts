@@ -1,3 +1,8 @@
+const approvedMeaningFixtureSql = `insert into word_index.mock_wordbook_identity_review(source_release_id,source_entry_id,source_row_sha256,
+ reviewed_headword,reviewed_gloss,lexical_pos,sense_id,review_evidence_sha256)
+ select o.release_id,e.id,e.row_sha256,e.headword,e.primary_meaning,'noun','m03-remap/'||o.dictionary_id,repeat('d',64)
+ from word_index.app_exam_use_occurrence o join public.vocab_entries e on e.id=o.vocab_entry_id and e.dataset_id=o.dataset_id
+ where o.release_id=$1::uuid and e.id=any($2::bigint[]) and o.include_in_exam`;
 import fs from "node:fs";
 import path from "node:path";
 
@@ -356,6 +361,8 @@ describe.sequential("exam-use dictionary projection", () => {
       insert into public.students (id, display_name, status, created_by, school_name, grade_label)
       values ('${ids.student}', 'Preview student', 'active', '${ids.admin}', '가짜 고등학교', '고2');
     `);
+
+    await database.query(approvedMeaningFixtureSql, [releaseId, entryIds]);
 
     const directions = [
       "english_to_korean",
@@ -1606,9 +1613,7 @@ describe.sequential("exam-use dictionary projection", () => {
       choice_vocab_entry_ids: currentEntryIds,
     }));
 
-    await database.exec("set role authenticated;");
-    const mixed = await database.query<{ assignment_id: string }>(
-      `select public.create_mixed_review_assignment_v8(
+    const mixedSql = `select public.create_mixed_review_assignment_v8(
         $1::uuid,
         $2::uuid,
         $3::smallint[],
@@ -1624,15 +1629,20 @@ describe.sequential("exam-use dictionary projection", () => {
         'total',
         null,
         $5::jsonb
-      ) as assignment_id`,
-      [
-        ids.student,
-        datasetId,
-        reviewLevels,
-        queueIds,
-        JSON.stringify(questions),
-      ],
-    );
+      ) as assignment_id`;
+    const mixedArgs = [ids.student, datasetId, reviewLevels, queueIds, JSON.stringify(questions)];
+    await database.exec("reset role");
+    const unchangedSql = `select (select count(*) from public.assignments) assignments,
+      (select count(*) from public.assignment_review_targets) targets,
+      (select jsonb_agg(to_jsonb(q) order by q.id) from public.student_vocab_review_queue q where q.id=any($1::uuid[])) queues`;
+    const beforeRejected = (await database.query(unchangedSql,[queueIds])).rows;
+    await database.exec("set role authenticated");
+    await expect(database.query(mixedSql,mixedArgs)).rejects.toThrow("review_target_meaning_changed");
+    await database.exec("reset role");
+    expect((await database.query(unchangedSql,[queueIds])).rows).toEqual(beforeRejected);
+    await database.query(approvedMeaningFixtureSql,[remapReleaseId,currentEntryIds]);
+    await database.exec("set role authenticated");
+    const mixed = await database.query<{ assignment_id: string }>(mixedSql,mixedArgs);
     const identities = await database.query<{
       assignment_id: string;
       vocab_entry_id: number;

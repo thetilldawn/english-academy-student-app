@@ -19,7 +19,7 @@ export async function materializeLibraryComposition(input: unknown, admin?: Admi
   let progressConfirmed = false;
   const checkedStep = (response: { data: unknown; error: { code?: string; message?: string } | null }) => {
     if (response.error && isVocabularySourceError(response.error)) throw new LibraryCommandError(409, progressConfirmed, true);
-    if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : response.error.code === "P0002" ? 404 : response.error.code === "40001" ? 409 : response.error.code === "22023" ? 422 : 503, progressConfirmed);
+    if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : response.error.code === "P0002" ? 404 : (response.error.code === "40001" || response.error.code === "PT409") ? 409 : response.error.code === "22023" ? 422 : 503, progressConfirmed);
     const result = compositionStepSchema.safeParse(response.data);
     if (!result.success || result.data.versionId !== command.versionId || result.data.contentHash !== command.contentHash ||
       (datasetId && result.data.datasetId !== datasetId)) throw new LibraryCommandError(503);
@@ -40,7 +40,7 @@ export async function materializeLibraryComposition(input: unknown, admin?: Admi
     if (step.needsQuestions) {
       const response = await client.rpc("prepare_vocabulary_template_question_input_v1", { p_request: command });
       if (response.error && isVocabularySourceError(response.error)) throw new LibraryCommandError(409, progressConfirmed, true);
-      if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : response.error.code === "40001" ? 409 : 503, progressConfirmed);
+      if (response.error) throw new LibraryCommandError(response.error.code === "42501" ? 403 : (response.error.code === "40001" || response.error.code === "PT409") ? 409 : 503, progressConfirmed);
       const prepared = compositionQuestionInputSchema.safeParse(response.data);
       if (!prepared.success || prepared.data.versionId !== command.versionId || prepared.data.datasetId !== datasetId ||
         prepared.data.contentHash !== command.contentHash) throw new LibraryCommandError(503);

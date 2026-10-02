@@ -5,10 +5,11 @@ import type { QuizAttemptResponse } from "../model";
 import { attemptResponseSchema } from "../api/quiz-attempt";
 import { freezePracticeQuestions, practiceHash, preparePractice } from "./practice-source";
 import { PracticeError, practiceRpc } from "./practice-rpc";
+import { freezeMistakePracticeQuestions, prepareMistakePractice } from "./mistake-practice-source";
 export { PracticeError, practiceRpc } from "./practice-rpc";
 
 export async function previewPractice(studentId: string, input: PracticeInput) {
-  return (await preparePractice(studentId, input)).preview;
+  return (await (["mistakes", "mistake_filters"].includes(input.selection.mode) ? prepareMistakePractice(studentId, input) : preparePractice(studentId, input))).preview;
 }
 export async function startPractice(studentId: string, input: PracticeStartInput): Promise<QuizAttemptResponse>;
 export async function startPractice(studentId: string, input: PracticeStartInput, prepare: boolean): Promise<QuizAttemptResponse | {preparationId: string}>;
@@ -23,11 +24,13 @@ export async function startPractice(studentId: string, input: PracticeStartInput
   }
   const { confirmation: _confirmation, ...previewInput } = input;
   void _confirmation;
-  const prepared = await preparePractice(studentId, previewInput);
+  const prepared = ["mistakes", "mistake_filters"].includes(input.selection.mode)
+    ? { kind: "mistakes" as const, ...await prepareMistakePractice(studentId, previewInput) }
+    : { kind: "legacy" as const, ...await preparePractice(studentId, previewInput) };
   if (!prepared.preview.confirmation || prepared.preview.confirmation !== input.confirmation) {
     throw new PracticeError(409, "단어가 달라졌습니다. 다시 확인해 주세요.", "source_changed");
   }
-  const questions = await freezePracticeQuestions(prepared);
+  const questions = prepared.kind === "mistakes" ? await freezeMistakePracticeQuestions(studentId, prepared) : await freezePracticeQuestions(prepared);
   const result = await practiceRpc(prepare ? "prepare_word_practice_start_v1" : "start_student_word_practice_v1", { p_student_id: studentId, p_request_key: input.requestKey,
     p_request_hash: requestHash, p_selection: input.selection, p_settings: input.settings, p_source_hash: prepared.source.sourceHash, p_questions: questions });
   return prepare ? {preparationId: z.uuid().parse(result)} : attemptResponseSchema.parse(result);
