@@ -18,6 +18,9 @@ describe.sequential("뜻별 오답 접수와 현재 구간", () => {
   let db: PGlite;
   beforeAll(async () => {
     db = await createFinalSchemaDatabase();
+    await seedFixture();
+  }, 120_000);
+  async function seedFixture() {
     await db.exec(`grant usage on schema auth,extensions to service_role; alter role service_role bypassrls;
       begin;
       select set_config('request.jwt.claim.sub','${admin}',true);
@@ -32,7 +35,7 @@ describe.sequential("뜻별 오답 접수와 현재 구간", () => {
       insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
         select '${dataset}',n,'fakeword'||n,'fakeword'||n,array['가짜 뜻'||n],'가짜 뜻'||n,repeat('B',63)||n::text,'${unit}',n,'word' from generate_series(1,4)n;
       commit;`);
-  }, 120_000);
+  }
   beforeEach(async () => { await db.exec("begin"); });
   afterEach(async () => { await db.exec("rollback; reset role"); });
   afterAll(async () => { await db?.close(); });
@@ -328,12 +331,32 @@ describe.sequential("뜻별 오답 접수와 현재 구간", () => {
     expect(await state(e.questions[1])).toMatchObject({ unresolved: false, lifetime_wrong_count: 1 });
   });
   it.each([false, true])("옛 최초 오답의 같은 문항을 새 재시험에서 맞혀도 이전 이력은 유지한다 (옛 시각 없음=%s)", async missingTime => {
-    const e = await exam(240);
+    const sharedDatabase = db;
+    let legacyDatabase: PGlite | undefined;
+    let legacyExam: FakeExam | undefined;
+    try {
+      // Create the old answer before M04, then exercise the current public retry path.
+      // A separate database keeps this history out of the shared list/count fixtures.
+      legacyDatabase = await createFinalSchemaDatabase({beforeMigration: async (pending, name) => {
+        if (name !== "20261002040000_preserve_compact_vocabulary_results.sql") return;
+        legacyDatabase = db = pending;
+        await seedFixture();
+        await db.exec("begin");
+      legacyExam = await exam(240);
+      const e = legacyExam;
     for (let n = 0; n < 4; n++) {
       await ready(e);
       await db.query("select private.grade_vocabulary_base($1,$2,$3,'initial',$4::smallint)", [student, e.attempt, e.questions[n], n === 0 ? 1 : n]);
     }
     if (missingTime) await db.query("update quiz_questions set initial_answered_at=null where id=$1", [e.questions[0]]);
+
+        await db.exec("commit");
+      }});
+      db = legacyDatabase;
+      if (!legacyExam) throw new Error("Legacy fixture was not created");
+      const e = legacyExam;
+      await db.exec("begin");
+      expect(await rows("select * from private.vocabulary_result_policies")).toEqual([]);
     const first = await page({ view: "history" });
     const oldMeaning = first.items[0].meanings[0];
     expect(oldMeaning).toMatchObject({ unresolved: true });
@@ -346,7 +369,11 @@ describe.sequential("뜻별 오답 접수와 현재 구간", () => {
     expect(after.items[0].meanings[0]).toMatchObject({ unresolved: false, resolvedAt: expect.any(String),
       episodes: [{ episodeId: expect.any(String), includesLegacy: true, resolvedAt: expect.any(String), wrongCount: 1 }] });
     expect((await page()).items).toEqual([]);
-  });
+    } finally {
+      await legacyDatabase?.close();
+      db = sharedDatabase;
+    }
+  }, 120_000);
   it("재시험 없는 초기 완료 보정까지 저장한 결과를 그대로 반환한다", async () => {
     const e = await exam(84, { retry: false });
     await answer(e, 0, 1);

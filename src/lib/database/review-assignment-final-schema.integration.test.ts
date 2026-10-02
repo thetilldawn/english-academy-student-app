@@ -4080,9 +4080,6 @@ describe.sequential("admin deletion controls", () => {
   }, 30_000);
 
   it("soft-deletes a student while preserving attempts and cancelling only unstarted delivery", async () => {
-    const database = await createFinalSchemaDatabase();
-    try {
-      await seedReviewAssignmentScenario(database);
       const unstartedAssignment =
         "00000000-0000-4000-8000-000000000701";
       const startedAssignment =
@@ -4096,6 +4093,10 @@ describe.sequential("admin deletion controls", () => {
       const peerStudent =
         "00000000-0000-4000-8000-000000000706";
 
+    // These are pre-policy records; new attempt deletion is tested with actual answers separately.
+    const database = await createFinalSchemaDatabase({beforeMigration: async (database, name) => {
+      if (name !== "20261002040000_preserve_compact_vocabulary_results.sql") return;
+      await seedReviewAssignmentScenario(database);
       await database.exec(`
         insert into public.students (
           id,
@@ -4360,6 +4361,11 @@ describe.sequential("admin deletion controls", () => {
           0
         );
 
+      `);
+    }});
+    try {
+      expect((await database.query("select count(*)::int n from private.vocabulary_result_policies")).rows).toEqual([{n:0}]);
+      await database.exec(`
         set role authenticated;
         select public.delete_student_v1('${ids.student}');
         reset role;

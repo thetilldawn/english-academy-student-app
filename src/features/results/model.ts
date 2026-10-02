@@ -2,6 +2,7 @@ import type { QuestionProvenanceStatus } from "@/lib/quiz/question-provenance";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 import type { StudentAttemptPointSummary } from "@/features/learning-points/model";
 import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
+import type { VocabularyResultRecord } from "./contracts/result-record";
 
 export type AttemptResultQuestion = {
   id: string;
@@ -22,6 +23,7 @@ export type AttemptResultQuestion = {
 };
 
 export type StudentAttemptResult = {
+  resultRecord?: VocabularyResultRecord;
   id: string;
   title: string;
   quizContentMode: QuizContentMode;

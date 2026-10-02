@@ -57,10 +57,19 @@ export async function getAdminHistoryReadModelDetail(
       ])
     : [null, null];
 
+  // Assignment metadata may be older, but all mutable attempt values must come
+  // from the same result read. A retry can finish between the two RPCs above.
+  const snapshot = attempt?.resultRecord?.attempt;
+  const currentSummary = snapshot ? {
+    ...summary,
+    ...snapshot,
+    activityAt: snapshot.completedAt ?? snapshot.retryStartedAt ?? snapshot.initialCompletedAt ?? snapshot.startedAt,
+  } : summary;
+
   return {
     attempt,
     canonicalKey: historyEntryKey(summary),
     pointSummary,
-    summary,
+    summary: currentSummary,
   };
 }

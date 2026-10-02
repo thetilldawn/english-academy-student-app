@@ -1182,6 +1182,8 @@ describe.sequential("exam-use dictionary projection", () => {
       replacementState.rows[0]!.source_question_hash,
     );
 
+    // Roll back only the trial start; preserve the prepared assignment for cancellation.
+    await database.exec("begin");
     await database.exec("set role service_role; select set_config('request.jwt.claim.role','service_role',false)");
     const attempt = await database.query<{ attempt_id: string }>(`
       select public.create_quiz_attempt_from_bank(
@@ -1211,9 +1213,7 @@ describe.sequential("exam-use dictionary projection", () => {
       status: "in_progress",
     });
 
-    await database.exec(`
-      delete from public.quiz_attempts where id = '${attemptId}';
-    `);
+    await database.exec("rollback");
     await database.exec("set role authenticated;");
     await database.query(
       `select public.cancel_student_assignment_v1(

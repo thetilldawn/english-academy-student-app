@@ -2,6 +2,7 @@ import "server-only";
 import { getAttemptQuestionContents, type AttemptContentActor } from "@/features/quiz-player/public-server-queries";
 
 import type { StudentAttemptResult } from "@/features/results/model";
+import { getVocabularyResultRecord } from "@/features/results/public-server";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
 import { withCorrectedPronunciationAudio } from "@/lib/quiz/pronunciation-snapshot";
@@ -31,15 +32,18 @@ import {
 export async function getAttemptQuestionResults(
   attemptId: string,
   actor: AttemptContentActor,
+  detailScope: "legacy" | "initial_mistakes" | "summary_only" = "legacy",
 ): Promise<AttemptQuestionResult[]> {
+  if (detailScope === "summary_only") return [];
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("quiz_questions")
     .select(
       "id, vocab_entry_id, order_index, direction, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, vocab_entries(headword, primary_meaning, pronunciation_ko)",
     )
-    .eq("attempt_id", attemptId)
-    .order("order_index");
+    .eq("attempt_id", attemptId);
+  if (detailScope === "initial_mistakes") query = query.or("initial_is_correct.is.null,initial_is_correct.eq.false");
+  const { data, error } = await query.order("order_index");
 
   if (error) {
     throw new Error("문항 결과를 불러오지 못했습니다.");
@@ -133,8 +137,11 @@ export async function getAttemptResult(
   if (!data) {
     return null;
   }
+  const resultRecord = await getVocabularyResultRecord(attemptId, { kind: "student", id: studentId });
+  if (!resultRecord) return null;
+  const snapshot = resultRecord.attempt;
   const [questions, pointSummary] = await Promise.all([
-    getAttemptQuestionResults(attemptId, { kind: "student", studentId }),
+    getAttemptQuestionResults(attemptId, { kind: "student", studentId }, resultRecord.detailScope),
     getStudentAttemptPointSummary(studentId, attemptId),
   ]);
 
@@ -142,48 +149,55 @@ export async function getAttemptResult(
     ? data.assignments[0]
     : data.assignments;
   const reviewing =
-    data.status === "in_progress" && data.phase === "review";
-  const reviewMetrics = reviewing
+    snapshot.status === "in_progress" && snapshot.phase === "review";
+  const initial = resultRecord.phases.find(phase => phase.phase === "initial");
+  const retry = resultRecord.phases.find(phase => phase.phase === "retry");
+  const reviewMetrics = resultRecord.retentionPolicy === "summary_and_mistakes_v1" && initial
+    ? { initialCorrectCount: initial.correctCount, retryCorrectCount: retry?.correctCount ?? snapshot.retryCorrectCount ?? 0,
+      unresolvedWrongCount: retry ? initial.targetCount - initial.correctCount - retry.correctCount
+        : snapshot.unresolvedWrongCount ?? initial.targetCount - initial.correctCount, initialScore: initial.score }
+    : reviewing
     ? deriveAttemptQuestionMetrics(questions)
     : null;
   const reviewElapsedSeconds =
-    reviewing && data.initial_completed_at
+    reviewing && snapshot.initialCompletedAt
       ? Math.max(
           0,
           Math.floor(
-            (new Date(data.initial_completed_at).getTime() -
-              new Date(data.started_at).getTime()) /
+            (new Date(snapshot.initialCompletedAt).getTime() -
+              new Date(snapshot.startedAt).getTime()) /
               1000,
           ),
         )
       : null;
 
   return {
+    resultRecord,
     id: data.id,
     title: assignment?.title ?? "단어 시험",
     quizContentMode: normalizeQuizContentMode(
       assignment?.quiz_content_mode ?? "legacy_book_meaning_choice",
     ),
-    status: data.status as StudentAttemptResult["status"],
-    phase: data.phase as AttemptState["phase"],
-    attemptNumber: data.attempt_number,
-    questionCount: data.question_count_snapshot,
+    status: snapshot.status as StudentAttemptResult["status"],
+    phase: snapshot.phase as AttemptState["phase"],
+    attemptNumber: snapshot.attemptNumber,
+    questionCount: snapshot.questionCount,
     initialCorrectCount:
-      reviewMetrics?.initialCorrectCount ?? data.initial_correct_count,
+      reviewMetrics?.initialCorrectCount ?? snapshot.initialCorrectCount,
     retryCorrectCount:
-      reviewMetrics?.retryCorrectCount ?? data.retry_correct_count,
+      reviewMetrics?.retryCorrectCount ?? snapshot.retryCorrectCount,
     unresolvedWrongCount:
       reviewMetrics?.unresolvedWrongCount ??
-      data.unresolved_wrong_count,
+      snapshot.unresolvedWrongCount,
     initialScore:
       reviewMetrics?.initialScore ??
-      (data.initial_score === null ? null : Number(data.initial_score)),
-    finalScore: data.final_score === null ? null : Number(data.final_score),
-    passed: data.passed,
-    elapsedSeconds: reviewElapsedSeconds ?? data.elapsed_seconds,
-    startedAt: data.started_at,
-    initialCompletedAt: data.initial_completed_at,
-    completedAt: data.completed_at,
+      (snapshot.initialScore === null ? null : Number(snapshot.initialScore)),
+    finalScore: snapshot.finalScore === null ? null : Number(snapshot.finalScore),
+    passed: snapshot.passed,
+    elapsedSeconds: reviewElapsedSeconds ?? snapshot.elapsedSeconds,
+    startedAt: snapshot.startedAt,
+    initialCompletedAt: snapshot.initialCompletedAt,
+    completedAt: snapshot.completedAt,
     pointSummary,
     questions,
   };

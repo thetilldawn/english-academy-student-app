@@ -9,6 +9,8 @@ import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import type { AdminHistoryDetail } from "../model";
 
 import { AdminHistoryDetailContent } from "./admin-history-detail";
+import { resultRecordFixture, resultRecordWire } from "@/test-support/vocabulary-result-fixture";
+import { adminHistoryText } from "@/content/ko/admin-history";
 
 afterEach(cleanup);
 
@@ -116,6 +118,37 @@ function detail(retryIsCorrect: boolean): AdminHistoryDetail {
 }
 
 describe("AdminHistoryDetailContent", () => {
+  it("공식 재시험 대기를 최종 미통과로 표시하지 않고 미확정 재시험 점수를 숨긴다", () => {
+    const value = detail(false);
+    value.attempt!.resultRecord = resultRecordFixture({ state: "retry_waiting", finalized: false, retryStarted: false,
+      finalizedAt: null, finalReason: null, phases: resultRecordWire().phases.slice(0, 1) });
+    render(<AdminHistoryDetailContent detail={value} />);
+    expect(screen.getByText("재시험 대기")).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "재시험" })).not.toBeInTheDocument();
+    expect(screen.queryByText("0점")).not.toBeInTheDocument();
+  });
+  it("서로 다른 통과 기준에서도 저장된 재시험 통과를 최초 기준으로 뒤집지 않는다", () => {
+    const value = detail(false);
+    const wire = resultRecordWire();
+    wire.phases[1].score = 75;
+    wire.phases[1].passing_score = 60;
+    wire.attempt.finalScore = 75;
+    value.attempt!.resultRecord = resultRecordFixture(wire);
+    value.summary.finalScore = 75;
+    value.summary.passingScore = 80;
+    render(<AdminHistoryDetailContent detail={value} />);
+    expect(screen.getByText("통과", { exact: true })).toBeVisible();
+    expect(screen.getByText("75점 · 통과")).toBeVisible();
+    expect(screen.queryByText("75점", { exact: true })).not.toBeInTheDocument();
+  });
+  it("상세 미보관을 오답0으로 해석하지 않는다", () => {
+    const value = detail(false);
+    value.attempt!.questions = [];
+    value.attempt!.resultRecord = resultRecordFixture({ detailScope: "summary_only" });
+    render(<AdminHistoryDetailContent detail={value} />);
+    expect(screen.getByText("문항별 상세는 보관되어 있지 않습니다.")).toBeVisible();
+    expect(screen.queryByText(adminHistoryText.resultDetail.allCorrect)).not.toBeInTheDocument();
+  });
   it("shows the signed point breakdown only when events exist", () => {
     const withPoints = detail(true);
     withPoints.pointSummary = {

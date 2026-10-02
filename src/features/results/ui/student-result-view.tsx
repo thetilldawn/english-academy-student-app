@@ -1,5 +1,6 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
+import { resultRecordText } from "@/content/ko/result-record";
 import { CountBadge, MetaTag } from "@/design-system/primitives/badge/badge";
 import { ButtonLink } from "@/design-system/primitives/button/button";
 import { StudentAttemptPointSummaryView } from "@/features/learning-points/public-ui";
@@ -22,6 +23,7 @@ import {
   resultLayoutStyles,
 } from "./result-layout";
 import { StartRetryButton } from "./start-retry-button";
+import { ResultRecordSummary } from "./result-record-summary";
 import styles from "./student-result-view.module.css";
 
 function answerDensity(answer: string) {
@@ -210,11 +212,12 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
   const unresolvedQuestions = questionGroups.unresolved;
   const resolvedQuestions = questionGroups.resolved;
   const hasRetryResult = questionGroups.hasRetryResult;
+  const summaryOnly = result.resultRecord?.detailScope === "summary_only";
 
   const unresolved = (
     <ResultSection
       count={
-        <CountBadge>
+        summaryOnly ? undefined : <CountBadge>
           {formatContentText(studentAppText.result.count, {
             count: unresolvedQuestions.length,
           })}
@@ -227,7 +230,7 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
       }
       headingId="unresolved-heading"
     >
-      {unresolvedQuestions.length === 0 ? (
+      {summaryOnly ? <ResultEmptyState>{resultRecordText.noDetails}</ResultEmptyState> : unresolvedQuestions.length === 0 ? (
         <ResultEmptyState>
           {reviewPending
             ? studentAppText.result.empty.noInitialWrong
@@ -250,6 +253,7 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
   const sidebar = (
     <>
       <ResultMetrics result={result} reviewPending={reviewPending} />
+      {result.resultRecord ? <ResultRecordSummary record={result.resultRecord} /> : null}
       {reviewPending ? <StartRetryButton attemptId={result.id} /> : null}
       <ButtonLink
         href="/student"
@@ -261,7 +265,7 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
   );
 
   const resolved =
-    resolvedQuestions.length > 0 ? (
+    !summaryOnly && resolvedQuestions.length > 0 ? (
       <ResultSection
         count={
           <CountBadge>

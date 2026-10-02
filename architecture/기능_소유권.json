@@ -377,8 +377,8 @@
     {
       "path": "src/content",
       "owner": "shared-contract",
-      "fileCount": 11,
-      "pathSetSha256": "cb63faba11e914ff592b6488b34da4581c8aef2ce15556018f37b3b16d87ee0f"
+      "fileCount": 12,
+      "pathSetSha256": "84b074247ee1cdabcbf77931a172b30ea8d44ad59e5da96d2858fe606cbfd52c"
     },
     {
       "path": "src/styles",
@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 22,
-      "pathSetSha256": "58e3e5b3fa0c89e0dab7c0c4e178924591ec0d54d8f8e575707757e47aaaca31"
+      "fileCount": 23,
+      "pathSetSha256": "6f9ed86a97d88b524a67c9a81e9f3cdb4359b7cf80dc4646e8e4dcf29eb86fa9"
     }
   ],
   "pageOwners": [
@@ -2102,8 +2102,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 133,
-      "pathSetSha256": "24b848ca183dd0f09403566750656b4520c8465b32f4478dd8da6dae4b63eea4"
+      "fileCount": 134,
+      "pathSetSha256": "9f70f2e261bce17e06cd57b63e619f48e3975a3d6739fc44c33276fccc253a0a"
     },
     {
       "path": "src/lib/deploy",
@@ -2535,6 +2535,10 @@
     {
       "path": "src/features/assignments/server/use-cases/mixed-mistake-assignment.ts",
       "owner": "assignments"
+    },
+    {
+      "path": "src/features/results/server/result-record-query.ts",
+      "owner": "results"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2985,6 +2989,11 @@
       "path": "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
       "owner": "students",
       "flow": "student-wrong-word-read"
+    },
+    {
+      "path": "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql",
+      "owner": "results",
+      "flow": "student-quiz-attempt"
     }
   ],
   "features": [
@@ -3760,6 +3769,18 @@
       "to": "src/features/quiz-player/public-server.ts",
       "reason": "혼합 배정의 뜻별 출제와 원문항 고정을 기존 공개 계획 경계로 재사용",
       "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/history/model.ts",
+      "to": "src/features/results/public-contracts.ts",
+      "reason": "APP-20261002-02: 권한 있는 같은 시점의 결과 요약과 공개 표시 계약 연결",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/history/server/queries/admin-attempt-detail-query.ts",
+      "to": "src/features/results/public-server.ts",
+      "reason": "APP-20261002-02: 권한 있는 같은 시점의 결과 요약과 공개 표시 계약 연결",
+      "removeIn": "공개 진입점으로 고정"
     }
   ],
   "currentLibToFeatureImports": [
@@ -3840,6 +3861,12 @@
       "to": "src/features/students/public-contracts.ts",
       "reason": "문제지 선택을 소유 기능의 뜻·구간·버전 계약으로 검증",
       "removeIn": "문제지 서비스의 기능 서버 이전"
+    },
+    {
+      "from": "src/lib/services/quiz/attempt-result-query.ts",
+      "to": "src/features/results/public-server.ts",
+      "reason": "APP-20261002-02: 권한 있는 같은 시점의 결과 요약과 공개 표시 계약 연결",
+      "removeIn": "공개 진입점으로 고정"
     }
   ],
   "currentFeatureToLibBridges": [
@@ -4001,6 +4028,15 @@
         "src/lib/services/quiz/attempt-query.ts",
         "src/lib/services/quiz/pronunciation-registry.ts"
       ]
+    },
+    {
+      "from": "src/features/history/server/queries/admin-attempt-detail-query.ts",
+      "to": "src/features/results/public-server.ts",
+      "via": [
+        "src/lib/services/quiz/attempt-result-query.ts"
+      ],
+      "reason": "APP-20261002-02: 권한 있는 같은 시점의 결과 요약과 공개 표시 계약 연결",
+      "removeIn": "공개 진입점으로 고정"
     }
   ],
   "crossLayerFlows": [
@@ -5396,7 +5432,8 @@
           "src/features/history/contracts/admin-history-read-model.ts",
           "src/features/history/contracts/admin-history-request-error.ts",
           "src/features/history/api/history-read-response.ts",
-          "src/features/history/model.ts"
+          "src/features/history/model.ts",
+          "src/features/results/public-contracts.ts"
         ],
         "transport": [
           "src/features/history/actions/hide-admin-history-entry.ts",
@@ -5416,7 +5453,9 @@
           "src/features/history/public-server.ts",
           "src/features/history/public-server-queries.ts",
           "src/features/school-schedules/public-server.ts",
-          "src/features/quiz-player/public-server-queries.ts"
+          "src/features/quiz-player/public-server-queries.ts",
+          "src/features/results/public-server.ts",
+          "src/features/results/server/result-record-query.ts"
         ],
         "database": [
           "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
@@ -5431,7 +5470,8 @@
           "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
           "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
           "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/loading.tsx",
@@ -5469,7 +5509,8 @@
           "src/lib/database/entry-approved-pronunciation.integration.test.ts",
           "src/lib/database/pronunciation-audio-corrections.integration.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
-          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts"
+          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
+          "src/lib/database/vocabulary-result-records.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7039,7 +7080,8 @@
         "students",
         "learning-points",
         "wordbook-compositions",
-        "session"
+        "session",
+        "results"
       ],
       "dataClass": "mutation",
       "cachePolicy": "진행 응시·문항·답·오답·포인트는 캐시 금지",
@@ -7129,7 +7171,8 @@
         "contract": [
           "src/features/quiz-player/model.ts",
           "src/lib/assignment/assignment-release.ts",
-          "src/features/quiz-player/contracts/preparation.ts"
+          "src/features/quiz-player/contracts/preparation.ts",
+          "src/features/results/public-contracts.ts"
         ],
         "transport": [
           "src/features/quiz-player/api/quiz-attempt.ts",
@@ -7154,7 +7197,9 @@
           "src/features/quiz-player/public-server.ts",
           "src/features/quiz-player/server/attempt-preparation.ts",
           "src/app/api/student/attempts/[id]/ready/route.ts",
-          "src/features/quiz-player/public-server-queries.ts"
+          "src/features/quiz-player/public-server-queries.ts",
+          "src/features/results/public-server.ts",
+          "src/features/results/server/result-record-query.ts"
         ],
         "database": [
           "supabase/migrations/20260728162905_initial_student_app_mvp.sql",
@@ -7189,7 +7234,8 @@
           "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
-          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+          "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7251,7 +7297,8 @@
           "src/features/session/controller/student-private-cache-events.test.ts",
           "src/features/quiz-player/api/quiz-transport.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
-          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
+          "src/lib/database/vocabulary-result-records.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

@@ -1,0 +1,39 @@
+.summary {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+.summary h2,
+.summary h3,
+.summary p,
+.summary dl,
+.summary dd {
+  margin: 0;
+}
+
+.summary h2 { font-size: 16px; }
+.summary h3 { font-size: 14px; }
+
+.phase {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.phase dl { display: grid; gap: var(--space-2); }
+.phase dt { color: var(--text-secondary); }
+.phase dd { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+.summary .notice {
+  margin-top: var(--space-3);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}

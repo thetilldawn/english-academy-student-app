@@ -11,7 +11,7 @@ export type ResultQuestionGroups = {
 };
 
 export function selectResultQuestionGroups(
-  result: Pick<StudentAttemptResult, "questions" | "status">,
+  result: Pick<StudentAttemptResult, "questions" | "status" | "resultRecord">,
 ): ResultQuestionGroups {
   const wrong = result.questions.flatMap((question) => {
     if (question.initialIsCorrect === false) return [question];
@@ -27,7 +27,8 @@ export function selectResultQuestionGroups(
     ];
   });
   return {
-    hasRetryResult: wrong.some((question) => question.retryIsCorrect !== null),
+    hasRetryResult: result.resultRecord ? result.resultRecord.phases.some(phase => phase.phase === "retry")
+      : wrong.some((question) => question.retryIsCorrect !== null),
     resolved: wrong.filter((question) => question.retryIsCorrect === true),
     unresolved: wrong.filter((question) => question.retryIsCorrect !== true),
     wrong,

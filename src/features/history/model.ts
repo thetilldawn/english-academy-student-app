@@ -1,4 +1,5 @@
 import type { AttemptResultQuestion } from "@/features/results/model";
+import type { VocabularyResultRecord } from "@/features/results/public-contracts";
 import type { AdminAttemptPointSummary } from "@/features/learning-points/model";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
@@ -22,6 +23,7 @@ export type AttemptSummary = {
 };
 
 export type AdminAttemptDetail = AttemptSummary & {
+  resultRecord?: VocabularyResultRecord;
   elapsedSeconds: number | null;
   quizContentMode: QuizContentMode;
   questions: AttemptResultQuestion[];

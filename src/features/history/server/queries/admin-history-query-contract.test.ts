@@ -40,7 +40,7 @@ describe("admin history query boundaries", () => {
     );
     const attemptRoute = source("src/app/api/admin/attempts/[id]/route.ts");
 
-    expect(attemptQuery).toContain('getAttemptQuestionResults(attemptId, { kind: "admin", adminId: admin.userId })');
+    expect(attemptQuery).toContain('getAttemptQuestionResults(attemptId, { kind: "admin", adminId: admin.userId }, resultRecord.detailScope)');
     expect(attemptQuery).toContain("deriveAttemptQuestionMetrics(questions)");
     expect(publicServerQueries).toContain(
       'from "./server/queries/admin-attempt-detail-query"',

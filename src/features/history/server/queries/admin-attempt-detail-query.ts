@@ -6,6 +6,7 @@ import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { getAttemptQuestionResults } from "@/lib/services/quiz/attempt-result-query";
+import { getVocabularyResultRecord } from "@/features/results/public-server";
 
 export async function getAdminAttemptDetail(
   attemptId: string,
@@ -29,30 +30,40 @@ export async function getAdminAttemptDetail(
     return null;
   }
 
-  const questions = await getAttemptQuestionResults(attemptId, { kind: "admin", adminId: admin.userId });
+  const resultRecord = await getVocabularyResultRecord(attemptId, { kind: "admin", id: admin.userId });
+  if (!resultRecord) return null;
+  const snapshot = resultRecord.attempt;
+  const questions = await getAttemptQuestionResults(attemptId, { kind: "admin", adminId: admin.userId }, resultRecord.detailScope);
   const student = Array.isArray(data.students)
     ? data.students[0]
     : data.students;
   const assignment = Array.isArray(data.assignments)
     ? data.assignments[0]
     : data.assignments;
-  const reviewing = data.status === "in_progress" && data.phase === "review";
-  const reviewMetrics = reviewing
+  const reviewing = snapshot.status === "in_progress" && snapshot.phase === "review";
+  const initial = resultRecord.phases.find(phase => phase.phase === "initial");
+  const retry = resultRecord.phases.find(phase => phase.phase === "retry");
+  const reviewMetrics = resultRecord.retentionPolicy === "summary_and_mistakes_v1" && initial
+    ? { initialCorrectCount: initial.correctCount, retryCorrectCount: retry?.correctCount ?? snapshot.retryCorrectCount ?? 0,
+      unresolvedWrongCount: retry ? initial.targetCount - initial.correctCount - retry.correctCount
+        : snapshot.unresolvedWrongCount ?? initial.targetCount - initial.correctCount, initialScore: initial.score }
+    : reviewing
     ? deriveAttemptQuestionMetrics(questions)
     : null;
   const reviewElapsedSeconds =
-    reviewing && data.initial_completed_at
+    reviewing && snapshot.initialCompletedAt
       ? Math.max(
           0,
           Math.floor(
-            (new Date(data.initial_completed_at).getTime() -
-              new Date(data.started_at).getTime()) /
+            (new Date(snapshot.initialCompletedAt).getTime() -
+              new Date(snapshot.startedAt).getTime()) /
               1000,
           ),
         )
       : null;
 
   return {
+    resultRecord,
     id: data.id,
     studentName:
       !student
@@ -66,24 +77,24 @@ export async function getAdminAttemptDetail(
         : assignment.deleted_at === null
           ? assignment.title
           : "삭제됨",
-    attemptNumber: data.attempt_number,
-    status: data.status,
-    phase: data.phase,
+    attemptNumber: snapshot.attemptNumber,
+    status: snapshot.status,
+    phase: snapshot.phase,
     initialScore:
       reviewMetrics?.initialScore ??
-      (data.initial_score === null ? null : Number(data.initial_score)),
-    finalScore: data.final_score === null ? null : Number(data.final_score),
-    passed: data.passed,
-    startedAt: data.started_at,
-    completedAt: data.completed_at,
-    questionCount: data.question_count_snapshot,
+      (snapshot.initialScore === null ? null : Number(snapshot.initialScore)),
+    finalScore: snapshot.finalScore === null ? null : Number(snapshot.finalScore),
+    passed: snapshot.passed,
+    startedAt: snapshot.startedAt,
+    completedAt: snapshot.completedAt,
+    questionCount: snapshot.questionCount,
     initialCorrectCount:
-      reviewMetrics?.initialCorrectCount ?? data.initial_correct_count,
+      reviewMetrics?.initialCorrectCount ?? snapshot.initialCorrectCount,
     retryCorrectCount:
-      reviewMetrics?.retryCorrectCount ?? data.retry_correct_count,
+      reviewMetrics?.retryCorrectCount ?? snapshot.retryCorrectCount,
     unresolvedWrongCount:
-      reviewMetrics?.unresolvedWrongCount ?? data.unresolved_wrong_count,
-    elapsedSeconds: reviewElapsedSeconds ?? data.elapsed_seconds,
+      reviewMetrics?.unresolvedWrongCount ?? snapshot.unresolvedWrongCount,
+    elapsedSeconds: reviewElapsedSeconds ?? snapshot.elapsedSeconds,
     quizContentMode: normalizeQuizContentMode(
       assignment?.quiz_content_mode ?? "legacy_book_meaning_choice",
     ),

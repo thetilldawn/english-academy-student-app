@@ -10,6 +10,7 @@ import type {
   StudentAttemptResult,
 } from "../model";
 import { StudentResultView } from "./student-result-view";
+import { resultRecordFixture } from "@/test-support/vocabulary-result-fixture";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -78,6 +79,14 @@ function result(
 }
 
 describe("StudentResultView", () => {
+  it("문항 상세가 없을 때 모두 정답 안내를 띄우지 않고 요약의 재시험을 표시한다", () => {
+    render(<StudentResultView result={result([], { resultRecord: resultRecordFixture({ detailScope: "summary_only" }),
+      questionCount: 50, initialCorrectCount: 40, retryCorrectCount: 8, unresolvedWrongCount: 2, initialScore: 80, finalScore: 96, passed: true })} />);
+    expect(screen.getByText("문항별 상세는 보관되어 있지 않습니다.")).toBeVisible();
+    expect(screen.getByText("결과 요약만 보관된 시험입니다.")).toBeVisible();
+    expect(screen.queryByText("다시 볼 단어가 없습니다.")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("시험 기록")).toHaveTextContent("재시험 후 최종 점수96점");
+  });
   it("shows new point events and hides the area for an old attempt", () => {
     const { rerender } = render(
       <StudentResultView

@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
+import { resultRecordText } from "@/content/ko/result-record";
 import {
   CountBadge,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
 import { AdminAttemptPointSummaryView } from "@/features/learning-points/public-ui";
-import { AttemptQuestionCard } from "@/features/results/public-ui";
+import { AttemptQuestionCard, ResultRecordSummary } from "@/features/results/public-ui";
 import {
   assignmentOrderLabel,
   assignmentScopeLabel,
@@ -56,6 +57,7 @@ export function AdminHistoryDetailContent({
   detail: AdminHistoryDetail;
 }) {
   const { attempt, summary } = detail;
+  const summaryOnly = attempt?.resultRecord?.detailScope === "summary_only";
   const reviewPending =
     attempt?.status === "in_progress" && attempt.phase === "review";
   const wrongQuestions =
@@ -69,7 +71,7 @@ export function AdminHistoryDetailContent({
         aria-label={adminHistoryText.resultDetail.summaryAria}
         className={styles.overview}
       >
-        <div className={styles.scoreCard}>
+        {attempt?.resultRecord ? null : <div className={styles.scoreCard}>
           <AttemptScoreSummary
             finalScore={summary.finalScore}
             initialScore={summary.initialScore}
@@ -80,11 +82,12 @@ export function AdminHistoryDetailContent({
             status={summary.status}
           />
           <ActivityStatusTimeline item={summary} />
-        </div>
+        </div>}
 
         {detail.pointSummary ? (
           <AdminAttemptPointSummaryView summary={detail.pointSummary} />
         ) : null}
+        {attempt?.resultRecord ? <ResultRecordSummary record={attempt.resultRecord} /> : null}
 
         <dl className={styles.metadata}>
           <div>
@@ -158,14 +161,14 @@ export function AdminHistoryDetailContent({
             <h2 id="answer-flow-heading">
               {adminHistoryText.resultDetail.flowTitle}
             </h2>
-            <CountBadge>
+            {summaryOnly ? null : <CountBadge>
               {formatContentText(adminHistoryText.resultDetail.questionCount, {
                 count: wrongQuestions.length,
               })}
-            </CountBadge>
+            </CountBadge>}
           </div>
 
-          {wrongQuestions.length === 0 ? (
+          {summaryOnly ? <div className={styles.empty}>{resultRecordText.noDetails}</div> : wrongQuestions.length === 0 ? (
             <div className={styles.empty}>
               {adminHistoryText.resultDetail.allCorrect}
             </div>

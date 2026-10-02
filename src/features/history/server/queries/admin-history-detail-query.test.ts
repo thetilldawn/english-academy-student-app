@@ -22,6 +22,7 @@ vi.mock("@/lib/services/learning-point-read-service", () => ({
 }));
 
 import { getAdminHistoryReadModelDetail } from "./admin-history-detail-query";
+import { resultRecordFixture } from "@/test-support/vocabulary-result-fixture";
 
 const assignmentId = "10000000-0000-4000-8000-000000000001";
 const attemptId = "20000000-0000-4000-8000-000000000001";
@@ -144,6 +145,17 @@ describe("admin history detail query", () => {
       canonicalKey: `attempt.${attemptId}`,
       pointSummary,
     });
+  });
+
+  it("조회 사이 재시험이 끝나면 상세 전체가 공식 응시 시점을 사용한다", async () => {
+    const record = resultRecordFixture();
+    mocks.rpc.mockResolvedValue({ data: { ...rawDetail(attemptId), phase: "review", initialScore: 10, deadlineAt: "2026-08-29T01:00:00Z" }, error: null });
+    mocks.getAdminAttemptDetail.mockResolvedValue({ id: attemptId, resultRecord: record });
+    mocks.getAdminAttemptPointSummary.mockResolvedValue(null);
+    const detail = await getAdminHistoryReadModelDetail(`attempt.${attemptId}`);
+    expect(detail?.summary).toMatchObject({ ...record.attempt, activityAt: record.attempt.completedAt,
+      assignmentId, studentId, datasetTitle: "테스트 단어장", deadlineAt: null });
+    expect(detail?.summary.retryStartedAt).toBe("2026-10-02T01:06:00+00:00");
   });
 
   it("상세에서도 시간 제한 없는 DB 마감 값을 null로 바꾼다", async () => {
