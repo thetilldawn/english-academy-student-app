@@ -2,6 +2,14 @@ type Change = "identity" | "mistakes";
 const LOCAL_EVENT = "student-private-cache:change";
 const CHANNEL = "student-private-cache-v1";
 const STORAGE_KEY = "student-private-cache-signal";
+const IDENTITY_KEY = "student-private-cache-identity";
+/** Persistent across closed tabs. Never contains a student identifier. */
+export function studentIdentityGeneration() {
+  let generation = localStorage.getItem(IDENTITY_KEY);
+  if (!generation) { generation = crypto.randomUUID(); localStorage.setItem(IDENTITY_KEY, generation); }
+  if (localStorage.getItem(IDENTITY_KEY) !== generation) throw new Error("identity_storage_unavailable");
+  return generation;
+}
 type Signal = { kind: Change; nonce: string };
 function valid(value: unknown): value is Signal {
   return typeof value === "object" && value !== null && "kind" in value
@@ -13,6 +21,9 @@ function valid(value: unknown): value is Signal {
 export function announceStudentPrivateCacheChange(kind: Change) {
   if (typeof window === "undefined") return;
   const signal: Signal = { kind, nonce: crypto.randomUUID() };
+  if (kind === "identity") {
+    try { localStorage.setItem(IDENTITY_KEY, signal.nonce); } catch { /* Active offline screens still lock via the signal. */ }
+  }
   window.dispatchEvent(new CustomEvent(LOCAL_EVENT, { detail: signal }));
   try {
     const channel = new BroadcastChannel(CHANNEL);

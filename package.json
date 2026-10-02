@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/verify-preview-environment.mjs && node scripts/check-feature-map.mjs --verify && node scripts/check-work-records.mjs --phase format",
-    "build": "next build",
+    "build": "next build --webpack",
+    "postbuild": "node scripts/build-quiz-offline-assets.mjs",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

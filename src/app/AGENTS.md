@@ -20,3 +20,8 @@
   등록하지 않으면 Preview의 `prebuild`가 실패해야 한다.
 - `work-records.test.mjs`는 앱 기능이 아닌 개발 기록 검사기의 가상 예시·경로·증거·명령 경계 검사다.
   `architectureGuardOwners`에 등록하며 실제 문법 기능이나 학생 자료를 만들지 않는다.
+
+## APP-20261002-03 공용 시험 화면
+
+- /quiz-offline은 개인 자료와 정답이 없는 공용 정적 화면이다. 기기 답은 원래 학생/기기 확인 뒤 기능 제어기에서 읽는다. URL hash의 준비 ID로 읽고 개인 자료를 HTML에 넣지 않는다.
+- /api/student/local-quiz와 local-quiz-protocol/[id]는 본인 인증·private no-store를 유지한다. 서비스워커는 공용 화면/정적 자산만 다루며 개인 HTML/API/RSC/서버 액션을 가로채 보관하지 않는다.

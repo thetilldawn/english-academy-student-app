@@ -4,6 +4,7 @@ node_modules/
 # Next.js
 .next/
 out/
+public/quiz-offline-sw.js
 
 # Vercel local linkage
 .vercel/

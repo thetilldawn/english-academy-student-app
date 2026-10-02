@@ -1,4 +1,5 @@
 import "server-only";
+export { usesLocalQuiz } from "./server/local-quiz-protocol-query";
 export { handlePracticeRequest } from "./server/practice-http";
 export { getPractice, getPracticeHistory } from "./server/practice-service";
 export { buildPracticePlan, practiceSourceSchema, type PracticeSource } from "./domain/practice-plan";

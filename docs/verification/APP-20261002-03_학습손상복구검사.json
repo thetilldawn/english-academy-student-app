@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-02T08:54:53.254Z",
+  "scope": "실제 학습 훅과 기기 저장·준비 함수/새 시험 화면, 가짜 HTTP/이동 경계, 큰 글자390px와 실제 WebLocks 취소",
+  "cases": [
+    {
+      "case": "실제 학습 훅→공용 기기 저장→시험 준비→다른 배정 재사용",
+      "sharedStudyAtoms": 7,
+      "studyAtomsDownloadedAgain": 0,
+      "secondAssignmentContents": 0,
+      "secondAssignmentAtoms": 0,
+      "corruptAtomRepair": {
+        "atoms": 1,
+        "contents": 1,
+        "restoredOriginal": true
+      },
+      "firstQuizOpened": true,
+      "largeText390HorizontalOverflow": false,
+      "pendingScreenLockCancelled": true
+    }
+  ]
+}

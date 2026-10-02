@@ -521,6 +521,10 @@
     {
       "path": "src/app/student/(protected)/practice/[id]/result/page.tsx",
       "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/quiz-offline/page.tsx",
+      "owner": "quiz-player"
     }
   ],
   "nextSpecialEntrypointOwners": [
@@ -696,6 +700,10 @@
     }
   ],
   "appSupportOwners": [
+    {
+      "path": "src/app/student/(protected)/attempt/[id]/page.test.tsx",
+      "owner": "quiz-player"
+    },
     {
       "path": "src/app/api/admin/schools/search/route.test.ts",
       "owner": "students"
@@ -1153,6 +1161,14 @@
     {
       "path": "src/app/api/admin/mixed-assignments/preview/route.ts",
       "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/student/local-quiz/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/local-quiz-protocol/[id]/route.ts",
+      "owner": "quiz-player"
     }
   ],
   "serviceOwners": [
@@ -1415,6 +1431,10 @@
     },
     {
       "path": "src/lib/quiz/choice-safety.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
+      "path": "src/lib/quiz/shared-display.ts",
       "owner": "shared-quiz-domain"
     }
   ],
@@ -2102,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 134,
-      "pathSetSha256": "9f70f2e261bce17e06cd57b63e619f48e3975a3d6739fc44c33276fccc253a0a"
+      "fileCount": 135,
+      "pathSetSha256": "f367db910c9383c5d971ed806ca53d415a554e7c28fc0851c31cbdd8dc611601"
     },
     {
       "path": "src/lib/deploy",
@@ -2539,6 +2559,18 @@
     {
       "path": "src/features/results/server/result-record-query.ts",
       "owner": "results"
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-service.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-http.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-protocol-query.ts",
+      "owner": "quiz-player"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2994,6 +3026,11 @@
       "path": "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql",
       "owner": "results",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
     }
   ],
   "features": [
@@ -3076,7 +3113,10 @@
         "src/app/api/student/practice/preview/route.ts",
         "src/app/student/(protected)/practice/page.tsx",
         "src/app/student/(protected)/practice/[id]/page.tsx",
-        "src/app/student/(protected)/practice/[id]/result/page.tsx"
+        "src/app/student/(protected)/practice/[id]/result/page.tsx",
+        "src/app/quiz-offline/page.tsx",
+        "src/app/api/student/local-quiz/route.ts",
+        "src/app/api/student/local-quiz-protocol/[id]/route.ts"
       ]
     },
     {
@@ -3781,6 +3821,48 @@
       "to": "src/features/results/public-server.ts",
       "reason": "APP-20261002-02: 권한 있는 같은 시점의 결과 요약과 공개 표시 계약 연결",
       "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/quiz-player/server/local-quiz-service.ts",
+      "to": "src/features/student-dashboard/public-server.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "removeIn": "공개 진입점으로 유지"
+    },
+    {
+      "from": "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "removeIn": "공개 진입점으로 유지"
+    },
+    {
+      "from": "src/features/quiz-player/client/flows/local-quiz-preparation.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "removeIn": "공개 진입점으로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "to": "src/features/quiz-player/public-local-client.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "removeIn": "공개 진입점으로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/controller/use-shared-study.ts",
+      "to": "src/features/quiz-player/public-local-client.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "removeIn": "공개 진입점으로 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/controller/use-shared-study.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "removeIn": "공개 진입점으로 유지"
+    },
+    {
+      "from": "src/features/quiz-player/client/flows/local-quiz-prefetch.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "미리 읽기 요청을 계정 세대에 묶고 전환 때 취소",
+      "removeIn": "공개 진입점으로 유지"
     }
   ],
   "currentLibToFeatureImports": [
@@ -3911,6 +3993,12 @@
       "to": "src/lib/services/quiz/attempt-query.ts",
       "reason": "같은 기능의 기존 문항 복원으로 원 발음·본문 검증을 보존",
       "removeIn": "기존 시험 조회의 기능 서버 이전"
+    },
+    {
+      "from": "src/features/quiz-player/server/local-quiz-service.ts",
+      "to": "src/lib/services/quiz/attempt-query.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "removeIn": "기존 시험·배정 명령의 기능 서버 이전 때 검토"
     }
   ],
   "currentFeatureViaLibToFeatureImports": [
@@ -4037,6 +4125,26 @@
       ],
       "reason": "APP-20261002-02: 권한 있는 같은 시점의 결과 요약과 공개 표시 계약 연결",
       "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/quiz-player/server/local-quiz-service.ts",
+      "to": "src/features/wordbook-compositions/public-contracts.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/question-snapshot.ts"
+      ],
+      "removeIn": "기존 시험 조회의 기능 server 이동"
+    },
+    {
+      "from": "src/features/quiz-player/server/local-quiz-service.ts",
+      "to": "src/features/wordbook-compositions/public-server.ts",
+      "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결",
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/pronunciation-registry.ts"
+      ],
+      "removeIn": "기존 시험 명령의 기능 server 이동"
     }
   ],
   "crossLayerFlows": [
@@ -7081,11 +7189,12 @@
         "learning-points",
         "wordbook-compositions",
         "session",
-        "results"
+        "results",
+        "student-dashboard"
       ],
       "dataClass": "mutation",
-      "cachePolicy": "진행 응시·문항·답·오답·포인트는 캐시 금지",
-      "streamingPolicy": "시작 전 private 계획과 문항/발음·비활성 화면을 먼저 준비하고 ready로 시각1회 확정. 진행자료 공유캐시 없음.",
+      "cachePolicy": "공용 텍스트/발음 표시는 기기48시간, 시작 원판 보호. 개인 답은 기기에 별도 보존·미확정 자동삭제0. 음원은 기존 CDN 직접재생과 일반 HTTP 캐시이며 별도 IDB/앱 중계 없음.",
+      "streamingPolicy": "화면과 문항 준비 후 시작1회. 풀이 중 시험자료/답/시간 요청0, 종료 묶음제출. 음원은 기존 CDN과 다음 문항 미리받기를 사용.",
       "closedLocalLayers": [
         "ui",
         "controller",
@@ -7105,10 +7214,14 @@
           "src/app/api/student/attempts/[id]/feedback/route.ts",
           "src/app/api/student/attempts/[id]/retry/route.ts",
           "src/app/api/student/attempts/[id]/timeouts/route.ts",
-          "src/app/api/student/attempts/[id]/ready/route.ts"
+          "src/app/api/student/attempts/[id]/ready/route.ts",
+          "src/app/quiz-offline/page.tsx",
+          "src/app/api/student/local-quiz/route.ts",
+          "src/app/api/student/local-quiz-protocol/[id]/route.ts"
         ],
         "serverComponent": [
-          "src/app/student/(protected)/attempt/[id]/page.tsx"
+          "src/app/student/(protected)/attempt/[id]/page.tsx",
+          "src/app/quiz-offline/page.tsx"
         ],
         "ui": [
           "src/features/quiz-player/ui/quiz-player.tsx",
@@ -7131,7 +7244,9 @@
           "src/lib/quiz/question-content-mode.ts",
           "src/lib/quiz/question-generator.ts",
           "src/lib/quiz/question-semantics.ts",
-          "src/features/quiz-player/ui/prepared-quiz-player.tsx"
+          "src/features/quiz-player/ui/prepared-quiz-player.tsx",
+          "src/features/quiz-player/client/components/local-quiz-player.tsx",
+          "src/features/student-dashboard/ui/start-attempt-button.tsx"
         ],
         "clientState": [
           "src/features/quiz-player/controller/use-quiz-player-controller.ts",
@@ -7149,7 +7264,14 @@
           "src/features/quiz-player/controller/quiz-audio-preloaders.ts",
           "src/features/quiz-player/controller/quiz-audio-source.ts",
           "src/features/quiz-player/controller/quiz-transition-timer.ts",
-          "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts"
+          "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts",
+          "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.ts",
+          "src/features/quiz-player/client/flows/local-quiz-preparation.ts",
+          "src/features/quiz-player/client/flows/local-quiz-store.ts",
+          "src/features/quiz-player/client/flows/local-quiz-screen.ts",
+          "src/features/quiz-player/client/flows/local-quiz-clock-anchor.ts",
+          "src/features/quiz-player/public-local-client.ts",
+          "src/features/quiz-player/client/flows/local-quiz-prefetch.ts"
         ],
         "application": [],
         "domain": [
@@ -7165,18 +7287,24 @@
           "src/lib/quiz/word-identity.ts",
           "src/lib/quiz/question-types.ts",
           "src/lib/quiz/question-provenance.ts",
-          "src/lib/quiz/question-semantics.ts"
+          "src/lib/quiz/question-semantics.ts",
+          "src/features/quiz-player/domain/local-quiz.ts",
+          "src/features/quiz-player/domain/local-quiz-content.ts",
+          "src/lib/quiz/shared-display.ts"
         ],
         "presentation": [],
         "contract": [
           "src/features/quiz-player/model.ts",
           "src/lib/assignment/assignment-release.ts",
           "src/features/quiz-player/contracts/preparation.ts",
-          "src/features/results/public-contracts.ts"
+          "src/features/results/public-contracts.ts",
+          "src/features/quiz-player/contracts/local-quiz.ts"
         ],
         "transport": [
           "src/features/quiz-player/api/quiz-attempt.ts",
-          "src/features/quiz-player/api/quiz-transport.ts"
+          "src/features/quiz-player/api/quiz-transport.ts",
+          "src/features/quiz-player/api/local-quiz.ts",
+          "src/features/results/api/start-retry.ts"
         ],
         "server": [
           "src/app/api/student/assignments/[id]/attempts/route.ts",
@@ -7199,7 +7327,11 @@
           "src/app/api/student/attempts/[id]/ready/route.ts",
           "src/features/quiz-player/public-server-queries.ts",
           "src/features/results/public-server.ts",
-          "src/features/results/server/result-record-query.ts"
+          "src/features/results/server/result-record-query.ts",
+          "src/features/quiz-player/server/local-quiz-service.ts",
+          "src/features/quiz-player/server/local-quiz-http.ts",
+          "src/features/student-dashboard/public-server.ts",
+          "src/features/quiz-player/server/local-quiz-protocol-query.ts"
         ],
         "database": [
           "supabase/migrations/20260728162905_initial_student_app_mvp.sql",
@@ -7235,12 +7367,16 @@
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
-          "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql"
+          "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql",
+          "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
           "src/features/session/public-client.ts",
-          "src/features/session/controller/student-private-cache-events.ts"
+          "src/features/session/controller/student-private-cache-events.ts",
+          "scripts/build-quiz-offline-assets.mjs",
+          "scripts/quiz-offline-worker.template.js",
+          "next.config.ts"
         ],
         "tests": [
           "src/features/quiz-player/api/quiz-attempt.test.ts",
@@ -7298,7 +7434,19 @@
           "src/features/quiz-player/api/quiz-transport.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
           "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
-          "src/lib/database/vocabulary-result-records.integration.test.ts"
+          "src/lib/database/vocabulary-result-records.integration.test.ts",
+          "src/features/quiz-player/domain/local-quiz.test.ts",
+          "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.test.tsx",
+          "src/lib/database/local-quiz-batches.integration.test.ts",
+          "src/features/quiz-player/server/local-quiz-http.test.ts",
+          "src/features/quiz-player/server/local-quiz-service.test.ts",
+          "src/features/quiz-player/client/flows/local-quiz-clock-anchor.test.ts",
+          "src/features/quiz-player/client/flows/local-quiz-prefetch.test.ts",
+          "scripts/verify-local-quiz-browser.ts",
+          "src/app/student/(protected)/attempt/[id]/page.test.tsx",
+          "src/features/results/ui/student-result-view.test.tsx",
+          "src/features/student-dashboard/server/components/assignment-study-content.test.tsx",
+          "src/features/quiz-player/test-support/local-quiz-fixtures.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7346,6 +7494,36 @@
           "from": "src/features/quiz-player/public-server-queries.ts",
           "to": "src/features/quiz-player/server/queries/question-content-query.ts",
           "reason": "권한 문맥을 요구하는 서버 전용 본문 조회만 공개"
+        },
+        {
+          "from": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+          "to": "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.ts",
+          "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결"
+        },
+        {
+          "from": "src/features/quiz-player/server/local-quiz-http.ts",
+          "to": "src/features/quiz-player/server/local-quiz-service.ts",
+          "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결"
+        },
+        {
+          "from": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+          "to": "src/features/quiz-player/public-local-client.ts",
+          "reason": "APP-20261002-03: 공용 자료 재사용과 기기 풀이 연결"
+        },
+        {
+          "from": "src/features/quiz-player/public-local-client.ts",
+          "to": "src/features/quiz-player/client/flows/local-quiz-preparation.ts",
+          "reason": "APP-20261002-03: 공용 자료 재사용과 기기 풀이 연결"
+        },
+        {
+          "from": "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.ts",
+          "to": "src/features/quiz-player/client/flows/local-quiz-store.ts",
+          "reason": "APP-20261002-03: 공용 자료 재사용과 기기 풀이 연결"
+        },
+        {
+          "from": "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.ts",
+          "to": "src/features/quiz-player/client/flows/local-quiz-screen.ts",
+          "reason": "APP-20261002-03: 공용 자료 재사용과 기기 풀이 연결"
         }
       ],
       "notApplicable": {
@@ -7503,16 +7681,18 @@
         "quiz-player",
         "assignment-queue",
         "assignments",
-        "wordbook-compositions"
+        "wordbook-compositions",
+        "session"
       ],
       "dataClass": "private",
-      "cachePolicy": "인증된 학생의 배정 범위만 클릭 시 조회, 공유 캐시와 목록 링크 일괄 prefetch 금지",
-      "streamingPolicy": "인증 후 직접 RSC 조회. 모달과 독립 페이지에 닫을 수 있는 loading/error 경계.",
+      "cachePolicy": "인증한 배정 목록·표시 계획은 개인 no-store, 공용 표시 자료는 시험과 같은 기기48시간 캐시. 계정 변경 후 기존 계획 재사용 금지.",
+      "streamingPolicy": "RSC는 권한 확인한 개인 표시 계획만 전달. 기기에 없는 공용 표시만 인증 POST로 복원.",
       "closedLocalLayers": [],
       "touchpoints": {
         "route": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
-          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx"
+          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx",
+          "src/app/api/student/local-quiz/route.ts"
         ],
         "serverComponent": [
           "src/features/student-dashboard/server/components/assignment-study-content.tsx"
@@ -7530,11 +7710,15 @@
           "src/lib/quiz/entry-source-pronunciation.ts",
           "src/lib/quiz/pronunciation-snapshot.ts",
           "src/lib/quiz/pronunciation-storage.ts",
-          "src/styles/reset.css"
+          "src/styles/reset.css",
+          "src/features/student-dashboard/client/components/cached-assignment-study-reader.tsx"
         ],
         "clientState": [
           "src/features/student-dashboard/controller/use-study-audio.ts",
-          "src/features/student-dashboard/client/components/assignment-study-reader.tsx"
+          "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+          "src/features/student-dashboard/controller/use-shared-study.ts",
+          "src/features/quiz-player/public-local-client.ts",
+          "src/features/quiz-player/client/flows/local-quiz-store.ts"
         ],
         "application": [],
         "domain": [
@@ -7542,20 +7726,28 @@
           "src/lib/quiz/pronunciation-snapshot.ts",
           "src/lib/quiz/pronunciation-storage.ts",
           "src/lib/quiz/question-content-mode.ts",
-          "src/features/student-dashboard/domain/study-example-ranges.ts"
+          "src/features/student-dashboard/domain/study-example-ranges.ts",
+          "src/features/student-dashboard/domain/study-materials.ts",
+          "src/lib/quiz/shared-display.ts"
         ],
         "presentation": [],
         "contract": [
           "src/features/student-dashboard/contracts/assignment-study.ts",
-          "src/lib/assignment/assignment-release.ts"
+          "src/lib/assignment/assignment-release.ts",
+          "src/features/student-dashboard/contracts/study-materials.ts"
         ],
-        "transport": [],
+        "transport": [
+          "src/features/quiz-player/api/local-quiz.ts"
+        ],
         "server": [
           "src/features/student-dashboard/server/components/assignment-study-content.tsx",
           "src/features/student-dashboard/server/queries/assignment-study-query.ts",
           "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
           "src/lib/services/quiz/pronunciation-registry.ts",
-          "src/features/quiz-player/public-server-queries.ts"
+          "src/features/quiz-player/public-server-queries.ts",
+          "src/features/student-dashboard/public-server.ts",
+          "src/features/quiz-player/server/local-quiz-service.ts",
+          "src/features/quiz-player/server/local-quiz-http.ts"
         ],
         "database": [
           "supabase/migrations/20260905051013_add_student_assignment_study.sql",
@@ -7582,7 +7774,9 @@
           "src/app/student/(protected)/assignments/[id]/words/error.tsx",
           "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx",
           "src/app/student/(protected)/@detail/(.)assignments/[id]/words/loading.tsx",
-          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/error.tsx"
+          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/error.tsx",
+          "src/features/session/public-client.ts",
+          "src/features/session/controller/student-private-cache-events.ts"
         ],
         "tests": [
           "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
@@ -7607,7 +7801,10 @@
           "src/lib/quiz/pronunciation-storage.test.ts",
           "src/lib/database/vocabulary-learning-values.integration.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
-          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts"
+          "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
+          "src/features/student-dashboard/controller/use-shared-study.test.tsx",
+          "src/features/quiz-player/server/local-quiz-http.test.ts",
+          "src/features/quiz-player/server/local-quiz-service.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7620,11 +7817,6 @@
           "from": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
           "to": "src/features/student-dashboard/controller/use-study-audio.ts",
           "reason": "단어 음성 한 개 재생과 닫기 정리"
-        },
-        {
-          "from": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
-          "to": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
-          "reason": "서버 최소 학습 자료를 로컬 표시 조립부로 전달"
         },
         {
           "from": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
@@ -7640,12 +7832,26 @@
           "from": "src/features/quiz-player/public-server-queries.ts",
           "to": "src/features/quiz-player/server/queries/question-content-query.ts",
           "reason": "권한 문맥을 요구하는 서버 전용 본문 조회만 공개"
+        },
+        {
+          "from": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+          "to": "src/features/student-dashboard/client/components/cached-assignment-study-reader.tsx",
+          "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결"
+        },
+        {
+          "from": "src/features/student-dashboard/client/components/cached-assignment-study-reader.tsx",
+          "to": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+          "reason": "APP-20261002-03: 공용 표시 재사용과 기기 답 보존의 공개 연결"
+        },
+        {
+          "from": "src/features/student-dashboard/client/components/cached-assignment-study-reader.tsx",
+          "to": "src/features/student-dashboard/controller/use-shared-study.ts",
+          "reason": "APP-20261002-03: 공용 자료 재사용과 기기 풀이 연결"
         }
       ],
       "notApplicable": {
         "application": "읽기 전용으로 저장 조정 없음",
-        "presentation": "화면 표시는 UI에서 수행",
-        "transport": "RSC가 서버 조회를 직접 호출"
+        "presentation": "화면 표시는 UI에서 수행"
       },
       "serverImportExceptions": {},
       "flowImportExceptions": {}

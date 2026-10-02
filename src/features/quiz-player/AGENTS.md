@@ -17,3 +17,11 @@
   관련 변경이면 `assignment-series`도 함께 확인한다.
 - 판정, 점수, 오답, 재시험, 다음 시험 생성은 클라이언트 화면 결과를 신뢰하지 않고 server와 DB에서 검증한다.
 - 진행 중 시험의 snapshot과 타이밍은 캐시하지 않는다. 재시도는 같은 답을 두 번 반영하지 않아야 한다.
+
+## APP-20261002-03 신규 응시
+
+- 신규 local_batch_v1은 public-local-client → client/flows/local-quiz-preparation|prefetch|store|screen → client/controllers/use-local-quiz-player-controller → client/components/local-quiz-player를 따른다. 기존 QuizPlayer/PreparedQuizPlayer는 구형 규격 전용이다.
+- 새 규격은 답과 다음 위치의 IndexedDB 거래 완료 뒤 채점/전환하고 최초/재시험 회차 종료 때 고정 묶음1개만 제출한다. 풀이 중 시간 확인/답 저장 API0이다. 미확정 답은 자동 삭제하지 않는다.
+- 공용 표시는48시간, 진행 중 원판은 보존한다. 음원은 원래 CDN 주소와 일반 HTTP캐시/미리 불러오기를 사용하며 별도 파일 보관·중계·오프라인 보장을 추가하지 않는다.
+- 공용 정적 화면만 서비스워커에 보관한다. API/개인 HTML/RSC는 제외한다. 설치·손상 복구는 공용 독점 잠금, 풀이 중 공유 잠금으로 분리하며 동시에 여러 누락 파일의 복구는 합친다.
+- server/local-quiz-http|service|protocol-query가 본인/기기와 종료 접수 계약을 소유한다. 학생 ID를 클라이언트 요청에서 받지 않는다. SQL은 M03/M04와 포인트를 한 거래로 확정한다. 위 매 답 전송·snapshot 캐시 금지·서버 다음 문항 예약 지침은 구형 응시에만 적용한다.

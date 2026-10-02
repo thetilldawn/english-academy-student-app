@@ -1,0 +1,628 @@
+{
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "verifiedAt": "2026-10-02T09:14:24.349Z",
+  "scope": "M05 전용 가짜 6학생. A는 MCP SQL 거래, B는 실제 PostgREST service_role의 별도 연결. 시험 시작·최초 제출·재시험 시작 경합. 앱 인증 화면 통합 검사는 별도.",
+  "cases": [
+    {
+      "case": "begin_start",
+      "assertion": "같은 응시·시작 시각·문항·계획 해시 유지",
+      "status": "pass",
+      "proof": {
+        "aPid": 4056,
+        "bPid": 4054,
+        "waitType": "Lock",
+        "blockedBy": [
+          4056
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-02T09:03:34.525348+00:00"
+      },
+      "firstResponse": {
+        "items": [
+          {
+            "id": "9097ba4b-53c0-41eb-b6d8-253da6fd4bc9",
+            "order": 1,
+            "contentId": "bfbdeaa2-804b-4e26-ac9d-394b90a0a319",
+            "priorWrongCount": 0,
+            "correctChoiceIndex": 0
+          },
+          {
+            "id": "55659c8c-0b73-4d25-8558-6af72154cbd9",
+            "order": 2,
+            "contentId": "a9477694-e86c-4c9d-9c20-7dea2ea2c277",
+            "priorWrongCount": 0,
+            "correctChoiceIndex": 0
+          },
+          {
+            "id": "6314eb47-a17f-472a-b9ed-070a2e616ab0",
+            "order": 3,
+            "contentId": "2248aea8-410c-4671-a1b1-cfe6aae97533",
+            "priorWrongCount": 0,
+            "correctChoiceIndex": 0
+          },
+          {
+            "id": "69983804-471a-4ee2-95ab-47fe703c8f1a",
+            "order": 4,
+            "contentId": "b0e1f9c9-b64d-4a7c-9a18-b40656303ff8",
+            "priorWrongCount": 0,
+            "correctChoiceIndex": 0
+          }
+        ],
+        "phase": "initial",
+        "status": "in_progress",
+        "limitMs": null,
+        "planHash": "6159ea2e010400232d27de54cb671443903976a338b72c07e1c9a50c269af53e",
+        "protocol": "local_batch_v1",
+        "attemptId": "c38b0695-c897-440e-a414-9bc1fa7570a4",
+        "serverNow": "2026-10-02T09:03:27.628167+00:00",
+        "startedAt": "2026-10-02T09:03:27.600583+00:00",
+        "timePolicy": "local-elapsed-v1",
+        "officialPhase": "initial",
+        "questionLimitMs": null
+      },
+      "secondResponse": {
+        "case": "begin_start",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "fn": "begin_local_quiz_v1",
+        "sentAt": "2026-10-02T09:03:34.385Z",
+        "finishedAt": "2026-10-02T09:03:34.536Z",
+        "durationMs": 151,
+        "status": 200,
+        "data": {
+          "items": [
+            {
+              "id": "9097ba4b-53c0-41eb-b6d8-253da6fd4bc9",
+              "order": 1,
+              "contentId": "bfbdeaa2-804b-4e26-ac9d-394b90a0a319",
+              "priorWrongCount": 0,
+              "correctChoiceIndex": 0
+            },
+            {
+              "id": "55659c8c-0b73-4d25-8558-6af72154cbd9",
+              "order": 2,
+              "contentId": "a9477694-e86c-4c9d-9c20-7dea2ea2c277",
+              "priorWrongCount": 0,
+              "correctChoiceIndex": 0
+            },
+            {
+              "id": "6314eb47-a17f-472a-b9ed-070a2e616ab0",
+              "order": 3,
+              "contentId": "2248aea8-410c-4671-a1b1-cfe6aae97533",
+              "priorWrongCount": 0,
+              "correctChoiceIndex": 0
+            },
+            {
+              "id": "69983804-471a-4ee2-95ab-47fe703c8f1a",
+              "order": 4,
+              "contentId": "b0e1f9c9-b64d-4a7c-9a18-b40656303ff8",
+              "priorWrongCount": 0,
+              "correctChoiceIndex": 0
+            }
+          ],
+          "phase": "initial",
+          "status": "in_progress",
+          "limitMs": null,
+          "planHash": "6159ea2e010400232d27de54cb671443903976a338b72c07e1c9a50c269af53e",
+          "protocol": "local_batch_v1",
+          "attemptId": "c38b0695-c897-440e-a414-9bc1fa7570a4",
+          "serverNow": "2026-10-02T09:03:34.532303+00:00",
+          "startedAt": "2026-10-02T09:03:27.600583+00:00",
+          "timePolicy": "local-elapsed-v1",
+          "officialPhase": "initial",
+          "questionLimitMs": null
+        }
+      }
+    },
+    {
+      "case": "conflicting_batch",
+      "assertion": "같은 제출 ID의 다른 답 거절",
+      "status": "pass",
+      "proof": {
+        "aPid": 4098,
+        "bPid": 4085,
+        "waitType": "Lock",
+        "blockedBy": [
+          4098
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-02T09:05:18.601073+00:00"
+      },
+      "firstResponse": {
+        "phase": "initial",
+        "result": {
+          "state": "completed",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 100,
+              "passed": true,
+              "ended_at": "2026-10-02T08:59:40.517528+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "d3accc91-ab11-48e6-a1e5-443595d2a15d",
+              "end_reason": "completed",
+              "started_at": "2026-10-02T08:59:40.217528+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 0,
+              "content_hash": "f6259bb8bc0ed9e7787a952847ac4aa6566c72dc92df74877ef522154dd44481",
+              "target_count": 4,
+              "correct_count": 4,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "completed",
+            "passed": true,
+            "status": "completed",
+            "startedAt": "2026-10-02T08:59:40.217528+00:00",
+            "deadlineAt": null,
+            "finalScore": 100,
+            "completedAt": "2026-10-02T08:59:40.517528+00:00",
+            "initialScore": 100,
+            "attemptNumber": 1,
+            "questionCount": 4,
+            "elapsedSeconds": 0,
+            "retryStartedAt": null,
+            "retryCorrectCount": 0,
+            "initialCompletedAt": "2026-10-02T08:59:40.517528+00:00",
+            "initialCorrectCount": 4,
+            "unresolvedWrongCount": 0
+          },
+          "finalized": true,
+          "detailScope": "initial_mistakes",
+          "finalReason": "completed",
+          "finalizedAt": "2026-10-02T08:59:40.517528+00:00",
+          "retryStarted": false,
+          "resultVersion": "81a85e007516ce27e6274019018d6f0766cdf5425e8c6045195f801e08c4142b",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": [
+          {
+            "id": "14dda516-1210-4bf4-a1ea-18366e4a29df",
+            "sequence": 1,
+            "answerHash": "1e33f02498d13a1512e3bdf94608269ee73ba6ba64c745d8dbbeb3ef828d0f53"
+          },
+          {
+            "id": "21025f73-d49b-4397-be0c-0b127e789441",
+            "sequence": 2,
+            "answerHash": "936d771912b0b4ca7fbee0b9ac4d378ad3bb33d0ebc24f15a5636fcedb902eaa"
+          },
+          {
+            "id": "023248c4-a5b2-45c6-bff6-2b1dcc879ee6",
+            "sequence": 3,
+            "answerHash": "094b148c8532c7bf0906ee33960b34f08025dc2299be0157796f01f2589ba834"
+          },
+          {
+            "id": "6624e212-d9c5-487b-9856-809f85cc3bc0",
+            "sequence": 4,
+            "answerHash": "2a2412beb802b08d3762ea8b61640cad80df09bae56f5d834525a2d51d3e2735"
+          }
+        ],
+        "planHash": "760d52a38130d547561fccb6ed42bf224f08dafed515b14ada1f1835dab6f330",
+        "protocol": "local_batch_v1",
+        "payloadHash": "c56d315e6130579f8fef3974210b95901b020b96318aa4a734412497952f7af2",
+        "retryTargets": [],
+        "submissionId": "a5080000-0000-4000-8000-000000009001"
+      },
+      "secondResponse": {
+        "case": "conflicting_batch",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "fn": "submit_local_quiz_phase_v1",
+        "sentAt": "2026-10-02T09:05:18.513Z",
+        "finishedAt": "2026-10-02T09:05:18.721Z",
+        "durationMs": 208,
+        "status": 409,
+        "data": {
+          "code": "PT409",
+          "details": null,
+          "hint": null,
+          "message": "local_quiz_submission_conflict"
+        }
+      }
+    },
+    {
+      "case": "duplicate_batch",
+      "assertion": "동일 제출 ID와 답의 전체 접수 응답 일치",
+      "status": "pass",
+      "proof": {
+        "aPid": 4122,
+        "bPid": 4119,
+        "waitType": "Lock",
+        "blockedBy": [
+          4122
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-02T09:06:44.398443+00:00"
+      },
+      "firstResponse": {
+        "phase": "initial",
+        "result": {
+          "state": "completed",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 100,
+              "passed": true,
+              "ended_at": "2026-10-02T08:59:40.665401+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "b3116bc9-a2f4-48d8-b973-f630ede2d5e1",
+              "end_reason": "completed",
+              "started_at": "2026-10-02T08:59:40.365401+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 0,
+              "content_hash": "f4092ee865acb472156f99526e95ba98dea2739f2622781e98ca0d4715b82ee2",
+              "target_count": 4,
+              "correct_count": 4,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "completed",
+            "passed": true,
+            "status": "completed",
+            "startedAt": "2026-10-02T08:59:40.365401+00:00",
+            "deadlineAt": null,
+            "finalScore": 100,
+            "completedAt": "2026-10-02T08:59:40.665401+00:00",
+            "initialScore": 100,
+            "attemptNumber": 1,
+            "questionCount": 4,
+            "elapsedSeconds": 0,
+            "retryStartedAt": null,
+            "retryCorrectCount": 0,
+            "initialCompletedAt": "2026-10-02T08:59:40.665401+00:00",
+            "initialCorrectCount": 4,
+            "unresolvedWrongCount": 0
+          },
+          "finalized": true,
+          "detailScope": "initial_mistakes",
+          "finalReason": "completed",
+          "finalizedAt": "2026-10-02T08:59:40.665401+00:00",
+          "retryStarted": false,
+          "resultVersion": "4f5fab06dec5841efd30fff7e427043f88730eb32d9f9981e48df9b777ab4385",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": [
+          {
+            "id": "0bab3dc1-66ed-4bd9-8631-bfb8c5efb2b9",
+            "sequence": 1,
+            "answerHash": "2d3b60f38645a23de70a58e430f72415403584a3e4639479f79822733a6cc2ff"
+          },
+          {
+            "id": "46baa6b5-2dc8-4cde-b5a4-c71a0afa847c",
+            "sequence": 2,
+            "answerHash": "78795946df1d98c57c06ea2cbdde95d4b6eeb7cfbad551619fdf32b6b1563191"
+          },
+          {
+            "id": "d05c70c2-6c0c-4396-9527-5cf97348d2e3",
+            "sequence": 3,
+            "answerHash": "b7f946455740b220942956c2732957f477bb0f98684270c82be1244996789bae"
+          },
+          {
+            "id": "2708cde8-67ab-4822-93a7-a7f8f5b01ca1",
+            "sequence": 4,
+            "answerHash": "07036dcf61fc35045947816340fe132254cd974d190d977235b1ae9091ae2416"
+          }
+        ],
+        "planHash": "b4261d03177217ad1ce488533e1d736e10d46e668dfe7c503432ae80b2c34922",
+        "protocol": "local_batch_v1",
+        "payloadHash": "3e3294b46ea1b2b674d3c242902e5136a9babd513fbc046f0019e868b2b69dbd",
+        "retryTargets": [],
+        "submissionId": "a5080000-0000-4000-8000-000000009002"
+      },
+      "secondResponse": {
+        "case": "duplicate_batch",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "fn": "submit_local_quiz_phase_v1",
+        "sentAt": "2026-10-02T09:06:44.322Z",
+        "finishedAt": "2026-10-02T09:06:44.427Z",
+        "durationMs": 105,
+        "status": 200,
+        "data": {
+          "phase": "initial",
+          "result": {
+            "state": "completed",
+            "phases": [
+              {
+                "phase": "initial",
+                "score": 100,
+                "passed": true,
+                "ended_at": "2026-10-02T08:59:40.665401+00:00",
+                "evidence": "recorded_answers",
+                "attempt_id": "b3116bc9-a2f4-48d8-b973-f630ede2d5e1",
+                "end_reason": "completed",
+                "started_at": "2026-10-02T08:59:40.365401+00:00",
+                "score_basis": "initial_total",
+                "wrong_count": 0,
+                "content_hash": "f4092ee865acb472156f99526e95ba98dea2739f2622781e98ca0d4715b82ee2",
+                "target_count": 4,
+                "correct_count": 4,
+                "passing_score": 80,
+                "unanswered_count": 0
+              }
+            ],
+            "attempt": {
+              "phase": "completed",
+              "passed": true,
+              "status": "completed",
+              "startedAt": "2026-10-02T08:59:40.365401+00:00",
+              "deadlineAt": null,
+              "finalScore": 100,
+              "completedAt": "2026-10-02T08:59:40.665401+00:00",
+              "initialScore": 100,
+              "attemptNumber": 1,
+              "questionCount": 4,
+              "elapsedSeconds": 0,
+              "retryStartedAt": null,
+              "retryCorrectCount": 0,
+              "initialCompletedAt": "2026-10-02T08:59:40.665401+00:00",
+              "initialCorrectCount": 4,
+              "unresolvedWrongCount": 0
+            },
+            "finalized": true,
+            "detailScope": "initial_mistakes",
+            "finalReason": "completed",
+            "finalizedAt": "2026-10-02T08:59:40.665401+00:00",
+            "retryStarted": false,
+            "resultVersion": "4f5fab06dec5841efd30fff7e427043f88730eb32d9f9981e48df9b777ab4385",
+            "schemaVersion": "vocabulary-result-v1",
+            "retentionPolicy": "summary_and_mistakes_v1"
+          },
+          "accepted": [
+            {
+              "id": "0bab3dc1-66ed-4bd9-8631-bfb8c5efb2b9",
+              "sequence": 1,
+              "answerHash": "2d3b60f38645a23de70a58e430f72415403584a3e4639479f79822733a6cc2ff"
+            },
+            {
+              "id": "46baa6b5-2dc8-4cde-b5a4-c71a0afa847c",
+              "sequence": 2,
+              "answerHash": "78795946df1d98c57c06ea2cbdde95d4b6eeb7cfbad551619fdf32b6b1563191"
+            },
+            {
+              "id": "d05c70c2-6c0c-4396-9527-5cf97348d2e3",
+              "sequence": 3,
+              "answerHash": "b7f946455740b220942956c2732957f477bb0f98684270c82be1244996789bae"
+            },
+            {
+              "id": "2708cde8-67ab-4822-93a7-a7f8f5b01ca1",
+              "sequence": 4,
+              "answerHash": "07036dcf61fc35045947816340fe132254cd974d190d977235b1ae9091ae2416"
+            }
+          ],
+          "planHash": "b4261d03177217ad1ce488533e1d736e10d46e668dfe7c503432ae80b2c34922",
+          "protocol": "local_batch_v1",
+          "payloadHash": "3e3294b46ea1b2b674d3c242902e5136a9babd513fbc046f0019e868b2b69dbd",
+          "retryTargets": [],
+          "submissionId": "a5080000-0000-4000-8000-000000009002"
+        }
+      }
+    },
+    {
+      "case": "expiry_batch",
+      "assertion": "자동 만료가 미접수 응시를 보류하고 답 묶음 접수 완료",
+      "status": "pass",
+      "proof": {
+        "aPid": 4128,
+        "bPid": 4119,
+        "waitType": "Lock",
+        "blockedBy": [
+          4128
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-02T09:07:08.89175+00:00"
+      },
+      "firstResponse": {
+        "expired": false,
+        "completed": false,
+        "awaitingLocalSubmission": true
+      },
+      "secondResponse": {
+        "case": "expiry_batch",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "fn": "submit_local_quiz_phase_v1",
+        "sentAt": "2026-10-02T09:07:08.793Z",
+        "finishedAt": "2026-10-02T09:07:09.044Z",
+        "durationMs": 251,
+        "status": 200,
+        "data": {
+          "phase": "initial",
+          "result": {
+            "state": "completed",
+            "phases": [
+              {
+                "phase": "initial",
+                "score": 100,
+                "passed": true,
+                "ended_at": "2026-10-02T08:59:40.691365+00:00",
+                "evidence": "recorded_answers",
+                "attempt_id": "06ce374d-f749-41b8-af30-8f6c2f5405db",
+                "end_reason": "completed",
+                "started_at": "2026-10-02T08:59:40.391365+00:00",
+                "score_basis": "initial_total",
+                "wrong_count": 0,
+                "content_hash": "e261cc8f8a413ef7ef68be662887a940775508c3d8d32beb9ce028e9c843be7d",
+                "target_count": 4,
+                "correct_count": 4,
+                "passing_score": 80,
+                "unanswered_count": 0
+              }
+            ],
+            "attempt": {
+              "phase": "completed",
+              "passed": true,
+              "status": "completed",
+              "startedAt": "2026-10-02T08:59:40.391365+00:00",
+              "deadlineAt": "2026-10-02T09:07:01.204395+00:00",
+              "finalScore": 100,
+              "completedAt": "2026-10-02T08:59:40.691365+00:00",
+              "initialScore": 100,
+              "attemptNumber": 1,
+              "questionCount": 4,
+              "elapsedSeconds": 0,
+              "retryStartedAt": null,
+              "retryCorrectCount": 0,
+              "initialCompletedAt": "2026-10-02T08:59:40.691365+00:00",
+              "initialCorrectCount": 4,
+              "unresolvedWrongCount": 0
+            },
+            "finalized": true,
+            "detailScope": "initial_mistakes",
+            "finalReason": "completed",
+            "finalizedAt": "2026-10-02T08:59:40.691365+00:00",
+            "retryStarted": false,
+            "resultVersion": "16a98f1beba0b3c164edb2ced3f3ee47b108933ca4396336f7c95b98a6125161",
+            "schemaVersion": "vocabulary-result-v1",
+            "retentionPolicy": "summary_and_mistakes_v1"
+          },
+          "accepted": [
+            {
+              "id": "f22dd38b-9d9d-4e14-98c6-643f7bc8def0",
+              "sequence": 1,
+              "answerHash": "7c245e24de215819c5da3e825f0452afe60f95dff30b68774b5c7c83bd815a3f"
+            },
+            {
+              "id": "fad939fe-b180-428f-a55e-416b1ac7b023",
+              "sequence": 2,
+              "answerHash": "bf2e382df028f26d0ab54d1ac2a7c07d756380c6748d002eea8493b8d80dd472"
+            },
+            {
+              "id": "6e2ff718-f2dc-477c-a4b0-42d3ea0e8efe",
+              "sequence": 3,
+              "answerHash": "84fff3ed69f3ffc9561a2de953a1737dadb675406d626671269b82d995ba06a4"
+            },
+            {
+              "id": "3bdbe7dc-746b-46ec-9d9f-eb3d6f720f71",
+              "sequence": 4,
+              "answerHash": "49b6ee6668c255d77cee05a483f07883b5312e052ba9279fee01fc2c2304d84f"
+            }
+          ],
+          "planHash": "7f65682958d5cd894634aefdaf9f51354909188eb454e2d7fd4ba3abf9d034b1",
+          "protocol": "local_batch_v1",
+          "payloadHash": "487af329aa4768533eff3a3bd38705875b56b7d1d429dfbcdfa382db32130482",
+          "retryTargets": [],
+          "submissionId": "a5080000-0000-4000-8000-000000009003"
+        }
+      }
+    },
+    {
+      "case": "retry_start",
+      "assertion": "같은 응시·시작 시각·문항·계획 해시 유지",
+      "status": "pass",
+      "proof": {
+        "aPid": 4131,
+        "bPid": 4119,
+        "waitType": "Lock",
+        "blockedBy": [
+          4131
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-02T09:07:45.574649+00:00"
+      },
+      "firstResponse": {
+        "items": [
+          {
+            "id": "7313c172-ff66-441e-afe1-0a5a6d1c75c2",
+            "order": 1,
+            "contentId": "bfbdeaa2-804b-4e26-ac9d-394b90a0a319",
+            "priorWrongCount": 0,
+            "correctChoiceIndex": 0
+          },
+          {
+            "id": "9099bcf1-1fb6-4deb-af04-f56cee89de41",
+            "order": 2,
+            "contentId": "a9477694-e86c-4c9d-9c20-7dea2ea2c277",
+            "priorWrongCount": 0,
+            "correctChoiceIndex": 0
+          }
+        ],
+        "phase": "retry",
+        "status": "in_progress",
+        "limitMs": null,
+        "planHash": "a848f50973c2a949c8c6bea58a5b4e31e655b98b6a5439a0b8f03e16a96c3dd2",
+        "protocol": "local_batch_v1",
+        "attemptId": "9141a6d7-a9f9-42cf-b7fb-3012173d27a7",
+        "serverNow": "2026-10-02T09:07:39.09396+00:00",
+        "startedAt": "2026-10-02T09:07:39.086797+00:00",
+        "timePolicy": "local-elapsed-v1",
+        "officialPhase": "retry",
+        "questionLimitMs": null
+      },
+      "secondResponse": {
+        "case": "retry_start",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "fn": "begin_local_quiz_retry_v1",
+        "sentAt": "2026-10-02T09:07:45.510Z",
+        "finishedAt": "2026-10-02T09:07:45.592Z",
+        "durationMs": 82,
+        "status": 200,
+        "data": {
+          "items": [
+            {
+              "id": "7313c172-ff66-441e-afe1-0a5a6d1c75c2",
+              "order": 1,
+              "contentId": "bfbdeaa2-804b-4e26-ac9d-394b90a0a319",
+              "priorWrongCount": 0,
+              "correctChoiceIndex": 0
+            },
+            {
+              "id": "9099bcf1-1fb6-4deb-af04-f56cee89de41",
+              "order": 2,
+              "contentId": "a9477694-e86c-4c9d-9c20-7dea2ea2c277",
+              "priorWrongCount": 0,
+              "correctChoiceIndex": 0
+            }
+          ],
+          "phase": "retry",
+          "status": "in_progress",
+          "limitMs": null,
+          "planHash": "a848f50973c2a949c8c6bea58a5b4e31e655b98b6a5439a0b8f03e16a96c3dd2",
+          "protocol": "local_batch_v1",
+          "attemptId": "9141a6d7-a9f9-42cf-b7fb-3012173d27a7",
+          "serverNow": "2026-10-02T09:07:45.578429+00:00",
+          "startedAt": "2026-10-02T09:07:39.086797+00:00",
+          "timePolicy": "local-elapsed-v1",
+          "officialPhase": "retry",
+          "questionLimitMs": null
+        }
+      }
+    }
+  ],
+  "cleanup": {
+    "status": "pass",
+    "evidence": "APP-20261002-03_가짜자료종료.json",
+    "attempts": 6,
+    "phaseReceipts": 7,
+    "answerReceipts": 26,
+    "activeStudents": 0,
+    "inProgress": 0
+  },
+  "deviceMismatch": {
+    "status": "pass",
+    "response": {
+      "case": "wrong_device",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "fn": "submit_local_quiz_phase_v1",
+      "sentAt": "2026-10-02T09:14:43.451Z",
+      "finishedAt": "2026-10-02T09:14:44.167Z",
+      "durationMs": 716,
+      "status": 409,
+      "data": {
+        "code": "PT409",
+        "details": null,
+        "hint": null,
+        "message": "local_quiz_device_required"
+      }
+    },
+    "afterRejection": {
+      "receipts": 0,
+      "answers": 0,
+      "status": "in_progress"
+    },
+    "note": "이 관측은 거절 이후이며, 거절 직전의 별도 조회는 열 이름 오류로 실패했다. 새 답이나 접수 없는 상태를 거절 후 확인했다."
+  },
+  "expiryScope": "무제한 가짜 시험의 quiz_attempt deadline_at만 과거로 옮겼다. 만료 경합 보호 근거이며 원래 제한시간 시험의 늦은 제출은 로컬 SQL 검사를 참조한다."
+}

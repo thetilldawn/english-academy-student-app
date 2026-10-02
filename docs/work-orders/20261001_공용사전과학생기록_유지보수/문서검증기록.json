@@ -1,13 +1,13 @@
 {
   "kind": "maintenance-instruction-document-validation",
-  "revision": 3,
+  "revision": 6,
   "state": "passed",
-  "checked_at": "2026-10-02T03:30:53.029Z",
-  "scope": "Revision 3 directive edits only: full current document definitions, local links and hashes checked; independent review of changed M05/M09 contracts and six corrections recorded. Runtime M03 work has separate evidence. M05 implementation and production rollout are not claimed.",
+  "checked_at": "2026-10-02T09:18:47.489Z",
+  "scope": "Revision 6: current-review pointer and historical audio instructions clarified; M05 local and Preview SQL validation recorded separately; not deployed.",
   "baseline": {
     "docs_head": "7c1c281",
     "runtime": "fa4357e",
-    "implementation_head": "7275b71716c2951e2210239e0e7ad673d70ee76f"
+    "implementation_head": "e39157c0c8c12933709e1e151a15b56e657a3bd7"
   },
   "counts": {
     "markdown_files": 16,
@@ -16,7 +16,7 @@
     "planned_checks": 119,
     "decisions": 21,
     "local_links": 116,
-    "total_markdown_lines": 1497,
+    "total_markdown_lines": 1507,
     "common_ui_states": 10,
     "integrated_scenarios": 10
   },
@@ -36,8 +36,7 @@
     "D13",
     "D16",
     "D17",
-    "D18",
-    "D21"
+    "D18"
   ],
   "modules": [
     {
@@ -481,7 +480,7 @@
   "files": [
     {
       "path": "00_유지보수_전체지시서.md",
-      "sha256": "802e0a6b5582e5b47ccc6146cdefb2abf12dabea8a3271e8eceaceef28dc2fa8",
+      "sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
       "lines": 106
     },
     {
@@ -506,7 +505,7 @@
     },
     {
       "path": "05_시험준비와_재시험캐시.md",
-      "sha256": "c9db52f67d00869bd0546e3497fee34035342a1401563e4b64005a8a319b2f48",
+      "sha256": "ef6ddff96f26ca27e64a674fb448924f10dda7175e206daf09744dacb9346843",
       "lines": 149
     },
     {
@@ -546,13 +545,13 @@
     },
     {
       "path": "13_공통보존과_결정검사기준.md",
-      "sha256": "d4ae21a27389d7c94d7723d8501ad1a55460023dd072c49963b98f3d5a16b338",
-      "lines": 134
+      "sha256": "ce967462c459809627da1a0f9141e8c5d7c57a20d6c07252c9705fdb1bd31232",
+      "lines": 136
     },
     {
       "path": "14_문서검토결과.md",
-      "sha256": "3d07ca5c939283a980ff796d961e3a0b1d36d3154cb2331ee7a64c3b2f03f1cb",
-      "lines": 81
+      "sha256": "d63528a8f76b51fc20dc751cdc427db2c2647a3eaa7906dc717d523f0f222ee7",
+      "lines": 89
     },
     {
       "path": "15_답복구와_종료실패수리.md",
@@ -561,9 +560,9 @@
     }
   ],
   "previous_revision": {
-    "revision": 2,
-    "overview_sha256": "e3b91d8174561a5e9a27bb8ad606963b2a600cb1be5b9ed40093dd54faf4b0ab",
-    "manifest_sha256": "5103bfbe092f260bf32ac5bff43dfcc4068f0bbc26b2da03a94e6337533ef83c",
+    "revision": 5,
+    "overview_sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
+    "manifest_sha256": "b1035ee72b4bb0614ecd5a374d693d8a1b19e4a14675cfd80cbbff7c4621e0a3",
     "counts": {
       "markdown_files": 16,
       "modules": 13,
@@ -571,36 +570,86 @@
       "planned_checks": 119,
       "decisions": 21,
       "local_links": 116,
-      "total_markdown_lines": 1483,
+      "total_markdown_lines": 1507,
       "common_ui_states": 10,
       "integrated_scenarios": 10
     },
     "prior_history": {
-      "overview_sha256": "faad0b31d5bc6189af02adb738184b0d63b5a664fbe3bbd66c39edf70603bf90",
-      "manifest_sha256": "d084b6750ebe1645f28d4e6809ec8eab9ebe2856ab3c7ae7a3b6580f39a758cb",
-      "requirements": 59,
-      "planned_checks": 94,
-      "capacity_model_MB": [
-        39.064,
-        43.224,
-        57.784
-      ],
-      "note": "Historical revision1 figures; capacity was not remeasured in revision2."
+      "revision": 4,
+      "overview_sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
+      "manifest_sha256": "5e3ee5e1a1f8b198cdbfacbf4d95de193950945b6b03c3ebdc9981c4e5aba591",
+      "counts": {
+        "markdown_files": 16,
+        "modules": 13,
+        "requirements": 70,
+        "planned_checks": 119,
+        "decisions": 21,
+        "local_links": 116,
+        "total_markdown_lines": 1501,
+        "common_ui_states": 10,
+        "integrated_scenarios": 10
+      },
+      "prior_history": {
+        "revision": 3,
+        "overview_sha256": "802e0a6b5582e5b47ccc6146cdefb2abf12dabea8a3271e8eceaceef28dc2fa8",
+        "manifest_sha256": "ce42439136629e95518d2d0d5bfbecedf9114cc7d543b09d6533f39cf4c4e281",
+        "counts": {
+          "markdown_files": 16,
+          "modules": 13,
+          "requirements": 70,
+          "planned_checks": 119,
+          "decisions": 21,
+          "local_links": 116,
+          "total_markdown_lines": 1497,
+          "common_ui_states": 10,
+          "integrated_scenarios": 10
+        },
+        "prior_history": {
+          "revision": 2,
+          "overview_sha256": "e3b91d8174561a5e9a27bb8ad606963b2a600cb1be5b9ed40093dd54faf4b0ab",
+          "manifest_sha256": "5103bfbe092f260bf32ac5bff43dfcc4068f0bbc26b2da03a94e6337533ef83c",
+          "counts": {
+            "markdown_files": 16,
+            "modules": 13,
+            "requirements": 70,
+            "planned_checks": 119,
+            "decisions": 21,
+            "local_links": 116,
+            "total_markdown_lines": 1483,
+            "common_ui_states": 10,
+            "integrated_scenarios": 10
+          },
+          "prior_history": {
+            "overview_sha256": "faad0b31d5bc6189af02adb738184b0d63b5a664fbe3bbd66c39edf70603bf90",
+            "manifest_sha256": "d084b6750ebe1645f28d4e6809ec8eab9ebe2856ab3c7ae7a3b6580f39a758cb",
+            "requirements": 59,
+            "planned_checks": 94,
+            "capacity_model_MB": [
+              39.064,
+              43.224,
+              57.784
+            ],
+            "note": "Historical revision1 figures; capacity was not remeasured in revision2."
+          }
+        }
+      }
     }
   },
-  "no_app_or_production_changes": true,
+  "no_app_or_production_changes": false,
   "changed_documents": [
     "00_유지보수_전체지시서.md",
     "05_시험준비와_재시험캐시.md",
-    "09_무료운영인원과_부하검증.md",
     "13_공통보존과_결정검사기준.md",
     "14_문서검토결과.md"
   ],
   "independent_delta_review": {
-    "agent": "m01_value_contract",
-    "corrections": 6,
-    "review_kind": "read-only",
+    "agents": [
+      "m05_browser_review",
+      "m05_record_review",
+      "m05_db_review"
+    ],
+    "review_kind": "read-only current implementation and documentation review; latest audio correction included",
     "application_checks_executed": false
   },
-  "no_app_or_production_changes_scope": "This document-only revision; excludes separately recorded M03 implementation and Preview verification."
+  "no_app_or_production_changes_scope": "M05 local implementation and tests are separately recorded. One M05 Preview SQL migration applied and synthetic verification retired. No Production writes or app deployment."
 }

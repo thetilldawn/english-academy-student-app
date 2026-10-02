@@ -11,7 +11,8 @@ import {
   millisecondsUntil,
 } from "@/lib/deadline";
 import { getStudentAttempt } from "@/lib/services/quiz/attempt-query";
-import { getQuizPreparation, getRetryPreparation, QuizPreparationChangedError } from "@/features/quiz-player/public-server";
+import { getQuizPreparation, getRetryPreparation, QuizPreparationChangedError, usesLocalQuiz } from "@/features/quiz-player/public-server";
+import { LocalQuizResume } from "@/features/quiz-player/public-local-client";
 import { PreparedQuizPlayer } from "@/features/quiz-player/ui/prepared-quiz-player";
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ async function AttemptContent({
     params,
     requireStudentSession(),
   ]);
+  if (await usesLocalQuiz(session.studentId, id)) return <LocalQuizResume studentId={session.studentId} attemptId={id} retry={(await searchParams).prepare === "retry"} />;
   const attempt = await getStudentAttempt(session.studentId, id);
 
   if (!attempt) {

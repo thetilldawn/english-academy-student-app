@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-02T08:23:15.842Z",
+  "browser": "151.0.7922.34",
+  "scope": "실제 새 시험 UI의 CDN 직접 재생. 가짜 문제/준비 API, 실제 공개 음원 두 개. 사람의 청취/발음 내용 검수는 아님.",
+  "ended": [
+    {
+      "url": "https://media.merriam-webster.com/audio/prons/en/us/mp3/c/collec01.mp3",
+      "duration": 0.527438
+    },
+    {
+      "url": "https://xdxhswjgksukjmpbzqgz.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/pronunciation/google_cloud_text_to_speech/profile-286866721f7f4ee8/15944f75c56cbcb2c6180409f068808cb675f1309a0fd63b6cac7fb856b6d7cc.mp3",
+      "duration": 1.055938
+    }
+  ],
+  "mediaNetwork": [
+    {
+      "url": "https://media.merriam-webster.com/audio/prons/en/us/mp3/c/collec01.mp3",
+      "status": 206
+    },
+    {
+      "url": "https://media.merriam-webster.com/audio/prons/en/us/mp3/c/collec01.mp3",
+      "status": 206
+    },
+    {
+      "url": "https://xdxhswjgksukjmpbzqgz.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/pronunciation/google_cloud_text_to_speech/profile-286866721f7f4ee8/15944f75c56cbcb2c6180409f068808cb675f1309a0fd63b6cac7fb856b6d7cc.mp3",
+      "status": 206
+    },
+    {
+      "url": "https://xdxhswjgksukjmpbzqgz.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/pronunciation/google_cloud_text_to_speech/profile-286866721f7f4ee8/15944f75c56cbcb2c6180409f068808cb675f1309a0fd63b6cac7fb856b6d7cc.mp3",
+      "status": 206
+    }
+  ],
+  "appAudioProxyRequests": 0,
+  "examDataRequestsDuringPlay": 0
+}

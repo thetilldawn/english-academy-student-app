@@ -1,0 +1,61 @@
+{
+  "at": "2026-10-02T08:56:00.358Z",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "migration": {
+    "version": "20261002085219",
+    "name": "submit_local_quiz_phase_batches"
+  },
+  "sqlSha256": "65bb3a3ec1c527e8f9175a9c0fd90a2de472d126479ffe58785fca1f1cc49011",
+  "scope": "Migration-only comparison before synthetic tests; all columns of 161 original tables. vocabulary_library_versions uses row_to_json; other tables to_jsonb with unused a5080000 prefix excluded.",
+  "beforeRows": 251473,
+  "beforeTables": 161,
+  "afterTables": 165,
+  "originalFunctions": 730,
+  "changedFunctions": [
+    "public.start_quiz_retry",
+    "public.finalize_quiz_attempt_if_stale",
+    "private.record_initial_wrong_events_when_review_starts",
+    "private.resolve_vocab_state_on_correct_answer",
+    "public.resume_quiz_after_feedback_v1",
+    "public.resume_quiz_after_feedback_v2",
+    "public.start_quiz_retry_v2",
+    "private.record_vocab_quiz_point_events",
+    "private.run_stale_quiz_attempt_maintenance_v1",
+    "public.prepare_quiz_attempt_v1",
+    "public.begin_prepared_quiz_v1",
+    "private.submit_vocabulary_answer_v1",
+    "private.finalize_vocabulary_expiry_v2"
+  ],
+  "newFunctions": [
+    "private.assert_local_quiz_device_v1",
+    "public.get_local_quiz_protocol_v1",
+    "public.read_local_quiz_materials_v1",
+    "private.local_quiz_plan_hash_v1",
+    "private.create_local_quiz_phase_plan_v1",
+    "public.prepare_local_quiz_v1",
+    "public.read_local_quiz_plan_v1",
+    "public.begin_local_quiz_v1",
+    "public.begin_local_quiz_retry_v1",
+    "private.project_local_quiz_legacy_state_v1",
+    "public.submit_local_quiz_phase_v1",
+    "private.assert_legacy_quiz_protocol_v1",
+    "private.begin_local_quiz_core_v1"
+  ],
+  "functionMetadataDifferences": [],
+  "tableMetadataDifferences": [],
+  "structureDifferences": [],
+  "unchangedTables": 160,
+  "unchangedRows": 251470,
+  "acceptedOperationalDifference": {
+    "name": "private.student_app_maintenance_state",
+    "rows": 3,
+    "reason": "정기 작업의 실행 시각 갱신. 후속 조회는 08:56 UTC 실행과 processed_count=0을 확인했다. 이 3행은 내용 불변 주장에서 제외하며 다른 필드의 전후 일치도 주장하지 않는다."
+  },
+  "rowDifferences": [
+    {
+      "name": "private.student_app_maintenance_state",
+      "rows": 3,
+      "hash": "f0f834550d4a13f08f02e62f37eab9bb"
+    }
+  ]
+}

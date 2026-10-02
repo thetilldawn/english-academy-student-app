@@ -12,11 +12,15 @@ vi.mock("../queries/assignment-study-query", () => ({ getAssignmentStudy: mocks.
 vi.mock("../../client/components/assignment-study-reader", () => ({
   AssignmentStudyReader: (props: unknown) => { mocks.reader(props); return <p>허용된 학습 자료</p>; },
 }));
+vi.mock("../../client/components/cached-assignment-study-reader", () => ({
+  CachedAssignmentStudyReader: (props: unknown) => { mocks.reader(props); return <p>허용된 공용 학습 자료</p>; },
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back: mocks.back, refresh: mocks.refresh }),
   notFound: () => { throw new Error("NEXT_NOT_FOUND"); },
 }));
 import { AssignmentStudyContent } from "./assignment-study-content";
+import { packAssignmentStudy } from "../../domain/study-materials";
 const originalShow = HTMLDialogElement.prototype.showModal;
 const originalClose = HTMLDialogElement.prototype.close;
 beforeEach(() => {
@@ -37,6 +41,19 @@ const locked = (state: "held" | "waiting_initial" | "waiting_time", opensAt: str
 });
 
 describe("잠긴 단어장 서버 조립", () => {
+  it("공개된 단어장은 정확한 발음 조회와 표시 참조만 공용 읽기 화면에 전달한다",async()=>{
+    const study={assignmentId:"fake-assignment",title:"공개 단어장",mode:"book_meaning_choice" as const,words:[{
+      key:"fake-word",headword:"sample",meaning:"예",definition:null,example:null,
+      pronunciation:{available:false,audioUrl:null,variantId:null,displayKo:null},
+    }]};
+    mocks.study.mockResolvedValue(study);
+    render(await AssignmentStudyContent(props("page")));
+    expect(mocks.study).toHaveBeenCalledWith({studentId:"fake-student"},"fake-assignment",true);
+    const {manifest}=await packAssignmentStudy(study);
+    expect(mocks.reader).toHaveBeenCalledWith({presentation:"page",manifest});
+    expect(JSON.stringify(mocks.reader.mock.calls[0])).not.toContain('"sample"');
+    expect(screen.getByText("허용된 공용 학습 자료")).toBeVisible();
+  });
   it.each(["page", "dialog"] as const)("%s에서도 자료 없이 쉬운 보류 안내와 닫기를 유지한다", async (presentation) => {
     mocks.study.mockResolvedValue(locked("held"));
     render(await AssignmentStudyContent(props(presentation)));

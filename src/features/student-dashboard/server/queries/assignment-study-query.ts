@@ -52,6 +52,7 @@ const lockedStudySchema = studySchema.omit({ words: true }).extend({
 export async function getAssignmentStudy(
   student: Pick<StudentSession, "studentId">,
   assignmentId: string,
+  strictPronunciation = false,
 ): Promise<AssignmentStudyResult | null> {
   if (!z.uuid().safeParse(assignmentId).success) return null;
   const { data, error } = await getServiceSupabaseClient().rpc(
@@ -92,14 +93,14 @@ export async function getAssignmentStudy(
     : []);
   const dictionaryIds = legacyRows.flatMap((word) => word.dictionaryId ? [word.dictionaryId] : []);
   const [registry, active, synthetic, approved, examplePrompts, entryApproved, entrySource, audioCorrections] = await Promise.all([
-    loadVocabPronunciationRegistry(ids),
-    loadActiveVocabPronunciationReleaseRegistry(ids),
-    loadSyntheticPronunciationRegistry(bindings),
-    loadApprovedKoreanPronunciationRegistry(dictionaryIds),
+    loadVocabPronunciationRegistry(ids, strictPronunciation),
+    loadActiveVocabPronunciationReleaseRegistry(ids, strictPronunciation),
+    loadSyntheticPronunciationRegistry(bindings, strictPronunciation),
+    loadApprovedKoreanPronunciationRegistry(dictionaryIds, strictPronunciation),
     mode === "canonical_example_to_headword" ? getStudyExamplePrompts(student.studentId, assignmentId, ids) : Promise.resolve(new Map<number, string[]>()),
-    loadEntryApprovedKoreanPronunciationRegistry(ids),
-    loadEntrySourcePronunciationRegistry(ids),
-    loadPronunciationAudioCorrections(),
+    loadEntryApprovedKoreanPronunciationRegistry(ids, strictPronunciation),
+    loadEntrySourcePronunciationRegistry(ids, strictPronunciation),
+    loadPronunciationAudioCorrections(strictPronunciation),
   ]);
   return {
     assignmentId,

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -12,13 +12,13 @@ import type {
 import { StudentResultView } from "./student-result-view";
 import { resultRecordFixture } from "@/test-support/vocabulary-result-fixture";
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn() }),
-}));
+const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.clearAllMocks();
 });
 
 function question(
@@ -79,6 +79,26 @@ function result(
 }
 
 describe("StudentResultView", () => {
+  it.each([true, false])("실제 재시험 버튼은 새 규격=%s에 맞는 명령만 보낸다", async (local) => {
+    const fetcher=vi.fn().mockResolvedValueOnce(Response.json({local})).mockResolvedValueOnce(Response.json({retry:{phase:"retry"}}));
+    vi.stubGlobal("fetch",fetcher);
+    render(<StudentResultView result={result([question("q1")],{status:"in_progress",phase:"review"})} />);
+    fireEvent.click(screen.getByRole("button",{name:"재시험 시작"}));
+    await waitFor(()=>expect(replace).toHaveBeenCalledWith("/student/attempt/attempt-1?prepare=retry"));
+    expect(fetcher).toHaveBeenNthCalledWith(1,"/api/student/local-quiz-protocol/attempt-1",{cache:"no-store"});
+    expect(fetcher).toHaveBeenCalledTimes(local?1:2);
+    if(!local)expect(fetcher).toHaveBeenNthCalledWith(2,"/api/student/attempts/attempt-1/retry",{method:"POST",headers:{"x-quiz-preparation":"1"}});
+  });
+  it.each(["조회 실패","잘못된 규격","구형 시작 실패"])("%s에는 재시험 이동 없이 다시 누를 수 있다", async (kind) => {
+    const fetcher=vi.fn().mockResolvedValueOnce(kind==="조회 실패"?Response.json({}, {status:503}):Response.json(kind==="잘못된 규격"?{}:{local:false}));
+    if(kind==="구형 시작 실패")fetcher.mockResolvedValueOnce(Response.json({error:"재시험을 시작하지 못했습니다."},{status:503}));
+    vi.stubGlobal("fetch",fetcher);
+    render(<StudentResultView result={result([question("q1")],{status:"in_progress",phase:"review"})} />);
+    fireEvent.click(screen.getByRole("button",{name:"재시험 시작"}));
+    expect(await screen.findByRole("alert")).toHaveTextContent("재시험");
+    expect(replace).not.toHaveBeenCalled();expect(fetcher).toHaveBeenCalledTimes(kind==="구형 시작 실패"?2:1);
+    expect(screen.getByRole("button",{name:"재시험 시작"})).toBeEnabled();
+  });
   it("문항 상세가 없을 때 모두 정답 안내를 띄우지 않고 요약의 재시험을 표시한다", () => {
     render(<StudentResultView result={result([], { resultRecord: resultRecordFixture({ detailScope: "summary_only" }),
       questionCount: 50, initialCorrectCount: 40, retryCorrectCount: 8, unresolvedWrongCount: 2, initialScore: 80, finalScore: 96, passed: true })} />);

@@ -44,7 +44,7 @@ export async function prepareStudentRetry(studentId: string, id: string) {
   if (error || !data || data.status !== "in_progress" || !["review","retry"].includes(data.phase)) throw new Error("retry_unavailable");
   return { phase: "retry" as const, prepared: true };
 }
-export async function getQuizPreparation(studentId: string, id: string): Promise<PreparedQuiz | {resumeId:string;kind:"initial"|"practice"} | null> {
+export async function getQuizPreparation(studentId: string, id: string, options: { strictPronunciation?: boolean } = {}): Promise<PreparedQuiz | {resumeId:string;kind:"initial"|"practice"} | null> {
   const raw = await rpc("get_quiz_preparation_v1", { p_student_id: studentId, p_preparation_id: id });
   if (!raw) return null;
   const base = z.object({ id: z.uuid(), kind: z.enum(["initial","practice"]), begunId:z.uuid().nullable().optional(), plan: z.unknown().optional(), assignment: z.unknown().optional() }).parse(raw);
@@ -83,7 +83,7 @@ export async function getQuizPreparation(studentId: string, id: string): Promise
   const quizContentMode = normalizeQuizContentMode(a.quiz_content_mode);
   return preparedQuizSchema.parse({ id, kind: "initial", assignmentTitle: a.title, quizContentMode, phase: "initial",
     timingMode: a.timing_mode, questionTimeLimitSeconds: a.question_time_limit_seconds, currentQuestionId: plan[0]?.id ?? null,
-    questions: await hydrateQuizQuestions(rows, quizContentMode) });
+    questions: await hydrateQuizQuestions(rows, quizContentMode, options) });
 }
 export async function beginQuizPreparation(studentId: string, id: string, kind: PreparedQuiz["kind"]): Promise<ReadyQuiz> {
   if (kind === "practice") {

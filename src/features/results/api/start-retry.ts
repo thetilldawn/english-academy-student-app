@@ -6,6 +6,11 @@ type RetryResponse = {
 };
 
 export async function requestAttemptRetry(attemptId: string) {
+  const protocolResponse = await fetch(`/api/student/local-quiz-protocol/${attemptId}`, { cache: "no-store" });
+  if (!protocolResponse.ok) throw new Error(studentAppText.actions.retryError);
+  const protocol = await protocolResponse.json() as { local: boolean };
+  if (protocol.local === true) return;
+  if (protocol.local !== false) throw new Error(studentAppText.actions.retryError);
   const response = await fetch(`/api/student/attempts/${attemptId}/retry`, {
     method: "POST",
     headers: { "x-quiz-preparation": "1" },

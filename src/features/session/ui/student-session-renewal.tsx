@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { requestStudentSessionRenewal } from "../api/session";
+import { announceStudentPrivateCacheChange } from "../controller/student-private-cache-events";
 
 const RETRY_DELAY_MS = 15 * 60 * 1000;
 
@@ -35,6 +36,7 @@ export function StudentSessionRenewal({
         inFlight = false;
         if (disposed || result.status === "aborted") return;
         if (result.status === "invalid") {
+          announceStudentPrivateCacheChange("identity");
           window.location.replace("/");
           return;
         }

@@ -1,0 +1,178 @@
+{
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "verifiedAt": "2026-10-02T09:17:06.531Z",
+  "fixturePrefix": "a5080000-0000-4000-8000-",
+  "guard": "fake dataset metadata, fixed six students, creator and assignment scope validated before mutation",
+  "finished": {
+    "attempts": 6,
+    "students": 6,
+    "inProgress": 0,
+    "unresolved": 0,
+    "finalScores": [
+      {
+        "id": "b3116bc9-a2f4-48d8-b973-f630ede2d5e1",
+        "phase": "completed",
+        "status": "completed",
+        "student": "a5080000-0000-4000-8000-000000000101",
+        "finalScore": 100
+      },
+      {
+        "id": "d3accc91-ab11-48e6-a1e5-443595d2a15d",
+        "phase": "completed",
+        "status": "completed",
+        "student": "a5080000-0000-4000-8000-000000000102",
+        "finalScore": 100
+      },
+      {
+        "id": "06ce374d-f749-41b8-af30-8f6c2f5405db",
+        "phase": "completed",
+        "status": "completed",
+        "student": "a5080000-0000-4000-8000-000000000103",
+        "finalScore": 100
+      },
+      {
+        "id": "9141a6d7-a9f9-42cf-b7fb-3012173d27a7",
+        "phase": "completed",
+        "status": "completed",
+        "student": "a5080000-0000-4000-8000-000000000104",
+        "finalScore": 100
+      },
+      {
+        "id": "7185a36f-4e79-46c9-bfd6-8d9cf7c28bf8",
+        "phase": "completed",
+        "status": "completed",
+        "student": "a5080000-0000-4000-8000-000000000105",
+        "finalScore": 100
+      },
+      {
+        "id": "c38b0695-c897-440e-a414-9bc1fa7570a4",
+        "phase": "completed",
+        "status": "completed",
+        "student": "a5080000-0000-4000-8000-000000000106",
+        "finalScore": 100
+      }
+    ],
+    "phaseReceipts": 7,
+    "answerReceipts": 26
+  },
+  "beforeCleanup": [
+    {
+      "name": "attempts",
+      "rows": 6,
+      "hash": "d20a115f06863e9ea36f52a20f2b0a40"
+    },
+    {
+      "name": "phase_receipts",
+      "rows": 7,
+      "hash": "e4f20ad2484d0ba569e99e9f65b34460"
+    },
+    {
+      "name": "answer_receipts",
+      "rows": 26,
+      "hash": "a1c240848f5368dcdbe4c470524d53cb"
+    },
+    {
+      "name": "phase_results",
+      "rows": 7,
+      "hash": "11ae6fc510ad32af588e812de0eb57a5"
+    }
+  ],
+  "afterCleanup": [
+    {
+      "name": "attempts",
+      "rows": 6,
+      "hash": "d20a115f06863e9ea36f52a20f2b0a40"
+    },
+    {
+      "name": "phase_receipts",
+      "rows": 7,
+      "hash": "e4f20ad2484d0ba569e99e9f65b34460"
+    },
+    {
+      "name": "answer_receipts",
+      "rows": 26,
+      "hash": "a1c240848f5368dcdbe4c470524d53cb"
+    },
+    {
+      "name": "phase_results",
+      "rows": 7,
+      "hash": "11ae6fc510ad32af588e812de0eb57a5"
+    }
+  ],
+  "historyIdentical": true,
+  "closed": {
+    "sessions": 0,
+    "assignable": false,
+    "inProgress": 0,
+    "adminActive": false,
+    "assignments": [
+      {
+        "id": "c24ae571-315c-41ca-bcfc-7127e93a2829",
+        "status": "closed",
+        "isActive": null,
+        "deletedAt": "2026-10-02T09:16:31.880306+00:00"
+      },
+      {
+        "id": "4c30d62c-6c87-4a05-9db1-987e1aae99f4",
+        "status": "closed",
+        "isActive": null,
+        "deletedAt": "2026-10-02T09:16:31.870952+00:00"
+      },
+      {
+        "id": "dcc6da19-3ea6-4495-b50c-640a2699e1ed",
+        "status": "closed",
+        "isActive": null,
+        "deletedAt": "2026-10-02T09:16:31.882771+00:00"
+      },
+      {
+        "id": "6b62fc91-7e2f-4d87-9426-90790928ef97",
+        "status": "closed",
+        "isActive": null,
+        "deletedAt": "2026-10-02T09:16:31.873456+00:00"
+      },
+      {
+        "id": "1f7e699c-8068-48f9-af35-35141ea7a44d",
+        "status": "closed",
+        "isActive": null,
+        "deletedAt": "2026-10-02T09:16:31.86469+00:00"
+      },
+      {
+        "id": "7af13f9f-5537-4522-9581-9654f15c88f2",
+        "status": "closed",
+        "isActive": null,
+        "deletedAt": "2026-10-02T09:16:31.875865+00:00"
+      }
+    ],
+    "datasetActive": false,
+    "activeStudents": 0,
+    "studentStatuses": [
+      {
+        "id": "a5080000-0000-4000-8000-000000000101",
+        "status": "blocked"
+      },
+      {
+        "id": "a5080000-0000-4000-8000-000000000102",
+        "status": "blocked"
+      },
+      {
+        "id": "a5080000-0000-4000-8000-000000000103",
+        "status": "blocked"
+      },
+      {
+        "id": "a5080000-0000-4000-8000-000000000104",
+        "status": "blocked"
+      },
+      {
+        "id": "a5080000-0000-4000-8000-000000000105",
+        "status": "blocked"
+      },
+      {
+        "id": "a5080000-0000-4000-8000-000000000106",
+        "status": "blocked"
+      }
+    ],
+    "validPreparations": 0
+  },
+  "productionWrites": 0,
+  "existingStudentWrites": 0
+}

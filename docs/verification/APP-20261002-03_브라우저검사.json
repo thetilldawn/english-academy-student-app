@@ -1,0 +1,162 @@
+{
+  "at": "2026-10-02T08:33:13.556Z",
+  "browser": "151.0.7922.34",
+  "workerSha256": "6e7ae79c384e06d8be85a6269ced435d8b76f16342dd60500c6dff6460e0fdc0",
+  "htmlSha256": "96d3031ef62206c3793cc04b08d55688334c2c410e38d544c1489b72d432e6c0",
+  "scope": "실제 빌드 시험 화면/IndexedDB/WebLocks/ServiceWorker, 서버 응답은 가짜 자료. 학습 훅·결과 버튼·원기기 복원은 별도 검사 화면에 실제 코드를 주입하며 Next 이동 경계와 CSS만 대체. 실제 인증된 결과 페이지 왕복은 아님. 음원은 CDN 직접재생으로 별도 검사.",
+  "cases": [
+    {
+      "case": "실제 학습 훅→공용 기기 저장→시험 준비→다른 배정 재사용",
+      "sharedStudyAtoms": 7,
+      "studyAtomsDownloadedAgain": 0,
+      "secondAssignmentContents": 0,
+      "secondAssignmentAtoms": 0,
+      "firstQuizOpened": true
+    },
+    {
+      "case": "정상 PC와 390px",
+      "duringPlayRequests": 0,
+      "endSubmissions": 1,
+      "consoleErrors": []
+    },
+    {
+      "case": "오프라인 새로고침과 재연결",
+      "resumeQuestion": 2,
+      "duringPlayRequests": 0,
+      "endAttempts": 2,
+      "sameBatch": true,
+      "onlineSignal": "CDP 재로딩 한계로 online 이벤트 명시 발생",
+      "consoleErrors": []
+    },
+    {
+      "case": "실제 IDB put 성공 후 거래 중단과 두 탭",
+      "failedCommitAdvanced": false,
+      "recoveredQuestion": 2,
+      "secondTabBlocked": true,
+      "apiDuringPlay": 0
+    },
+    {
+      "case": "시작 응답 유실 후 같은 기기 재진입",
+      "samePreparationAndAttempt": true,
+      "clockPreserved": true,
+      "startTransportAttempts": 2
+    },
+    {
+      "case": "실제 공용 표시48시간/진행 보호/정리와 동시 저장",
+      "fresh": 3,
+      "expired": 0,
+      "protectedCount": 3,
+      "successfulConcurrentWrites": 1,
+      "expiredUnpinned": 0,
+      "answerRecordKept": true
+    },
+    {
+      "case": "풀이 중 화면 갱신 차단/옛 화면 오프라인/공용 문서와 병렬 청크 복구",
+      "updateState": "redundant",
+      "assetRequestsDuringPlay": 0,
+      "parallelChunksRestored": 2,
+      "documentRestored": true,
+      "resumeQuestion": 2
+    },
+    {
+      "case": "99문항과 공식 대상10 재시험",
+      "fakeServerDelayMs": 0,
+      "duringPlayRequests": 0,
+      "initialAnswers": 99,
+      "retryAnswers": 10,
+      "phaseSubmissions": 2,
+      "contentReloads": 0,
+      "localTransactionMs": {
+        "count": 116,
+        "p50": 1.199999988079071,
+        "p95": 2.5,
+        "max": 12
+      },
+      "submissions": [
+        {
+          "phase": "initial",
+          "ms": 7.599999964237213,
+          "status": 200
+        },
+        {
+          "phase": "retry",
+          "ms": 5.300000011920929,
+          "status": 200
+        }
+      ],
+      "lastAnswerToOfficialResultMs": [
+        140.19999998807907,
+        141.80000001192093
+      ],
+      "resultProtocolReads": 0,
+      "viaResultRetryButton": false,
+      "consoleErrors": [],
+      "timingScope": "최초와 재시험 전체"
+    },
+    {
+      "case": "99문항과 공식 대상10 재시험",
+      "fakeServerDelayMs": 150,
+      "duringPlayRequests": 0,
+      "initialAnswers": 99,
+      "retryAnswers": 10,
+      "phaseSubmissions": 2,
+      "contentReloads": 0,
+      "localTransactionMs": {
+        "count": 116,
+        "p50": 1.199999988079071,
+        "p95": 2.800000011920929,
+        "max": 13.300000011920929
+      },
+      "submissions": [
+        {
+          "phase": "initial",
+          "ms": 167.10000002384186,
+          "status": 200
+        },
+        {
+          "phase": "retry",
+          "ms": 168.0999999642372,
+          "status": 200
+        }
+      ],
+      "lastAnswerToOfficialResultMs": [
+        298.5,
+        298.0999999642372
+      ],
+      "resultProtocolReads": 0,
+      "viaResultRetryButton": false,
+      "consoleErrors": [],
+      "timingScope": "최초와 재시험 전체"
+    },
+    {
+      "case": "50문항과 공식 대상10 재시험",
+      "fakeServerDelayMs": 0,
+      "duringPlayRequests": 0,
+      "initialAnswers": 50,
+      "retryAnswers": 10,
+      "phaseSubmissions": 2,
+      "contentReloads": 0,
+      "localTransactionMs": {
+        "count": 13,
+        "p50": 1,
+        "p95": 2.299999952316284,
+        "max": 2.299999952316284
+      },
+      "submissions": [
+        {
+          "phase": "retry",
+          "ms": 3,
+          "status": 200
+        }
+      ],
+      "lastAnswerToOfficialResultMs": [
+        133.4000000357628
+      ],
+      "resultProtocolReads": 1,
+      "viaResultRetryButton": true,
+      "consoleErrors": [],
+      "timingScope": "결과 화면 경유 재진입 후 재시험 구간"
+    }
+  ],
+  "scopeClarifiedAt": "2026-10-02T08:42:06.923Z"
+}
