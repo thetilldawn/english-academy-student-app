@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 138,
-      "pathSetSha256": "90fa2017f203468c160ed21b10080320aa4aeb9222f960a7abd5a7de0f5d7d61"
+      "fileCount": 139,
+      "pathSetSha256": "9e946393ac04b910c957445b7e85a75a0481f0e0ada53e68a5f8ee2c3a78e64e"
     },
     {
       "path": "src/lib/deploy",
@@ -3055,6 +3055,11 @@
       "path": "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
     }
   ],
   "features": [
@@ -7395,7 +7400,8 @@
           "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql",
           "supabase/migrations/20261002140634_retain_operational_logs_and_preparations.sql",
           "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql",
-          "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql"
+          "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql",
+          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7475,7 +7481,8 @@
           "src/features/student-dashboard/server/components/assignment-study-content.test.tsx",
           "src/features/quiz-player/test-support/local-quiz-fixtures.ts",
           "src/lib/database/operational-retention.integration.test.ts",
-          "src/lib/database/historical-question-migration.integration.test.ts"
+          "src/lib/database/historical-question-migration.integration.test.ts",
+          "src/lib/database/historical-learning-migration.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7797,7 +7804,8 @@
           "supabase/migrations/20260914213654_add_reviewed_pronunciation_assets.sql",
           "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
           "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
-          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql"
+          "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -7835,7 +7843,8 @@
           "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
           "src/features/student-dashboard/controller/use-shared-study.test.tsx",
           "src/features/quiz-player/server/local-quiz-http.test.ts",
-          "src/features/quiz-player/server/local-quiz-service.test.ts"
+          "src/features/quiz-player/server/local-quiz-service.test.ts",
+          "src/lib/database/historical-learning-migration.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8184,7 +8193,8 @@
           "supabase/migrations/20260921060000_add_reviewed_csat_wordbooks.sql",
           "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
-          "supabase/migrations/20261002155950_classify_wordbook_templates.sql"
+          "supabase/migrations/20261002155950_classify_wordbook_templates.sql",
+          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -8224,7 +8234,8 @@
           "src/features/wordbook-compositions/client/controllers/use-library-command.test.tsx",
           "src/design-system/primitives/tabs/tabs.test.tsx",
           "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx",
-          "scripts/verify-wordbook-kinds-browser.ts"
+          "scripts/verify-wordbook-kinds-browser.ts",
+          "src/lib/database/historical-learning-migration.integration.test.ts"
         ]
       },
       "requiredImportEdges": [],
@@ -8338,7 +8349,8 @@
           "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
-          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql"
         ],
         "cacheStreaming": [
           "src/app/api/student/wrong-words/route.ts",
@@ -8378,7 +8390,8 @@
           "src/features/student-dashboard/client/controllers/use-notebook-detail.test.tsx",
           "src/features/session/controller/student-private-cache-events.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
-          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
+          "src/lib/database/historical-learning-migration.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

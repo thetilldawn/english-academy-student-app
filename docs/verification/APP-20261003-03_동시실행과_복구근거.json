@@ -1,0 +1,4375 @@
+{
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "work": "APP-20261003-03",
+  "at": "2026-10-02T21:19:11.906Z",
+  "migrationSha256": "1782965a78c2a933c73722d823c230188724ff115a0c95c5304ff5a6dd5207ba",
+  "local": {
+    "targetTests": 12,
+    "fullFiles": 623,
+    "fullPassed": 5039,
+    "existingSkipped": 1,
+    "productionBuild": true,
+    "typeCheck": true,
+    "changedFileLint": true,
+    "featureMap": true
+  },
+  "concurrentSql": {
+    "compact-copy": {
+      "case": "compact-copy",
+      "proof": {
+        "aPid": 17322,
+        "bPid": 17321,
+        "waitType": "Lock",
+        "blockedBy": [
+          17322
+        ],
+        "waitEvent": "relation",
+        "observedAt": "2026-10-02T20:55:40.502767+00:00"
+      },
+      "result": {
+        "rows": 6,
+        "action": "compact",
+        "changed": 6,
+        "requestId": "a8040000-0000-4000-8000-000000000200",
+        "archiveHash": "69624fe8e2b363fc747850249e9c4ea6a945370a266172f038504121de722f1f"
+      }
+    },
+    "create": {
+      "case": "create",
+      "proof": {
+        "aPid": 17343,
+        "bPid": 17342,
+        "kind": "NOWAIT-observed-on-independent-connection",
+        "observedAt": "2026-10-02T20:56:41.254943+00:00"
+      },
+      "result": {
+        "state": "preparing",
+        "versionId": "502bb83a-d31a-4d38-97b5-147dad1601b4"
+      }
+    },
+    "ready": {
+      "case": "ready",
+      "proof": {
+        "aPid": 17351,
+        "bPid": 17350,
+        "kind": "NOWAIT-observed-on-independent-connection",
+        "observedAt": "2026-10-02T20:57:30.925304+00:00"
+      },
+      "result": {
+        "state": "ready",
+        "datasetId": "8017f66b-d890-4431-a463-0c2ad0465a15",
+        "versionId": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+        "entryCount": 6,
+        "contentHash": "4d43f330591df3387ec559545d3796332e3c2abe77d8a08b2560a2b6f54efe7b",
+        "questionCount": 12
+      }
+    },
+    "ready-advance": {
+      "case": "ready-advance",
+      "proof": {
+        "aPid": 17411,
+        "bPid": 17398,
+        "kind": "NOWAIT-observed-on-independent-connection",
+        "observedAt": "2026-10-02T21:00:10.123808+00:00"
+      },
+      "result": {
+        "done": 12,
+        "stage": "complete",
+        "state": "ready",
+        "total": 12,
+        "datasetId": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+        "versionId": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+        "contentHash": "4d43f330591df3387ec559545d3796332e3c2abe77d8a08b2560a2b6f54efe7b",
+        "needsQuestions": false
+      }
+    },
+    "direct-assignment": {
+      "case": "direct-assignment",
+      "proof": {
+        "aPid": 18064,
+        "bPid": 18062,
+        "kind": "NOWAIT-observed-on-independent-connection",
+        "observedAt": "2026-10-02T21:03:23.818086+00:00"
+      },
+      "result": {
+        "path": "original-dataset-FK-insertion-not-full-app-capability-flow",
+        "assignmentId": "f8b39ca4-ae12-4049-b505-30fd4b01b373"
+      }
+    },
+    "assignment": {
+      "case": "assignment",
+      "proof": {
+        "aPid": 18065,
+        "bPid": 18062,
+        "kind": "NOWAIT-observed-on-independent-connection",
+        "observedAt": "2026-10-02T21:03:43.105341+00:00"
+      },
+      "result": {
+        "assignmentId": "a9d73545-2866-433e-96d1-e43842233317"
+      }
+    },
+    "start": {
+      "case": "start",
+      "proof": {
+        "aPid": 18085,
+        "bPid": 18062,
+        "kind": "NOWAIT-observed-on-independent-connection",
+        "observedAt": "2026-10-02T21:04:02.798632+00:00"
+      },
+      "result": {
+        "items": 6,
+        "planHash": "901ea4f512b4d18dec95a82ad31cd6418cbce9d66d2b6bfd19569d64b12d883f",
+        "attemptId": "01c26c00-1064-4e5a-a4a9-6892b8b4f398"
+      }
+    },
+    "late": {
+      "case": "late",
+      "proof": {
+        "aPid": 17279,
+        "bPid": 17275,
+        "waitType": "Lock",
+        "blockedBy": [
+          17279
+        ],
+        "waitEvent": "advisory",
+        "observedAt": "2026-10-02T20:53:04.83108+00:00"
+      },
+      "result": {
+        "state": "ready",
+        "datasetId": "2d6abab3-1a83-4fef-89a0-172e26445236",
+        "versionId": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "entryCount": 6,
+        "contentHash": "4d43f330591df3387ec559545d3796332e3c2abe77d8a08b2560a2b6f54efe7b",
+        "questionCount": 12
+      }
+    }
+  },
+  "lateProcessedExactlyOnce": [
+    {
+      "repeated": {
+        "rows": 6,
+        "action": "compact",
+        "changed": 6,
+        "requestId": "a8040000-0000-4000-8000-000000000101",
+        "archiveHash": "382df820c4763b89d4f06552856012face9ab7303632b532fa58f7a3ad26a5e9"
+      }
+    }
+  ],
+  "newStudentAnswers": [
+    {
+      "evidence": {
+        "result": {
+          "state": "failed",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 66.67,
+              "passed": false,
+              "ended_at": "2026-10-02T21:04:02.47937+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+              "end_reason": "completed",
+              "started_at": "2026-10-02T21:04:01.97937+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 2,
+              "content_hash": "60fd296d4d438f49b06eee266ad4e25e1a52e9dfbdd8f493f5a44719034f34bc",
+              "target_count": 6,
+              "correct_count": 4,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "completed",
+            "passed": false,
+            "status": "completed",
+            "startedAt": "2026-10-02T21:04:01.97937+00:00",
+            "deadlineAt": null,
+            "finalScore": 66.67,
+            "completedAt": "2026-10-02T21:04:02.47937+00:00",
+            "initialScore": 66.67,
+            "attemptNumber": 1,
+            "questionCount": 6,
+            "elapsedSeconds": 0,
+            "retryStartedAt": null,
+            "retryCorrectCount": 0,
+            "initialCompletedAt": "2026-10-02T21:04:02.47937+00:00",
+            "initialCorrectCount": 4,
+            "unresolvedWrongCount": 2
+          },
+          "finalized": true,
+          "detailScope": "initial_mistakes",
+          "finalReason": "completed",
+          "finalizedAt": "2026-10-02T21:04:02.47937+00:00",
+          "retryStarted": false,
+          "resultVersion": "e4f1939aefd3e1f3763d58143f61b91ae1a034716d5009b964df3495a781d5a4",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": 6,
+        "attemptId": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+        "sameRetry": true
+      }
+    }
+  ],
+  "afterCreateProtection": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"error\":{\"name\":\"HttpException\",\"message\":\"Failed to run sql query: ERROR:  55000: historical_learning_build_pending\\nCONTEXT:  PL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 49 at RAISE\\nSQL statement \\\"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\\\"\\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\\n\"}}"
+      }
+    ],
+    "structuredContent": {
+      "error_code": "INVALID_ARGUMENT"
+    },
+    "isError": true
+  },
+  "afterReadyRecheck": [
+    {
+      "repeated": {
+        "rows": 6,
+        "action": "compact",
+        "changed": 0,
+        "requestId": "a8040000-0000-4000-8000-000000000210",
+        "archiveHash": "69624fe8e2b363fc747850249e9c4ea6a945370a266172f038504121de722f1f"
+      }
+    }
+  ],
+  "afterStudentWorkProtection": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"error\":{\"name\":\"HttpException\",\"message\":\"Failed to run sql query: ERROR:  55000: historical_learning_student_work_pending\\nCONTEXT:  PL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 72 at RAISE\\nSQL statement \\\"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\\\"\\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\\n\"}}"
+      }
+    ],
+    "structuredContent": {
+      "error_code": "INVALID_ARGUMENT"
+    },
+    "isError": true
+  },
+  "partialRestore": {
+    "scope": [
+      {
+        "repeated": {
+          "rows": 2,
+          "action": "restore",
+          "changed": 2,
+          "requestId": "a8040000-0000-4000-8000-000000000300",
+          "archiveHash": "8657252143247d6d28e04caf6da99b1b6fdd69e3b6ab8f7195730816ef22bc61"
+        }
+      }
+    ],
+    "composition": [
+      {
+        "repeated": {
+          "rows": 2,
+          "action": "restore",
+          "changed": 2,
+          "requestId": "a8040000-0000-4000-8000-000000000301",
+          "archiveHash": "d81cf516bf7fbd1f93cabd469fb70a913fa098551b52ce18898fa9efec4837ce"
+        }
+      }
+    ],
+    "beforeRows": [
+      {
+        "id": "3c89a3af-76ed-4b74-9b9a-ee5a1d363264",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "a544fb30754ec7bbbc70645bd11bc9acd3c643e243a1c70cd8980cc546dada76",
+        "compacted_sha256": "3f13bae34bc2ef90dc615aaaf492c3a228207d6a0501696f9248b14725fa8707",
+        "state": "compacted",
+        "current_sha": "3f13bae34bc2ef90dc615aaaf492c3a228207d6a0501696f9248b14725fa8707"
+      },
+      {
+        "id": "aca98bf2-222b-448d-b4cc-68b70ae2bcf0",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "0c8801920bc0216eed5a00fa3c4980313eadc5584a78d2e8791f46517a49e4d6",
+        "compacted_sha256": "00490af7ecc9e97533727a4aa7f2c6e1dd802de145f4847ae742a83c77edf599",
+        "state": "compacted",
+        "current_sha": "00490af7ecc9e97533727a4aa7f2c6e1dd802de145f4847ae742a83c77edf599"
+      },
+      {
+        "id": "d9755c0e-1e5d-48eb-a967-bcbad31b8073",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "d20711a0a054a8d8ff6ff82394bb201c72d2057991b770d8b27c7b004d5b3a17",
+        "compacted_sha256": "eb0eb45a51d9a6ca5f3621244ac2da2a02e37bc84307fdcdda6a88c39bca1beb",
+        "state": "compacted",
+        "current_sha": "eb0eb45a51d9a6ca5f3621244ac2da2a02e37bc84307fdcdda6a88c39bca1beb"
+      },
+      {
+        "id": "4d1056bc-0546-4a17-bcaf-69e0e4a3106f",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "020307103156ab1ae58d58bbc82efbb08e25a5cbf07481bd463e00188720a927",
+        "compacted_sha256": "1080ff8f685b1718f4eb10bbbe16699bb4639a0c8ba27c40967eb0dd113943e9",
+        "state": "compacted",
+        "current_sha": "1080ff8f685b1718f4eb10bbbe16699bb4639a0c8ba27c40967eb0dd113943e9"
+      },
+      {
+        "id": "6a889ffe-9074-4902-b157-3606edc0f3b9",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "660a9b88ae7bfbad05cc43be7497a3f2e45771868440cfec1d9d2799eeaa115e",
+        "compacted_sha256": "c5762f7b695de8c95fd323f4ff297c69a10d6739209bb5728f3099528732e075",
+        "state": "compacted",
+        "current_sha": "c5762f7b695de8c95fd323f4ff297c69a10d6739209bb5728f3099528732e075"
+      },
+      {
+        "id": "9d599aa7-367b-42ad-9999-bf2029d29515",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "90de211aaef0b0262f81afff98dd5a0babe2237a4142b9d3a659ec0af5538b8e",
+        "compacted_sha256": "d0d2bb257f6e9fb96944ef909e8589182067b11618f196fe7bba2b0c580359ee",
+        "state": "compacted",
+        "current_sha": "d0d2bb257f6e9fb96944ef909e8589182067b11618f196fe7bba2b0c580359ee"
+      },
+      {
+        "id": "e9530c31-5d19-4c0d-aad8-ba5e9add0d64",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "d093a14fc36aad1c1f6ea06f2e7ddedd8014178f8bd58076f914fb098f18fe54",
+        "compacted_sha256": "bc9c9b72e2f0c327da407efb0775d102ed4b3559e7f281fa6a7ed429f6be3310",
+        "state": "prepared",
+        "current_sha": "d093a14fc36aad1c1f6ea06f2e7ddedd8014178f8bd58076f914fb098f18fe54"
+      },
+      {
+        "id": "8b492c81-ddac-40ad-866b-b126b699dde8",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "01a47c1269ad05c260122d69af0d316ca7cb30fc47426e54e91f779d03f5f6fc",
+        "compacted_sha256": "11399f98a53947be00fcc5a61f8d11f90da8f9fdec32ed3744297dec969bece4",
+        "state": "prepared",
+        "current_sha": "01a47c1269ad05c260122d69af0d316ca7cb30fc47426e54e91f779d03f5f6fc"
+      },
+      {
+        "id": "1e3a9925-bef2-4e51-901e-d96abac19714",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "3b986f91f172e9cc912497e7d9e3ae2b38f8a276c31ccdcae4656b736dc56492",
+        "compacted_sha256": "fea817533d9f2cba717e3b511ca68fcb51545181023a8e856bda2a662e6afff2",
+        "state": "prepared",
+        "current_sha": "3b986f91f172e9cc912497e7d9e3ae2b38f8a276c31ccdcae4656b736dc56492"
+      },
+      {
+        "id": "32420803-fcdb-4b94-aa14-ab57ee9ff736",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "c63c32f12215c8b9198c88e97a03ca78f12a47053bd5c01467b8a0c8517e223e",
+        "compacted_sha256": "9228e01124f3d9cbb54368cf0b3a1846515fa015719ccc19a52a5ecd2812c74a",
+        "state": "prepared",
+        "current_sha": "c63c32f12215c8b9198c88e97a03ca78f12a47053bd5c01467b8a0c8517e223e"
+      },
+      {
+        "id": "cd63024b-dcad-4da4-93cc-be38259d2b79",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "7ef001b58fc31ae87ee4076b31f90cf7c2f3d30b5830aca76ea33cd811d0f05a",
+        "compacted_sha256": "4f67810cf95818a601d46adac3717fa220dffa814cd8a4dd9450e091d43819c8",
+        "state": "prepared",
+        "current_sha": "7ef001b58fc31ae87ee4076b31f90cf7c2f3d30b5830aca76ea33cd811d0f05a"
+      },
+      {
+        "id": "87686e89-a2b5-438b-a9f9-017c57d78143",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "db213e52aa90793cd2c1344cd2a5d6f3916a5e7b5429b03381cefa167f660977",
+        "compacted_sha256": "2cb09245f3de0e8a877bf49f8508f632e571ea998d3f58f38fc8b90ac56ab21e",
+        "state": "prepared",
+        "current_sha": "db213e52aa90793cd2c1344cd2a5d6f3916a5e7b5429b03381cefa167f660977"
+      },
+      {
+        "id": "2f35698c-5545-4dc8-a09e-ca4503432509",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "1bc0880ee898e05beec0c03f0d4e53b723c9771312ad3164a90839a3b5d9b32f",
+        "compacted_sha256": "31e20a767558f109968fa7a5544cbaec671a949cb56d1b2b45cbf1f931686fdd",
+        "state": "compacted",
+        "current_sha": "31e20a767558f109968fa7a5544cbaec671a949cb56d1b2b45cbf1f931686fdd"
+      },
+      {
+        "id": "0b278687-5f53-4cea-88a5-790e82460385",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "f1a6bb11e070013c42d79e25fc6c19ce349f42468a57b11ebe7546aa36e7cdbd",
+        "compacted_sha256": "d511b3dd0805c3ffce241b9376bfa89ea7afb108cb04938fc6c42bf703c8fc7f",
+        "state": "compacted",
+        "current_sha": "d511b3dd0805c3ffce241b9376bfa89ea7afb108cb04938fc6c42bf703c8fc7f"
+      },
+      {
+        "id": "1e52908c-d0c6-47e6-bd60-9f8badfda800",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "4977fb1bcd722e2f979167088e8843d2b5917e17265071c527cb92507e61533c",
+        "compacted_sha256": "3b7d1ebb655524decc7ba81ae230d02b04bb1ad6d1adf179e60d61825631fa6b",
+        "state": "compacted",
+        "current_sha": "3b7d1ebb655524decc7ba81ae230d02b04bb1ad6d1adf179e60d61825631fa6b"
+      },
+      {
+        "id": "624e3b45-4706-49d5-b632-1f45439e6258",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "7738c54ba0ca104e744f1a6487cb9da2f1a35982d2a9d0b1b3650092a45deb2f",
+        "compacted_sha256": "c32001a53243e141a4e985602894ab736c79e14b10a28ec704b0c9d46dd2c273",
+        "state": "compacted",
+        "current_sha": "c32001a53243e141a4e985602894ab736c79e14b10a28ec704b0c9d46dd2c273"
+      },
+      {
+        "id": "e052cf7a-d802-46b8-8911-2482fda9aee2",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "ac3bca60a5584733622060557bf5fd912bacef73c12bdcfaf9c4e1bd4e12d507",
+        "compacted_sha256": "3fe87734523066c4f714e6e5aa8c3e8d25f45526e816d5d52470826e474dce4c",
+        "state": "compacted",
+        "current_sha": "3fe87734523066c4f714e6e5aa8c3e8d25f45526e816d5d52470826e474dce4c"
+      },
+      {
+        "id": "855b0f6a-df99-468a-b573-e70131cd12a1",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "268b48918e7cffc14c420ff83b1013891254977ac18c1a53b671347b7fd2cc27",
+        "compacted_sha256": "5a208adeeeabf9fbfedb79b954ab4eb1ff4dda324184eb12add6cb4105a8732b",
+        "state": "compacted",
+        "current_sha": "5a208adeeeabf9fbfedb79b954ab4eb1ff4dda324184eb12add6cb4105a8732b"
+      },
+      {
+        "id": "f6244906-4eb1-4c66-92d6-311ee37b1b04",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "5c240e4818a406dc15245503288fd402e153de6fc0cb114906bf270ff4874216",
+        "compacted_sha256": "12e0a7f4f150e47cf5a695e6044b119daf336677e041c203d739043fa1ca2a0f",
+        "state": "compacted",
+        "current_sha": "12e0a7f4f150e47cf5a695e6044b119daf336677e041c203d739043fa1ca2a0f"
+      },
+      {
+        "id": "3e7fc34d-f74a-48f4-a57a-ee159e336c51",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "82526e4d521d78ec90f628bb3f5fe9a137dc07c7a75b332ead8d0cc9664dfb50",
+        "compacted_sha256": "633968cb9dac0725d38b6c9d17ffb90a9e530c87cf9fbc0eb0a52155c1a6c7f8",
+        "state": "compacted",
+        "current_sha": "633968cb9dac0725d38b6c9d17ffb90a9e530c87cf9fbc0eb0a52155c1a6c7f8"
+      },
+      {
+        "id": "7f45aba0-bc18-44ca-8741-cc79ca8fac2a",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "1982f9f65270596d6c685a967fa4cefac2075393cad2820c10b01e52a8fca38e",
+        "compacted_sha256": "ec64af811a3f8e3ada45e327753776308abaee4a8ff1514c8ac165c342d1fa84",
+        "state": "compacted",
+        "current_sha": "ec64af811a3f8e3ada45e327753776308abaee4a8ff1514c8ac165c342d1fa84"
+      },
+      {
+        "id": "c081634d-b62a-414d-965c-c564cf77eb42",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "91c8c8997b64a215621c501e2eb0cba7474469dc19dd0cb1aad18c51be6feb57",
+        "compacted_sha256": "4c349755bbe633a3dc6b2399de9d7c9df950668d951c22a384865489c139f095",
+        "state": "compacted",
+        "current_sha": "4c349755bbe633a3dc6b2399de9d7c9df950668d951c22a384865489c139f095"
+      },
+      {
+        "id": "739346f6-bf89-40c3-88ae-b61799a0aaed",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "5543835b0eea78aec98e9649c2c23d7fcb89bdde97695ba003540ec8d2f85b42",
+        "compacted_sha256": "31611e1cd82c453f4d8f332c93f7e9dc9d082af2e0d7ba14844c01a4ad3623a9",
+        "state": "compacted",
+        "current_sha": "31611e1cd82c453f4d8f332c93f7e9dc9d082af2e0d7ba14844c01a4ad3623a9"
+      },
+      {
+        "id": "4a3de4cc-f1dc-465d-9479-b5e05fbc9ecc",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "f14a16300b409a755789d707e757bd3a6b2b4ea735ecff5bb4d13fabe9cc3825",
+        "compacted_sha256": "3881ad4724ceb160d2d64b889869c24c74f9800ec9bfe35fca2413936f0da6ad",
+        "state": "compacted",
+        "current_sha": "3881ad4724ceb160d2d64b889869c24c74f9800ec9bfe35fca2413936f0da6ad"
+      }
+    ],
+    "afterRows": [
+      {
+        "id": "3c89a3af-76ed-4b74-9b9a-ee5a1d363264",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "a544fb30754ec7bbbc70645bd11bc9acd3c643e243a1c70cd8980cc546dada76",
+        "compacted_sha256": "3f13bae34bc2ef90dc615aaaf492c3a228207d6a0501696f9248b14725fa8707",
+        "state": "compacted",
+        "current_sha": "3f13bae34bc2ef90dc615aaaf492c3a228207d6a0501696f9248b14725fa8707"
+      },
+      {
+        "id": "aca98bf2-222b-448d-b4cc-68b70ae2bcf0",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "0c8801920bc0216eed5a00fa3c4980313eadc5584a78d2e8791f46517a49e4d6",
+        "compacted_sha256": "00490af7ecc9e97533727a4aa7f2c6e1dd802de145f4847ae742a83c77edf599",
+        "state": "compacted",
+        "current_sha": "00490af7ecc9e97533727a4aa7f2c6e1dd802de145f4847ae742a83c77edf599"
+      },
+      {
+        "id": "d9755c0e-1e5d-48eb-a967-bcbad31b8073",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "d20711a0a054a8d8ff6ff82394bb201c72d2057991b770d8b27c7b004d5b3a17",
+        "compacted_sha256": "eb0eb45a51d9a6ca5f3621244ac2da2a02e37bc84307fdcdda6a88c39bca1beb",
+        "state": "compacted",
+        "current_sha": "eb0eb45a51d9a6ca5f3621244ac2da2a02e37bc84307fdcdda6a88c39bca1beb"
+      },
+      {
+        "id": "4d1056bc-0546-4a17-bcaf-69e0e4a3106f",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "020307103156ab1ae58d58bbc82efbb08e25a5cbf07481bd463e00188720a927",
+        "compacted_sha256": "1080ff8f685b1718f4eb10bbbe16699bb4639a0c8ba27c40967eb0dd113943e9",
+        "state": "compacted",
+        "current_sha": "1080ff8f685b1718f4eb10bbbe16699bb4639a0c8ba27c40967eb0dd113943e9"
+      },
+      {
+        "id": "6a889ffe-9074-4902-b157-3606edc0f3b9",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "660a9b88ae7bfbad05cc43be7497a3f2e45771868440cfec1d9d2799eeaa115e",
+        "compacted_sha256": "c5762f7b695de8c95fd323f4ff297c69a10d6739209bb5728f3099528732e075",
+        "state": "compacted",
+        "current_sha": "c5762f7b695de8c95fd323f4ff297c69a10d6739209bb5728f3099528732e075"
+      },
+      {
+        "id": "9d599aa7-367b-42ad-9999-bf2029d29515",
+        "kind": "composition",
+        "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "90de211aaef0b0262f81afff98dd5a0babe2237a4142b9d3a659ec0af5538b8e",
+        "compacted_sha256": "d0d2bb257f6e9fb96944ef909e8589182067b11618f196fe7bba2b0c580359ee",
+        "state": "compacted",
+        "current_sha": "d0d2bb257f6e9fb96944ef909e8589182067b11618f196fe7bba2b0c580359ee"
+      },
+      {
+        "id": "e9530c31-5d19-4c0d-aad8-ba5e9add0d64",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "d093a14fc36aad1c1f6ea06f2e7ddedd8014178f8bd58076f914fb098f18fe54",
+        "compacted_sha256": "bc9c9b72e2f0c327da407efb0775d102ed4b3559e7f281fa6a7ed429f6be3310",
+        "state": "prepared",
+        "current_sha": "d093a14fc36aad1c1f6ea06f2e7ddedd8014178f8bd58076f914fb098f18fe54"
+      },
+      {
+        "id": "8b492c81-ddac-40ad-866b-b126b699dde8",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "01a47c1269ad05c260122d69af0d316ca7cb30fc47426e54e91f779d03f5f6fc",
+        "compacted_sha256": "11399f98a53947be00fcc5a61f8d11f90da8f9fdec32ed3744297dec969bece4",
+        "state": "prepared",
+        "current_sha": "01a47c1269ad05c260122d69af0d316ca7cb30fc47426e54e91f779d03f5f6fc"
+      },
+      {
+        "id": "1e3a9925-bef2-4e51-901e-d96abac19714",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "3b986f91f172e9cc912497e7d9e3ae2b38f8a276c31ccdcae4656b736dc56492",
+        "compacted_sha256": "fea817533d9f2cba717e3b511ca68fcb51545181023a8e856bda2a662e6afff2",
+        "state": "prepared",
+        "current_sha": "3b986f91f172e9cc912497e7d9e3ae2b38f8a276c31ccdcae4656b736dc56492"
+      },
+      {
+        "id": "32420803-fcdb-4b94-aa14-ab57ee9ff736",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "c63c32f12215c8b9198c88e97a03ca78f12a47053bd5c01467b8a0c8517e223e",
+        "compacted_sha256": "9228e01124f3d9cbb54368cf0b3a1846515fa015719ccc19a52a5ecd2812c74a",
+        "state": "prepared",
+        "current_sha": "c63c32f12215c8b9198c88e97a03ca78f12a47053bd5c01467b8a0c8517e223e"
+      },
+      {
+        "id": "cd63024b-dcad-4da4-93cc-be38259d2b79",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "7ef001b58fc31ae87ee4076b31f90cf7c2f3d30b5830aca76ea33cd811d0f05a",
+        "compacted_sha256": "4f67810cf95818a601d46adac3717fa220dffa814cd8a4dd9450e091d43819c8",
+        "state": "prepared",
+        "current_sha": "7ef001b58fc31ae87ee4076b31f90cf7c2f3d30b5830aca76ea33cd811d0f05a"
+      },
+      {
+        "id": "87686e89-a2b5-438b-a9f9-017c57d78143",
+        "kind": "composition",
+        "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "db213e52aa90793cd2c1344cd2a5d6f3916a5e7b5429b03381cefa167f660977",
+        "compacted_sha256": "2cb09245f3de0e8a877bf49f8508f632e571ea998d3f58f38fc8b90ac56ab21e",
+        "state": "prepared",
+        "current_sha": "db213e52aa90793cd2c1344cd2a5d6f3916a5e7b5429b03381cefa167f660977"
+      },
+      {
+        "id": "2f35698c-5545-4dc8-a09e-ca4503432509",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "1bc0880ee898e05beec0c03f0d4e53b723c9771312ad3164a90839a3b5d9b32f",
+        "compacted_sha256": "31e20a767558f109968fa7a5544cbaec671a949cb56d1b2b45cbf1f931686fdd",
+        "state": "restored",
+        "current_sha": "1bc0880ee898e05beec0c03f0d4e53b723c9771312ad3164a90839a3b5d9b32f"
+      },
+      {
+        "id": "0b278687-5f53-4cea-88a5-790e82460385",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "f1a6bb11e070013c42d79e25fc6c19ce349f42468a57b11ebe7546aa36e7cdbd",
+        "compacted_sha256": "d511b3dd0805c3ffce241b9376bfa89ea7afb108cb04938fc6c42bf703c8fc7f",
+        "state": "restored",
+        "current_sha": "f1a6bb11e070013c42d79e25fc6c19ce349f42468a57b11ebe7546aa36e7cdbd"
+      },
+      {
+        "id": "1e52908c-d0c6-47e6-bd60-9f8badfda800",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "4977fb1bcd722e2f979167088e8843d2b5917e17265071c527cb92507e61533c",
+        "compacted_sha256": "3b7d1ebb655524decc7ba81ae230d02b04bb1ad6d1adf179e60d61825631fa6b",
+        "state": "compacted",
+        "current_sha": "3b7d1ebb655524decc7ba81ae230d02b04bb1ad6d1adf179e60d61825631fa6b"
+      },
+      {
+        "id": "624e3b45-4706-49d5-b632-1f45439e6258",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "7738c54ba0ca104e744f1a6487cb9da2f1a35982d2a9d0b1b3650092a45deb2f",
+        "compacted_sha256": "c32001a53243e141a4e985602894ab736c79e14b10a28ec704b0c9d46dd2c273",
+        "state": "compacted",
+        "current_sha": "c32001a53243e141a4e985602894ab736c79e14b10a28ec704b0c9d46dd2c273"
+      },
+      {
+        "id": "e052cf7a-d802-46b8-8911-2482fda9aee2",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "ac3bca60a5584733622060557bf5fd912bacef73c12bdcfaf9c4e1bd4e12d507",
+        "compacted_sha256": "3fe87734523066c4f714e6e5aa8c3e8d25f45526e816d5d52470826e474dce4c",
+        "state": "compacted",
+        "current_sha": "3fe87734523066c4f714e6e5aa8c3e8d25f45526e816d5d52470826e474dce4c"
+      },
+      {
+        "id": "855b0f6a-df99-468a-b573-e70131cd12a1",
+        "kind": "composition",
+        "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "268b48918e7cffc14c420ff83b1013891254977ac18c1a53b671347b7fd2cc27",
+        "compacted_sha256": "5a208adeeeabf9fbfedb79b954ab4eb1ff4dda324184eb12add6cb4105a8732b",
+        "state": "compacted",
+        "current_sha": "5a208adeeeabf9fbfedb79b954ab4eb1ff4dda324184eb12add6cb4105a8732b"
+      },
+      {
+        "id": "f6244906-4eb1-4c66-92d6-311ee37b1b04",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "1044435f8c9c9ad2a7ff1ca83e6214ad1ca02ebeee0236c32eb2dd914abc26cc",
+        "original_sha256": "5c240e4818a406dc15245503288fd402e153de6fc0cb114906bf270ff4874216",
+        "compacted_sha256": "12e0a7f4f150e47cf5a695e6044b119daf336677e041c203d739043fa1ca2a0f",
+        "state": "restored",
+        "current_sha": "5c240e4818a406dc15245503288fd402e153de6fc0cb114906bf270ff4874216"
+      },
+      {
+        "id": "3e7fc34d-f74a-48f4-a57a-ee159e336c51",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "38e673c29c6a640f98401cbef35f92ab67d2bea94cd4141512eeb11dfd0e685d",
+        "original_sha256": "82526e4d521d78ec90f628bb3f5fe9a137dc07c7a75b332ead8d0cc9664dfb50",
+        "compacted_sha256": "633968cb9dac0725d38b6c9d17ffb90a9e530c87cf9fbc0eb0a52155c1a6c7f8",
+        "state": "restored",
+        "current_sha": "82526e4d521d78ec90f628bb3f5fe9a137dc07c7a75b332ead8d0cc9664dfb50"
+      },
+      {
+        "id": "7f45aba0-bc18-44ca-8741-cc79ca8fac2a",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "4dd785a9a92d2981f83bb23e6923a08d776266d249edc6727793496119b77435",
+        "original_sha256": "1982f9f65270596d6c685a967fa4cefac2075393cad2820c10b01e52a8fca38e",
+        "compacted_sha256": "ec64af811a3f8e3ada45e327753776308abaee4a8ff1514c8ac165c342d1fa84",
+        "state": "compacted",
+        "current_sha": "ec64af811a3f8e3ada45e327753776308abaee4a8ff1514c8ac165c342d1fa84"
+      },
+      {
+        "id": "c081634d-b62a-414d-965c-c564cf77eb42",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "81b637d45b7c99a854198e89be37b95478c675d8de0db68bd5b168b3a52ba569",
+        "original_sha256": "91c8c8997b64a215621c501e2eb0cba7474469dc19dd0cb1aad18c51be6feb57",
+        "compacted_sha256": "4c349755bbe633a3dc6b2399de9d7c9df950668d951c22a384865489c139f095",
+        "state": "compacted",
+        "current_sha": "4c349755bbe633a3dc6b2399de9d7c9df950668d951c22a384865489c139f095"
+      },
+      {
+        "id": "739346f6-bf89-40c3-88ae-b61799a0aaed",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "d0a07993741019767c98e814208b8464ae386e4fb6872d9f05b8a5165a10a84d",
+        "original_sha256": "5543835b0eea78aec98e9649c2c23d7fcb89bdde97695ba003540ec8d2f85b42",
+        "compacted_sha256": "31611e1cd82c453f4d8f332c93f7e9dc9d082af2e0d7ba14844c01a4ad3623a9",
+        "state": "compacted",
+        "current_sha": "31611e1cd82c453f4d8f332c93f7e9dc9d082af2e0d7ba14844c01a4ad3623a9"
+      },
+      {
+        "id": "4a3de4cc-f1dc-465d-9479-b5e05fbc9ecc",
+        "kind": "scope",
+        "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+        "occurrence_key": "f107d75f2b7f80ecde298d430c7bb1cdfbde0ed228c73458253289390e756bf2",
+        "original_sha256": "f14a16300b409a755789d707e757bd3a6b2b4ea735ecff5bb4d13fabe9cc3825",
+        "compacted_sha256": "3881ad4724ceb160d2d64b889869c24c74f9800ec9bfe35fca2413936f0da6ad",
+        "state": "compacted",
+        "current_sha": "3881ad4724ceb160d2d64b889869c24c74f9800ec9bfe35fca2413936f0da6ad"
+      }
+    ],
+    "preservedTablesBefore": [
+      {
+        "name": "private.assignment_release_links_v1",
+        "rows": 22,
+        "hash": "2ad88c52e488590c3bb9dc8bbc83027e"
+      },
+      {
+        "name": "private.assignment_replacement_requests",
+        "rows": 2,
+        "hash": "6ef5c614c355f86a66ac8b713178d5ff"
+      },
+      {
+        "name": "private.assignment_study_examples_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 136,
+        "hash": "5d736a181f58d7dd6ec708d091066603"
+      },
+      {
+        "name": "private.assignment_vocabulary_new_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.current_wrong_review_assignment_requests",
+        "rows": 4,
+        "hash": "75c267cf32528f91b35321a2e5b20557"
+      },
+      {
+        "name": "private.local_quiz_phase_plans",
+        "rows": 9,
+        "hash": "66b7f9f8bd1ac95409d8fb74ece0080e"
+      },
+      {
+        "name": "private.local_quiz_phase_receipts",
+        "rows": 9,
+        "hash": "1d9363d0d7d7b946e1169f2437f387c4"
+      },
+      {
+        "name": "private.local_quiz_preparations",
+        "rows": 8,
+        "hash": "7ffe69d81e291a5bdbfe5123ca20116a"
+      },
+      {
+        "name": "private.local_quiz_runs",
+        "rows": 8,
+        "hash": "1b41d43cae4cb23a96fa070113eebad0"
+      },
+      {
+        "name": "private.notebook_assignment_requests",
+        "rows": 2,
+        "hash": "9dbbddcf2fd63d17b313c66c6be9380b"
+      },
+      {
+        "name": "private.quiz_attempt_preparations",
+        "rows": 34,
+        "hash": "2bc66ea38366879774380acc794d2b74"
+      },
+      {
+        "name": "private.quiz_preparation_compaction_checks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.quiz_preparation_expirations",
+        "rows": 2,
+        "hash": "4e24addb2bd7758b2f87edc275076d41"
+      },
+      {
+        "name": "private.student_app_maintenance_retry_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_vocabulary_meaning_states",
+        "rows": 41,
+        "hash": "ae0b24d1e0eda03445b525fb2635183a"
+      },
+      {
+        "name": "private.student_vocabulary_versions",
+        "rows": 25,
+        "hash": "b7b7217c29b957ecb22f111227cae130"
+      },
+      {
+        "name": "private.student_word_practice_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_word_practice_runs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_queue_requests",
+        "rows": 32,
+        "hash": "9b8c130e1e285e734648694803ab06ec"
+      },
+      {
+        "name": "private.vocab_assignment_series",
+        "rows": 42,
+        "hash": "a28d7861ba9eda4878d5b8d4979f9023"
+      },
+      {
+        "name": "private.vocab_assignment_series_events",
+        "rows": 148,
+        "hash": "55788bfca5ba69f17aab73062fa9db54"
+      },
+      {
+        "name": "private.vocab_assignment_series_items",
+        "rows": 114,
+        "hash": "b0b01e4d75bafc0c37f30994db66edc2"
+      },
+      {
+        "name": "private.vocabulary_answer_receipts",
+        "rows": 106,
+        "hash": "566cec7e63787ccda5f1c0a977527cce"
+      },
+      {
+        "name": "private.vocabulary_composition_builds",
+        "rows": 1,
+        "hash": "2e942c53b93e45ffccee76e03a09e5e2"
+      },
+      {
+        "name": "private.vocabulary_composition_items",
+        "rows": 31866,
+        "hash": "91a2dd42b241e2ce2ae345f18693cdff"
+      },
+      {
+        "name": "private.vocabulary_compositions",
+        "rows": 10,
+        "hash": "7f5bb2772bcd7d33324444d3780d97f5"
+      },
+      {
+        "name": "private.vocabulary_library_row_fingerprints",
+        "rows": 22333,
+        "hash": "919c90ae55b6e559a308a12395d383be"
+      },
+      {
+        "name": "private.vocabulary_library_versions",
+        "rows": 18,
+        "hash": "862ef7c59ef4372dbbd5a7b07fe192ea"
+      },
+      {
+        "name": "private.vocabulary_phase_results",
+        "rows": 18,
+        "hash": "e5b72b73344f8896bc22dcfa379de2c1"
+      },
+      {
+        "name": "private.vocabulary_question_content_versions",
+        "rows": 33,
+        "hash": "eb18b160a5fbd415ca8ad78c1cac205e"
+      },
+      {
+        "name": "private.vocabulary_question_meaning_versions",
+        "rows": 22,
+        "hash": "265dfb0d5416eac774746d0844dfcf84"
+      },
+      {
+        "name": "private.vocabulary_result_policies",
+        "rows": 14,
+        "hash": "6c608012ff73ae673865ed7fd75a7311"
+      },
+      {
+        "name": "public.admin_vocab_assignment_time_templates",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.assignment_question_exam_use_snapshot",
+        "rows": 4755,
+        "hash": "720c8a178da6edf312a79d2008996344"
+      },
+      {
+        "name": "public.assignment_questions",
+        "rows": 5559,
+        "hash": "7a6a1e3391b0902c20da432bb22ca073"
+      },
+      {
+        "name": "public.assignment_quiz_mode_snapshots",
+        "rows": 144,
+        "hash": "f658e9d91509571cb90d4e2e205b27dc"
+      },
+      {
+        "name": "public.assignment_review_targets",
+        "rows": 42,
+        "hash": "917ea9d715566e14306debac77c9c97c"
+      },
+      {
+        "name": "public.assignment_sources",
+        "rows": 229,
+        "hash": "18ec9c367ac8c1403e8ac0f83a47d042"
+      },
+      {
+        "name": "public.assignment_students",
+        "rows": 231,
+        "hash": "7f8e97e1e24f849e562a41cbdce9b348"
+      },
+      {
+        "name": "public.assignment_units",
+        "rows": 1543,
+        "hash": "6df749f73d478a0599c66f436d47ba5e"
+      },
+      {
+        "name": "public.assignments",
+        "rows": 229,
+        "hash": "cfd581b1b34626e4886d9e852a9cb229"
+      },
+      {
+        "name": "public.class_group_students",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.quiz_attempts",
+        "rows": 134,
+        "hash": "96b4a1edd0ff5c7b45c74b7b4d163b4f"
+      },
+      {
+        "name": "public.quiz_questions",
+        "rows": 1600,
+        "hash": "45ae0aef87856f2e95b7dda01dcc3990"
+      },
+      {
+        "name": "public.student_codes",
+        "rows": 32,
+        "hash": "2c4253d2c02009589f20970f8bdeaa07"
+      },
+      {
+        "name": "public.student_learning_sources",
+        "rows": 41,
+        "hash": "a2d4f30135faa16baf77537b8dea9c14"
+      },
+      {
+        "name": "public.student_login_attempts",
+        "rows": 72,
+        "hash": "76f77a2a58aa9ffb82266904db08ca26"
+      },
+      {
+        "name": "public.student_point_events",
+        "rows": 1073,
+        "hash": "ba8c63edca6178134c43e1cdce0c40b1"
+      },
+      {
+        "name": "public.student_point_totals",
+        "rows": 32,
+        "hash": "7a6a8d9d226988aef5a5ab8eb689a01f"
+      },
+      {
+        "name": "public.student_sessions",
+        "rows": 73,
+        "hash": "18ab0dda7d3741a256879cd0de2915a8"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_draft_items",
+        "rows": 2,
+        "hash": "499c6272f080d4298560bbe10bfaff39"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_drafts",
+        "rows": 2,
+        "hash": "174c2205650a9758919f641dfb79ad8b"
+      },
+      {
+        "name": "public.student_vocab_review_queue",
+        "rows": 40,
+        "hash": "5305b79fe3304effdbaac93eb8f482a4"
+      },
+      {
+        "name": "public.student_vocab_state",
+        "rows": 750,
+        "hash": "c64d45f96fa6c6a987adf84385feb712"
+      },
+      {
+        "name": "public.student_vocab_wrong_events",
+        "rows": 840,
+        "hash": "21847445e2249ac15e7790be0f069a8c"
+      },
+      {
+        "name": "public.students",
+        "rows": 120,
+        "hash": "cf9301a108d6575bfe96294a0f089ad7"
+      },
+      {
+        "name": "public.vocab_entry_quiz_eligibility",
+        "rows": 6086,
+        "hash": "31a68ad0b64f27cbad4d1f01e3014d26"
+      },
+      {
+        "name": "word_index.assignment_exam_use_release_snapshot",
+        "rows": 122,
+        "hash": "0f01987942f966e6025ca21828841062"
+      }
+    ],
+    "preservedTablesAfter": [
+      {
+        "name": "private.assignment_release_links_v1",
+        "rows": 22,
+        "hash": "2ad88c52e488590c3bb9dc8bbc83027e"
+      },
+      {
+        "name": "private.assignment_replacement_requests",
+        "rows": 2,
+        "hash": "6ef5c614c355f86a66ac8b713178d5ff"
+      },
+      {
+        "name": "private.assignment_study_examples_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 136,
+        "hash": "5d736a181f58d7dd6ec708d091066603"
+      },
+      {
+        "name": "private.assignment_vocabulary_new_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.current_wrong_review_assignment_requests",
+        "rows": 4,
+        "hash": "75c267cf32528f91b35321a2e5b20557"
+      },
+      {
+        "name": "private.local_quiz_phase_plans",
+        "rows": 9,
+        "hash": "66b7f9f8bd1ac95409d8fb74ece0080e"
+      },
+      {
+        "name": "private.local_quiz_phase_receipts",
+        "rows": 9,
+        "hash": "1d9363d0d7d7b946e1169f2437f387c4"
+      },
+      {
+        "name": "private.local_quiz_preparations",
+        "rows": 8,
+        "hash": "7ffe69d81e291a5bdbfe5123ca20116a"
+      },
+      {
+        "name": "private.local_quiz_runs",
+        "rows": 8,
+        "hash": "1b41d43cae4cb23a96fa070113eebad0"
+      },
+      {
+        "name": "private.notebook_assignment_requests",
+        "rows": 2,
+        "hash": "9dbbddcf2fd63d17b313c66c6be9380b"
+      },
+      {
+        "name": "private.quiz_attempt_preparations",
+        "rows": 34,
+        "hash": "2bc66ea38366879774380acc794d2b74"
+      },
+      {
+        "name": "private.quiz_preparation_compaction_checks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.quiz_preparation_expirations",
+        "rows": 2,
+        "hash": "4e24addb2bd7758b2f87edc275076d41"
+      },
+      {
+        "name": "private.student_app_maintenance_retry_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_vocabulary_meaning_states",
+        "rows": 41,
+        "hash": "ae0b24d1e0eda03445b525fb2635183a"
+      },
+      {
+        "name": "private.student_vocabulary_versions",
+        "rows": 25,
+        "hash": "b7b7217c29b957ecb22f111227cae130"
+      },
+      {
+        "name": "private.student_word_practice_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_word_practice_runs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_queue_requests",
+        "rows": 32,
+        "hash": "9b8c130e1e285e734648694803ab06ec"
+      },
+      {
+        "name": "private.vocab_assignment_series",
+        "rows": 42,
+        "hash": "a28d7861ba9eda4878d5b8d4979f9023"
+      },
+      {
+        "name": "private.vocab_assignment_series_events",
+        "rows": 148,
+        "hash": "55788bfca5ba69f17aab73062fa9db54"
+      },
+      {
+        "name": "private.vocab_assignment_series_items",
+        "rows": 114,
+        "hash": "b0b01e4d75bafc0c37f30994db66edc2"
+      },
+      {
+        "name": "private.vocabulary_answer_receipts",
+        "rows": 106,
+        "hash": "566cec7e63787ccda5f1c0a977527cce"
+      },
+      {
+        "name": "private.vocabulary_composition_builds",
+        "rows": 1,
+        "hash": "2e942c53b93e45ffccee76e03a09e5e2"
+      },
+      {
+        "name": "private.vocabulary_composition_items",
+        "rows": 31866,
+        "hash": "91a2dd42b241e2ce2ae345f18693cdff"
+      },
+      {
+        "name": "private.vocabulary_compositions",
+        "rows": 10,
+        "hash": "7f5bb2772bcd7d33324444d3780d97f5"
+      },
+      {
+        "name": "private.vocabulary_library_row_fingerprints",
+        "rows": 22333,
+        "hash": "919c90ae55b6e559a308a12395d383be"
+      },
+      {
+        "name": "private.vocabulary_library_versions",
+        "rows": 18,
+        "hash": "862ef7c59ef4372dbbd5a7b07fe192ea"
+      },
+      {
+        "name": "private.vocabulary_phase_results",
+        "rows": 18,
+        "hash": "e5b72b73344f8896bc22dcfa379de2c1"
+      },
+      {
+        "name": "private.vocabulary_question_content_versions",
+        "rows": 33,
+        "hash": "eb18b160a5fbd415ca8ad78c1cac205e"
+      },
+      {
+        "name": "private.vocabulary_question_meaning_versions",
+        "rows": 22,
+        "hash": "265dfb0d5416eac774746d0844dfcf84"
+      },
+      {
+        "name": "private.vocabulary_result_policies",
+        "rows": 14,
+        "hash": "6c608012ff73ae673865ed7fd75a7311"
+      },
+      {
+        "name": "public.admin_vocab_assignment_time_templates",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.assignment_question_exam_use_snapshot",
+        "rows": 4755,
+        "hash": "720c8a178da6edf312a79d2008996344"
+      },
+      {
+        "name": "public.assignment_questions",
+        "rows": 5559,
+        "hash": "7a6a1e3391b0902c20da432bb22ca073"
+      },
+      {
+        "name": "public.assignment_quiz_mode_snapshots",
+        "rows": 144,
+        "hash": "f658e9d91509571cb90d4e2e205b27dc"
+      },
+      {
+        "name": "public.assignment_review_targets",
+        "rows": 42,
+        "hash": "917ea9d715566e14306debac77c9c97c"
+      },
+      {
+        "name": "public.assignment_sources",
+        "rows": 229,
+        "hash": "18ec9c367ac8c1403e8ac0f83a47d042"
+      },
+      {
+        "name": "public.assignment_students",
+        "rows": 231,
+        "hash": "7f8e97e1e24f849e562a41cbdce9b348"
+      },
+      {
+        "name": "public.assignment_units",
+        "rows": 1543,
+        "hash": "6df749f73d478a0599c66f436d47ba5e"
+      },
+      {
+        "name": "public.assignments",
+        "rows": 229,
+        "hash": "cfd581b1b34626e4886d9e852a9cb229"
+      },
+      {
+        "name": "public.class_group_students",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.quiz_attempts",
+        "rows": 134,
+        "hash": "96b4a1edd0ff5c7b45c74b7b4d163b4f"
+      },
+      {
+        "name": "public.quiz_questions",
+        "rows": 1600,
+        "hash": "45ae0aef87856f2e95b7dda01dcc3990"
+      },
+      {
+        "name": "public.student_codes",
+        "rows": 32,
+        "hash": "2c4253d2c02009589f20970f8bdeaa07"
+      },
+      {
+        "name": "public.student_learning_sources",
+        "rows": 41,
+        "hash": "a2d4f30135faa16baf77537b8dea9c14"
+      },
+      {
+        "name": "public.student_login_attempts",
+        "rows": 72,
+        "hash": "76f77a2a58aa9ffb82266904db08ca26"
+      },
+      {
+        "name": "public.student_point_events",
+        "rows": 1073,
+        "hash": "ba8c63edca6178134c43e1cdce0c40b1"
+      },
+      {
+        "name": "public.student_point_totals",
+        "rows": 32,
+        "hash": "7a6a8d9d226988aef5a5ab8eb689a01f"
+      },
+      {
+        "name": "public.student_sessions",
+        "rows": 73,
+        "hash": "18ab0dda7d3741a256879cd0de2915a8"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_draft_items",
+        "rows": 2,
+        "hash": "499c6272f080d4298560bbe10bfaff39"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_drafts",
+        "rows": 2,
+        "hash": "174c2205650a9758919f641dfb79ad8b"
+      },
+      {
+        "name": "public.student_vocab_review_queue",
+        "rows": 40,
+        "hash": "5305b79fe3304effdbaac93eb8f482a4"
+      },
+      {
+        "name": "public.student_vocab_state",
+        "rows": 750,
+        "hash": "c64d45f96fa6c6a987adf84385feb712"
+      },
+      {
+        "name": "public.student_vocab_wrong_events",
+        "rows": 840,
+        "hash": "21847445e2249ac15e7790be0f069a8c"
+      },
+      {
+        "name": "public.students",
+        "rows": 120,
+        "hash": "cf9301a108d6575bfe96294a0f089ad7"
+      },
+      {
+        "name": "public.vocab_entry_quiz_eligibility",
+        "rows": 6086,
+        "hash": "31a68ad0b64f27cbad4d1f01e3014d26"
+      },
+      {
+        "name": "word_index.assignment_exam_use_release_snapshot",
+        "rows": 122,
+        "hash": "0f01987942f966e6025ca21828841062"
+      }
+    ]
+  },
+  "finalPreservation": {
+    "fixtureXid": 1520142,
+    "comparison": "xmin below fixture XID, same transaction ID epoch; counts and whole-row hashes must both match. Separately validate newer row references.",
+    "parts": [
+      {
+        "i": 0,
+        "at": "2026-10-02T21:13:35.837Z",
+        "data": [
+          {
+            "name": "private.app_migration_snapshots",
+            "rows": 5,
+            "hash": "4348a4d68fbfb6c8d764f216035127c0",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.assignment_release_links_v1",
+            "rows": 22,
+            "hash": "2ad88c52e488590c3bb9dc8bbc83027e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.assignment_replacement_requests",
+            "rows": 2,
+            "hash": "6ef5c614c355f86a66ac8b713178d5ff",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.assignment_study_examples_v1",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.assignment_vocabulary_meaning_refs",
+            "rows": 130,
+            "hash": "62061248fc4d784a86935ed07816023a",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "content_version_id": "c91523a1-d300-4ca8-9ac4-84afb7dddc52"
+              },
+              {
+                "content_version_id": "c46663af-7df3-4200-ac53-b6bce9b6ac37"
+              },
+              {
+                "content_version_id": "712b5759-34b5-40e3-b042-a278c0668adc"
+              },
+              {
+                "content_version_id": "d3fb144e-3082-483c-95e7-2c0da0453b61"
+              },
+              {
+                "content_version_id": "14558959-9d21-43ef-80d5-a12b3a559055"
+              },
+              {
+                "content_version_id": "2b4eef37-aade-4b0d-a123-e1eb94e8329e"
+              }
+            ]
+          },
+          {
+            "name": "private.assignment_vocabulary_new_questions",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.bulk_canonical_question_preview_requests",
+            "rows": 9,
+            "hash": "004ad61fc3743573c30147ac9e504278",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.bulk_vocab_series_requests",
+            "rows": 72,
+            "hash": "dc16b934247abef5f5ec30af7dc2fb34",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.current_wrong_review_assignment_requests",
+            "rows": 4,
+            "hash": "75c267cf32528f91b35321a2e5b20557",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.entry_source_pronunciations_v1",
+            "rows": 855,
+            "hash": "60c8cf2cb7e8724463010a0aecb81b25",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.historical_question_migration_receipts",
+            "rows": 3,
+            "hash": "5882d16214d35a8a1463b455f7b032f8",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.historical_question_migrations",
+            "rows": 8,
+            "hash": "3300e52615057d29036994e7d829ff3a",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.historical_question_write_permits",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.local_quiz_phase_plans",
+            "rows": 8,
+            "hash": "0f49c9d7875b265db341777ee2c85a89",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398"
+              }
+            ]
+          },
+          {
+            "name": "private.local_quiz_phase_receipts",
+            "rows": 8,
+            "hash": "0cbfe8f88af2d63f4b1aa38c01dc5dd6",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "submission_id": "a8040000-0000-4000-8000-000000001000"
+              }
+            ]
+          },
+          {
+            "name": "private.local_quiz_preparations",
+            "rows": 7,
+            "hash": "e157ffa6fccd1d15cb1f3d91a60822bf",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "preparation_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398"
+              }
+            ]
+          },
+          {
+            "name": "private.local_quiz_runs",
+            "rows": 7,
+            "hash": "097daa0849f0e7b9ff7e17d2a0ed619d",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398"
+              }
+            ]
+          },
+          {
+            "name": "private.notebook_assignment_requests",
+            "rows": 2,
+            "hash": "9dbbddcf2fd63d17b313c66c6be9380b",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.notebook_question_origins_v2",
+            "rows": 6,
+            "hash": "8719df0af271bf9ae0a148990eb3d392",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.operational_retention_holds",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.operational_retention_jobs",
+            "rows": 4,
+            "hash": "72a8a08237876bde2d16aa13b2e5e611",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.operational_retention_policy",
+            "rows": 1,
+            "hash": "b8abb7ee4329a2e13c1cf9ac30967a0d",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.operational_retention_state",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.pronunciation_audio_corrections_v1",
+            "rows": 2,
+            "hash": "88e9da3e60d59b5f4b0d47f9749819fb",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.quiz_attempt_preparations",
+            "rows": 33,
+            "hash": "16876945d83b31ff1dbc4a2763cef61a",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "i": 1,
+        "at": "2026-10-02T21:13:51.290Z",
+        "data": [
+          {
+            "name": "private.quiz_preparation_compaction_checks",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.quiz_preparation_expirations",
+            "rows": 2,
+            "hash": "4e24addb2bd7758b2f87edc275076d41",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_entry_resource_approvals_v1",
+            "rows": 2,
+            "hash": "70f98c0e06371c5e172609607bd2c28a",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_entry_resource_releases_v1",
+            "rows": 2,
+            "hash": "d4fd721348b0fc219bafd99abf3a2d58",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_entry_resources_v1",
+            "rows": 864,
+            "hash": "6ad0606069351ca1b2dfdc7e2c181c7e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_exam_entries",
+            "rows": 1061,
+            "hash": "6525908f405d200782c32113b1bc49a9",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_exam_import_approvals",
+            "rows": 1,
+            "hash": "b68e8711acf8510de6ff1527d03d4f8b",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_exam_items",
+            "rows": 3380,
+            "hash": "4f4089ffebcf5eed332dbb3d8e01f6ca",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_exam_releases",
+            "rows": 4,
+            "hash": "a6c1b2e03023cf7684ddf122740ce621",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_mock_source_approvals_v1",
+            "rows": 20,
+            "hash": "18a176c9e4ae39cc52ad8d21935d8a31",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_mock_source_releases_v1",
+            "rows": 20,
+            "hash": "fe32e2339c5307da260d1fe61e35cd0e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_mock_source_resources_v1",
+            "rows": 16894,
+            "hash": "fafdaf9b32f7da81149d9411be863b49",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_pronunciation_asset_approvals_v1",
+            "rows": 1,
+            "hash": "6548d80ab6070ab0e9e45b52434f06d5",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.reviewed_pronunciation_assets_v1",
+            "rows": 127,
+            "hash": "3e0d8575e3c8655b47d9d861d4cb86c3",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.school_handout_import_approvals_v1",
+            "rows": 3,
+            "hash": "5b30d97644127a58e1139e53d324f418",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.school_schedule_manual_edits",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.school_schedule_versions",
+            "rows": 3,
+            "hash": "f38ae3021603e18ab1bc621fcbacba28",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.student_app_maintenance_retry_state",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.student_vocabulary_meaning_states",
+            "rows": 39,
+            "hash": "74e41550db5d31c7be9c50ae80584709",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "word_key": "dictionary:word:fake-learning-1",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "892f51ff8919012df226dd1417b6e97f796df2cd4888923e79d8e5182eaf02c0"
+              },
+              {
+                "word_key": "headword:fakelearning2",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "4e22ad1fef1577ae13637622511175b127955ffd9d2d7da8b4fa8af4938d9759"
+              }
+            ]
+          },
+          {
+            "name": "private.student_vocabulary_versions",
+            "rows": 24,
+            "hash": "7de416f108595cbc53b0901eafb446eb",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002"
+              }
+            ]
+          },
+          {
+            "name": "private.student_word_practice_questions",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.student_word_practice_runs",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocab_assignment_queue_requests",
+            "rows": 32,
+            "hash": "9b8c130e1e285e734648694803ab06ec",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocab_assignment_series",
+            "rows": 42,
+            "hash": "a28d7861ba9eda4878d5b8d4979f9023",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocab_assignment_series_events",
+            "rows": 148,
+            "hash": "55788bfca5ba69f17aab73062fa9db54",
+            "new_rows": 0,
+            "new_links": []
+          }
+        ]
+      },
+      {
+        "i": 2,
+        "at": "2026-10-02T21:14:15.106Z",
+        "data": [
+          {
+            "name": "private.vocab_assignment_series_items",
+            "rows": 114,
+            "hash": "b0b01e4d75bafc0c37f30994db66edc2",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_answer_receipts",
+            "rows": 100,
+            "hash": "c1a58f95bcd822872eee6f00621b7f79",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "word_key": "dictionary:word:fake-learning-1",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "892f51ff8919012df226dd1417b6e97f796df2cd4888923e79d8e5182eaf02c0"
+              },
+              {
+                "word_key": "headword:fakelearning2",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "4e22ad1fef1577ae13637622511175b127955ffd9d2d7da8b4fa8af4938d9759"
+              },
+              {
+                "word_key": "dictionary:word:fake-learning-3",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "eb38694d4095e23322ccf02c8226a1e0dbdee67bf6448f4853f1689961934c74"
+              },
+              {
+                "word_key": "headword:fakelearning4",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "14f5ca9a0bcd0ecfce20846c78b13d68e4aadc07389a6385c4c90acc6437027a"
+              },
+              {
+                "word_key": "dictionary:word:fake-learning-5",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "8a9858c0df0cc498b34aec632b6a59801951f3d7885f8e33bbd4992e602d0b2e"
+              },
+              {
+                "word_key": "headword:fakelearning6",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "meaning_key": "2d7b41990ffb6b52ae4cc85534cfa8743ce68b38fa7deb891592d57fd0adffc5"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_composition_build_positions",
+            "rows": 14329,
+            "hash": "a5c24976a386a40f5f22fa67ccae2f64",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_composition_builds",
+            "rows": 1,
+            "hash": "2e942c53b93e45ffccee76e03a09e5e2",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_composition_entries",
+            "rows": 15903,
+            "hash": "d5039a5499cefa1f6490e1ea1ad3a94c",
+            "new_rows": 30,
+            "new_links": [
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192988,
+                "source_entry_id": 192976
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192987,
+                "source_entry_id": 192975
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192977,
+                "source_entry_id": 192971
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192986,
+                "source_entry_id": 192974
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192985,
+                "source_entry_id": 192973
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192984,
+                "source_entry_id": 192972
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192983,
+                "source_entry_id": 192971
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192980,
+                "source_entry_id": 192974
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192979,
+                "source_entry_id": 192973
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192992,
+                "source_entry_id": 192974
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192991,
+                "source_entry_id": 192973
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 193000,
+                "source_entry_id": 192976
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192999,
+                "source_entry_id": 192975
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192998,
+                "source_entry_id": 192974
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192997,
+                "source_entry_id": 192973
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192996,
+                "source_entry_id": 192972
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192995,
+                "source_entry_id": 192971
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193006,
+                "source_entry_id": 192976
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193005,
+                "source_entry_id": 192975
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193004,
+                "source_entry_id": 192974
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193003,
+                "source_entry_id": 192973
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193002,
+                "source_entry_id": 192972
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193001,
+                "source_entry_id": 192971
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192982,
+                "source_entry_id": 192976
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192978,
+                "source_entry_id": 192972
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192981,
+                "source_entry_id": 192975
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192993,
+                "source_entry_id": 192975
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192990,
+                "source_entry_id": 192972
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192989,
+                "source_entry_id": 192971
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192994,
+                "source_entry_id": 192976
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_composition_items",
+            "rows": 31806,
+            "hash": "8b2b73f6f555fca29ba044b00540d935",
+            "new_rows": 60,
+            "new_links": [
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192977
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192977
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192978
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192978
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192979
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192979
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192980
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192980
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192981
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192981
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192982
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "vocab_entry_id": 192982
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192983
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192983
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192984
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192984
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192985
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192985
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192986
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192986
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192987
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192987
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192988
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "vocab_entry_id": 192988
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192989
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192989
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192990
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192990
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192991
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192991
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192992
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192992
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192993
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192993
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192994
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "vocab_entry_id": 192994
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192995
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192995
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192996
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192996
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192997
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192997
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192998
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192998
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192999
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 192999
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 193000
+              },
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "vocab_entry_id": 193000
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193001
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193001
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193002
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193002
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193003
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193003
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193004
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193004
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193005
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193005
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193006
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "vocab_entry_id": 193006
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_composition_management_approvals",
+            "rows": 5,
+            "hash": "ad9b901ff25cfdc15d9145cc1134568f",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_composition_management_chunks",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_composition_management_inputs",
+            "rows": 5,
+            "hash": "c0526e3d3ea8d314daf5ef9cb949171c",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_composition_management_requests",
+            "rows": 5,
+            "hash": "3dd53de1135a6042542def0c396db55d",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_composition_management_results",
+            "rows": 5,
+            "hash": "4fb62401513df0a1aa5a233a84d18e87",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_composition_question_plans",
+            "rows": 1,
+            "hash": "555e4a141780dfddebadc266039f5765",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_composition_storage_formats",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4"
+              },
+              {
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_composition_write_context",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_compositions",
+            "rows": 5,
+            "hash": "788b891fd721c3f1ad9a1894a0d6e7af",
+            "new_rows": 5,
+            "new_links": [
+              {
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "version_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50"
+              },
+              {
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "version_id": "a3ea1318-1c5a-4812-8903-484fecf62301"
+              },
+              {
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "version_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5"
+              },
+              {
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "version_id": "502bb83a-d31a-4d38-97b5-147dad1601b4"
+              },
+              {
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "version_id": "d3d40820-2778-4df7-b17e-bd6ee2c45479"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_expired_answer_results",
+            "rows": 1,
+            "hash": "5b3adfd84937bb698d67e3e80dc9463b",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_learning_value_bindings",
+            "rows": 3,
+            "hash": "76be3527890151c79649fd58bee34a3b",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "binding_sha256": "e7bfcbd97a871703b301e546b0be5aa0dbdead7aacbdcd511c68634cf8761540"
+              },
+              {
+                "binding_sha256": "77d78c77cac55a36781446f168f77b7d47c8c98e0d1ed2fbf32f1370cf7bf6e1"
+              },
+              {
+                "binding_sha256": "043c49302ff5b1c8f22900ea2640b806b282157a92e38df16d6b99955569efd3"
+              },
+              {
+                "binding_sha256": "974addb8932fe090ca550005808c5d28b14cd51b1043f34dfd5c1b63c5bb6ff5"
+              },
+              {
+                "binding_sha256": "00a732291d1da55a52ca1918e1927185de6ea1c4c56fac39f24ec33cac5dc422"
+              },
+              {
+                "binding_sha256": "f7ff76c520413072f8fc0e1cfcbf3785a9741174de66b4472a09eb35e832e8d8"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_learning_value_versions",
+            "rows": 2,
+            "hash": "73f6378addaf9069b45be1fc86461a2d",
+            "new_rows": 6,
+            "new_links": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ]
+          },
+          {
+            "name": "private.vocabulary_legacy_question_baselines",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_legacy_state_baselines",
+            "rows": 78,
+            "hash": "4a21ae2208b0a19b378d66d6f95b8dc7",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192977
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192978
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192979
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192980
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192981
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192982
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_library_import_approvals",
+            "rows": 54,
+            "hash": "83377e8837c0807f9674126d846f7b5f",
+            "new_rows": 1,
+            "new_links": [
+              {}
+            ]
+          },
+          {
+            "name": "private.vocabulary_library_import_chunks",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_library_management_requests",
+            "rows": 10,
+            "hash": "8b42b42f0415f067b1f0213d3d46fc96",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_library_management_results",
+            "rows": 10,
+            "hash": "6404de4a141980066e1f87442ed3aeca",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_library_requests",
+            "rows": 8,
+            "hash": "12303acf77fa263bad1dbd88b329e912",
+            "new_rows": 5,
+            "new_links": [
+              {
+                "actor_id": "a8040000-0000-4000-8000-000000000001",
+                "request_id": "a8040000-0000-4000-8000-000000000010"
+              },
+              {
+                "actor_id": "a8040000-0000-4000-8000-000000000001",
+                "request_id": "e62f7a2e-b765-4d0f-a675-ac38ed74f0bf"
+              },
+              {
+                "actor_id": "a8040000-0000-4000-8000-000000000001",
+                "request_id": "2d193327-2e13-48a0-8c4d-95780363e509"
+              },
+              {
+                "actor_id": "a8040000-0000-4000-8000-000000000001",
+                "request_id": "a8040000-0000-4000-8000-000000000030"
+              },
+              {
+                "actor_id": "a8040000-0000-4000-8000-000000000001",
+                "request_id": "a8040000-0000-4000-8000-000000000031"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "i": 3,
+        "at": "2026-10-02T21:14:52.227Z",
+        "data": [
+          {
+            "name": "private.vocabulary_library_row_fingerprints",
+            "rows": 22327,
+            "hash": "4fdd60d8ec3d1c9b04c7a12508c2351b",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1"
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1"
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1"
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1"
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1"
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_library_scope_rows",
+            "rows": 22327,
+            "hash": "a5f93bbc49bcfb0d68ce38c7c9808e2d",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+                "source_entry_id": 192972
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+                "source_entry_id": 192971
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+                "source_entry_id": 192975
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+                "source_entry_id": 192974
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+                "source_entry_id": 192976
+              },
+              {
+                "scope_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+                "source_entry_id": 192973
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_library_scopes",
+            "rows": 686,
+            "hash": "d74dd60ed60592f4b654824eb1a7bd4e",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_library_template_approvals",
+            "rows": 10,
+            "hash": "4aa403a4bc0ecc4f0ae492827b7fd894",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "private.vocabulary_library_templates",
+            "rows": 13,
+            "hash": "c45a8d9ee81fe0052c1aa8809fed07e6",
+            "new_rows": 5,
+            "new_links": [
+              {
+                "id": "71d9a112-72f0-4db0-bddf-4de72f69e0fb",
+                "created_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "99c48364-6d09-49f1-9433-05fd0ed45e05",
+                "created_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "511db66f-297d-4392-a751-c26e288dc512",
+                "created_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "69886579-80bb-4a29-9022-340191cdf688",
+                "created_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "d2993c76-4f1d-4729-8b30-bd23d42617d4",
+                "created_by": "a8040000-0000-4000-8000-000000000001"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_library_versions",
+            "rows": 13,
+            "hash": "d20dcbbfb2cd426583bb82841b855518",
+            "new_rows": 5,
+            "new_links": [
+              {
+                "id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "template_id": "71d9a112-72f0-4db0-bddf-4de72f69e0fb"
+              },
+              {
+                "id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "template_id": "99c48364-6d09-49f1-9433-05fd0ed45e05"
+              },
+              {
+                "id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "template_id": "511db66f-297d-4392-a751-c26e288dc512"
+              },
+              {
+                "id": "502bb83a-d31a-4d38-97b5-147dad1601b4",
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "template_id": "69886579-80bb-4a29-9022-340191cdf688"
+              },
+              {
+                "id": "d3d40820-2778-4df7-b17e-bd6ee2c45479",
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "template_id": "d2993c76-4f1d-4729-8b30-bd23d42617d4"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_phase_results",
+            "rows": 17,
+            "hash": "8a0b41ef92ffc5b9e0cd56406b7056e8",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_question_content_versions",
+            "rows": 27,
+            "hash": "a86e96fa853747215d6c41328cb2efa6",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "id": "c91523a1-d300-4ca8-9ac4-84afb7dddc52",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "vocab_entry_id": 192977
+              },
+              {
+                "id": "c46663af-7df3-4200-ac53-b6bce9b6ac37",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "vocab_entry_id": 192978
+              },
+              {
+                "id": "712b5759-34b5-40e3-b042-a278c0668adc",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "vocab_entry_id": 192979
+              },
+              {
+                "id": "d3fb144e-3082-483c-95e7-2c0da0453b61",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "vocab_entry_id": 192980
+              },
+              {
+                "id": "14558959-9d21-43ef-80d5-a12b3a559055",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "vocab_entry_id": 192981
+              },
+              {
+                "id": "2b4eef37-aade-4b0d-a123-e1eb94e8329e",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "vocab_entry_id": 192982
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_question_meaning_versions",
+            "rows": 16,
+            "hash": "1a8560f8adac2c7906b4f097b1684584",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "content_version_id": "c91523a1-d300-4ca8-9ac4-84afb7dddc52"
+              },
+              {
+                "content_version_id": "c46663af-7df3-4200-ac53-b6bce9b6ac37"
+              },
+              {
+                "content_version_id": "712b5759-34b5-40e3-b042-a278c0668adc"
+              },
+              {
+                "content_version_id": "d3fb144e-3082-483c-95e7-2c0da0453b61"
+              },
+              {
+                "content_version_id": "14558959-9d21-43ef-80d5-a12b3a559055"
+              },
+              {
+                "content_version_id": "2b4eef37-aade-4b0d-a123-e1eb94e8329e"
+              }
+            ]
+          },
+          {
+            "name": "private.vocabulary_result_policies",
+            "rows": 13,
+            "hash": "d847fdc2a33e93ccc6319015720b71e6",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398"
+              }
+            ]
+          },
+          {
+            "name": "private.worksheet_mistake_items",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.admin_history_hidden_entries",
+            "rows": 10,
+            "hash": "79c4cb6b4da516a66c38ef330c047b2d",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.admin_profiles",
+            "rows": 9,
+            "hash": "86acafecf4ff381a2a198247307bce5f",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "user_id": "a8040000-0000-4000-8000-000000000001"
+              }
+            ]
+          },
+          {
+            "name": "public.admin_vocab_assignment_time_templates",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.assignment_question_exam_use_snapshot",
+            "rows": 4755,
+            "hash": "720c8a178da6edf312a79d2008996344",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.assignment_questions",
+            "rows": 5553,
+            "hash": "f0cee7109409af140b57925de91ea5a0",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "id": "39ab371c-e7e0-4384-8770-e18321556079",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317",
+                "vocab_entry_id": 192979,
+                "content_version_id": "712b5759-34b5-40e3-b042-a278c0668adc"
+              },
+              {
+                "id": "4d3a7e5c-8da5-465a-9373-51a9b3ee79fd",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317",
+                "vocab_entry_id": 192980,
+                "content_version_id": "d3fb144e-3082-483c-95e7-2c0da0453b61"
+              },
+              {
+                "id": "9f1c69b1-24a1-4971-8f12-bf2bca16fdf7",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317",
+                "vocab_entry_id": 192981,
+                "content_version_id": "14558959-9d21-43ef-80d5-a12b3a559055"
+              },
+              {
+                "id": "d7150609-a382-4a6f-97c1-122a58c9e9d3",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317",
+                "vocab_entry_id": 192982,
+                "content_version_id": "2b4eef37-aade-4b0d-a123-e1eb94e8329e"
+              },
+              {
+                "id": "25c08c1d-1866-44fe-8e8d-081d9bc9d909",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317",
+                "vocab_entry_id": 192977,
+                "content_version_id": "c91523a1-d300-4ca8-9ac4-84afb7dddc52"
+              },
+              {
+                "id": "8ba887bd-766e-4a3d-be8f-e0514f141ff0",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317",
+                "vocab_entry_id": 192978,
+                "content_version_id": "c46663af-7df3-4200-ac53-b6bce9b6ac37"
+              }
+            ]
+          },
+          {
+            "name": "public.assignment_quiz_mode_snapshots",
+            "rows": 144,
+            "hash": "f658e9d91509571cb90d4e2e205b27dc",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.assignment_review_targets",
+            "rows": 42,
+            "hash": "917ea9d715566e14306debac77c9c97c",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.assignment_sources",
+            "rows": 227,
+            "hash": "036341a485f4763c9ed7c61c6ff19e3a",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "assignment_id": "f8b39ca4-ae12-4049-b505-30fd4b01b373"
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317"
+              }
+            ]
+          },
+          {
+            "name": "public.assignment_students",
+            "rows": 229,
+            "hash": "565aed8330c3ace956072a71402b66eb",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "assigned_by": "a8040000-0000-4000-8000-000000000001",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317"
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "assigned_by": "a8040000-0000-4000-8000-000000000001",
+                "assignment_id": "f8b39ca4-ae12-4049-b505-30fd4b01b373"
+              }
+            ]
+          },
+          {
+            "name": "public.assignment_units",
+            "rows": 1541,
+            "hash": "b0f786ce70df138d1673c9f96c9c7c8d",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317"
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "assignment_id": "f8b39ca4-ae12-4049-b505-30fd4b01b373"
+              }
+            ]
+          },
+          {
+            "name": "public.assignments",
+            "rows": 227,
+            "hash": "c2a4904dc11856d086356f8601b74e71",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "id": "f8b39ca4-ae12-4049-b505-30fd4b01b373",
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": "a9d73545-2866-433e-96d1-e43842233317",
+                "created_by": "a8040000-0000-4000-8000-000000000001",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              }
+            ]
+          },
+          {
+            "name": "public.audit_events",
+            "rows": 1090,
+            "hash": "7720b183a56c5605c50193709ff4974d",
+            "new_rows": 5,
+            "new_links": [
+              {
+                "id": 1277
+              },
+              {
+                "id": 1278,
+                "student_id": "a8040000-0000-4000-8000-000000000002"
+              },
+              {
+                "id": 1279,
+                "student_id": "a8040000-0000-4000-8000-000000000002"
+              },
+              {
+                "id": 1280
+              },
+              {
+                "id": 1281
+              }
+            ]
+          },
+          {
+            "name": "public.class_group_students",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.class_groups",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          }
+        ]
+      },
+      {
+        "i": 4,
+        "at": "2026-10-02T21:14:59.986Z",
+        "data": [
+          {
+            "name": "public.notification_receipts",
+            "rows": 326,
+            "hash": "838b0298da7fa24b8451f546a78e9715",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "assignment_id": "f8b39ca4-ae12-4049-b505-30fd4b01b373"
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317"
+              }
+            ]
+          },
+          {
+            "name": "public.quiz_attempts",
+            "rows": 133,
+            "hash": "26a8e19a3cab06ce2068feba46bd57b7",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "assignment_id": "a9d73545-2866-433e-96d1-e43842233317"
+              }
+            ]
+          },
+          {
+            "name": "public.quiz_questions",
+            "rows": 1594,
+            "hash": "1b6626253bfbed538ca43d52e8fd817d",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "id": "66f9249d-0dc5-41ea-b4e2-e64c0542bf63",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "vocab_entry_id": 192977,
+                "content_version_id": "c91523a1-d300-4ca8-9ac4-84afb7dddc52"
+              },
+              {
+                "id": "453baf23-a602-4c65-bfad-061d1116dd9a",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "vocab_entry_id": 192978,
+                "content_version_id": "c46663af-7df3-4200-ac53-b6bce9b6ac37"
+              },
+              {
+                "id": "7d112ca5-efe9-4c91-86f2-f94387c74170",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "vocab_entry_id": 192979,
+                "content_version_id": "712b5759-34b5-40e3-b042-a278c0668adc"
+              },
+              {
+                "id": "4e7795c6-1dda-451f-ad16-2500ba38afd3",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "vocab_entry_id": 192980,
+                "content_version_id": "d3fb144e-3082-483c-95e7-2c0da0453b61"
+              },
+              {
+                "id": "1045ec51-213e-415d-bf68-05117eea0103",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "vocab_entry_id": 192981,
+                "content_version_id": "14558959-9d21-43ef-80d5-a12b3a559055"
+              },
+              {
+                "id": "7144eccd-b612-43aa-81c1-b9dd62877f52",
+                "attempt_id": "01c26c00-1064-4e5a-a4a9-6892b8b4f398",
+                "vocab_entry_id": 192982,
+                "content_version_id": "2b4eef37-aade-4b0d-a123-e1eb94e8329e"
+              }
+            ]
+          },
+          {
+            "name": "public.student_codes",
+            "rows": 32,
+            "hash": "2c4253d2c02009589f20970f8bdeaa07",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_learning_sources",
+            "rows": 41,
+            "hash": "a2d4f30135faa16baf77537b8dea9c14",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_login_attempts",
+            "rows": 72,
+            "hash": "76f77a2a58aa9ffb82266904db08ca26",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_point_events",
+            "rows": 1073,
+            "hash": "ba8c63edca6178134c43e1cdce0c40b1",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_point_totals",
+            "rows": 32,
+            "hash": "7a6a8d9d226988aef5a5ab8eb689a01f",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_sessions",
+            "rows": 73,
+            "hash": "18ab0dda7d3741a256879cd0de2915a8",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_vocab_review_assignment_draft_items",
+            "rows": 2,
+            "hash": "499c6272f080d4298560bbe10bfaff39",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_vocab_review_assignment_drafts",
+            "rows": 2,
+            "hash": "174c2205650a9758919f641dfb79ad8b",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_vocab_review_queue",
+            "rows": 40,
+            "hash": "5305b79fe3304effdbaac93eb8f482a4",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.student_vocab_state",
+            "rows": 744,
+            "hash": "3866057fc2a6331256c9ace26bfbacff",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192977
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192978
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192979
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192980
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192981
+              },
+              {
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192982
+              }
+            ]
+          },
+          {
+            "name": "public.student_vocab_wrong_events",
+            "rows": 838,
+            "hash": "05920848def85f54e2645e9178a18f2e",
+            "new_rows": 2,
+            "new_links": [
+              {
+                "id": 1168,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192978
+              },
+              {
+                "id": 1169,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "student_id": "a8040000-0000-4000-8000-000000000002",
+                "vocab_entry_id": 192977
+              }
+            ]
+          },
+          {
+            "name": "public.students",
+            "rows": 119,
+            "hash": "07298e1d955ea6544ae12c7b9e8a303d",
+            "new_rows": 1,
+            "new_links": [
+              {
+                "id": "a8040000-0000-4000-8000-000000000002",
+                "created_by": "a8040000-0000-4000-8000-000000000001"
+              }
+            ]
+          },
+          {
+            "name": "public.vocab_approved_korean_pronunciations",
+            "rows": 496,
+            "hash": "a835d15682b139bbdef94d573754fcf0",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_dataset_capabilities",
+            "rows": 22,
+            "hash": "528906509a52120bfbe9885c33434892",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_dataset_catalog",
+            "rows": 44,
+            "hash": "0a130b9ccbfdbf5211e582ae0be7aa7e",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              },
+              {
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              }
+            ]
+          },
+          {
+            "name": "public.vocab_datasets",
+            "rows": 52,
+            "hash": "4f78b760426da2ed84d15568d938b7f9",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "id": "a8040000-0000-4000-8000-000000000003",
+                "imported_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7",
+                "imported_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "d447b947-fa16-4565-8cef-288abca2b586",
+                "imported_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "2d6abab3-1a83-4fef-89a0-172e26445236",
+                "imported_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "8017f66b-d890-4431-a463-0c2ad0465a15",
+                "imported_by": "a8040000-0000-4000-8000-000000000001"
+              },
+              {
+                "id": "35706ef0-14e8-4af4-98e9-976d73c5fe47",
+                "imported_by": "a8040000-0000-4000-8000-000000000001"
+              }
+            ]
+          },
+          {
+            "name": "public.vocab_entries",
+            "rows": 39402,
+            "hash": "c099bef2ce925d72fadeb1af6f3f551a",
+            "new_rows": 36,
+            "new_links": [
+              {
+                "id": 192971,
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": 192972,
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": 192973,
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": 192974,
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": 192975,
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": 192976,
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": 192977,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "id": 192978,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "id": 192979,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "id": 192980,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "id": 192981,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "id": 192982,
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "id": 192983,
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "id": 192984,
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "id": 192985,
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "id": 192986,
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "id": 192987,
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "id": 192988,
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "id": 192989,
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "id": 192990,
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "id": 192991,
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "id": 192992,
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "id": 192993,
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "id": 192994,
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "id": 192995,
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "id": 192996,
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "id": 192997,
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "id": 192998,
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "id": 192999,
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "id": 193000,
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "id": 193001,
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              },
+              {
+                "id": 193002,
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              },
+              {
+                "id": 193003,
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              },
+              {
+                "id": 193004,
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              },
+              {
+                "id": 193005,
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              },
+              {
+                "id": 193006,
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              }
+            ]
+          },
+          {
+            "name": "public.vocab_entry_pronunciation_bindings_v2",
+            "rows": 10512,
+            "hash": "68f5a7821419af6d3feb8e3a26287d05",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_entry_pronunciations",
+            "rows": 60,
+            "hash": "97ba60a72ad2f31330ae1ce53219e5ff",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_entry_quiz_eligibility",
+            "rows": 6074,
+            "hash": "cc0d7a7f0b439c00dd46b9614a7b4f50",
+            "new_rows": 12,
+            "new_links": [
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192971
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192971
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192972
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192972
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192973
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192973
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192974
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192974
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192975
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192975
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192976
+              },
+              {
+                "dataset_id": "a8040000-0000-4000-8000-000000000003",
+                "vocab_entry_id": 192976
+              }
+            ]
+          },
+          {
+            "name": "public.vocab_pronunciation_identities_v2",
+            "rows": 7195,
+            "hash": "d6336bd5c749940e41aae7143dc9db20",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_pronunciation_releases_v2",
+            "rows": 9,
+            "hash": "e3dd2723fcd77593bd2039e3e12d78a1",
+            "new_rows": 0,
+            "new_links": []
+          }
+        ]
+      },
+      {
+        "i": 5,
+        "at": "2026-10-02T21:15:13.683Z",
+        "data": [
+          {
+            "name": "public.vocab_pronunciation_tts_assets_v2",
+            "rows": 1300,
+            "hash": "6cf703dcdea0fa124fda1bc33cb4b1bd",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_rule_derived_korean_pronunciations",
+            "rows": 582,
+            "hash": "386bdfca3871ce58aab23b88bad7728d",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_synthetic_audio_assets",
+            "rows": 412,
+            "hash": "a420e0e1162425434f530c8754fcedbf",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_synthetic_audio_bindings",
+            "rows": 418,
+            "hash": "68744c4de987cae8a6b2ecdf1f3324a6",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.vocab_unit_catalog",
+            "rows": 1179,
+            "hash": "5112f7a151b81fecaaba24ca4855177b",
+            "new_rows": 5,
+            "new_links": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ]
+          },
+          {
+            "name": "public.vocab_units",
+            "rows": 1257,
+            "hash": "cfe5b960fcfc7ffb8432d0b965b74132",
+            "new_rows": 6,
+            "new_links": [
+              {
+                "id": "a8040000-0000-4000-8000-000000000004",
+                "dataset_id": "a8040000-0000-4000-8000-000000000003"
+              },
+              {
+                "id": "aa8f8b18-da2b-4538-837a-d5412c5e29b8",
+                "dataset_id": "2268da37-e61a-4b7e-8f68-3f1e704ddcf7"
+              },
+              {
+                "id": "948185c3-ac2c-4fd5-b06c-37ffbf5073a6",
+                "dataset_id": "d447b947-fa16-4565-8cef-288abca2b586"
+              },
+              {
+                "id": "e5a665be-66ea-4266-8de5-aa2c471bf7f0",
+                "dataset_id": "2d6abab3-1a83-4fef-89a0-172e26445236"
+              },
+              {
+                "id": "1377bdd9-3871-4241-be14-c1933311fb9f",
+                "dataset_id": "8017f66b-d890-4431-a463-0c2ad0465a15"
+              },
+              {
+                "id": "a58f4f94-e20f-42bf-b02f-739e86bb0ee0",
+                "dataset_id": "35706ef0-14e8-4af4-98e9-976d73c5fe47"
+              }
+            ]
+          },
+          {
+            "name": "public.worksheet_request_items",
+            "rows": 3,
+            "hash": "cf3da27caf3e9425f7f424e6bba8c440",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "public.worksheet_requests",
+            "rows": 1,
+            "hash": "09f723ea1dfa7fb4ac0645a1332cf550",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.app_canonical_question_preview_item",
+            "rows": 2785,
+            "hash": "cf3fa529fa1714236bc3869cffb52d8f",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.app_canonical_question_preview_release",
+            "rows": 9,
+            "hash": "579c941111b51d7b312bf29bd35dfb25",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.app_exam_use_occurrence",
+            "rows": 19308,
+            "hash": "f064880d6f0edf19a6f661aa8681b15e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.app_exam_use_release",
+            "rows": 30,
+            "hash": "17fc928d0a5646c0e1bc2ea1d8382bde",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.assignment_exam_use_release_snapshot",
+            "rows": 122,
+            "hash": "0f01987942f966e6025ca21828841062",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.data_issue",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.dataset_source",
+            "rows": 7,
+            "hash": "b8b133f4d8caf84048d38d97136a867d",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.etymology",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.example",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.import_batch",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.import_run",
+            "rows": 1,
+            "hash": "8c5fac61a4631b2606e149dfacb23cf2",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.index_build",
+            "rows": 5,
+            "hash": "353b6cb9ea9b1557d68a02a142399a72",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.input_file_manifest",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.legacy_freeze",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.level_mapping",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.lexeme",
+            "rows": 2277,
+            "hash": "0e539df932c8378c3ec24c2370285da9",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.lexeme_metric",
+            "rows": 15,
+            "hash": "a3d967bb87bdcd320b81a51b4e023de0",
+            "new_rows": 0,
+            "new_links": []
+          }
+        ]
+      },
+      {
+        "i": 6,
+        "at": "2026-10-02T21:15:15.898Z",
+        "data": [
+          {
+            "name": "word_index.lexeme_tag",
+            "rows": 7,
+            "hash": "03afacacd33e87d994523ad4bd917f77",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.mock_wordbook_composition",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.mock_wordbook_identity_review",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.mock_wordbook_lineage",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.mock_wordbook_scope",
+            "rows": 510,
+            "hash": "065e461876e78e3c2c586f9052e001a0",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.occurrence",
+            "rows": 2129,
+            "hash": "d8df40a1a29945662930f39f2b15ac4c",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.pipeline_rule",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.preview_vocab_link_lexeme_seed_batch",
+            "rows": 11,
+            "hash": "0e086ec8cf7fa5185ff6fe3c35e571d0",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.preview_vocab_link_lexeme_seed_member",
+            "rows": 1979,
+            "hash": "1febae248b1528a947ef1cb5a84ca42f",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.preview_vocab_link_lexeme_seed_run",
+            "rows": 1,
+            "hash": "f233a2344530f92c3187101755c637df",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.raw_pointer",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.relation",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.relation_evidence",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.review",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.schema_meta",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.sense",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.source",
+            "rows": 7,
+            "hash": "c55292f89827308e8d2caf686a1b1f22",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.type_decision",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.vocab_entry_link",
+            "rows": 3029,
+            "hash": "034b06776250cac1ac8cc7878c8b86fa",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.vocab_entry_mapping_candidate",
+            "rows": 2,
+            "hash": "803cace0d6d60e721c12908535e12270",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.vocab_link_import_batch",
+            "rows": 34,
+            "hash": "73edb1ddd34ba6585f5867cc3923548c",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.vocab_link_import_run",
+            "rows": 7,
+            "hash": "7641803a30803d51684ec44c89003787",
+            "new_rows": 0,
+            "new_links": []
+          },
+          {
+            "name": "word_index.work_queue",
+            "rows": 0,
+            "hash": "d41d8cd98f00b204e9800998ecf8427e",
+            "new_rows": 0,
+            "new_links": []
+          }
+        ]
+      }
+    ],
+    "newReferences": {
+      "newRows": 288,
+      "newTables": 47,
+      "invalidReferences": []
+    },
+    "sharedValues": [
+      {
+        "kind": "value_versions",
+        "id": "333aa389-4280-4ad5-95e6-1d5f7a0cfc68",
+        "hash": "4f73e0624bdc094686f9850c02336c5b24daefccd0ea6a78621d69e5c2e8432b",
+        "headword": "fakelearning4",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_versions",
+        "id": "0a3a0c49-742f-4110-b8ba-3d074d2f06a9",
+        "hash": "1838ce398366a70b611aabae14ee2b28ea7cafec99fe1b6a6f15acf101c854ea",
+        "headword": "fakelearning1",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_versions",
+        "id": "a708ff94-60ba-4e34-b855-1b30627fe5a1",
+        "hash": "1430884a2a76b59b15466f379933eb4667045d85aef82982460d134ba420db0b",
+        "headword": "fakelearning6",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_versions",
+        "id": "8739e12f-a38d-4726-847e-104e9c3d1d4b",
+        "hash": "44d0a3b0532a47f6cea21e2d27ad7784b783befd9879c51dcd19f68976791bcd",
+        "headword": "fakelearning3",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_versions",
+        "id": "dba5ea6e-7f4e-4399-bdaf-2c8e8cbf00a8",
+        "hash": "ac305e2ae49e6157fe58d1133d2982cfd6d19f261b84ca8742efb646ca06e8c3",
+        "headword": "fakelearning5",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_versions",
+        "id": "daecdb97-63bf-43ce-a60b-755980682241",
+        "hash": "ebc1fb95dcabfd769300972ec7a66cb153ddd9215067e217c7db38b80cc126a4",
+        "headword": "fakelearning2",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_bindings",
+        "id": "e51b2506-7d20-4053-a9cd-e2a051228fba",
+        "hash": "e7bfcbd97a871703b301e546b0be5aa0dbdead7aacbdcd511c68634cf8761540",
+        "headword": "a8040000-0000-4000-8000-000000000003",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_bindings",
+        "id": "ffcfa32c-05bd-4348-bcac-332ea4740d20",
+        "hash": "77d78c77cac55a36781446f168f77b7d47c8c98e0d1ed2fbf32f1370cf7bf6e1",
+        "headword": "a8040000-0000-4000-8000-000000000003",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_bindings",
+        "id": "b575e402-44d3-49d5-9887-1470e3086d3e",
+        "hash": "043c49302ff5b1c8f22900ea2640b806b282157a92e38df16d6b99955569efd3",
+        "headword": "a8040000-0000-4000-8000-000000000003",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_bindings",
+        "id": "a916ee1e-bb0d-42ff-9368-5eb72fdc9620",
+        "hash": "974addb8932fe090ca550005808c5d28b14cd51b1043f34dfd5c1b63c5bb6ff5",
+        "headword": "a8040000-0000-4000-8000-000000000003",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_bindings",
+        "id": "002d9335-a841-4f42-88b3-0a1351dd4a1f",
+        "hash": "00a732291d1da55a52ca1918e1927185de6ea1c4c56fac39f24ec33cac5dc422",
+        "headword": "a8040000-0000-4000-8000-000000000003",
+        "linked_to_fake_archive": true
+      },
+      {
+        "kind": "value_bindings",
+        "id": "65c72102-9de1-4cb0-b71e-85ef4d4d7b8e",
+        "hash": "f7ff76c520413072f8fc0e1cfcbf3785a9741174de66b4472a09eb35e832e8d8",
+        "headword": "a8040000-0000-4000-8000-000000000003",
+        "linked_to_fake_archive": true
+      }
+    ],
+    "audit": [
+      {
+        "evidence": {
+          "audit_events": [
+            {
+              "id": 1277,
+              "details": {
+                "mode": "book_meaning_choice",
+                "versionId": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+                "assignmentId": "a9d73545-2866-433e-96d1-e43842233317",
+                "questionCount": 6
+              },
+              "event_type": "assignment.vocabulary_composition_created",
+              "student_id": null,
+              "actor_admin_id": "a8040000-0000-4000-8000-000000000001"
+            },
+            {
+              "id": 1278,
+              "details": {
+                "reason": "학생 삭제",
+                "cancelledAt": "2026-10-02T21:12:13.004036+00:00",
+                "assignmentId": "f8b39ca4-ae12-4049-b505-30fd4b01b373"
+              },
+              "event_type": "assignment.student.cancelled",
+              "student_id": "a8040000-0000-4000-8000-000000000002",
+              "actor_admin_id": "a8040000-0000-4000-8000-000000000001"
+            },
+            {
+              "id": 1279,
+              "details": {
+                "deletedAt": "2026-10-02T21:12:12.998978+00:00",
+                "displayNameSnapshot": "[M08 공용검증] 가짜 학생",
+                "abandonedAttemptCount": 0
+              },
+              "event_type": "student.deleted",
+              "student_id": "a8040000-0000-4000-8000-000000000002",
+              "actor_admin_id": "a8040000-0000-4000-8000-000000000001"
+            },
+            {
+              "id": 1280,
+              "details": {
+                "reason": "M08 가짜 동시 실행 검사 종료",
+                "deletedAt": "2026-10-02T21:12:13.228953+00:00",
+                "assignmentId": "f8b39ca4-ae12-4049-b505-30fd4b01b373",
+                "titleSnapshot": "[M08 검증] 원자료 FK 생성 확인"
+              },
+              "event_type": "assignment.deleted",
+              "student_id": null,
+              "actor_admin_id": "a8040000-0000-4000-8000-000000000001"
+            },
+            {
+              "id": 1281,
+              "details": {
+                "reason": "M08 가짜 동시 실행 검사 종료",
+                "deletedAt": "2026-10-02T21:12:13.236942+00:00",
+                "assignmentId": "a9d73545-2866-433e-96d1-e43842233317",
+                "titleSnapshot": "[M08 검증] 가짜 구성 시험"
+              },
+              "event_type": "assignment.deleted",
+              "student_id": null,
+              "actor_admin_id": "a8040000-0000-4000-8000-000000000001"
+            }
+          ],
+          "import_approvals": [
+            {
+              "approval_id": "M08-a804-synthetic",
+              "file_sha256": "a4aac2361b0d29bac8788043de3657c30f64c478a8cd8022f174f861cb596e6e",
+              "scope_count": 1,
+              "content_sha256": "f473184668dc5e0e556e3dae920c4d3d779a0071305a4d727bfbbb4cfaac8782",
+              "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+            }
+          ],
+          "unit_catalog_invalid": 0
+        }
+      }
+    ]
+  },
+  "cleanup": [
+    {
+      "evidence": {
+        "states": {
+          "prepared": 6,
+          "restored": 18
+        },
+        "answers": 6,
+        "attempts": 1,
+        "helperRemoved": true,
+        "operatorReceipts": 9,
+        "remainingPermits": 0,
+        "unrestoredBodies": 0,
+        "appFunctionPrivileges": 0
+      }
+    }
+  ],
+  "limits": [
+    "No Production write/deployment or actual student test.",
+    "Seven bounded read transactions, not one simultaneous database snapshot.",
+    "Direct source case validates actual FK insertion; full legacy capability import/UI path was not replayed.",
+    "Temporary synthetic files are not a Production backup."
+  ],
+  "harnessCorrections": [
+    "Ambiguous state variable in late probe corrected; first synthetic ready transaction committed but candidate response failed, so a second fake lower key was used for final proof.",
+    "An already compacted group was excluded from inline-only preparation; the original external archive was reused.",
+    "Direct legacy app case requires an actual dictionary capability package; its FK insertion lock was tested separately while the composition assignment used the real v7 app function.",
+    "Synthetic answer timestamps aligned with the existing 100ms feedback contract; rejected batch transaction wrote no answers.",
+    "Root contains an existing .git; all-repository archive guard correctly rejected its child folder. Synthetic archives were written outside all Git repositories to a protected temporary folder. No repository was created/removed."
+  ],
+  "concurrentHttp": {
+    "compact-copy": {
+      "case": "compact-copy",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T20:55:25.729Z",
+      "finishedAt": "2026-10-02T20:55:40.314Z",
+      "status": 200,
+      "data": {
+        "pid": 17321,
+        "aPid": 17322,
+        "mode": "copy",
+        "result": {
+          "sameFixed": true,
+          "versionId": "502bb83a-d31a-4d38-97b5-147dad1601b4"
+        },
+        "startedAt": "2026-10-02T20:55:26.470115+00:00",
+        "finishedAt": "2026-10-02T20:55:40.518713+00:00"
+      }
+    },
+    "create": {
+      "case": "create",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T20:56:27.917Z",
+      "finishedAt": "2026-10-02T20:56:43.030Z",
+      "status": 200,
+      "data": {
+        "pid": 17342,
+        "aPid": 17343,
+        "mode": "probe",
+        "result": {
+          "detail": "",
+          "context": "SQL statement \"lock table private.vocabulary_compositions in share row exclusive mode nowait\"\nPL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 17 at SQL statement\nSQL statement \"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\"\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\nPL/pgSQL function public.m08_preview_learning_probe_v1(text,jsonb) line 15 at assignment",
+          "message": "could not obtain lock on relation \"private.vocabulary_compositions\"",
+          "sqlstate": "55P03",
+          "blockerPid": 17343,
+          "observedAt": "2026-10-02T20:56:41.228287+00:00",
+          "unexpectedResult": null
+        },
+        "startedAt": "2026-10-02T20:56:28.429457+00:00",
+        "finishedAt": "2026-10-02T20:56:43.231887+00:00"
+      }
+    },
+    "ready": {
+      "case": "ready",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T20:57:19.527Z",
+      "finishedAt": "2026-10-02T20:57:32.721Z",
+      "status": 200,
+      "data": {
+        "pid": 17350,
+        "aPid": 17351,
+        "mode": "probe",
+        "result": {
+          "detail": "",
+          "context": "SQL statement \"lock table private.vocabulary_compositions in share row exclusive mode nowait\"\nPL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 17 at SQL statement\nSQL statement \"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\"\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\nPL/pgSQL function public.m08_preview_learning_probe_v1(text,jsonb) line 15 at assignment",
+          "message": "could not obtain lock on relation \"private.vocabulary_compositions\"",
+          "sqlstate": "55P03",
+          "blockerPid": 17351,
+          "observedAt": "2026-10-02T20:57:30.925011+00:00",
+          "unexpectedResult": null
+        },
+        "startedAt": "2026-10-02T20:57:19.903281+00:00",
+        "finishedAt": "2026-10-02T20:57:32.927286+00:00"
+      }
+    },
+    "ready-advance": {
+      "case": "ready-advance",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T20:59:58.603Z",
+      "finishedAt": "2026-10-02T21:00:11.918Z",
+      "status": 200,
+      "data": {
+        "pid": 17398,
+        "aPid": 17411,
+        "mode": "probe",
+        "result": {
+          "detail": "",
+          "context": "SQL statement \"lock table private.vocabulary_compositions in share row exclusive mode nowait\"\nPL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 17 at SQL statement\nSQL statement \"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\"\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\nPL/pgSQL function public.m08_preview_learning_probe_v1(text,jsonb) line 15 at assignment",
+          "message": "could not obtain lock on relation \"private.vocabulary_compositions\"",
+          "sqlstate": "55P03",
+          "blockerPid": 17411,
+          "observedAt": "2026-10-02T21:00:10.11985+00:00",
+          "unexpectedResult": null
+        },
+        "startedAt": "2026-10-02T20:59:59.393036+00:00",
+        "finishedAt": "2026-10-02T21:00:12.122242+00:00"
+      }
+    },
+    "direct-assignment": {
+      "case": "direct-assignment",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T21:03:10.750Z",
+      "finishedAt": "2026-10-02T21:03:25.597Z",
+      "status": 200,
+      "data": {
+        "pid": 18062,
+        "aPid": 18064,
+        "mode": "probe",
+        "result": {
+          "detail": "",
+          "context": "SQL statement \"SELECT 1 from public.vocab_datasets where id=any(datasets) order by id for update nowait\"\nPL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 35 at PERFORM\nSQL statement \"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\"\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\nPL/pgSQL function public.m08_preview_learning_probe_v1(text,jsonb) line 15 at assignment",
+          "message": "could not obtain lock on row in relation \"vocab_datasets\"",
+          "sqlstate": "55P03",
+          "blockerPid": 18064,
+          "observedAt": "2026-10-02T21:03:23.79285+00:00",
+          "unexpectedResult": null
+        },
+        "startedAt": "2026-10-02T21:03:11.683534+00:00",
+        "finishedAt": "2026-10-02T21:03:25.795131+00:00"
+      }
+    },
+    "assignment": {
+      "case": "assignment",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T21:03:31.031Z",
+      "finishedAt": "2026-10-02T21:03:44.893Z",
+      "status": 200,
+      "data": {
+        "pid": 18062,
+        "aPid": 18065,
+        "mode": "probe",
+        "result": {
+          "detail": "",
+          "context": "SQL statement \"SELECT 1 from public.vocab_datasets where id=any(datasets) order by id for update nowait\"\nPL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 35 at PERFORM\nSQL statement \"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\"\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\nPL/pgSQL function public.m08_preview_learning_probe_v1(text,jsonb) line 15 at assignment",
+          "message": "could not obtain lock on row in relation \"vocab_datasets\"",
+          "sqlstate": "55P03",
+          "blockerPid": 18065,
+          "observedAt": "2026-10-02T21:03:43.079151+00:00",
+          "unexpectedResult": null
+        },
+        "startedAt": "2026-10-02T21:03:31.352832+00:00",
+        "finishedAt": "2026-10-02T21:03:45.08127+00:00"
+      }
+    },
+    "start": {
+      "case": "start",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T21:03:50.597Z",
+      "finishedAt": "2026-10-02T21:04:04.572Z",
+      "status": 200,
+      "data": {
+        "pid": 18062,
+        "aPid": 18085,
+        "mode": "probe",
+        "result": {
+          "detail": "",
+          "context": "SQL statement \"SELECT 1 from public.assignments where id=any(assignment_ids) order by id for update nowait\"\nPL/pgSQL function private.lock_historical_learning_batch_v1(text,uuid,text[],boolean) line 44 at PERFORM\nSQL statement \"SELECT private.lock_historical_learning_batch_v1(first_row.kind,first_row.group_id,keys,p_action='compact')\"\nPL/pgSQL function private.apply_historical_learning_batch_v1(uuid,text,text,jsonb) line 26 at PERFORM\nPL/pgSQL function public.m08_preview_learning_probe_v1(text,jsonb) line 15 at assignment",
+          "message": "could not obtain lock on row in relation \"assignments\"",
+          "sqlstate": "55P03",
+          "blockerPid": 18085,
+          "observedAt": "2026-10-02T21:04:02.748301+00:00",
+          "unexpectedResult": null
+        },
+        "startedAt": "2026-10-02T21:03:50.964451+00:00",
+        "finishedAt": "2026-10-02T21:04:04.750396+00:00"
+      }
+    },
+    "late": {
+      "case": "late",
+      "project": "wojxpruvbjzbhrpmsbuy",
+      "sentAt": "2026-10-02T20:52:53.088Z",
+      "finishedAt": "2026-10-02T20:53:04.642Z",
+      "status": 200,
+      "data": {
+        "pid": 17275,
+        "aPid": 17279,
+        "mode": "late",
+        "result": {
+          "after": [
+            "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+            "a3ea1318-1c5a-4812-8903-484fecf62301"
+          ],
+          "before": [
+            "a3ea1318-1c5a-4812-8903-484fecf62301"
+          ],
+          "lowKey": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+          "lowKeyFound": true,
+          "higherCompacted": true,
+          "processedHigherKey": "d286572f-8ea2-4dc8-918a-5d775fc00d50"
+        },
+        "startedAt": "2026-10-02T20:52:54.214155+00:00",
+        "finishedAt": "2026-10-02T20:53:04.837634+00:00"
+      }
+    }
+  },
+  "archiveFiles": [
+    {
+      "kind": "composition",
+      "group_id": "d286572f-8ea2-4dc8-918a-5d775fc00d50",
+      "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\english-app-private-rehearsal\\APP-20261003-03\\historical-learning-46734002-0db9-49df-b72d-de9835b9b241.json",
+      "sha256": "7d5b93a461967bbe7313c3dac93cfdf52ea2bd5347701d25854ce97c5b82c084",
+      "bytes": 43221
+    },
+    {
+      "kind": "scope",
+      "group_id": "b8224f06-36bd-4d37-8a24-1180cc26e7a1",
+      "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\english-app-private-rehearsal\\APP-20261003-03\\historical-learning-faddb59e-7df6-43a2-a08d-a6219f435b3d.json",
+      "sha256": "69624fe8e2b363fc747850249e9c4ea6a945370a266172f038504121de722f1f",
+      "bytes": 19977
+    },
+    {
+      "kind": "composition",
+      "group_id": "a3ea1318-1c5a-4812-8903-484fecf62301",
+      "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\english-app-private-rehearsal\\APP-20261003-03\\historical-learning-2f6d5999-26e5-4621-b39b-5d227ea94aa1.json",
+      "sha256": "8cbaea983479bf604ae45f5af0fd7af178cb099e38c35c2075dd2c4e20cfba65",
+      "bytes": 43221
+    },
+    {
+      "kind": "composition",
+      "group_id": "6401c2ab-d5e1-433e-a9bc-8d03d5838cf5",
+      "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\english-app-private-rehearsal\\APP-20261003-03\\historical-learning-f1e0694e-9148-4f01-a1a6-e93dac096cf9.json",
+      "sha256": "382df820c4763b89d4f06552856012face9ab7303632b532fa58f7a3ad26a5e9",
+      "bytes": 43221
+    }
+  ],
+  "logFiles": [
+    {
+      "path": ".codex-tmp/m08-learning-test.log",
+      "bytes": 285,
+      "sha256": "7c789ad2a7fb0845d2973d62697488a996844071b0d7ede43ed2bbb310b8aa53"
+    },
+    {
+      "path": ".codex-tmp/m08-learning-regression-recheck.log",
+      "bytes": 285,
+      "sha256": "013c85bc3de030e8186af2c1299063024b6f84615a7e5edc3c26ba342723189b"
+    },
+    {
+      "path": ".codex-tmp/m08-learning-full.log",
+      "bytes": 1972,
+      "sha256": "a3c827fb6a2c365273cc535734a7b5805a1ebc4b512a91cf348a5677efd780fa"
+    },
+    {
+      "path": ".codex-tmp/m08-learning-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex-tmp/m08-learning-lint.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex-tmp/m08-learning-map.log",
+      "bytes": 556,
+      "sha256": "ed9c34c046f77da38b9f697dc7b05e523b68664c34a7fc5feaf0c2edcf10a247"
+    },
+    {
+      "path": ".codex-tmp/m08-learning-build.log",
+      "bytes": 4538,
+      "sha256": "7d03dc18b77823a7d847b3be6f8dbf10ba8d74c4698ef12ca26af27472a6312a"
+    },
+    {
+      "path": ".codex-tmp/m08-learning-races-check.log",
+      "bytes": 899,
+      "sha256": "004e680ca0682a743a694980f88aabd2ae3a2726dc7965bc93b60ca863fab3c8"
+    }
+  ]
+}
