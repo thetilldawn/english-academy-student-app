@@ -1,0 +1,62 @@
+{
+  "at": "2026-10-02T11:01:16.786Z",
+  "browser": "151.0.7922.34",
+  "htmlSha256": "d25d7ba1261ec1e4afdd219e89a2d250fddb6c7b0049ba02083f88a7b92632b8",
+  "scope": "실제 빌드/HTMLAudioElement와 합성8초 WAV, 가짜 시험 API. 자동재생 허용 옵션 사용. 자동 문제음·수동 선택지음의 답 선택/시간 종료 중단 검사이며 CDN 가용성·발음 내용·실스피커 출력 검사는 아님.",
+  "cases": [
+    {
+      "kind": "prompt",
+      "trigger": "answer",
+      "inputAt": 710.6000000238419,
+      "pause": {
+        "at": 711.1000000238419,
+        "question": "sample1",
+        "currentTime": 0.047013
+      },
+      "stillPlaying": false,
+      "mediaTime": 0.047027,
+      "answerToPauseMs": 0.5,
+      "examRequests": []
+    },
+    {
+      "kind": "prompt",
+      "trigger": "timeout",
+      "pause": {
+        "at": 5358.099999964237,
+        "question": "sample1",
+        "currentTime": 1.07734
+      },
+      "stillPlaying": false,
+      "mediaTime": 1.077353,
+      "answerToPauseMs": null,
+      "examRequests": []
+    },
+    {
+      "kind": "choice",
+      "trigger": "answer",
+      "inputAt": 745.6000000238419,
+      "pause": {
+        "at": 745.6999999880791,
+        "question": "sample1",
+        "currentTime": 0.049378
+      },
+      "stillPlaying": false,
+      "mediaTime": 0.049391,
+      "answerToPauseMs": 0.09999996423721313,
+      "examRequests": []
+    },
+    {
+      "kind": "choice",
+      "trigger": "timeout",
+      "pause": {
+        "at": 5395.300000011921,
+        "question": "sample1",
+        "currentTime": 1.069907
+      },
+      "stillPlaying": false,
+      "mediaTime": 1.069921,
+      "answerToPauseMs": null,
+      "examRequests": []
+    }
+  ]
+}

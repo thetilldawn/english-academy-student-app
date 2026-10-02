@@ -36,15 +36,24 @@ localServer=spawn(process.execPath,['node_modules/next/dist/bin/next','start','-
 const serverLog=fs.createWriteStream('.codex-tmp/m05-browser-owned-server.log');localServer.stdout?.pipe(serverLog);localServer.stderr?.pipe(serverLog);
 for(let i=0;i<60;i++){try{const r=await fetch(origin+'/quiz-offline');if(r.ok)break;}catch{}if(i===59)throw Error('Local test server unavailable');await new Promise(r=>setTimeout(r,200));}
 const output='docs/verification/APP-20261002-03_화면';fs.mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({headless:true});const evidence:Record<string,unknown>[]=[];
+const browser=await chromium.launch({headless:true,args:process.argv.includes('--audio-interrupt-only')?['--autoplay-policy=no-user-gesture-required']:[]});const evidence:Record<string,unknown>[]=[];
 const hash=(bytes:string|Buffer)=>createHash('sha256').update(bytes).digest('hex');
 const workerFile='public/quiz-offline-sw.js',originalWorker=fs.readFileSync(workerFile,'utf8');
-type Options={count?:number;wrong?:number;delay?:number;wait?:boolean;loseStart?:boolean;audio?:string[];beforeStart?:(page:Page)=>Promise<void>};
+type Options={count?:number;wrong?:number;delay?:number;wait?:boolean;loseStart?:boolean;audio?:string[];audioKind?:'prompt'|'choice';firstAudioOnly?:boolean;questionSeconds?:number;beforeStart?:(page:Page)=>Promise<void>};
 async function fixture(context:BrowserContext,options:Options={}){
   const {run,plan,contents}=await localFixture(options.count??3);run.plan=null;run.clock.elapsedAt=0;run.preparation.questionTimeLimitSeconds=null;run.preparation.timingMode='none';plan.questionLimitMs=null;
+  if(options.questionSeconds){run.preparation.questionTimeLimitSeconds=options.questionSeconds;run.preparation.timingMode='per_question';plan.questionLimitMs=options.questionSeconds*1000;}
   if(options.audio){
     const old=[...contents.values()];contents.clear();
-    for(let i=0;i<old.length;i++){const body={...old[i].body,pronunciation:{available:true,displayKo:null,variantId:'fake-media-check',audioUrl:options.audio[i%options.audio.length]}};const key=await commonContentKey(body);contents.set(key,{key,body});}
+    for(let i=0;i<old.length;i++){
+      const voice={available:true,displayKo:null,variantId:'fake-media-check',audioUrl:options.audio[i%options.audio.length]};
+      const body={...old[i].body};
+      if(options.audioKind==='choice'){
+        body.direction='korean_to_english';body.choices=['option1','option2','option3','option4'];
+        if(!options.firstAudioOnly||i===0)body.choicePronunciations=[voice,...body.choicePronunciations.slice(1)];
+      }else if(!options.firstAudioOnly||i===0)body.pronunciation=voice;
+      const key=await commonContentKey(body);contents.set(key,{key,body});
+    }
     run.preparation.items=[...contents.values()].map(c=>({contentId:c.body.contentId,key:c.key}));
   }
   const packet=await packLocalQuizContents([...contents.values()]);const page=await context.newPage();
@@ -109,6 +118,44 @@ async function choose(page:Page,index:number,next?:string){
   if(next)await expect(page.locator('#quiz-prompt')).toHaveText(next);
 }
 try{
+  if(process.argv.includes('--audio-interrupt-only')){
+    const samples=8000*8,wav=Buffer.alloc(44+samples*2);
+    wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(8000,24);wav.writeUInt32LE(16000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(samples*2,40);
+    for(let i=0;i<samples;i++)wav.writeInt16LE(Math.round(Math.sin(i*2*Math.PI*220/8000)*2000),44+i*2);
+    const results=[];
+    for(const kind of ['prompt','choice'] as const)for(const trigger of ['answer','timeout'] as const){
+      const context=await browser.newContext({serviceWorkers:'allow',viewport:{width:390,height:844}});
+      await context.route('https://audio.invalid/m05-interrupt.wav',route=>route.fulfill({contentType:'audio/wav',body:wav}));
+      await context.addInitScript(()=>{
+        const root=window as typeof window&{__audioCheck:{active:HTMLMediaElement|null;inputs:number[];pauses:Array<{at:number;question:string|null;currentTime:number}>}};
+        root.__audioCheck={active:null,inputs:[],pauses:[]};
+        document.addEventListener('keydown',e=>{if(/^[1-4]$/.test(e.key))root.__audioCheck.inputs.push(performance.now());},true);
+        document.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('button[data-feedback]'))root.__audioCheck.inputs.push(performance.now());},true);
+        const play=HTMLMediaElement.prototype.play,pause=HTMLMediaElement.prototype.pause;
+        HTMLMediaElement.prototype.play=function(){root.__audioCheck.active=this;return play.call(this);};
+        HTMLMediaElement.prototype.pause=function(){if(!this.paused)root.__audioCheck.pauses.push({at:performance.now(),question:document.querySelector('#quiz-prompt')?.textContent??null,currentTime:this.currentTime});return pause.call(this);};
+      });
+      const f=await fixture(context,{count:2,audio:['https://audio.invalid/m05-interrupt.wav'],audioKind:kind,firstAudioOnly:true,questionSeconds:trigger==='timeout'?5:undefined});
+      const speaking=()=>f.page.evaluate(()=>{const a=(window as typeof window&{__audioCheck:{active:HTMLMediaElement|null}}).__audioCheck.active;return Boolean(a&&!a.paused&&a.currentTime>0);});
+      if(trigger==='timeout')await f.page.waitForTimeout(3600);
+      if(kind==='choice'||trigger==='timeout')await f.page.getByRole('button',{name:/발음/}).first().click();
+      await expect.poll(speaking).toBe(true);f.requests.length=0;
+      const started=await f.page.evaluate(()=>performance.now());
+      if(trigger==='answer'){
+        if(kind==='prompt')await choose(f.page,0);
+        else await f.page.getByRole('button',{name:/4\s*option4/}).click();
+      }
+      await expect(f.page.locator('#quiz-prompt')).toHaveText('sample2',{timeout:8000});
+      const actual=await f.page.evaluate(since=>{const r=(window as typeof window&{__audioCheck:{active:HTMLMediaElement|null;inputs:number[];pauses:Array<{at:number;question:string|null;currentTime:number}>}}).__audioCheck;return {inputAt:r.inputs.at(-1),pause:r.pauses.find(p=>p.at>=since),stillPlaying:Boolean(r.active&&!r.active.paused),mediaTime:r.active?.currentTime};},started);
+      const result={kind,trigger,...actual,answerToPauseMs:actual.inputAt&&actual.pause?actual.pause.at-actual.inputAt:null,examRequests:f.requests.filter(p=>p.startsWith('/api/'))};
+      results.push(result);console.log(JSON.stringify(result));
+      fs.writeFileSync('.codex-tmp/m05-audio-interrupt-last-run.json',JSON.stringify({at:new Date().toISOString(),results},null,2));
+      expect(actual.pause?.question).toBe('sample1');expect(actual.stillPlaying).toBe(false);expect(result.examRequests).toEqual([]);
+      if(trigger==='answer')expect(result.answerToPauseMs).toBeLessThan(50);
+      await context.close();
+    }
+    fs.writeFileSync('docs/verification/APP-20261002-03_음성중단검사.json',JSON.stringify({at:new Date().toISOString(),browser:browser.version(),htmlSha256:hash(fs.readFileSync('.next/server/app/quiz-offline.html')),scope:'실제 빌드/HTMLAudioElement와 합성8초 WAV, 가짜 시험 API. 자동재생 허용 옵션 사용. 자동 문제음·수동 선택지음의 답 선택/시간 종료 중단 검사이며 CDN 가용성·발음 내용·실스피커 출력 검사는 아님.',cases:results},null,2));return;
+  }
   if(process.argv.includes('--audio-only')){
     const sources=['https://media.merriam-webster.com/audio/prons/en/us/mp3/c/collec01.mp3','https://xdxhswjgksukjmpbzqgz.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/pronunciation/google_cloud_text_to_speech/profile-286866721f7f4ee8/15944f75c56cbcb2c6180409f068808cb675f1309a0fd63b6cac7fb856b6d7cc.mp3'];
     const audioContext=await browser.newContext({serviceWorkers:'allow'});

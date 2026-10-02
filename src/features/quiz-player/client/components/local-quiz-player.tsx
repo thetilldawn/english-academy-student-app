@@ -36,9 +36,12 @@ function LocalQuizFrame({ controller: c }: { controller: Controller }) {
   }, [question, run, index, contents]);
   const audio = question ? quizAudioPresentation(question) : { promptAudioUrl: null };
   const phase = run?.plan?.phase ?? "initial";
-  const { playAudio } = useQuizAudio({ attemptId: run?.plan?.attemptId ?? "", phase, questionId: question?.id ?? null,
+  const { playAudio, stopAudio } = useQuizAudio({ attemptId: run?.plan?.attemptId ?? "", phase, questionId: question?.id ?? null,
     autoPlayEnabled: c.view === "playing" && !c.busy && c.pendingChoice === null && !feedback, playbackReady: true,
     preloadAudioUrls, promptAudioUrl: audio.promptAudioUrl });
+  useEffect(() => {
+    if (c.pendingChoice !== null || c.busy || feedback) stopAudio();
+  }, [c.pendingChoice, c.busy, feedback, stopAudio]);
   useEffect(() => { promptRef.current?.focus(); }, [question?.id]);
   if (!run?.plan || !question) return <p role="status">시험 결과를 준비하고 있습니다.</p>;
   const seconds = Number.isFinite(c.remaining) ? Math.ceil(c.remaining / 1000) : Infinity;
@@ -50,7 +53,8 @@ function LocalQuizFrame({ controller: c }: { controller: Controller }) {
     answerAnnouncement={quizAnswerAnnouncement(phase, feedback?.correct ?? null, feedback?.timedOut ?? false)}
     formattedRemaining={time} remainingSeconds={Number.isFinite(seconds) ? seconds : 1} timingMode={run.preparation.timingMode}
     timerSynchronized={true} submitting={c.view !== "playing" || c.busy || Boolean(feedback)} error={c.error} timeWarning="" timedOut={feedback?.timedOut ?? false}
-    promptAudioUrl={audio.promptAudioUrl} onPlayAudio={url => { if (!c.busy && !feedback) playAudio(url); }} onChoose={c.choose} onRetrySynchronization={() => void c.recover()}
+    promptAudioUrl={audio.promptAudioUrl} onPlayAudio={url => { if (c.pendingChoice === null && !c.busy && !feedback) playAudio(url); }}
+    onChoose={index => { stopAudio(); c.choose(index); }} onRetrySynchronization={() => void c.recover()}
     choiceFeedback={i => feedback ? feedback.answer === i ? "correct" : feedback.selected === i ? "wrong" : null : c.pendingChoice === i ? "selected" : null} />;
 }
 function Player({ localKey, retry }: { localKey: string; retry: boolean }) {
