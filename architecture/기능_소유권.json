@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 140,
-      "pathSetSha256": "a518f9a20a86d5912e5ea27e6ca4aae1879e3a638faf2dfa5398e9fdaeaae371"
+      "fileCount": 141,
+      "pathSetSha256": "2952020818a435930248da94bba14152a798fc0d6ef79151c0a9103abc0870ef"
     },
     {
       "path": "src/lib/deploy",
@@ -3063,6 +3063,11 @@
     },
     {
       "path": "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
     }
@@ -5318,7 +5323,8 @@
           "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
-          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+          "supabase/migrations/20261003210000_share_reviewed_package_entries.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
@@ -5358,7 +5364,8 @@
           "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
           "src/features/assignments/server/use-cases/direct-mistake-assignment.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
-          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
+          "src/lib/database/exam-use-package-archive.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7406,7 +7413,8 @@
           "supabase/migrations/20261002140634_retain_operational_logs_and_preparations.sql",
           "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql",
           "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql",
-          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql"
+          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
+          "supabase/migrations/20261003210000_share_reviewed_package_entries.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7487,7 +7495,8 @@
           "src/features/quiz-player/test-support/local-quiz-fixtures.ts",
           "src/lib/database/operational-retention.integration.test.ts",
           "src/lib/database/historical-question-migration.integration.test.ts",
-          "src/lib/database/historical-learning-migration.integration.test.ts"
+          "src/lib/database/historical-learning-migration.integration.test.ts",
+          "src/lib/database/exam-use-package-archive.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8200,7 +8209,8 @@
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
           "supabase/migrations/20261002155950_classify_wordbook_templates.sql",
           "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
-          "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql"
+          "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
+          "supabase/migrations/20261003210000_share_reviewed_package_entries.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -8242,7 +8252,8 @@
           "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx",
           "scripts/verify-wordbook-kinds-browser.ts",
           "src/lib/database/historical-learning-migration.integration.test.ts",
-          "src/lib/database/reviewed-bundle-archive.integration.test.ts"
+          "src/lib/database/reviewed-bundle-archive.integration.test.ts",
+          "src/lib/database/exam-use-package-archive.integration.test.ts"
         ]
       },
       "requiredImportEdges": [],

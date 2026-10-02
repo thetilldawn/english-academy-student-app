@@ -60,15 +60,21 @@ describe.sequential("reviewed source bundle: archive, replay and selective resto
       from word_index.mock_wordbook_scope s`);
     return { resources, replays, sources };
   }
-  async function preservedTables() {
+  async function preservedTables(originalOnly = false) {
     await owner();
     const tables = (await db.query<{ name: string }>(`select quote_ident(n.nspname)||'.'||quote_ident(c.relname) name
       from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind='r' and n.nspname in ('public','private','word_index')
       and c.relname not in ('reviewed_mock_source_releases_v1','reviewed_bundle_archives','reviewed_bundle_archive_receipts','reviewed_bundle_write_permits')
       order by 1`)).rows;
     const evidence: Record<string, unknown> = {};
-    for (const { name } of tables) evidence[name] = await scalar(`select jsonb_build_object('rows',count(*),'hash',md5(coalesce(string_agg(h,'' order by h),''))) value
-      from (select md5(to_jsonb(t)::text) h from ${name} t) d`);
+    for (const { name } of tables) {
+      // Later migrations may add empty tables. Compare every original table;
+      // selective-restore checks still inspect all tables that exist then.
+      const entry = await scalar<{ rows: number; hash: string }>(`select jsonb_build_object('rows',count(*),'hash',md5(coalesce(string_agg(h,'' order by h),''))) value
+        from (select md5(to_jsonb(t)::text) h from ${name} t) d`);
+      if (originalOnly && originalTables && !Object.hasOwn(originalTables, name)) expect(entry.rows).toBe(0);
+      else evidence[name] = entry;
+    }
     return evidence;
   }
   let originalOnline: Awaited<ReturnType<typeof online>>, originalTables: Awaited<ReturnType<typeof preservedTables>>;
@@ -87,7 +93,7 @@ describe.sequential("reviewed source bundle: archive, replay and selective resto
   it("preserves real pre-migration mock and CSAT imports and all existing tables", async () => {
     expect(await releaseRows()).toEqual(originalRows);
     expect(await online()).toEqual(originalOnline);
-    expect(await preservedTables()).toEqual(originalTables);
+    expect(await preservedTables(true)).toEqual(originalTables);
     expect(originalOnline.resources).toHaveLength(106);
     expect(originalOnline.sources).toHaveLength(27);
     expect((originalOnline.sources as Array<{ stored: string; current: string }>).every(s => !!s.stored && s.stored === s.current)).toBe(true);
@@ -110,7 +116,7 @@ describe.sequential("reviewed source bundle: archive, replay and selective resto
     expect(await apply(first, "compact", requestId)).toEqual(firstResult);
     expect(await apply(second)).toMatchObject({ changed: 1 });
     expect(await online()).toEqual(originalOnline);
-    expect(await preservedTables()).toEqual(originalTables);
+    expect(await preservedTables(true)).toEqual(originalTables);
     const now = await scalar<Array<Record<string, unknown>>>("select jsonb_agg(to_jsonb(r)-'bundle' order by release_id) value from private.reviewed_mock_source_releases_v1 r");
     expect(now).toEqual((originalRows as Array<Record<string, unknown>>).map(row => Object.fromEntries(Object.entries(row).filter(([key]) => key !== "bundle"))));
     expect(await scalar("select bool_and(octet_length(bundle::text)<600) value from private.reviewed_mock_source_releases_v1")).toBe(true);
