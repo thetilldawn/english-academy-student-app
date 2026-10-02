@@ -1,0 +1,606 @@
+{
+  "kind": "maintenance-instruction-document-validation",
+  "revision": 3,
+  "state": "passed",
+  "checked_at": "2026-10-02T03:30:53.029Z",
+  "scope": "Revision 3 directive edits only: full current document definitions, local links and hashes checked; independent review of changed M05/M09 contracts and six corrections recorded. Runtime M03 work has separate evidence. M05 implementation and production rollout are not claimed.",
+  "baseline": {
+    "docs_head": "7c1c281",
+    "runtime": "fa4357e",
+    "implementation_head": "7275b71716c2951e2210239e0e7ad673d70ee76f"
+  },
+  "counts": {
+    "markdown_files": 16,
+    "modules": 13,
+    "requirements": 70,
+    "planned_checks": 119,
+    "decisions": 21,
+    "local_links": 116,
+    "total_markdown_lines": 1497,
+    "common_ui_states": 10,
+    "integrated_scenarios": 10
+  },
+  "errors": {
+    "broken_links": [],
+    "requirements_without_check": [],
+    "undefined_requirements": [],
+    "undefined_checks": [],
+    "undefined_decisions": [],
+    "duplicate_definitions": [],
+    "replacement_characters": [],
+    "changed_original_inputs": [],
+    "review_incomplete": []
+  },
+  "decision_open": [
+    "D12",
+    "D13",
+    "D16",
+    "D17",
+    "D18",
+    "D21"
+  ],
+  "modules": [
+    {
+      "id": "M01",
+      "file": "01_공용사전과_뜻출처연결.md",
+      "requirements": [
+        "M01-R1",
+        "M01-R2",
+        "M01-R3",
+        "M01-R4",
+        "M01-R5"
+      ],
+      "planned_checks": [
+        "M01-T1",
+        "M01-T2",
+        "M01-T3",
+        "M01-T4",
+        "M01-T5",
+        "M01-T6",
+        "M01-T7",
+        "M01-T8"
+      ]
+    },
+    {
+      "id": "M02",
+      "file": "02_단어장세트와_배정참조.md",
+      "requirements": [
+        "M02-R1",
+        "M02-R2",
+        "M02-R3",
+        "M02-R4",
+        "M02-R5"
+      ],
+      "planned_checks": [
+        "M02-T1",
+        "M02-T2",
+        "M02-T3",
+        "M02-T4",
+        "M02-T5",
+        "M02-T6",
+        "M02-T7",
+        "M02-T8"
+      ]
+    },
+    {
+      "id": "M03",
+      "file": "03_현재오답과_과거이력.md",
+      "requirements": [
+        "M03-R1",
+        "M03-R2",
+        "M03-R3",
+        "M03-R4",
+        "M03-R5"
+      ],
+      "planned_checks": [
+        "M03-T1",
+        "M03-T2",
+        "M03-T3",
+        "M03-T4",
+        "M03-T5",
+        "M03-T6",
+        "M03-T7",
+        "M03-T8",
+        "M03-T9"
+      ]
+    },
+    {
+      "id": "M04",
+      "file": "04_종료시험과_학생기록.md",
+      "requirements": [
+        "M04-R1",
+        "M04-R2",
+        "M04-R3",
+        "M04-R4",
+        "M04-R5"
+      ],
+      "planned_checks": [
+        "M04-T1",
+        "M04-T2",
+        "M04-T3",
+        "M04-T4",
+        "M04-T5",
+        "M04-T6",
+        "M04-T7",
+        "M04-T8"
+      ]
+    },
+    {
+      "id": "M05",
+      "file": "05_시험준비와_재시험캐시.md",
+      "requirements": [
+        "M05-R1",
+        "M05-R2",
+        "M05-R3",
+        "M05-R4",
+        "M05-R5",
+        "M05-R6",
+        "M05-R7",
+        "M05-R8",
+        "M05-R9",
+        "M05-R10"
+      ],
+      "planned_checks": [
+        "M05-T1",
+        "M05-T2",
+        "M05-T3",
+        "M05-T4",
+        "M05-T5",
+        "M05-T6",
+        "M05-T7",
+        "M05-T8",
+        "M05-T9",
+        "M05-T10",
+        "M05-T11",
+        "M05-T12",
+        "M05-T13",
+        "M05-T14",
+        "M05-T15",
+        "M05-T16",
+        "M05-T17",
+        "M05-T18"
+      ]
+    },
+    {
+      "id": "M06",
+      "file": "06_임시자료와_운영로그정리.md",
+      "requirements": [
+        "M06-R1",
+        "M06-R2",
+        "M06-R3",
+        "M06-R4"
+      ],
+      "planned_checks": [
+        "M06-T1",
+        "M06-T2",
+        "M06-T3",
+        "M06-T4",
+        "M06-T5",
+        "M06-T6",
+        "M06-T7",
+        "M06-T8"
+      ]
+    },
+    {
+      "id": "M07",
+      "file": "07_종류별단어장과_화면정리.md",
+      "requirements": [
+        "M07-R1",
+        "M07-R2",
+        "M07-R3",
+        "M07-R4",
+        "M07-R5"
+      ],
+      "planned_checks": [
+        "M07-T1",
+        "M07-T2",
+        "M07-T3",
+        "M07-T4",
+        "M07-T5",
+        "M07-T6",
+        "M07-T7",
+        "M07-T8",
+        "M07-T9"
+      ]
+    },
+    {
+      "id": "M08",
+      "file": "08_기존자료이전과_용량회수.md",
+      "requirements": [
+        "M08-R1",
+        "M08-R2",
+        "M08-R3",
+        "M08-R4",
+        "M08-R5"
+      ],
+      "planned_checks": [
+        "M08-T1",
+        "M08-T2",
+        "M08-T3",
+        "M08-T4",
+        "M08-T5",
+        "M08-T6",
+        "M08-T7",
+        "M08-T8"
+      ]
+    },
+    {
+      "id": "M09",
+      "file": "09_무료운영인원과_부하검증.md",
+      "requirements": [
+        "M09-R1",
+        "M09-R2",
+        "M09-R3",
+        "M09-R4",
+        "M09-R5"
+      ],
+      "planned_checks": [
+        "M09-T1",
+        "M09-T2",
+        "M09-T3",
+        "M09-T4",
+        "M09-T5",
+        "M09-T6",
+        "M09-T7",
+        "M09-T8"
+      ]
+    },
+    {
+      "id": "M10",
+      "file": "10_검토환경과_운영반영.md",
+      "requirements": [
+        "M10-R1",
+        "M10-R2",
+        "M10-R3",
+        "M10-R4",
+        "M10-R5"
+      ],
+      "planned_checks": [
+        "M10-T1",
+        "M10-T2",
+        "M10-T3",
+        "M10-T4",
+        "M10-T5",
+        "M10-T6",
+        "M10-T7",
+        "M10-T8"
+      ]
+    },
+    {
+      "id": "F01",
+      "file": "11_패치공지_별도기능.md",
+      "requirements": [
+        "F01-R1",
+        "F01-R2",
+        "F01-R3",
+        "F01-R4",
+        "F01-R5"
+      ],
+      "planned_checks": [
+        "F01-T1",
+        "F01-T2",
+        "F01-T3",
+        "F01-T4",
+        "F01-T5",
+        "F01-T6",
+        "F01-T7"
+      ]
+    },
+    {
+      "id": "F02",
+      "file": "12_관리자별학생관리_별도기능.md",
+      "requirements": [
+        "F02-R1",
+        "F02-R2",
+        "F02-R3",
+        "F02-R4",
+        "F02-R5"
+      ],
+      "planned_checks": [
+        "F02-T1",
+        "F02-T2",
+        "F02-T3",
+        "F02-T4",
+        "F02-T5",
+        "F02-T6",
+        "F02-T7",
+        "F02-T8"
+      ]
+    },
+    {
+      "id": "M11",
+      "file": "15_답복구와_종료실패수리.md",
+      "requirements": [
+        "M11-R1",
+        "M11-R2",
+        "M11-R3",
+        "M11-R4",
+        "M11-R5",
+        "M11-R6"
+      ],
+      "planned_checks": [
+        "M11-T1",
+        "M11-T2",
+        "M11-T3",
+        "M11-T4",
+        "M11-T5",
+        "M11-T6",
+        "M11-T7",
+        "M11-T8",
+        "M11-T9",
+        "M11-T10",
+        "M11-T11",
+        "M11-T12"
+      ]
+    }
+  ],
+  "implementation_stage_dependencies": {
+    "edges": [
+      [
+        "M11",
+        "M10-repair"
+      ],
+      [
+        "M11",
+        "M05"
+      ],
+      [
+        "M01",
+        "M02"
+      ],
+      [
+        "M02",
+        "M03"
+      ],
+      [
+        "M02",
+        "M04"
+      ],
+      [
+        "M02",
+        "M05"
+      ],
+      [
+        "M05",
+        "M06"
+      ],
+      [
+        "M01",
+        "M08-A"
+      ],
+      [
+        "M02",
+        "M08-A"
+      ],
+      [
+        "M03",
+        "M08-A"
+      ],
+      [
+        "M04",
+        "M08-A"
+      ],
+      [
+        "M05",
+        "M08-A"
+      ],
+      [
+        "M06",
+        "M08-A"
+      ],
+      [
+        "M07",
+        "M08-A"
+      ],
+      [
+        "M08-A",
+        "M09"
+      ],
+      [
+        "M09",
+        "M10-expand"
+      ],
+      [
+        "M10-expand",
+        "M08-B"
+      ],
+      [
+        "M08-B",
+        "M10-close"
+      ]
+    ],
+    "acyclic": true,
+    "one_possible_technical_order": [
+      "M01",
+      "M07",
+      "M11",
+      "M02",
+      "M10-repair",
+      "M03",
+      "M04",
+      "M05",
+      "M06",
+      "M08-A",
+      "M09",
+      "M10-expand",
+      "M08-B",
+      "M10-close"
+    ],
+    "note": "Technical dependencies only. Active ledger is unchanged. M11 repair does not require M01/M02 or M08 migration. M10-repair, M10-expand and M10-close are separate scopes."
+  },
+  "source_chat": {
+    "title": "앱",
+    "thread_id": "01a08a0f-9b0f-7180-b721-1d819ca9b2e8",
+    "host": "local",
+    "recent_turns_read": 5,
+    "latest_record_request_turn": "01a0f6b4-1db1-7ea0-9bac-5af5fa2fefe4",
+    "read_only": true,
+    "app_handoff_section": "2026-10-01 답 클릭 멈춤·자료 재사용 진단",
+    "used_sections": [
+      8,
+      9
+    ]
+  },
+  "independent_reviews": [
+    {
+      "area": "first-answer recovery, expiry and existing protocol",
+      "state": "reservation cleanup condition corrected and independently rechecked"
+    },
+    {
+      "area": "shared content, async answer delivery, retention and rollback",
+      "state": "updated contracts independently reviewed; no material inconsistency or omission found"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "docs/verification/20261001_사전공유와학생기록_구조재분석.md",
+      "sha256": "32e128312f114e0113eca15c7481674dc6e158b79fc48f0e46092405fbf933cc",
+      "use": "Existing report or evidence read for document update; not a fresh production observation or reproduction."
+    },
+    {
+      "path": "docs/verification/20261001_사전공유와학생기록_조회근거.json",
+      "sha256": "8d22752ceb6b675d3eb9cb7b3f689b09798638fd787f8dc67bead65e6451fc2c",
+      "use": "Existing report or evidence read for document update; not a fresh production observation or reproduction."
+    },
+    {
+      "path": "docs/verification/20261001_시험멈춤과자료재사용_점검.md",
+      "sha256": "4ce246e5ca07345c2020b615d932e798113609c4a7c20dd01474e66837c20ece",
+      "use": "Existing report or evidence read for document update; not a fresh production observation or reproduction."
+    },
+    {
+      "path": "docs/verification/20261001_첫답멈춤_재현근거.json",
+      "sha256": "dc77c713f7fc149002bce06c5ae35d2497d7d171cef719f2c5d51b7a5536a093",
+      "use": "Existing report or evidence read for document update; not a fresh production observation or reproduction."
+    },
+    {
+      "path": "docs/verification/20261001_첫답멈춤_가짜시험재현.png",
+      "sha256": "835f8f2058d721bb0f71a38cd14ea8f16511dcfe0f09f7bed4f3ce8d100e9b81",
+      "use": "Existing report or evidence read for document update; not a fresh production observation or reproduction."
+    }
+  ],
+  "files": [
+    {
+      "path": "00_유지보수_전체지시서.md",
+      "sha256": "802e0a6b5582e5b47ccc6146cdefb2abf12dabea8a3271e8eceaceef28dc2fa8",
+      "lines": 106
+    },
+    {
+      "path": "01_공용사전과_뜻출처연결.md",
+      "sha256": "d0ac965c88fc300d978073c5e470cbca01097522ed252b04ecc5d0126370fc19",
+      "lines": 83
+    },
+    {
+      "path": "02_단어장세트와_배정참조.md",
+      "sha256": "c6677076c9b355662823202670405cc6cb7bf241b1a2e53bd8eef72458c3a694",
+      "lines": 74
+    },
+    {
+      "path": "03_현재오답과_과거이력.md",
+      "sha256": "b76fe1b1b78a0cd6e9261050b9031841fef7b7ea1a20ebea15b352eec36654c4",
+      "lines": 90
+    },
+    {
+      "path": "04_종료시험과_학생기록.md",
+      "sha256": "c693811e7ee4deca514fe75566423a948e002e78feee972cb486007ccaa0c4cb",
+      "lines": 94
+    },
+    {
+      "path": "05_시험준비와_재시험캐시.md",
+      "sha256": "c9db52f67d00869bd0546e3497fee34035342a1401563e4b64005a8a319b2f48",
+      "lines": 149
+    },
+    {
+      "path": "06_임시자료와_운영로그정리.md",
+      "sha256": "0bb35542b950732fe928395fcb0007ca68573f75c0070c7bbc89505488184184",
+      "lines": 65
+    },
+    {
+      "path": "07_종류별단어장과_화면정리.md",
+      "sha256": "95496d3cf4039c03a4c9ca9d2a18bcb7024adffbeae63c1e273eb6ef137db2d8",
+      "lines": 100
+    },
+    {
+      "path": "08_기존자료이전과_용량회수.md",
+      "sha256": "7a42818ebe9cd91c514e648616669fce2617784821da9542dd6a1514b36b9fac",
+      "lines": 82
+    },
+    {
+      "path": "09_무료운영인원과_부하검증.md",
+      "sha256": "292caffe0e3859cc8b29954030af273dea27c0e2540c35a15294aa1a11e0b821",
+      "lines": 94
+    },
+    {
+      "path": "10_검토환경과_운영반영.md",
+      "sha256": "12286b65f56481a93b4f0b4312b16292db9af09953d5f4e7ea525c273531369d",
+      "lines": 73
+    },
+    {
+      "path": "11_패치공지_별도기능.md",
+      "sha256": "e6e914e2b516ea0c0ec78e39c15b8b42c5c9222263f77e3c52a1cb948c169752",
+      "lines": 76
+    },
+    {
+      "path": "12_관리자별학생관리_별도기능.md",
+      "sha256": "61656020486a185a2ad4e86849ff3bdb8434ece9ffafbcbb5c103c283d945785",
+      "lines": 88
+    },
+    {
+      "path": "13_공통보존과_결정검사기준.md",
+      "sha256": "d4ae21a27389d7c94d7723d8501ad1a55460023dd072c49963b98f3d5a16b338",
+      "lines": 134
+    },
+    {
+      "path": "14_문서검토결과.md",
+      "sha256": "3d07ca5c939283a980ff796d961e3a0b1d36d3154cb2331ee7a64c3b2f03f1cb",
+      "lines": 81
+    },
+    {
+      "path": "15_답복구와_종료실패수리.md",
+      "sha256": "fdb5dac994b73c7d1b972f44aed7b36039a566ef550cfff457deddbafa5f4e49",
+      "lines": 108
+    }
+  ],
+  "previous_revision": {
+    "revision": 2,
+    "overview_sha256": "e3b91d8174561a5e9a27bb8ad606963b2a600cb1be5b9ed40093dd54faf4b0ab",
+    "manifest_sha256": "5103bfbe092f260bf32ac5bff43dfcc4068f0bbc26b2da03a94e6337533ef83c",
+    "counts": {
+      "markdown_files": 16,
+      "modules": 13,
+      "requirements": 70,
+      "planned_checks": 119,
+      "decisions": 21,
+      "local_links": 116,
+      "total_markdown_lines": 1483,
+      "common_ui_states": 10,
+      "integrated_scenarios": 10
+    },
+    "prior_history": {
+      "overview_sha256": "faad0b31d5bc6189af02adb738184b0d63b5a664fbe3bbd66c39edf70603bf90",
+      "manifest_sha256": "d084b6750ebe1645f28d4e6809ec8eab9ebe2856ab3c7ae7a3b6580f39a758cb",
+      "requirements": 59,
+      "planned_checks": 94,
+      "capacity_model_MB": [
+        39.064,
+        43.224,
+        57.784
+      ],
+      "note": "Historical revision1 figures; capacity was not remeasured in revision2."
+    }
+  },
+  "no_app_or_production_changes": true,
+  "changed_documents": [
+    "00_유지보수_전체지시서.md",
+    "05_시험준비와_재시험캐시.md",
+    "09_무료운영인원과_부하검증.md",
+    "13_공통보존과_결정검사기준.md",
+    "14_문서검토결과.md"
+  ],
+  "independent_delta_review": {
+    "agent": "m01_value_contract",
+    "corrections": 6,
+    "review_kind": "read-only",
+    "application_checks_executed": false
+  },
+  "no_app_or_production_changes_scope": "This document-only revision; excludes separately recorded M03 implementation and Preview verification."
+}
