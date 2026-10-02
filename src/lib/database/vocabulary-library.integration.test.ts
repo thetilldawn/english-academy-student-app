@@ -134,7 +134,15 @@ async function createFinalSchemaDatabase() {
       jobid bigint generated always as identity primary key,
       jobname text not null unique,
       schedule text not null,
-      command text not null
+      command text not null,
+      database text not null default current_database(),
+      username text not null default 'postgres',
+      active boolean not null default true
+    );
+    create table cron.job_run_details (
+      jobid bigint, runid bigint primary key, job_pid integer,
+      database text, username text, command text, status text,
+      return_message text, start_time timestamptz, end_time timestamptz
     );
     create function cron.schedule(
       p_jobname text,

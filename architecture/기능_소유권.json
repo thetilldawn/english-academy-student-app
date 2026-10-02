@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 135,
-      "pathSetSha256": "f367db910c9383c5d971ed806ca53d415a554e7c28fc0851c31cbdd8dc611601"
+      "fileCount": 136,
+      "pathSetSha256": "658912f4d1432c853f98e2806344dd1d19e7d831e9730dc64b1267523f014506"
     },
     {
       "path": "src/lib/deploy",
@@ -3029,6 +3029,16 @@
     },
     {
       "path": "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261002140634_retain_operational_logs_and_preparations.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
     }
@@ -7368,7 +7378,9 @@
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
           "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql",
-          "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql"
+          "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql",
+          "supabase/migrations/20261002140634_retain_operational_logs_and_preparations.sql",
+          "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7446,7 +7458,8 @@
           "src/app/student/(protected)/attempt/[id]/page.test.tsx",
           "src/features/results/ui/student-result-view.test.tsx",
           "src/features/student-dashboard/server/components/assignment-study-content.test.tsx",
-          "src/features/quiz-player/test-support/local-quiz-fixtures.ts"
+          "src/features/quiz-player/test-support/local-quiz-fixtures.ts",
+          "src/lib/database/operational-retention.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
