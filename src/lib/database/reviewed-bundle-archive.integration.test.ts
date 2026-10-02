@@ -89,6 +89,8 @@ describe.sequential("reviewed source bundle: archive, replay and selective resto
     expect(await online()).toEqual(originalOnline);
     expect(await preservedTables()).toEqual(originalTables);
     expect(originalOnline.resources).toHaveLength(106);
+    expect(originalOnline.sources).toHaveLength(27);
+    expect((originalOnline.sources as Array<{ stored: string; current: string }>).every(s => !!s.stored && s.stored === s.current)).toBe(true);
     expect(originalOnline.replays).toEqual([{ ...savedMock, idempotent: true }, { ...savedCsat, idempotent: true }]);
   });
   it("prepares a byte-exact DB-row file without altering the imported row", async () => {
@@ -140,9 +142,15 @@ describe.sequential("reviewed source bundle: archive, replay and selective resto
     expect(await scalar("select count(*)::int value from private.reviewed_bundle_write_permits")).toBe(0);
   });
   it("rolls an interrupted restore back atomically and detects a changed current row", async () => {
+    const state = () => scalar(`select jsonb_build_object('rows',(select jsonb_agg(to_jsonb(r) order by release_id) from private.reviewed_mock_source_releases_v1 r),
+      'manifests',(select jsonb_agg(to_jsonb(m) order by release_id) from private.reviewed_bundle_archives m),
+      'receipts',(select jsonb_agg(to_jsonb(r) order by request_id) from private.reviewed_bundle_archive_receipts r),
+      'permits',(select count(*) from private.reviewed_bundle_write_permits)) value`);
+    const before = await state();
     await db.exec("begin");
     await apply(first, "restore");
     await db.exec("rollback");
+    expect(await state()).toEqual(before);
     expect(await apply(first, "compact", requestId)).toEqual(firstResult);
     await db.exec("begin");
     try {
@@ -150,6 +158,17 @@ describe.sequential("reviewed source bundle: archive, replay and selective resto
       await db.query("update private.reviewed_bundle_archives set compacted_sha256=repeat('0',64) where release_id=$1", [savedMock.releaseId]);
       await expect(apply(first, "restore")).rejects.toThrow("reference_changed");
     } finally { await db.exec("rollback"); }
+    await db.exec("begin");
+    try {
+      // Explicit postgres-only fault injection using a precise permit. The
+      // source guard stays enabled; normal app roles cannot write permits.
+      await db.query(`insert into private.reviewed_bundle_write_permits
+        select pg_backend_pid(),txid_current(),r.release_id,private.reviewed_bundle_row_sha256_v1(to_jsonb(r)),
+          private.reviewed_bundle_row_sha256_v1(jsonb_set(to_jsonb(r),'{bundle}','{}')) from private.reviewed_mock_source_releases_v1 r where release_id=$1`, [savedMock.releaseId]);
+      await db.query("update private.reviewed_mock_source_releases_v1 set bundle='{}' where release_id=$1", [savedMock.releaseId]);
+      await expect(apply(first, "restore")).rejects.toThrow("row_changed");
+    } finally { await db.exec("rollback"); }
+    expect(await state()).toEqual(before);
   });
   it("keeps new accepted student answers when only one of two bundles is restored", async () => {
     const id = (n: number) => `a8050000-0000-4000-8000-${String(n).padStart(12, "0")}`;
