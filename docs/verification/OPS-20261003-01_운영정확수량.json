@@ -1,0 +1,86 @@
+{
+  "note": "Repeatable-read read-only baseline; size snapshot and exact counts have different timestamps. Text bytes are uncompressed serialization, not allocated disk bytes. Max ID is not a commit-order cursor.",
+  "at": "2026-10-02T18:04:07.603025+00:00",
+  "events": {
+    "rows": 1901,
+    "maxId": "5745",
+    "latest": "2026-10-02T06:35:40.576776+00:00"
+  },
+  "tables": [
+    {
+      "rows": 22324,
+      "table": "private.vocabulary_library_scope_rows",
+      "bodyTextBytes": 164335138,
+      "jsonTextBytes": 172059298
+    },
+    {
+      "rows": 19007,
+      "table": "word_index.app_exam_use_occurrence",
+      "bodyTextBytes": 52635541,
+      "jsonTextBytes": 81673603
+    },
+    {
+      "rows": 7532,
+      "table": "private.vocabulary_composition_entries",
+      "bodyTextBytes": 87839201,
+      "jsonTextBytes": 93433664
+    },
+    {
+      "rows": 15064,
+      "table": "private.vocabulary_composition_items",
+      "bodyTextBytes": 56280454,
+      "jsonTextBytes": 67844702
+    },
+    {
+      "rows": 16894,
+      "table": "private.reviewed_mock_source_resources_v1",
+      "bodyTextBytes": 95968098,
+      "jsonTextBytes": 99306635
+    },
+    {
+      "rows": 20,
+      "table": "private.reviewed_mock_source_releases_v1",
+      "bodyTextBytes": 129111193,
+      "jsonTextBytes": 129118607
+    },
+    {
+      "rows": 17990,
+      "table": "public.assignment_questions",
+      "bodyTextBytes": 43773359,
+      "jsonTextBytes": 80789492
+    },
+    {
+      "rows": 7617,
+      "table": "public.quiz_questions",
+      "bodyTextBytes": 885120,
+      "jsonTextBytes": 5208320
+    }
+  ],
+  "answers": {
+    "retry": 335,
+    "initial": 6541,
+    "questions": 7617
+  },
+  "results": {
+    "active": 5,
+    "passed": 47,
+    "attempts": 89,
+    "completed": 84,
+    "unresolved": 2642,
+    "retryCorrect": 250,
+    "initialCorrect": 4725
+  },
+  "preparationColumns": [
+    "id",
+    "student_id",
+    "assignment_id",
+    "kind",
+    "request_key",
+    "request_hash",
+    "fingerprint",
+    "plan",
+    "created_at",
+    "expires_at",
+    "begun_id"
+  ]
+}

@@ -1,0 +1,5 @@
+import fs from 'node:fs';import {createHash} from 'node:crypto';
+const names=['historical-question-migration','historical-learning-migration','reviewed-bundle-archive','exam-use-package-archive','exam-use-occurrence-archive','reviewed-resource-archive'];
+const manifest=[];
+for(const name of names){const source='src/lib/database/'+name+'.integration.test.ts';const original=fs.readFileSync(source,'utf8');let copy=original.replace('import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";',`import { measuredFactory } from './measure-factory';\nconst createFinalSchemaDatabase=measuredFactory('${name}');`).replaceAll('../../../scripts/','../../scripts/');if(copy===original||copy.includes('from "@/test-support/final-schema-database"'))throw Error('factory replacement failed');fs.writeFileSync('.codex-tmp/m08-space/'+name+'.test.ts',copy);manifest.push({name,source,sourceSha256:createHash('sha256').update(original).digest('hex'),copySha256:createHash('sha256').update(copy).digest('hex')});}
+fs.writeFileSync('.codex-tmp/m08-space/input-manifest.json',JSON.stringify(manifest,null,2)+'\n');

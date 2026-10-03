@@ -1,0 +1,2930 @@
+{
+  "schemaVersion": "m08-space-observations-v1",
+  "basisCommit": "e57f399",
+  "environment": "local isolated PGlite PostgreSQL 17",
+  "semantics": {
+    "window": "before/after completed operator statements; rolled-back statements may be represented",
+    "database": "pg_database_size(current_database())",
+    "table": "pg_table_size includes TOAST",
+    "index": "pg_indexes_size",
+    "total": "pg_total_relation_size = table + index",
+    "body": "whole-row JSON text for nine source tables; not physical saving",
+    "maximum": "observed statement boundary only; not transaction peak, cloud/WAL peak, or combined whole-migration peak"
+  },
+  "files": [
+    {
+      "name": "historical-question-migration",
+      "source": "src/lib/database/historical-question-migration.integration.test.ts",
+      "sourceSha256": "805b57a788b1a8e047d065bf90f7f6e17dd0fdabf64c8002dd7dfb03f2baf74e",
+      "copySha256": "4f74dc431b3bbcc1cab0f2769365ec862c003e0f2159e724e202073c2d8b408b",
+      "measurementsFile": "historical-question-migration.measurements.json",
+      "measurementsSha256": "65511283bf865bfdf74100d961b9f5ae72008ea7bece28e43a0f464ba041896a",
+      "observations": 92,
+      "completePairs": 38,
+      "observedMaximumDatabaseBytes": 26493051
+    },
+    {
+      "name": "historical-learning-migration",
+      "source": "src/lib/database/historical-learning-migration.integration.test.ts",
+      "sourceSha256": "ca9fbadfdaca90cc7ef46ca763392ccbe1d704319674499ef3a54d15624ae4ff",
+      "copySha256": "5b2b50cf2ceb565edd412a029f6af45b6c97b8067f07f3e0e469786eba50de4c",
+      "measurementsFile": "historical-learning-migration.measurements.json",
+      "measurementsSha256": "c75fff936adcfefce096619dd8c6f0bc6e21f52c4469d9ccafa2f9096c662a11",
+      "observations": 39,
+      "completePairs": 16,
+      "observedMaximumDatabaseBytes": 32891003
+    },
+    {
+      "name": "reviewed-bundle-archive",
+      "source": "src/lib/database/reviewed-bundle-archive.integration.test.ts",
+      "sourceSha256": "00f314629c9b0f293791dba94d4191c4895fbd371a7065f2aa0a4fd12f820dc0",
+      "copySha256": "2406b97593d1f3ef6e6c13e4e33ef75092808294491554a2b3c0717af6599a38",
+      "measurementsFile": "reviewed-bundle-archive.measurements.json",
+      "measurementsSha256": "1fa499eeb453b5a2e77bb625a411936f29d76a406627b968af1cc449ab6088c4",
+      "observations": 35,
+      "completePairs": 11,
+      "observedMaximumDatabaseBytes": 26796155
+    },
+    {
+      "name": "exam-use-package-archive",
+      "source": "src/lib/database/exam-use-package-archive.integration.test.ts",
+      "sourceSha256": "7f56de64f0ffa8a99b6c81db5678b988bcb554f8c7a3ff7b03fd55bde80c5796",
+      "copySha256": "a04b9f0d0559cc9eb15496be60f1710121104b93ea37b86628b929488c593028",
+      "measurementsFile": "exam-use-package-archive.measurements.json",
+      "measurementsSha256": "26bcace24516c55d799a4d559b183c1e0c45165c10186fa91463f72c29812c3c",
+      "observations": 38,
+      "completePairs": 13,
+      "observedMaximumDatabaseBytes": 27476091
+    },
+    {
+      "name": "exam-use-occurrence-archive",
+      "source": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "sourceSha256": "ac885808815336b27237b8de4fd16220e09a0d02929f9b90ba3e7e580de091ca",
+      "copySha256": "766bbf340eaf77364229f115cace1e769f51a5283a0907818bebdac3164da70b",
+      "measurementsFile": "exam-use-occurrence-archive.measurements.json",
+      "measurementsSha256": "67f7e51e829b88447c11293b7457e026dde8e067042e8c5ec85bf49ec52d219a",
+      "observations": 38,
+      "completePairs": 14,
+      "observedMaximumDatabaseBytes": 28598395
+    },
+    {
+      "name": "reviewed-resource-archive",
+      "source": "src/lib/database/reviewed-resource-archive.integration.test.ts",
+      "sourceSha256": "b355fce1de764ac0598652ea7be7bcff7e874ab497c69829ef067545bfa58b0c",
+      "copySha256": "5e89eb4894a1b7387cda6cdf76c023fb3e6aecd55ad6dd3e19a422606018d24a",
+      "measurementsFile": "reviewed-resource-archive.measurements.json",
+      "measurementsSha256": "1d1b96e032d2964c5ed6aa7762cdccf8a3988220ffc50dd8e7ff91573344caa7",
+      "observations": 38,
+      "completePairs": 14,
+      "observedMaximumDatabaseBytes": 28418171
+    }
+  ],
+  "pairs": [
+    {
+      "suite": "historical-question-migration",
+      "serial": 1,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:11.702Z",
+      "afterAt": "2026-10-03T03:26:11.749Z",
+      "databaseBefore": 25723003,
+      "databaseAfter": 25772155,
+      "databaseDelta": 49152,
+      "trackedRelationDelta": 49152,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 16384,
+          "totalDelta": 24576,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 16384,
+          "totalDelta": 24576,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 2,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:11.773Z",
+      "afterAt": "2026-10-03T03:26:11.823Z",
+      "databaseBefore": 25772155,
+      "databaseAfter": 25772155,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 3,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:11.852Z",
+      "afterAt": "2026-10-03T03:26:11.894Z",
+      "databaseBefore": 25772155,
+      "databaseAfter": 25772155,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 4,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:11.916Z",
+      "afterAt": "2026-10-03T03:26:11.955Z",
+      "databaseBefore": 25772155,
+      "databaseAfter": 25837691,
+      "databaseDelta": 65536,
+      "trackedRelationDelta": 65536,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.assignment_vocabulary_meaning_refs",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.historical_question_migration_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.historical_question_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_question_meaning_versions",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -86,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 5,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:11.975Z",
+      "afterAt": "2026-10-03T03:26:12.013Z",
+      "databaseBefore": 25837691,
+      "databaseAfter": 25837691,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -86,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 6,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:12.035Z",
+      "afterAt": "2026-10-03T03:26:12.072Z",
+      "databaseBefore": 25837691,
+      "databaseAfter": 25870459,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -112,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 7,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:12.116Z",
+      "afterAt": "2026-10-03T03:26:12.146Z",
+      "databaseBefore": 25870459,
+      "databaseAfter": 25903227,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 8,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:12.165Z",
+      "afterAt": "2026-10-03T03:26:12.212Z",
+      "databaseBefore": 25903227,
+      "databaseAfter": 25903227,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -172,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 9,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:12.232Z",
+      "afterAt": "2026-10-03T03:26:12.256Z",
+      "databaseBefore": 25903227,
+      "databaseAfter": 25903227,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 10,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:12.282Z",
+      "afterAt": "2026-10-03T03:26:12.323Z",
+      "databaseBefore": 25903227,
+      "databaseAfter": 25911419,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 12,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:12.384Z",
+      "afterAt": "2026-10-03T03:26:12.418Z",
+      "databaseBefore": 25911419,
+      "databaseAfter": 25919611,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 13,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:12.439Z",
+      "afterAt": "2026-10-03T03:26:12.483Z",
+      "databaseBefore": 25919611,
+      "databaseAfter": 25927803,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 14,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:12.518Z",
+      "afterAt": "2026-10-03T03:26:12.559Z",
+      "databaseBefore": 25927803,
+      "databaseAfter": 25935995,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 15,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:12.587Z",
+      "afterAt": "2026-10-03T03:26:12.641Z",
+      "databaseBefore": 25935995,
+      "databaseAfter": 25952379,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migration_receipts",
+          "tableDelta": 16384,
+          "indexDelta": 0,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -172,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -112,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 16,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:12.662Z",
+      "afterAt": "2026-10-03T03:26:12.717Z",
+      "databaseBefore": 25952379,
+      "databaseAfter": 25985147,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migration_receipts",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_question_exam_use_snapshot",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -8744,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 17,
+      "operator": "apply_historical_question_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:26:12.742Z",
+      "afterAt": "2026-10-03T03:26:12.803Z",
+      "databaseBefore": 25985147,
+      "databaseAfter": 26026107,
+      "databaseDelta": 40960,
+      "trackedRelationDelta": 40960,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_question_exam_use_snapshot",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": 8880,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 18,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:12.841Z",
+      "afterAt": "2026-10-03T03:26:12.887Z",
+      "databaseBefore": 26026107,
+      "databaseAfter": 26034299,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 23,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:13.007Z",
+      "afterAt": "2026-10-03T03:26:13.036Z",
+      "databaseBefore": 26034299,
+      "databaseAfter": 26042491,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 30,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:13.313Z",
+      "afterAt": "2026-10-03T03:26:13.345Z",
+      "databaseBefore": 26173563,
+      "databaseAfter": 26189947,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 31,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:13.370Z",
+      "afterAt": "2026-10-03T03:26:13.401Z",
+      "databaseBefore": 26189947,
+      "databaseAfter": 26189947,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 32,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:13.423Z",
+      "afterAt": "2026-10-03T03:26:13.455Z",
+      "databaseBefore": 26189947,
+      "databaseAfter": 26198139,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 33,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:13.484Z",
+      "afterAt": "2026-10-03T03:26:13.559Z",
+      "databaseBefore": 26198139,
+      "databaseAfter": 26206331,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_question_exam_use_snapshot",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -8744,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -172,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -112,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 34,
+      "operator": "apply_historical_question_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:26:13.599Z",
+      "afterAt": "2026-10-03T03:26:13.681Z",
+      "databaseBefore": 26206331,
+      "databaseAfter": 26280059,
+      "databaseDelta": 73728,
+      "trackedRelationDelta": 73728,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migration_receipts",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_question_exam_use_snapshot",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 8880,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": 308,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 248,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 35,
+      "operator": "apply_historical_question_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:26:13.714Z",
+      "afterAt": "2026-10-03T03:26:13.742Z",
+      "databaseBefore": 26280059,
+      "databaseAfter": 26280059,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 36,
+      "operator": "apply_historical_question_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:26:13.761Z",
+      "afterAt": "2026-10-03T03:26:13.813Z",
+      "databaseBefore": 26280059,
+      "databaseAfter": 26288251,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 37,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:13.844Z",
+      "afterAt": "2026-10-03T03:26:13.879Z",
+      "databaseBefore": 26288251,
+      "databaseAfter": 26296443,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 38,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:13.907Z",
+      "afterAt": "2026-10-03T03:26:13.938Z",
+      "databaseBefore": 26296443,
+      "databaseAfter": 26312827,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 39,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:13.960Z",
+      "afterAt": "2026-10-03T03:26:13.996Z",
+      "databaseBefore": 26312827,
+      "databaseAfter": 26312827,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -112,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 41,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:14.046Z",
+      "afterAt": "2026-10-03T03:26:14.086Z",
+      "databaseBefore": 26312827,
+      "databaseAfter": 26321019,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 43,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:14.139Z",
+      "afterAt": "2026-10-03T03:26:14.172Z",
+      "databaseBefore": 26321019,
+      "databaseAfter": 26321019,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 45,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:14.321Z",
+      "afterAt": "2026-10-03T03:26:14.351Z",
+      "databaseBefore": 26402939,
+      "databaseAfter": 26411131,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 46,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:14.384Z",
+      "afterAt": "2026-10-03T03:26:14.428Z",
+      "databaseBefore": 26411131,
+      "databaseAfter": 26419323,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 47,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:14.453Z",
+      "afterAt": "2026-10-03T03:26:14.482Z",
+      "databaseBefore": 26419323,
+      "databaseAfter": 26419323,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 48,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:14.506Z",
+      "afterAt": "2026-10-03T03:26:14.559Z",
+      "databaseBefore": 26419323,
+      "databaseAfter": 26460283,
+      "databaseDelta": 40960,
+      "trackedRelationDelta": 40960,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_question_meaning_versions",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -172,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -112,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 50,
+      "operator": "apply_historical_question_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:26:14.618Z",
+      "afterAt": "2026-10-03T03:26:14.679Z",
+      "databaseBefore": 26460283,
+      "databaseAfter": 26476667,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migration_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 308,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 248,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 51,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:14.704Z",
+      "afterAt": "2026-10-03T03:26:14.735Z",
+      "databaseBefore": 26476667,
+      "databaseAfter": 26484859,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_question_content_versions",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 52,
+      "operator": "prepare_historical_question_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:14.755Z",
+      "afterAt": "2026-10-03T03:26:14.785Z",
+      "databaseBefore": 26484859,
+      "databaseAfter": 26484859,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 53,
+      "operator": "apply_historical_question_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:26:14.807Z",
+      "afterAt": "2026-10-03T03:26:14.861Z",
+      "databaseBefore": 26484859,
+      "databaseAfter": 26493051,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_question_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "public.assignment_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -172,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "public.quiz_questions",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -112,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 2,
+      "operator": "prepare_historical_learning_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:38.503Z",
+      "afterAt": "2026-10-03T03:25:38.590Z",
+      "databaseBefore": 32227451,
+      "databaseAfter": 32292987,
+      "databaseDelta": 65536,
+      "trackedRelationDelta": 65536,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_learning_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 16384,
+          "totalDelta": 24576,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_learning_value_bindings",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_learning_value_versions",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 3,
+      "operator": "prepare_historical_learning_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:38.634Z",
+      "afterAt": "2026-10-03T03:25:38.728Z",
+      "databaseBefore": 32292987,
+      "databaseAfter": 32325755,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_learning_migrations",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 4,
+      "operator": "prepare_historical_learning_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:38.810Z",
+      "afterAt": "2026-10-03T03:25:38.901Z",
+      "databaseBefore": 32325755,
+      "databaseAfter": 32325755,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 5,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:38.950Z",
+      "afterAt": "2026-10-03T03:25:39.008Z",
+      "databaseBefore": 32325755,
+      "databaseAfter": 32358523,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_learning_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.historical_learning_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_library_scope_rows",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -4836,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 6,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:39.052Z",
+      "afterAt": "2026-10-03T03:25:39.124Z",
+      "databaseBefore": 32358523,
+      "databaseAfter": 32358523,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_library_scope_rows",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -3525,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 7,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:39.169Z",
+      "afterAt": "2026-10-03T03:25:39.293Z",
+      "databaseBefore": 32358523,
+      "databaseAfter": 32374907,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_composition_entries",
+          "tableDelta": 16384,
+          "indexDelta": 0,
+          "totalDelta": 16384,
+          "rowTextDelta": -15132,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 8,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:39.446Z",
+      "afterAt": "2026-10-03T03:25:39.565Z",
+      "databaseBefore": 32374907,
+      "databaseAfter": 32374907,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 9,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:39.608Z",
+      "afterAt": "2026-10-03T03:25:39.652Z",
+      "databaseBefore": 32374907,
+      "databaseAfter": 32374907,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 17,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:39.877Z",
+      "afterAt": "2026-10-03T03:25:39.940Z",
+      "databaseBefore": 32374907,
+      "databaseAfter": 32374907,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 18,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:39.991Z",
+      "afterAt": "2026-10-03T03:25:40.041Z",
+      "databaseBefore": 32374907,
+      "databaseAfter": 32374907,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 20,
+      "operator": "prepare_historical_learning_batch_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:40.538Z",
+      "afterAt": "2026-10-03T03:25:40.634Z",
+      "databaseBefore": 32669819,
+      "databaseAfter": 32686203,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_learning_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_learning_value_bindings",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 21,
+      "operator": "apply_historical_learning_batch_v1:compact",
+      "beforeAt": "2026-10-03T03:25:40.679Z",
+      "afterAt": "2026-10-03T03:25:40.766Z",
+      "databaseBefore": 32686203,
+      "databaseAfter": 32686203,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_library_scope_rows",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -30717,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 22,
+      "operator": "apply_historical_learning_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:25:41.080Z",
+      "afterAt": "2026-10-03T03:25:41.161Z",
+      "databaseBefore": 32841851,
+      "databaseAfter": 32874619,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.historical_learning_migrations",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.vocabulary_library_scope_rows",
+          "tableDelta": 24576,
+          "indexDelta": 0,
+          "totalDelta": 24576,
+          "rowTextDelta": 30717,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 23,
+      "operator": "apply_historical_learning_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:25:41.282Z",
+      "afterAt": "2026-10-03T03:25:41.368Z",
+      "databaseBefore": 32874619,
+      "databaseAfter": 32874619,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_composition_entries",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 9142,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 24,
+      "operator": "apply_historical_learning_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:25:41.464Z",
+      "afterAt": "2026-10-03T03:25:41.550Z",
+      "databaseBefore": 32874619,
+      "databaseAfter": 32891003,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_composition_entries",
+          "tableDelta": 16384,
+          "indexDelta": 0,
+          "totalDelta": 16384,
+          "rowTextDelta": 5990,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 25,
+      "operator": "apply_historical_learning_batch_v1:restore",
+      "beforeAt": "2026-10-03T03:25:41.597Z",
+      "afterAt": "2026-10-03T03:25:41.662Z",
+      "databaseBefore": 32891003,
+      "databaseAfter": 32891003,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.vocabulary_library_scope_rows",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 8361,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 1,
+      "operator": "prepare_reviewed_bundle_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:05.113Z",
+      "afterAt": "2026-10-03T03:26:05.154Z",
+      "databaseBefore": 25968763,
+      "databaseAfter": 25985147,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_bundle_archives",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 2,
+      "operator": "prepare_reviewed_bundle_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:26:05.198Z",
+      "afterAt": "2026-10-03T03:26:05.357Z",
+      "databaseBefore": 25985147,
+      "databaseAfter": 25985147,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 3,
+      "operator": "apply_reviewed_bundle_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:26:05.412Z",
+      "afterAt": "2026-10-03T03:26:05.465Z",
+      "databaseBefore": 25985147,
+      "databaseAfter": 26001531,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_bundle_archive_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 4,
+      "operator": "apply_reviewed_bundle_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:26:05.522Z",
+      "afterAt": "2026-10-03T03:26:05.566Z",
+      "databaseBefore": 26001531,
+      "databaseAfter": 26017915,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_bundle_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.reviewed_mock_source_releases_v1",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -28014,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 5,
+      "operator": "apply_reviewed_bundle_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:26:05.594Z",
+      "afterAt": "2026-10-03T03:26:05.638Z",
+      "databaseBefore": 26017915,
+      "databaseAfter": 26017915,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 6,
+      "operator": "apply_reviewed_bundle_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:26:05.673Z",
+      "afterAt": "2026-10-03T03:26:05.746Z",
+      "databaseBefore": 26017915,
+      "databaseAfter": 26017915,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_releases_v1",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -477817,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 17,
+      "operator": "apply_reviewed_bundle_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:26:06.766Z",
+      "afterAt": "2026-10-03T03:26:06.813Z",
+      "databaseBefore": 26017915,
+      "databaseAfter": 26026107,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_releases_v1",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": 28014,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 18,
+      "operator": "apply_reviewed_bundle_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:26:06.849Z",
+      "afterAt": "2026-10-03T03:26:06.879Z",
+      "databaseBefore": 26026107,
+      "databaseAfter": 26026107,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 21,
+      "operator": "apply_reviewed_bundle_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:26:07.216Z",
+      "afterAt": "2026-10-03T03:26:07.276Z",
+      "databaseBefore": 26755195,
+      "databaseAfter": 26755195,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_releases_v1",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 28014,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 22,
+      "operator": "apply_reviewed_bundle_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:26:07.841Z",
+      "afterAt": "2026-10-03T03:26:07.873Z",
+      "databaseBefore": 26755195,
+      "databaseAfter": 26755195,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 23,
+      "operator": "apply_reviewed_bundle_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:26:07.910Z",
+      "afterAt": "2026-10-03T03:26:08.000Z",
+      "databaseBefore": 26755195,
+      "databaseAfter": 26796155,
+      "databaseDelta": 40960,
+      "trackedRelationDelta": 40960,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_releases_v1",
+          "tableDelta": 40960,
+          "indexDelta": 0,
+          "totalDelta": 40960,
+          "rowTextDelta": 477817,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 1,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:56.309Z",
+      "afterAt": "2026-10-03T03:25:56.350Z",
+      "databaseBefore": 27082875,
+      "databaseAfter": 27099259,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_package_archives",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 2,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:56.385Z",
+      "afterAt": "2026-10-03T03:25:56.482Z",
+      "databaseBefore": 27099259,
+      "databaseAfter": 27099259,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 3,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:56.519Z",
+      "afterAt": "2026-10-03T03:25:56.556Z",
+      "databaseBefore": 27099259,
+      "databaseAfter": 27099259,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 4,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:56.593Z",
+      "afterAt": "2026-10-03T03:25:56.646Z",
+      "databaseBefore": 27099259,
+      "databaseAfter": 27099259,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 5,
+      "operator": "apply_exam_use_package_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:56.691Z",
+      "afterAt": "2026-10-03T03:25:56.752Z",
+      "databaseBefore": 27099259,
+      "databaseAfter": 27132027,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_package_archive_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.exam_use_package_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "word_index.app_exam_use_release",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -9099,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 6,
+      "operator": "apply_exam_use_package_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:56.793Z",
+      "afterAt": "2026-10-03T03:25:56.895Z",
+      "databaseBefore": 27132027,
+      "databaseAfter": 27132027,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "word_index.app_exam_use_release",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -182426,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 7,
+      "operator": "apply_exam_use_package_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:57.665Z",
+      "afterAt": "2026-10-03T03:25:57.700Z",
+      "databaseBefore": 27132027,
+      "databaseAfter": 27132027,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 17,
+      "operator": "apply_exam_use_package_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:58.961Z",
+      "afterAt": "2026-10-03T03:25:59.005Z",
+      "databaseBefore": 27385979,
+      "databaseAfter": 27394171,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "word_index.app_exam_use_release",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": 9099,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 19,
+      "operator": "apply_exam_use_package_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:59.383Z",
+      "afterAt": "2026-10-03T03:25:59.437Z",
+      "databaseBefore": 27394171,
+      "databaseAfter": 27394171,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "word_index.app_exam_use_release",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 9099,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 20,
+      "operator": "apply_exam_use_package_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:59.548Z",
+      "afterAt": "2026-10-03T03:25:59.576Z",
+      "databaseBefore": 27394171,
+      "databaseAfter": 27394171,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 21,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:59.602Z",
+      "afterAt": "2026-10-03T03:25:59.633Z",
+      "databaseBefore": 27394171,
+      "databaseAfter": 27394171,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 22,
+      "operator": "apply_exam_use_package_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:59.678Z",
+      "afterAt": "2026-10-03T03:25:59.729Z",
+      "databaseBefore": 27394171,
+      "databaseAfter": 27418747,
+      "databaseDelta": 24576,
+      "trackedRelationDelta": 24576,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "word_index.app_exam_use_release",
+          "tableDelta": 24576,
+          "indexDelta": 0,
+          "totalDelta": 24576,
+          "rowTextDelta": 182426,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 23,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:59.756Z",
+      "afterAt": "2026-10-03T03:25:59.806Z",
+      "databaseBefore": 27418747,
+      "databaseAfter": 27418747,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 1,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:45.973Z",
+      "afterAt": "2026-10-03T03:25:46.016Z",
+      "databaseBefore": 27140219,
+      "databaseAfter": 27156603,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_package_archives",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 2,
+      "operator": "apply_exam_use_package_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:46.052Z",
+      "afterAt": "2026-10-03T03:25:46.090Z",
+      "databaseBefore": 27156603,
+      "databaseAfter": 27189371,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_package_archive_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.exam_use_package_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "word_index.app_exam_use_release",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -9099,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 3,
+      "operator": "prepare_exam_use_occurrence_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:47.119Z",
+      "afterAt": "2026-10-03T03:25:47.154Z",
+      "databaseBefore": 27492475,
+      "databaseAfter": 27492475,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 4,
+      "operator": "prepare_exam_use_occurrence_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:47.201Z",
+      "afterAt": "2026-10-03T03:25:47.301Z",
+      "databaseBefore": 27492475,
+      "databaseAfter": 27549819,
+      "databaseDelta": 57344,
+      "trackedRelationDelta": 57344,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_occurrence_archives",
+          "tableDelta": 57344,
+          "indexDelta": 0,
+          "totalDelta": 57344,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 5,
+      "operator": "prepare_exam_use_occurrence_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:47.343Z",
+      "afterAt": "2026-10-03T03:25:47.378Z",
+      "databaseBefore": 27549819,
+      "databaseAfter": 27549819,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 8,
+      "operator": "apply_exam_use_occurrence_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:47.658Z",
+      "afterAt": "2026-10-03T03:25:47.733Z",
+      "databaseBefore": 27549819,
+      "databaseAfter": 27598971,
+      "databaseDelta": 49152,
+      "trackedRelationDelta": 49152,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_occurrence_archive_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.exam_use_occurrence_archives",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.exam_use_occurrence_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "word_index.app_exam_use_occurrence",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": -8161,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 9,
+      "operator": "apply_exam_use_occurrence_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:47.789Z",
+      "afterAt": "2026-10-03T03:25:48.021Z",
+      "databaseBefore": 27598971,
+      "databaseAfter": 27803771,
+      "databaseDelta": 204800,
+      "trackedRelationDelta": 204800,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_occurrence_archives",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.exam_use_occurrence_write_permits",
+          "tableDelta": 40960,
+          "indexDelta": 0,
+          "totalDelta": 40960,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "word_index.app_exam_use_occurrence",
+          "tableDelta": 131072,
+          "indexDelta": 0,
+          "totalDelta": 131072,
+          "rowTextDelta": -162628,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 10,
+      "operator": "apply_exam_use_occurrence_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:48.721Z",
+      "afterAt": "2026-10-03T03:25:48.753Z",
+      "databaseBefore": 27803771,
+      "databaseAfter": 27803771,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 17,
+      "operator": "apply_exam_use_occurrence_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:50.039Z",
+      "afterAt": "2026-10-03T03:25:50.078Z",
+      "databaseBefore": 28188795,
+      "databaseAfter": 28205179,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "word_index.app_exam_use_occurrence",
+          "tableDelta": 16384,
+          "indexDelta": 0,
+          "totalDelta": 16384,
+          "rowTextDelta": 8161,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 18,
+      "operator": "apply_exam_use_occurrence_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:50.283Z",
+      "afterAt": "2026-10-03T03:25:50.319Z",
+      "databaseBefore": 28205179,
+      "databaseAfter": 28205179,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "word_index.app_exam_use_occurrence",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 1362,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 19,
+      "operator": "apply_exam_use_occurrence_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:50.433Z",
+      "afterAt": "2026-10-03T03:25:50.502Z",
+      "databaseBefore": 28205179,
+      "databaseAfter": 28213371,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "word_index.app_exam_use_occurrence",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": 6799,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 20,
+      "operator": "apply_exam_use_occurrence_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:50.542Z",
+      "afterAt": "2026-10-03T03:25:50.717Z",
+      "databaseBefore": 28213371,
+      "databaseAfter": 28500091,
+      "databaseDelta": 286720,
+      "trackedRelationDelta": 286720,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_occurrence_archives",
+          "tableDelta": 32768,
+          "indexDelta": 0,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.exam_use_occurrence_write_permits",
+          "tableDelta": 16384,
+          "indexDelta": 16384,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "word_index.app_exam_use_occurrence",
+          "tableDelta": 221184,
+          "indexDelta": 0,
+          "totalDelta": 221184,
+          "rowTextDelta": 162628,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 21,
+      "operator": "prepare_exam_use_occurrence_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:50.820Z",
+      "afterAt": "2026-10-03T03:25:50.856Z",
+      "databaseBefore": 28500091,
+      "databaseAfter": 28500091,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 22,
+      "operator": "apply_exam_use_occurrence_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:50.887Z",
+      "afterAt": "2026-10-03T03:25:50.919Z",
+      "databaseBefore": 28500091,
+      "databaseAfter": 28500091,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 1,
+      "operator": "prepare_exam_use_package_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:26.348Z",
+      "afterAt": "2026-10-03T03:25:26.389Z",
+      "databaseBefore": 27246715,
+      "databaseAfter": 27263099,
+      "databaseDelta": 16384,
+      "trackedRelationDelta": 16384,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_package_archives",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 2,
+      "operator": "apply_exam_use_package_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:26.426Z",
+      "afterAt": "2026-10-03T03:25:26.470Z",
+      "databaseBefore": 27263099,
+      "databaseAfter": 27295867,
+      "databaseDelta": 32768,
+      "trackedRelationDelta": 32768,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.exam_use_package_archive_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.exam_use_package_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "word_index.app_exam_use_release",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -9099,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 3,
+      "operator": "prepare_reviewed_resource_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:27.509Z",
+      "afterAt": "2026-10-03T03:25:27.554Z",
+      "databaseBefore": 27500667,
+      "databaseAfter": 27500667,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 4,
+      "operator": "prepare_reviewed_resource_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:27.586Z",
+      "afterAt": "2026-10-03T03:25:27.756Z",
+      "databaseBefore": 27500667,
+      "databaseAfter": 27566203,
+      "databaseDelta": 65536,
+      "trackedRelationDelta": 65536,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_resource_archives",
+          "tableDelta": 65536,
+          "indexDelta": 0,
+          "totalDelta": 65536,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 5,
+      "operator": "prepare_reviewed_resource_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:27.798Z",
+      "afterAt": "2026-10-03T03:25:27.842Z",
+      "databaseBefore": 27566203,
+      "databaseAfter": 27566203,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 9,
+      "operator": "apply_reviewed_resource_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:28.352Z",
+      "afterAt": "2026-10-03T03:25:28.405Z",
+      "databaseBefore": 27566203,
+      "databaseAfter": 27607163,
+      "databaseDelta": 40960,
+      "trackedRelationDelta": 40960,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_resources_v1",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": -2832,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "private.reviewed_resource_archive_receipts",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.reviewed_resource_archives",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.reviewed_resource_write_permits",
+          "tableDelta": 8192,
+          "indexDelta": 8192,
+          "totalDelta": 16384,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 10,
+      "operator": "apply_reviewed_resource_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:28.438Z",
+      "afterAt": "2026-10-03T03:25:28.722Z",
+      "databaseBefore": 27607163,
+      "databaseAfter": 27811963,
+      "databaseDelta": 204800,
+      "trackedRelationDelta": 204800,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_resources_v1",
+          "tableDelta": 122880,
+          "indexDelta": 0,
+          "totalDelta": 122880,
+          "rowTextDelta": -47200,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "private.reviewed_resource_archives",
+          "tableDelta": 40960,
+          "indexDelta": 0,
+          "totalDelta": 40960,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.reviewed_resource_write_permits",
+          "tableDelta": 40960,
+          "indexDelta": 0,
+          "totalDelta": 40960,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 11,
+      "operator": "apply_reviewed_resource_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:29.466Z",
+      "afterAt": "2026-10-03T03:25:29.511Z",
+      "databaseBefore": 27811963,
+      "databaseAfter": 27811963,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 18,
+      "operator": "apply_reviewed_resource_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:30.787Z",
+      "afterAt": "2026-10-03T03:25:30.834Z",
+      "databaseBefore": 28205179,
+      "databaseAfter": 28213371,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_resources_v1",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": 2832,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 19,
+      "operator": "apply_reviewed_resource_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:31.020Z",
+      "afterAt": "2026-10-03T03:25:31.054Z",
+      "databaseBefore": 28213371,
+      "databaseAfter": 28213371,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_resources_v1",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 472,
+          "rowsDelta": 0
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 20,
+      "operator": "apply_reviewed_resource_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:31.184Z",
+      "afterAt": "2026-10-03T03:25:31.236Z",
+      "databaseBefore": 28213371,
+      "databaseAfter": 28221563,
+      "databaseDelta": 8192,
+      "trackedRelationDelta": 8192,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_resources_v1",
+          "tableDelta": 0,
+          "indexDelta": 0,
+          "totalDelta": 0,
+          "rowTextDelta": 2360,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "private.reviewed_resource_archives",
+          "tableDelta": 8192,
+          "indexDelta": 0,
+          "totalDelta": 8192,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 21,
+      "operator": "apply_reviewed_resource_archive_v1:restore",
+      "beforeAt": "2026-10-03T03:25:31.269Z",
+      "afterAt": "2026-10-03T03:25:31.463Z",
+      "databaseBefore": 28221563,
+      "databaseAfter": 28418171,
+      "databaseDelta": 196608,
+      "trackedRelationDelta": 196608,
+      "unexplainedDelta": 0,
+      "changedRelations": [
+        {
+          "relation": "private.reviewed_mock_source_resources_v1",
+          "tableDelta": 122880,
+          "indexDelta": 0,
+          "totalDelta": 122880,
+          "rowTextDelta": 47200,
+          "rowsDelta": 0
+        },
+        {
+          "relation": "private.reviewed_resource_archives",
+          "tableDelta": 40960,
+          "indexDelta": 0,
+          "totalDelta": 40960,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        },
+        {
+          "relation": "private.reviewed_resource_write_permits",
+          "tableDelta": 16384,
+          "indexDelta": 16384,
+          "totalDelta": 32768,
+          "rowTextDelta": null,
+          "rowsDelta": null
+        }
+      ]
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 22,
+      "operator": "prepare_reviewed_resource_archive_v1:prepare",
+      "beforeAt": "2026-10-03T03:25:31.559Z",
+      "afterAt": "2026-10-03T03:25:31.593Z",
+      "databaseBefore": 28418171,
+      "databaseAfter": 28418171,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 23,
+      "operator": "apply_reviewed_resource_archive_v1:compact",
+      "beforeAt": "2026-10-03T03:25:31.638Z",
+      "afterAt": "2026-10-03T03:25:31.671Z",
+      "databaseBefore": 28418171,
+      "databaseAfter": 28418171,
+      "databaseDelta": 0,
+      "trackedRelationDelta": 0,
+      "unexplainedDelta": 0,
+      "changedRelations": []
+    }
+  ],
+  "failedBeforeOnly": [
+    {
+      "suite": "historical-question-migration",
+      "serial": 11,
+      "label": "11:before:apply_historical_question_batch_v1:compact",
+      "at": "2026-10-03T03:26:12.348Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 19,
+      "label": "19:before:apply_historical_question_batch_v1:compact",
+      "at": "2026-10-03T03:26:12.910Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 20,
+      "label": "20:before:apply_historical_question_batch_v1:compact",
+      "at": "2026-10-03T03:26:12.937Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 21,
+      "label": "21:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:12.960Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 22,
+      "label": "22:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:12.982Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 24,
+      "label": "24:before:apply_historical_question_batch_v1:compact",
+      "at": "2026-10-03T03:26:13.058Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 25,
+      "label": "25:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:13.085Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 26,
+      "label": "26:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:13.106Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 27,
+      "label": "27:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:13.141Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 28,
+      "label": "28:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:13.179Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 29,
+      "label": "29:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:13.284Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 40,
+      "label": "40:before:apply_historical_question_batch_v1:compact",
+      "at": "2026-10-03T03:26:14.016Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 42,
+      "label": "42:before:apply_historical_question_batch_v1:compact",
+      "at": "2026-10-03T03:26:14.109Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 44,
+      "label": "44:before:prepare_historical_question_batch_v1:prepare",
+      "at": "2026-10-03T03:26:14.282Z"
+    },
+    {
+      "suite": "historical-question-migration",
+      "serial": 49,
+      "label": "49:before:apply_historical_question_batch_v1:compact",
+      "at": "2026-10-03T03:26:14.592Z"
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 1,
+      "label": "1:before:prepare_historical_learning_batch_v1:prepare",
+      "at": "2026-10-03T03:25:38.447Z"
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 10,
+      "label": "10:before:apply_historical_learning_batch_v1:restore",
+      "at": "2026-10-03T03:25:39.693Z"
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 11,
+      "label": "11:before:apply_historical_learning_batch_v1:restore",
+      "at": "2026-10-03T03:25:39.741Z"
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 12,
+      "label": "12:before:apply_historical_learning_batch_v1:restore",
+      "at": "2026-10-03T03:25:39.785Z"
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 13,
+      "label": "13:before:prepare_historical_learning_batch_v1:prepare",
+      "at": "2026-10-03T03:25:39.828Z"
+    },
+    {
+      "suite": "historical-learning-migration",
+      "serial": 19,
+      "label": "19:before:apply_historical_learning_batch_v1:compact",
+      "at": "2026-10-03T03:25:40.087Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 7,
+      "label": "7:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.276Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 8,
+      "label": "8:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.311Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 9,
+      "label": "9:before:apply_reviewed_bundle_archive_v1:restore",
+      "at": "2026-10-03T03:26:06.342Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 10,
+      "label": "10:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.370Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 11,
+      "label": "11:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.402Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 12,
+      "label": "12:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.442Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 13,
+      "label": "13:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.511Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 14,
+      "label": "14:before:prepare_reviewed_bundle_archive_v1:prepare",
+      "at": "2026-10-03T03:26:06.663Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 15,
+      "label": "15:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.694Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 16,
+      "label": "16:before:apply_reviewed_bundle_archive_v1:compact",
+      "at": "2026-10-03T03:26:06.725Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 19,
+      "label": "19:before:apply_reviewed_bundle_archive_v1:restore",
+      "at": "2026-10-03T03:26:06.908Z"
+    },
+    {
+      "suite": "reviewed-bundle-archive",
+      "serial": 20,
+      "label": "20:before:apply_reviewed_bundle_archive_v1:restore",
+      "at": "2026-10-03T03:26:06.944Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 8,
+      "label": "8:before:apply_exam_use_package_archive_v1:compact",
+      "at": "2026-10-03T03:25:58.309Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 9,
+      "label": "9:before:apply_exam_use_package_archive_v1:compact",
+      "at": "2026-10-03T03:25:58.342Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 10,
+      "label": "10:before:apply_exam_use_package_archive_v1:restore",
+      "at": "2026-10-03T03:25:58.372Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 11,
+      "label": "11:before:apply_exam_use_package_archive_v1:compact",
+      "at": "2026-10-03T03:25:58.404Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 12,
+      "label": "12:before:apply_exam_use_package_archive_v1:compact",
+      "at": "2026-10-03T03:25:58.445Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 13,
+      "label": "13:before:apply_exam_use_package_archive_v1:compact",
+      "at": "2026-10-03T03:25:58.501Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 14,
+      "label": "14:before:prepare_exam_use_package_archive_v1:prepare",
+      "at": "2026-10-03T03:25:58.656Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 15,
+      "label": "15:before:apply_exam_use_package_archive_v1:compact",
+      "at": "2026-10-03T03:25:58.688Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 16,
+      "label": "16:before:apply_exam_use_package_archive_v1:compact",
+      "at": "2026-10-03T03:25:58.720Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 18,
+      "label": "18:before:apply_exam_use_package_archive_v1:restore",
+      "at": "2026-10-03T03:25:59.135Z"
+    },
+    {
+      "suite": "exam-use-package-archive",
+      "serial": 25,
+      "label": "25:before:prepare_exam_use_package_archive_v1:prepare",
+      "at": "2026-10-03T03:25:59.889Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 6,
+      "label": "6:before:prepare_exam_use_occurrence_archive_v1:prepare",
+      "at": "2026-10-03T03:25:47.490Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 7,
+      "label": "7:before:prepare_exam_use_occurrence_archive_v1:prepare",
+      "at": "2026-10-03T03:25:47.526Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 11,
+      "label": "11:before:prepare_exam_use_occurrence_archive_v1:prepare",
+      "at": "2026-10-03T03:25:48.782Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 12,
+      "label": "12:before:apply_exam_use_occurrence_archive_v1:restore",
+      "at": "2026-10-03T03:25:49.540Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 13,
+      "label": "13:before:apply_exam_use_occurrence_archive_v1:restore",
+      "at": "2026-10-03T03:25:49.688Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 14,
+      "label": "14:before:apply_exam_use_occurrence_archive_v1:compact",
+      "at": "2026-10-03T03:25:49.721Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 15,
+      "label": "15:before:apply_exam_use_occurrence_archive_v1:compact",
+      "at": "2026-10-03T03:25:49.755Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 16,
+      "label": "16:before:apply_exam_use_occurrence_archive_v1:compact",
+      "at": "2026-10-03T03:25:49.810Z"
+    },
+    {
+      "suite": "exam-use-occurrence-archive",
+      "serial": 23,
+      "label": "23:before:prepare_exam_use_occurrence_archive_v1:prepare",
+      "at": "2026-10-03T03:25:51.005Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 6,
+      "label": "6:before:prepare_reviewed_resource_archive_v1:prepare",
+      "at": "2026-10-03T03:25:27.973Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 7,
+      "label": "7:before:prepare_reviewed_resource_archive_v1:prepare",
+      "at": "2026-10-03T03:25:28.021Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 8,
+      "label": "8:before:apply_reviewed_resource_archive_v1:compact",
+      "at": "2026-10-03T03:25:28.215Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 12,
+      "label": "12:before:prepare_reviewed_resource_archive_v1:prepare",
+      "at": "2026-10-03T03:25:29.560Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 13,
+      "label": "13:before:apply_reviewed_resource_archive_v1:restore",
+      "at": "2026-10-03T03:25:30.329Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 14,
+      "label": "14:before:apply_reviewed_resource_archive_v1:restore",
+      "at": "2026-10-03T03:25:30.469Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 15,
+      "label": "15:before:apply_reviewed_resource_archive_v1:compact",
+      "at": "2026-10-03T03:25:30.502Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 16,
+      "label": "16:before:apply_reviewed_resource_archive_v1:compact",
+      "at": "2026-10-03T03:25:30.533Z"
+    },
+    {
+      "suite": "reviewed-resource-archive",
+      "serial": 17,
+      "label": "17:before:apply_reviewed_resource_archive_v1:compact",
+      "at": "2026-10-03T03:25:30.562Z"
+    }
+  ],
+  "totals": {
+    "observations": 280,
+    "completePairs": 106,
+    "failedBeforeOnly": 62,
+    "unexplainedPairs": 0
+  }
+}

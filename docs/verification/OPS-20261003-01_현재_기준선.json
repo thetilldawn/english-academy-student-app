@@ -1,0 +1,2115 @@
+{
+  "checkedAt": "2026-10-03T03:08:31.732Z",
+  "supabase": {
+    "production": {
+      "id": "xdxhswjgksukjmpbzqgz",
+      "ref": "xdxhswjgksukjmpbzqgz",
+      "organization_id": "mdcmionaqtzadgouvyzt",
+      "organization_slug": "mdcmionaqtzadgouvyzt",
+      "name": "english-academy-student-app",
+      "region": "ap-northeast-2",
+      "status": "ACTIVE_HEALTHY",
+      "database": {
+        "host": "db.xdxhswjgksukjmpbzqgz.supabase.co",
+        "version": "17.6.1.147",
+        "postgres_engine": "17",
+        "release_channel": "ga"
+      },
+      "created_at": "2026-07-28T13:25:16.702181Z"
+    },
+    "preview": {
+      "id": "wojxpruvbjzbhrpmsbuy",
+      "ref": "wojxpruvbjzbhrpmsbuy",
+      "organization_id": "mdcmionaqtzadgouvyzt",
+      "organization_slug": "mdcmionaqtzadgouvyzt",
+      "name": "english-academy-student-app-staging",
+      "region": "ap-northeast-2",
+      "status": "ACTIVE_HEALTHY",
+      "database": {
+        "host": "db.wojxpruvbjzbhrpmsbuy.supabase.co",
+        "version": "17.6.1.155",
+        "postgres_engine": "17",
+        "release_channel": "ga"
+      },
+      "created_at": "2026-08-05T15:18:14.249744Z"
+    },
+    "organization": {
+      "id": "mdcmionaqtzadgouvyzt",
+      "name": "thetilldawn's Org",
+      "plan": "free",
+      "tier": "tier_free",
+      "opt_in_tags": [],
+      "allowed_release_channels": [
+        "ga",
+        "preview"
+      ]
+    }
+  },
+  "productionSchema": {
+    "at": "2026-10-03T02:57:07.303588+00:00",
+    "columns": [
+      {
+        "name": "id",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "attempt_id",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "vocab_entry_id",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "order_index",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "direction",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "prompt",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "choices",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "correct_choice_index",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "initial_choice_index",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "initial_is_correct",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "initial_answered_at",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "retry_choice_index",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "retry_is_correct",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "retry_answered_at",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "assignment_question_id",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "prior_wrong_count",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "initial_timed_out",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "retry_timed_out",
+        "table": "public.quiz_questions"
+      },
+      {
+        "name": "id",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "assignment_id",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "vocab_entry_id",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "base_order_index",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "direction",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "prompt",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "choices",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "correct_choice_index",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "created_at",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "dataset_id",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "entry_row_sha256_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "eligibility_quiz_mode",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "eligibility_input_hash_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "canonical_lexeme_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "canonical_content_hash_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "content_review_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "headword_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "headword_normalized_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "primary_meaning_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "choice_vocab_entry_ids",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "correct_answer_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "content_origin",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "eligibility_rule_version_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "generator_version_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "question_content_sha256",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "provenance",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "provenance_status",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "canonical_question_release_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "canonical_question_item_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "canonical_question_item_sha256_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "canonical_question_review_input_sha256_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "canonical_question_review_policy_version_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "reviewed_exam_release_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "reviewed_exam_item_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "reviewed_exam_item_sha256_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "composition_target_key_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "composition_version_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "composition_item_id_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "composition_item_sha256_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "composition_pronunciation_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "notebook_source_event_id",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "notebook_source_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "notebook_pronunciation_snapshot",
+        "table": "public.assignment_questions"
+      },
+      {
+        "name": "id",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "template_id",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "number",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "content_sha256",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "recipe",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "fixed_composition",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "source_version_id",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "created_by",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "created_at",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "management_request_id",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "criteria",
+        "table": "private.vocabulary_library_versions"
+      },
+      {
+        "name": "version_id",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "dataset_id",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "vocab_entry_id",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "item_id",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "item_sha256",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "quiz_mode",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "direction",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "source_kind",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "source_release_id",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "source_item_id",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "source_item_sha256",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "prompt_role",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "choice_role",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "prompt",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "choice_texts",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "choice_vocab_entry_ids",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "correct_choice_index",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "pronunciation_snapshot",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "source_proof",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "prompt_key",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "answer_key",
+        "table": "private.vocabulary_composition_items"
+      },
+      {
+        "name": "version_id",
+        "table": "private.vocabulary_compositions"
+      },
+      {
+        "name": "dataset_id",
+        "table": "private.vocabulary_compositions"
+      },
+      {
+        "name": "content_sha256",
+        "table": "private.vocabulary_compositions"
+      },
+      {
+        "name": "state",
+        "table": "private.vocabulary_compositions"
+      },
+      {
+        "name": "question_sha256",
+        "table": "private.vocabulary_compositions"
+      },
+      {
+        "name": "created_by",
+        "table": "private.vocabulary_compositions"
+      },
+      {
+        "name": "created_at",
+        "table": "private.vocabulary_compositions"
+      },
+      {
+        "name": "management_request_id",
+        "table": "private.vocabulary_compositions"
+      }
+    ],
+    "newTables": [
+      {
+        "name": "private.local_quiz_runs",
+        "installed": false
+      },
+      {
+        "name": "private.local_quiz_preparations",
+        "installed": false
+      },
+      {
+        "name": "private.vocabulary_result_policies",
+        "installed": false
+      },
+      {
+        "name": "private.vocabulary_learning_value_versions",
+        "installed": false
+      },
+      {
+        "name": "private.vocabulary_question_content_versions",
+        "installed": false
+      }
+    ],
+    "extensions": [
+      "plpgsql",
+      "pg_stat_statements",
+      "uuid-ossp",
+      "pgcrypto",
+      "supabase_vault",
+      "pg_cron"
+    ],
+    "databaseBytes": 779906195
+  },
+  "productionPhysical": {
+    "query": "BEGIN READ ONLY; SET LOCAL statement_timeout='20s'; SELECT jsonb_build_object('at',clock_timestamp(),'databaseBytes',pg_database_size(current_database()),'defaultReadOnly',current_setting('default_transaction_read_only'),'maxConnections',current_setting('max_connections'),'tables',(SELECT jsonb_agg(jsonb_build_object('schema',n.nspname,'table',c.relname,'estimatedRows',c.reltuples::bigint,'tableBytes',pg_table_size(c.oid),'indexesBytes',pg_indexes_size(c.oid),'totalBytes',pg_total_relation_size(c.oid)) ORDER BY pg_total_relation_size(c.oid) DESC) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind IN('r','m') AND n.nspname IN('public','private','word_index','cron','auth','storage')),'storage',(SELECT jsonb_build_object('objects',count(*),'fileBytes',sum((metadata->>'size')::bigint)) FROM storage.objects)) AS proof; COMMIT;",
+    "at": "2026-10-03T03:07:37.407346+00:00",
+    "tables": [
+      {
+        "table": "vocabulary_library_scope_rows",
+        "schema": "private",
+        "tableBytes": 98844672,
+        "totalBytes": 104636416,
+        "indexesBytes": 5791744,
+        "estimatedRows": 22324
+      },
+      {
+        "table": "app_exam_use_occurrence",
+        "schema": "word_index",
+        "tableBytes": 65216512,
+        "totalBytes": 77701120,
+        "indexesBytes": 12484608,
+        "estimatedRows": 19007
+      },
+      {
+        "table": "assignment_questions",
+        "schema": "public",
+        "tableBytes": 47857664,
+        "totalBytes": 56705024,
+        "indexesBytes": 8847360,
+        "estimatedRows": 17558
+      },
+      {
+        "table": "vocabulary_composition_entries",
+        "schema": "private",
+        "tableBytes": 50323456,
+        "totalBytes": 52322304,
+        "indexesBytes": 1998848,
+        "estimatedRows": 7532
+      },
+      {
+        "table": "vocabulary_composition_items",
+        "schema": "private",
+        "tableBytes": 39665664,
+        "totalBytes": 48513024,
+        "indexesBytes": 8847360,
+        "estimatedRows": 14424
+      },
+      {
+        "table": "reviewed_mock_source_resources_v1",
+        "schema": "private",
+        "tableBytes": 44564480,
+        "totalBytes": 46415872,
+        "indexesBytes": 1851392,
+        "estimatedRows": 16894
+      },
+      {
+        "table": "job_run_details",
+        "schema": "cron",
+        "tableBytes": 37912576,
+        "totalBytes": 42344448,
+        "indexesBytes": 4431872,
+        "estimatedRows": -1
+      },
+      {
+        "table": "reviewed_mock_source_releases_v1",
+        "schema": "private",
+        "tableBytes": 40927232,
+        "totalBytes": 40976384,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_entries",
+        "schema": "public",
+        "tableBytes": 10887168,
+        "totalBytes": 27656192,
+        "indexesBytes": 16769024,
+        "estimatedRows": 30073
+      },
+      {
+        "table": "raw_pointer",
+        "schema": "word_index",
+        "tableBytes": 15720448,
+        "totalBytes": 22208512,
+        "indexesBytes": 6488064,
+        "estimatedRows": 60039
+      },
+      {
+        "table": "relation_evidence",
+        "schema": "word_index",
+        "tableBytes": 10952704,
+        "totalBytes": 19980288,
+        "indexesBytes": 9027584,
+        "estimatedRows": 60058
+      },
+      {
+        "table": "relation",
+        "schema": "word_index",
+        "tableBytes": 7512064,
+        "totalBytes": 16080896,
+        "indexesBytes": 8568832,
+        "estimatedRows": 49796
+      },
+      {
+        "table": "sense",
+        "schema": "word_index",
+        "tableBytes": 9682944,
+        "totalBytes": 15056896,
+        "indexesBytes": 5373952,
+        "estimatedRows": 32874
+      },
+      {
+        "table": "app_exam_use_release",
+        "schema": "word_index",
+        "tableBytes": 13180928,
+        "totalBytes": 13279232,
+        "indexesBytes": 98304,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_entry_pronunciation_bindings_v2",
+        "schema": "public",
+        "tableBytes": 3555328,
+        "totalBytes": 13049856,
+        "indexesBytes": 9494528,
+        "estimatedRows": 7511
+      },
+      {
+        "table": "lexeme",
+        "schema": "word_index",
+        "tableBytes": 7077888,
+        "totalBytes": 11108352,
+        "indexesBytes": 4030464,
+        "estimatedRows": 15610
+      },
+      {
+        "table": "app_canonical_question_preview_item",
+        "schema": "word_index",
+        "tableBytes": 7593984,
+        "totalBytes": 9428992,
+        "indexesBytes": 1835008,
+        "estimatedRows": 2537
+      },
+      {
+        "table": "data_issue",
+        "schema": "word_index",
+        "tableBytes": 5922816,
+        "totalBytes": 8126464,
+        "indexesBytes": 2203648,
+        "estimatedRows": 32094
+      },
+      {
+        "table": "input_file_manifest",
+        "schema": "word_index",
+        "tableBytes": 5554176,
+        "totalBytes": 8044544,
+        "indexesBytes": 2490368,
+        "estimatedRows": 30841
+      },
+      {
+        "table": "vocabulary_library_row_fingerprints",
+        "schema": "private",
+        "tableBytes": 4112384,
+        "totalBytes": 7880704,
+        "indexesBytes": 3768320,
+        "estimatedRows": 22324
+      },
+      {
+        "table": "lexeme_metric",
+        "schema": "word_index",
+        "tableBytes": 4104192,
+        "totalBytes": 6643712,
+        "indexesBytes": 2539520,
+        "estimatedRows": 44564
+      },
+      {
+        "table": "vocabulary_library_versions",
+        "schema": "private",
+        "tableBytes": 6586368,
+        "totalBytes": 6635520,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_pronunciation_identities_v2",
+        "schema": "public",
+        "tableBytes": 4694016,
+        "totalBytes": 6340608,
+        "indexesBytes": 1646592,
+        "estimatedRows": 4250
+      },
+      {
+        "table": "vocabulary_library_scopes",
+        "schema": "private",
+        "tableBytes": 5775360,
+        "totalBytes": 6135808,
+        "indexesBytes": 360448,
+        "estimatedRows": 608
+      },
+      {
+        "table": "lexeme_tag",
+        "schema": "word_index",
+        "tableBytes": 3407872,
+        "totalBytes": 5758976,
+        "indexesBytes": 2351104,
+        "estimatedRows": 39854
+      },
+      {
+        "table": "reviewed_exam_items",
+        "schema": "private",
+        "tableBytes": 3907584,
+        "totalBytes": 5570560,
+        "indexesBytes": 1662976,
+        "estimatedRows": 3380
+      },
+      {
+        "table": "quiz_questions",
+        "schema": "public",
+        "tableBytes": 2138112,
+        "totalBytes": 5529600,
+        "indexesBytes": 3391488,
+        "estimatedRows": 7358
+      },
+      {
+        "table": "vocab_entry_pronunciations",
+        "schema": "public",
+        "tableBytes": 4341760,
+        "totalBytes": 4808704,
+        "indexesBytes": 466944,
+        "estimatedRows": 3561
+      },
+      {
+        "table": "objects",
+        "schema": "storage",
+        "tableBytes": 1556480,
+        "totalBytes": 4800512,
+        "indexesBytes": 3244032,
+        "estimatedRows": 1710
+      },
+      {
+        "table": "assignment_question_exam_use_snapshot",
+        "schema": "public",
+        "tableBytes": 4333568,
+        "totalBytes": 4710400,
+        "indexesBytes": 376832,
+        "estimatedRows": 1968
+      },
+      {
+        "table": "etymology",
+        "schema": "word_index",
+        "tableBytes": 3473408,
+        "totalBytes": 4046848,
+        "indexesBytes": 573440,
+        "estimatedRows": 7552
+      },
+      {
+        "table": "assignment_units",
+        "schema": "public",
+        "tableBytes": 983040,
+        "totalBytes": 3637248,
+        "indexesBytes": 2654208,
+        "estimatedRows": 4460
+      },
+      {
+        "table": "vocabulary_composition_build_positions",
+        "schema": "private",
+        "tableBytes": 1482752,
+        "totalBytes": 3588096,
+        "indexesBytes": 2105344,
+        "estimatedRows": 7532
+      },
+      {
+        "table": "vocab_entry_quiz_eligibility",
+        "schema": "public",
+        "tableBytes": 1687552,
+        "totalBytes": 3194880,
+        "indexesBytes": 1507328,
+        "estimatedRows": 6002
+      },
+      {
+        "table": "vocabulary_composition_question_plans",
+        "schema": "private",
+        "tableBytes": 2949120,
+        "totalBytes": 2965504,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_entry_link",
+        "schema": "word_index",
+        "tableBytes": 2023424,
+        "totalBytes": 2842624,
+        "indexesBytes": 819200,
+        "estimatedRows": 3001
+      },
+      {
+        "table": "student_point_events",
+        "schema": "public",
+        "tableBytes": 1253376,
+        "totalBytes": 2719744,
+        "indexesBytes": 1466368,
+        "estimatedRows": 3930
+      },
+      {
+        "table": "reviewed_entry_resources_v1",
+        "schema": "private",
+        "tableBytes": 2629632,
+        "totalBytes": 2686976,
+        "indexesBytes": 57344,
+        "estimatedRows": 864
+      },
+      {
+        "table": "reviewed_exam_entries",
+        "schema": "private",
+        "tableBytes": 2203648,
+        "totalBytes": 2367488,
+        "indexesBytes": 163840,
+        "estimatedRows": 1061
+      },
+      {
+        "table": "work_queue",
+        "schema": "word_index",
+        "tableBytes": 1155072,
+        "totalBytes": 2220032,
+        "indexesBytes": 1064960,
+        "estimatedRows": 10576
+      },
+      {
+        "table": "vocab_rule_derived_korean_pronunciations",
+        "schema": "public",
+        "tableBytes": 2056192,
+        "totalBytes": 2220032,
+        "indexesBytes": 163840,
+        "estimatedRows": 582
+      },
+      {
+        "table": "reviewed_entry_resource_releases_v1",
+        "schema": "private",
+        "tableBytes": 1622016,
+        "totalBytes": 1671168,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "occurrence",
+        "schema": "word_index",
+        "tableBytes": 868352,
+        "totalBytes": 1630208,
+        "indexesBytes": 761856,
+        "estimatedRows": 2774
+      },
+      {
+        "table": "example",
+        "schema": "word_index",
+        "tableBytes": 1228800,
+        "totalBytes": 1581056,
+        "indexesBytes": 352256,
+        "estimatedRows": 6474
+      },
+      {
+        "table": "student_vocab_wrong_events",
+        "schema": "public",
+        "tableBytes": 376832,
+        "totalBytes": 1482752,
+        "indexesBytes": 1105920,
+        "estimatedRows": 1901
+      },
+      {
+        "table": "student_vocab_state",
+        "schema": "public",
+        "tableBytes": 598016,
+        "totalBytes": 1441792,
+        "indexesBytes": 843776,
+        "estimatedRows": 4168
+      },
+      {
+        "table": "reviewed_exam_releases",
+        "schema": "private",
+        "tableBytes": 1163264,
+        "totalBytes": 1245184,
+        "indexesBytes": 81920,
+        "estimatedRows": 1
+      },
+      {
+        "table": "entry_source_pronunciations_v1",
+        "schema": "private",
+        "tableBytes": 663552,
+        "totalBytes": 950272,
+        "indexesBytes": 286720,
+        "estimatedRows": 855
+      },
+      {
+        "table": "vocab_synthetic_audio_assets",
+        "schema": "public",
+        "tableBytes": 327680,
+        "totalBytes": 884736,
+        "indexesBytes": 557056,
+        "estimatedRows": 412
+      },
+      {
+        "table": "vocab_pronunciation_tts_assets_v2",
+        "schema": "public",
+        "tableBytes": 614400,
+        "totalBytes": 786432,
+        "indexesBytes": 172032,
+        "estimatedRows": 1176
+      },
+      {
+        "table": "vocabulary_library_management_results",
+        "schema": "private",
+        "tableBytes": 737280,
+        "totalBytes": 753664,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_unit_catalog",
+        "schema": "public",
+        "tableBytes": 507904,
+        "totalBytes": 663552,
+        "indexesBytes": 155648,
+        "estimatedRows": 849
+      },
+      {
+        "table": "assignment_study_examples_v1",
+        "schema": "private",
+        "tableBytes": 532480,
+        "totalBytes": 630784,
+        "indexesBytes": 98304,
+        "estimatedRows": 1395
+      },
+      {
+        "table": "reviewed_pronunciation_assets_v1",
+        "schema": "private",
+        "tableBytes": 581632,
+        "totalBytes": 598016,
+        "indexesBytes": 16384,
+        "estimatedRows": 127
+      },
+      {
+        "table": "vocab_synthetic_audio_bindings",
+        "schema": "public",
+        "tableBytes": 204800,
+        "totalBytes": 573440,
+        "indexesBytes": 368640,
+        "estimatedRows": 418
+      },
+      {
+        "table": "review",
+        "schema": "word_index",
+        "tableBytes": 294912,
+        "totalBytes": 565248,
+        "indexesBytes": 270336,
+        "estimatedRows": 1051
+      },
+      {
+        "table": "vocab_units",
+        "schema": "public",
+        "tableBytes": 196608,
+        "totalBytes": 524288,
+        "indexesBytes": 327680,
+        "estimatedRows": 916
+      },
+      {
+        "table": "mock_wordbook_scope",
+        "schema": "word_index",
+        "tableBytes": 311296,
+        "totalBytes": 499712,
+        "indexesBytes": 188416,
+        "estimatedRows": 510
+      },
+      {
+        "table": "import_batch",
+        "schema": "word_index",
+        "tableBytes": 245760,
+        "totalBytes": 491520,
+        "indexesBytes": 245760,
+        "estimatedRows": 1343
+      },
+      {
+        "table": "audit_events",
+        "schema": "public",
+        "tableBytes": 360448,
+        "totalBytes": 483328,
+        "indexesBytes": 122880,
+        "estimatedRows": 679
+      },
+      {
+        "table": "assignments",
+        "schema": "public",
+        "tableBytes": 237568,
+        "totalBytes": 401408,
+        "indexesBytes": 163840,
+        "estimatedRows": 180
+      },
+      {
+        "table": "type_decision",
+        "schema": "word_index",
+        "tableBytes": 237568,
+        "totalBytes": 368640,
+        "indexesBytes": 131072,
+        "estimatedRows": 971
+      },
+      {
+        "table": "vocab_assignment_series_items",
+        "schema": "private",
+        "tableBytes": 221184,
+        "totalBytes": 335872,
+        "indexesBytes": 114688,
+        "estimatedRows": 30
+      },
+      {
+        "table": "level_mapping",
+        "schema": "word_index",
+        "tableBytes": 172032,
+        "totalBytes": 311296,
+        "indexesBytes": 139264,
+        "estimatedRows": 1064
+      },
+      {
+        "table": "vocab_approved_korean_pronunciations",
+        "schema": "public",
+        "tableBytes": 229376,
+        "totalBytes": 286720,
+        "indexesBytes": 57344,
+        "estimatedRows": 496
+      },
+      {
+        "table": "student_vocab_review_queue",
+        "schema": "public",
+        "tableBytes": 81920,
+        "totalBytes": 270336,
+        "indexesBytes": 188416,
+        "estimatedRows": 133
+      },
+      {
+        "table": "assignment_review_targets",
+        "schema": "public",
+        "tableBytes": 81920,
+        "totalBytes": 262144,
+        "indexesBytes": 180224,
+        "estimatedRows": 197
+      },
+      {
+        "table": "notification_receipts",
+        "schema": "public",
+        "tableBytes": 81920,
+        "totalBytes": 245760,
+        "indexesBytes": 163840,
+        "estimatedRows": 307
+      },
+      {
+        "table": "users",
+        "schema": "auth",
+        "tableBytes": 49152,
+        "totalBytes": 245760,
+        "indexesBytes": 196608,
+        "estimatedRows": 1
+      },
+      {
+        "table": "vocab_assignment_series",
+        "schema": "private",
+        "tableBytes": 90112,
+        "totalBytes": 204800,
+        "indexesBytes": 114688,
+        "estimatedRows": -1
+      },
+      {
+        "table": "assignment_quiz_mode_snapshots",
+        "schema": "public",
+        "tableBytes": 114688,
+        "totalBytes": 196608,
+        "indexesBytes": 81920,
+        "estimatedRows": 95
+      },
+      {
+        "table": "refresh_tokens",
+        "schema": "auth",
+        "tableBytes": 65536,
+        "totalBytes": 180224,
+        "indexesBytes": 114688,
+        "estimatedRows": 134
+      },
+      {
+        "table": "assignment_students",
+        "schema": "public",
+        "tableBytes": 57344,
+        "totalBytes": 172032,
+        "indexesBytes": 114688,
+        "estimatedRows": 180
+      },
+      {
+        "table": "vocabulary_library_import_chunks",
+        "schema": "private",
+        "tableBytes": 114688,
+        "totalBytes": 172032,
+        "indexesBytes": 57344,
+        "estimatedRows": 0
+      },
+      {
+        "table": "quiz_attempts",
+        "schema": "public",
+        "tableBytes": 65536,
+        "totalBytes": 163840,
+        "indexesBytes": 98304,
+        "estimatedRows": 89
+      },
+      {
+        "table": "app_canonical_question_preview_release",
+        "schema": "word_index",
+        "tableBytes": 57344,
+        "totalBytes": 139264,
+        "indexesBytes": 81920,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_assignment_series_events",
+        "schema": "private",
+        "tableBytes": 49152,
+        "totalBytes": 131072,
+        "indexesBytes": 81920,
+        "estimatedRows": 51
+      },
+      {
+        "table": "vocabulary_library_management_requests",
+        "schema": "private",
+        "tableBytes": 98304,
+        "totalBytes": 131072,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_sessions",
+        "schema": "public",
+        "tableBytes": 65536,
+        "totalBytes": 131072,
+        "indexesBytes": 65536,
+        "estimatedRows": 75
+      },
+      {
+        "table": "assignment_replacement_requests",
+        "schema": "private",
+        "tableBytes": 49152,
+        "totalBytes": 131072,
+        "indexesBytes": 81920,
+        "estimatedRows": -1
+      },
+      {
+        "table": "sessions",
+        "schema": "auth",
+        "tableBytes": 49152,
+        "totalBytes": 131072,
+        "indexesBytes": 81920,
+        "estimatedRows": 55
+      },
+      {
+        "table": "student_learning_sources",
+        "schema": "public",
+        "tableBytes": 16384,
+        "totalBytes": 114688,
+        "indexesBytes": 98304,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_datasets",
+        "schema": "public",
+        "tableBytes": 65536,
+        "totalBytes": 114688,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "students",
+        "schema": "public",
+        "tableBytes": 16384,
+        "totalBytes": 114688,
+        "indexesBytes": 98304,
+        "estimatedRows": 4
+      },
+      {
+        "table": "student_vocab_review_assignment_drafts",
+        "schema": "public",
+        "tableBytes": 16384,
+        "totalBytes": 114688,
+        "indexesBytes": 98304,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_login_attempts",
+        "schema": "public",
+        "tableBytes": 49152,
+        "totalBytes": 98304,
+        "indexesBytes": 49152,
+        "estimatedRows": 49
+      },
+      {
+        "table": "quiz_attempt_preparations",
+        "schema": "private",
+        "tableBytes": 65536,
+        "totalBytes": 98304,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_dataset_catalog",
+        "schema": "public",
+        "tableBytes": 65536,
+        "totalBytes": 98304,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "scim_users",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 90112,
+        "indexesBytes": 81920,
+        "estimatedRows": -1
+      },
+      {
+        "table": "one_time_tokens",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 90112,
+        "indexesBytes": 81920,
+        "estimatedRows": -1
+      },
+      {
+        "table": "assignment_release_links_v1",
+        "schema": "private",
+        "tableBytes": 40960,
+        "totalBytes": 90112,
+        "indexesBytes": 49152,
+        "estimatedRows": 71
+      },
+      {
+        "table": "admin_history_hidden_entries",
+        "schema": "public",
+        "tableBytes": 8192,
+        "totalBytes": 90112,
+        "indexesBytes": 81920,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_library_templates",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 81920,
+        "indexesBytes": 65536,
+        "estimatedRows": 10
+      },
+      {
+        "table": "identities",
+        "schema": "auth",
+        "tableBytes": 16384,
+        "totalBytes": 81920,
+        "indexesBytes": 65536,
+        "estimatedRows": -1
+      },
+      {
+        "table": "reviewed_mock_source_approvals_v1",
+        "schema": "private",
+        "tableBytes": 49152,
+        "totalBytes": 81920,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_assignment_queue_requests",
+        "schema": "private",
+        "tableBytes": 49152,
+        "totalBytes": 81920,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "school_schedule_versions",
+        "schema": "private",
+        "tableBytes": 49152,
+        "totalBytes": 81920,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "app_migration_snapshots",
+        "schema": "private",
+        "tableBytes": 65536,
+        "totalBytes": 81920,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_pronunciation_releases_v2",
+        "schema": "public",
+        "tableBytes": 16384,
+        "totalBytes": 81920,
+        "indexesBytes": 65536,
+        "estimatedRows": -1
+      },
+      {
+        "table": "worksheet_request_items",
+        "schema": "public",
+        "tableBytes": 8192,
+        "totalBytes": 73728,
+        "indexesBytes": 65536,
+        "estimatedRows": -1
+      },
+      {
+        "table": "migrations",
+        "schema": "storage",
+        "tableBytes": 40960,
+        "totalBytes": 73728,
+        "indexesBytes": 32768,
+        "estimatedRows": 61
+      },
+      {
+        "table": "bulk_vocab_series_requests",
+        "schema": "private",
+        "tableBytes": 57344,
+        "totalBytes": 73728,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "legacy_freeze",
+        "schema": "word_index",
+        "tableBytes": 57344,
+        "totalBytes": 73728,
+        "indexesBytes": 16384,
+        "estimatedRows": 64
+      },
+      {
+        "table": "student_app_maintenance_state",
+        "schema": "private",
+        "tableBytes": 57344,
+        "totalBytes": 73728,
+        "indexesBytes": 16384,
+        "estimatedRows": 3
+      },
+      {
+        "table": "assignment_sources",
+        "schema": "public",
+        "tableBytes": 40960,
+        "totalBytes": 73728,
+        "indexesBytes": 32768,
+        "estimatedRows": 188
+      },
+      {
+        "table": "vocab_entry_mapping_candidate",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 65536,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_app_maintenance_retry_state",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 65536,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_link_import_run",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 65536,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "source",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 65536,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "assignment_exam_use_release_snapshot",
+        "schema": "word_index",
+        "tableBytes": 49152,
+        "totalBytes": 65536,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "school_schedule_manual_edits",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 65536,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_library_import_approvals",
+        "schema": "private",
+        "tableBytes": 49152,
+        "totalBytes": 65536,
+        "indexesBytes": 16384,
+        "estimatedRows": 51
+      },
+      {
+        "table": "dataset_source",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 65536,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_compositions",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 65536,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "custom_oauth_providers",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 57344,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_vocab_review_assignment_draft_items",
+        "schema": "public",
+        "tableBytes": 8192,
+        "totalBytes": 57344,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mfa_factors",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 57344,
+        "indexesBytes": 49152,
+        "estimatedRows": -1
+      },
+      {
+        "table": "scim_tokens",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 49152,
+        "indexesBytes": 40960,
+        "estimatedRows": -1
+      },
+      {
+        "table": "worksheet_requests",
+        "schema": "public",
+        "tableBytes": 8192,
+        "totalBytes": 49152,
+        "indexesBytes": 40960,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_library_template_approvals",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mfa_amr_claims",
+        "schema": "auth",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": 31
+      },
+      {
+        "table": "pronunciation_audio_corrections_v1",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_codes",
+        "schema": "public",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "job",
+        "schema": "cron",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "school_handout_import_approvals_v1",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "oauth_consents",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 49152,
+        "indexesBytes": 40960,
+        "estimatedRows": -1
+      },
+      {
+        "table": "buckets",
+        "schema": "storage",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "simseok_production_receipts_v1",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_dataset_capabilities",
+        "schema": "public",
+        "tableBytes": 16384,
+        "totalBytes": 49152,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "saml_relay_states",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 40960,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_composition_builds",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 40960,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "flow_state",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 40960,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "oauth_authorizations",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 40960,
+        "indexesBytes": 32768,
+        "estimatedRows": -1
+      },
+      {
+        "table": "sso_domains",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "class_groups",
+        "schema": "public",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "index_build",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "current_wrong_review_assignment_requests",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "schema_meta",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "bulk_canonical_question_preview_requests",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "reviewed_choice_repair_releases_v1",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "simseok_production_approvals_v1",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "admin_profiles",
+        "schema": "public",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocab_link_import_batch",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "reviewed_exam_import_approvals",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "import_run",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "reviewed_entry_resource_approvals_v1",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "reviewed_pronunciation_asset_approvals_v1",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mock_wordbook_composition",
+        "schema": "word_index",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mock_wordbook_lineage",
+        "schema": "word_index",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "webauthn_challenges",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "webauthn_credentials",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_library_requests",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "sso_providers",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "pipeline_rule",
+        "schema": "word_index",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_composition_management_requests",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_composition_write_context",
+        "schema": "private",
+        "tableBytes": 16384,
+        "totalBytes": 32768,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "saml_providers",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_word_practice_runs",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 32768,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "admin_vocab_assignment_time_templates",
+        "schema": "public",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mfa_challenges",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vector_indexes",
+        "schema": "storage",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_point_totals",
+        "schema": "public",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "oauth_clients",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "oauth_client_states",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mfa_recovery_codes",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mfa_recovery_code_sets",
+        "schema": "auth",
+        "tableBytes": 0,
+        "totalBytes": 24576,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "buckets_analytics",
+        "schema": "storage",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "s3_multipart_uploads",
+        "schema": "storage",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "class_group_students",
+        "schema": "public",
+        "tableBytes": 0,
+        "totalBytes": 24576,
+        "indexesBytes": 24576,
+        "estimatedRows": -1
+      },
+      {
+        "table": "audit_log_entries",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "schema_migrations",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": 77
+      },
+      {
+        "table": "vocabulary_composition_management_approvals",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "student_word_practice_questions",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_composition_management_inputs",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 24576,
+        "indexesBytes": 16384,
+        "estimatedRows": -1
+      },
+      {
+        "table": "s3_multipart_uploads_parts",
+        "schema": "storage",
+        "tableBytes": 8192,
+        "totalBytes": 16384,
+        "indexesBytes": 8192,
+        "estimatedRows": -1
+      },
+      {
+        "table": "mock_wordbook_identity_review",
+        "schema": "word_index",
+        "tableBytes": 8192,
+        "totalBytes": 16384,
+        "indexesBytes": 8192,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_composition_management_chunks",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 16384,
+        "indexesBytes": 8192,
+        "estimatedRows": -1
+      },
+      {
+        "table": "vocabulary_composition_management_results",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 16384,
+        "indexesBytes": 8192,
+        "estimatedRows": -1
+      },
+      {
+        "table": "buckets_vectors",
+        "schema": "storage",
+        "tableBytes": 8192,
+        "totalBytes": 16384,
+        "indexesBytes": 8192,
+        "estimatedRows": -1
+      },
+      {
+        "table": "notebook_assignment_requests",
+        "schema": "private",
+        "tableBytes": 8192,
+        "totalBytes": 16384,
+        "indexesBytes": 8192,
+        "estimatedRows": -1
+      },
+      {
+        "table": "instances",
+        "schema": "auth",
+        "tableBytes": 8192,
+        "totalBytes": 16384,
+        "indexesBytes": 8192,
+        "estimatedRows": -1
+      }
+    ],
+    "storage": {
+      "objects": 1710,
+      "fileBytes": 9812604
+    },
+    "databaseBytes": 779914387,
+    "maxConnections": "60",
+    "defaultReadOnly": "off"
+  },
+  "questionStructuralCandidates": [
+    {
+      "kind": "assignment",
+      "reason": "assignment_open",
+      "rows": 7760,
+      "body_document_text_bytes": 20903292,
+      "key_set_hash": "ac1df8446f29cc675dc64a21624b8eca"
+    },
+    {
+      "kind": "assignment",
+      "reason": "attempt_pending",
+      "rows": 303,
+      "body_document_text_bytes": 942795,
+      "key_set_hash": "07de1955fba3c2343e8e6f69f1e55afa"
+    },
+    {
+      "kind": "assignment",
+      "reason": "pre_schema_candidate",
+      "rows": 9927,
+      "body_document_text_bytes": 26772852,
+      "key_set_hash": "34022f72844ba01337f90ced5e1bb24b"
+    },
+    {
+      "kind": "exam-use",
+      "reason": "assignment_open",
+      "rows": 834,
+      "body_document_text_bytes": 2078881,
+      "key_set_hash": "9b16b47dd1af7916822ec5ddfa01aab7"
+    },
+    {
+      "kind": "exam-use",
+      "reason": "pre_schema_candidate",
+      "rows": 1455,
+      "body_document_text_bytes": 3802621,
+      "key_set_hash": "d3f8271beb24b6369cd1587402459f63"
+    },
+    {
+      "kind": "quiz",
+      "reason": "assignment_open",
+      "rows": 2779,
+      "body_document_text_bytes": 351025,
+      "key_set_hash": "6f8360c4caf0b60d8d19bcda5bcb0e4e"
+    },
+    {
+      "kind": "quiz",
+      "reason": "attempt_pending",
+      "rows": 303,
+      "body_document_text_bytes": 55777,
+      "key_set_hash": "4bb7f8b40e84f6b3ce2641f365e993d8"
+    },
+    {
+      "kind": "quiz",
+      "reason": "pre_schema_candidate",
+      "rows": 4535,
+      "body_document_text_bytes": 683977,
+      "key_set_hash": "2060dc07fd5c3ae2f6f752fc51d70837"
+    }
+  ],
+  "scopeMetadata": {
+    "scopes": 683,
+    "versions": [
+      {
+        "id": "93f1f688-fb04-401b-be7b-486ef8a04eeb",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 5
+      },
+      {
+        "id": "20a9d6ee-787f-4c66-af81-8338dc4a28b0",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 30
+      },
+      {
+        "id": "497ed434-32bc-4b7b-8896-bfa53ca1f576",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 37
+      },
+      {
+        "id": "3b04d761-617f-4cb0-8ae8-5ff03ea81a27",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 17
+      },
+      {
+        "id": "3c72fd82-96dc-4455-b03c-ce8422fd6698",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 123
+      },
+      {
+        "id": "09139e35-62b0-4f35-964e-289cddbfbacd",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 75
+      },
+      {
+        "id": "e721c76b-7f74-4389-9063-b100cb672621",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 8
+      },
+      {
+        "id": "e8f699e8-0a3d-4187-91bf-fb476511d8cb",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 2
+      },
+      {
+        "id": "9f11f164-613f-4cde-b5c3-b8e0f470487a",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 0
+      },
+      {
+        "id": "e775918b-6c0b-4729-a17a-aeb0fb64d2ba",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 0
+      },
+      {
+        "id": "d49b4c0d-290b-4641-bf6b-4d14f6e8c74c",
+        "fixedSchema": "vocabulary-library-composition-v2",
+        "recipeScopes": 198
+      }
+    ],
+    "rowFormats": [
+      {
+        "count": 22324,
+        "format": "vocabulary-resource-snapshot-v1"
+      }
+    ],
+    "compositions": [
+      {
+        "items": 15064,
+        "state": "ready",
+        "entries": 7532,
+        "expected": 7532,
+        "versionId": "d49b4c0d-290b-4641-bf6b-4d14f6e8c74c",
+        "questionsHash": "b1f8fcfe09159fba3449030deffbd30a57a8e3161b83e106d63e4f8116015c3b"
+      }
+    ],
+    "questionPlans": [
+      {
+        "total": 15064,
+        "version": "d49b4c0d-290b-4641-bf6b-4d14f6e8c74c",
+        "processed": 15064
+      }
+    ]
+  },
+  "limits": [
+    {
+      "source": "https://supabase.com/pricing",
+      "databaseBytes": 500000000,
+      "storageBytes": 1000000000,
+      "uncachedEgressBytes": 5000000000,
+      "cachedEgressBytes": 5000000000,
+      "mau": 50000
+    },
+    {
+      "source": "https://vercel.com/docs/plans/hobby",
+      "functionInvocations": 1000000,
+      "cdnRequests": 1000000,
+      "cpuHours": 4,
+      "memoryGBHours": 360,
+      "fastDataGB": 100,
+      "fastOriginGB": 10
+    }
+  ],
+  "notes": [
+    "Production-only READ ONLY aggregates; no actual student text.",
+    "Future M01/M05 tables absent means not yet installed, not zero current data.",
+    "Question counts are structural candidates; final M01 meaning/body registration and current protective predicates must pass after M10 before M08-B.",
+    "Every JSON/text byte measure is logical serialized size, not reclaimable file size."
+  ]
+}

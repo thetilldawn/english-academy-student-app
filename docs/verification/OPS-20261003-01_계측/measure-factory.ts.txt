@@ -1,0 +1,44 @@
+import fs from 'node:fs';
+import { createFinalSchemaDatabase as createOriginal } from '@/test-support/final-schema-database';
+const bodyTables=new Set(['public.assignment_questions','public.quiz_questions','public.assignment_question_exam_use_snapshot','private.vocabulary_library_scope_rows','private.vocabulary_composition_entries','private.reviewed_mock_source_releases_v1','word_index.app_exam_use_release','word_index.app_exam_use_occurrence','private.reviewed_mock_source_resources_v1']);
+export function measuredFactory(name:string){
+ const file='.codex-tmp/m08-space/'+name+'.measurements.json';const history:any[]=[];
+ let installed=false,serial=0;
+ return async function(options:Parameters<typeof createOriginal>[0]={}){
+  let record:((label:string)=>Promise<void>)|undefined;
+  const db=await createOriginal({beforeMigration:async(db,migration)=>{
+   if(!installed){
+    installed=true;const raw=db.query.bind(db),rawExec=db.exec.bind(db);let inside=false;
+    record=async(label:string)=>{
+     if(inside)return;inside=true;
+     try{
+      const role=(await raw<{role:string}>('select current_user as role')).rows[0]?.role;if(role!=='postgres')return;
+      const sizes=(await raw<any>(`select quote_ident(n.nspname)||'.'||quote_ident(c.relname) relation,
+       pg_relation_size(c.oid)::float8 heap_bytes,pg_table_size(c.oid)::float8 table_bytes,pg_indexes_size(c.oid)::float8 index_bytes,
+       pg_total_relation_size(c.oid)::float8 total_bytes,case when c.reltoastrelid=0 then 0 else pg_total_relation_size(c.reltoastrelid)::float8 end toast_included_bytes
+       from pg_class c join pg_namespace n on n.oid=c.relnamespace
+       where c.relkind='r' and n.nspname in('public','private','word_index')
+       and (c.relname in('assignment_questions','quiz_questions','assignment_question_exam_use_snapshot','vocabulary_library_scope_rows','vocabulary_composition_entries','reviewed_mock_source_releases_v1','app_exam_use_release','app_exam_use_occurrence','reviewed_mock_source_resources_v1')
+         or c.relname like 'historical_%' or c.relname like 'reviewed_%archive%' or c.relname like 'exam_use_%archive%' or c.relname like 'vocabulary_learning_value%' or c.relname like 'vocabulary_question_%version%' or c.relname='reviewed_evidence_objects'
+         or c.relname in('assignment_vocabulary_meaning_refs','vocabulary_library_row_fingerprints','reviewed_bundle_write_permits','exam_use_package_write_permits','exam_use_occurrence_write_permits','reviewed_resource_write_permits')) order by 1`)).rows;
+      for(const s of sizes){if(bodyTables.has(s.relation)){Object.assign(s,(await raw<any>('select count(*)::int rows,coalesce(sum(octet_length(to_jsonb(t)::text)),0)::float8 row_text_bytes from '+s.relation+' t')).rows[0]);}}
+      const database=(await raw<any>('select pg_database_size(current_database())::float8 bytes')).rows[0].bytes;
+      history.push({at:new Date().toISOString(),label,databaseBytes:database,tables:sizes});fs.writeFileSync(file,JSON.stringify({name,environment:'isolated local PGlite PostgreSQL 17; not cloud performance',history},null,2)+'\n');
+     }finally{inside=false;}
+    };
+    const watched=(sql:string)=>/select\s+(?:\*\s+from\s+)?private\.(?:prepare|apply)_(?:historical_question|historical_learning|reviewed_bundle|exam_use_package|exam_use_occurrence|reviewed_resource)/i.test(sql)&&!/^\s*(?:--|create|begin;\s*create)/i.test(sql);
+    const run=async(fn:any,sql:string,args:any[])=>{
+     if(!watched(sql))return fn(sql,...args);
+     const n=++serial,kind=sql.match(/private\.([a-z0-9_]+)/i)?.[1]??'operator';
+     const a=kind.startsWith('prepare_')?'prepare':sql.match(/'(compact|restore)'/i)?.[1]?.toLowerCase()??JSON.stringify(args).match(/compact|restore/)?.[0]??'unknown';
+     await record?.(n+':before:'+kind+':'+a);
+     const result=await fn(sql,...args);await record?.(n+':after:'+kind+':'+a);return result;
+    };
+    (db as any).query=(sql:string,...args:any[])=>run(raw,sql,args);
+    (db as any).exec=(sql:string,...args:any[])=>run(rawExec,sql,args);
+   }
+   await options?.beforeMigration?.(db,migration);
+  }});
+  await record?.('schema-ready');return db;
+ };
+}

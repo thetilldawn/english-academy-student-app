@@ -1,0 +1,367 @@
+{
+  "schemaVersion": "m08-integrated-migration-manifest-v1",
+  "createdAt": "2026-10-03T03:56:32.113Z",
+  "basisCommit": "e57f399",
+  "stage": "A - synthetic rehearsal and production read inventory",
+  "productionProject": "xdxhswjgksukjmpbzqgz",
+  "previewProject": "wojxpruvbjzbhrpmsbuy",
+  "readWindowKst": "2026-10-03 11:57~12:17; separate bounded reads, not a single snapshot",
+  "rows": [
+    {
+      "order": 1,
+      "work": "APP-20261003-02",
+      "name": "과거 배정 문항",
+      "table": "public.assignment_questions",
+      "fields": [
+        "prompt",
+        "choices",
+        "headword_snapshot",
+        "primary_meaning_snapshot",
+        "correct_answer_snapshot",
+        "provenance",
+        "composition_pronunciation_snapshot",
+        "notebook_pronunciation_snapshot"
+      ],
+      "reference": "content_version_id → private.vocabulary_question_content_versions; 당시 meaning 참조",
+      "reader": "private.assignment_question_contents_v1 / resolve_assignment_question_content_v1",
+      "candidateRows": 9927,
+      "textBytes": 26772852,
+      "excluded": [
+        {
+          "reason": "배정 열림",
+          "rows": 7760,
+          "textBytes": 20903292
+        },
+        {
+          "reason": "보호 응시",
+          "rows": 303,
+          "textBytes": 942795
+        }
+      ],
+      "condition": "종료/삭제/유한 기한 경과 배정; 준비·진행·복습·재시험·개인 오답/새 결과 정책/새 기기 규격 없음",
+      "comparison": "historical_question_document_v1(kind,resolve(row))와 파일 before의 contentVersionId 제외 문서 동일; 정답·뜻·ID/FK·개인 기록 동일",
+      "rollback": "동일 ID/참조 유지, 파일에서 지정 8본문 열만 보충",
+      "batch": "1~100행, 파일 인수 4MiB"
+    },
+    {
+      "order": 1,
+      "work": "APP-20261003-02",
+      "name": "과거 응시 문항",
+      "table": "public.quiz_questions",
+      "fields": [
+        "prompt",
+        "choices"
+      ],
+      "reference": "content_version_id → 공용 문항판",
+      "reader": "private.quiz_question_contents_v1 / resolve_quiz_question_content_v1",
+      "candidateRows": 4535,
+      "textBytes": 683977,
+      "excluded": [
+        {
+          "reason": "배정 열림",
+          "rows": 2779,
+          "textBytes": 351025
+        },
+        {
+          "reason": "보호 응시",
+          "rows": 303,
+          "textBytes": 55777
+        }
+      ],
+      "condition": "배정 문항과 같은 보호 조건; 당시 문항 관계·뜻 전수 일치",
+      "comparison": "질문/보기/정답/방향/기존 assignment_question_id 동일, 최초/재시험 답과 접수/정책/결과 보존",
+      "rollback": "같은 응시 문항의 두 표시 열만 보충; 새 답 덮어쓰기 금지",
+      "batch": "1~100행, 4MiB"
+    },
+    {
+      "order": 1,
+      "work": "APP-20261003-02",
+      "name": "과거 출처 문항",
+      "table": "public.assignment_question_exam_use_snapshot",
+      "fields": [
+        "headword_snapshot",
+        "primary_meaning_snapshot",
+        "display_pronunciation_ko_snapshot",
+        "pronunciation_snapshot",
+        "choice_dictionary_snapshots"
+      ],
+      "reference": "content_version_id → 공용 문항판의 출처 본문",
+      "reader": "private.exam_use_question_contents_v1 / resolve_exam_use_question_content_v1",
+      "candidateRows": 1455,
+      "textBytes": 3802621,
+      "excluded": [
+        {
+          "reason": "배정 열림",
+          "rows": 834,
+          "textBytes": 2078881
+        }
+      ],
+      "condition": "배정/응시 보호 조건 동일; 출처·발음 확인값 일치",
+      "comparison": "출처 원판/고유 단어/뜻/음원/보기 발음 원형 확인값 동일",
+      "rollback": "지정한 발음/표시 5열만 복구",
+      "batch": "1~100행, 4MiB"
+    },
+    {
+      "order": 2,
+      "work": "APP-20261003-03",
+      "name": "구형 범위 본문",
+      "table": "private.vocabulary_library_scope_rows",
+      "fields": [
+        "entry_snapshot",
+        "occurrence_snapshot",
+        "resources"
+      ],
+      "reference": "당시 vocabulary_learning_value_versions/bindings + vocabulary_library_row_fingerprints",
+      "reader": "기존 v1/v2 범위 읽기 및 고정 구성 소비자; private.vocabulary_library_row_document_v1 / private.vocabulary_composition_preparation_v1 / private.assert_historical_learning_row_v1",
+      "candidateRows": 8690,
+      "candidateGroups": 296,
+      "textBytes": 66552491,
+      "excluded": [
+        {
+          "reason": "열린 배정",
+          "groups": 281,
+          "rows": 9529,
+          "textBytes": null
+        },
+        {
+          "reason": "열린 배정과 보호 응시",
+          "groups": 106,
+          "rows": 4105,
+          "textBytes": null
+        },
+        {
+          "reason": "보호 제외 합계",
+          "groups": 387,
+          "rows": 13634,
+          "textBytes": 97782647,
+          "aggregate": true
+        }
+      ],
+      "condition": "snapshot-v1·완전한 원형; 범위의 자료/고정판/원행을 사용하는 열린 배정·보호 응시·미시작 준비·M05 연결 없음; 범위 참조 구성도 ready·완료 처리수·문항 SHA 일치 필수, 생성 중 구성 제외",
+      "comparison": "당시 값/순서/원행 확인값/발음과 구형·새 읽기 동일; 새 현재 사전 재조회로 과거 뜻 재작성 금지",
+      "rollback": "원래 (scope_id, occurrence_key)의 세 열만 복구, 현재 학생 기록 제외",
+      "batch": "1~100행, 4MiB"
+    },
+    {
+      "order": 2,
+      "work": "APP-20261003-03",
+      "name": "완료 구성 연결 본문",
+      "table": "private.vocabulary_composition_entries",
+      "fields": [
+        "source_snapshot",
+        "resources"
+      ],
+      "reference": "당시 공용 학습값 판 + 원행 확인값",
+      "reader": "고정 구성/문항 생성·과거 구성 읽기",
+      "candidateRows": 0,
+      "textBytes": 0,
+      "excluded": [
+        {
+          "reason": "연결된 열린 배정",
+          "groups": 1,
+          "rows": 7532,
+          "textBytes": 85624793
+        }
+      ],
+      "condition": "ready 구성; 예상/entry/vocab 7532·items/generated/total/processed 15064·SHA/계획 위치 전수 일치; 모든 연결 배정 보호 제외",
+      "comparison": "원문항판·선택 뜻·모든 문항 SHA/순서 동일",
+      "rollback": "지정 구성판의 원행 본문만 복구",
+      "batch": "1~100행, 4MiB"
+    },
+    {
+      "order": 3,
+      "work": "APP-20261003-04",
+      "name": "검토 원자료 파일 보관",
+      "table": "private.reviewed_mock_source_releases_v1",
+      "fields": [
+        "bundle"
+      ],
+      "reference": "reviewed_bundle_archives + 외부 파일 확인값/원형 위치",
+      "reader": "운영 시험의 온라인 bundle 소비자 없음; 보관 표식 처리 및 지정 복구 도구",
+      "candidateRows": 20,
+      "textBytes": 129103610,
+      "excluded": [],
+      "condition": "검토 승인·목적 환경·원형 schema·semantic SHA 일치, 16MiB 이하 한 원행, 예약 표식 없음",
+      "comparison": "reviewed_exam_sha256_v1(bundle-content_sha256)=승인 SHA; 원행 전체 text SHA 및 파일 원본문 복원",
+      "rollback": "동일 release_id의 bundle 한 열만 파일에서 보충; 최신 퇴역 상태 유지",
+      "batch": "한 원행, 16MiB"
+    },
+    {
+      "order": 4,
+      "work": "APP-20261003-05",
+      "name": "자료판 반복 단어 배열",
+      "table": "word_index.app_exam_use_release",
+      "fields": [
+        "package_json.entries"
+      ],
+      "reference": "원래 source_rows 순서 + 불변 app_exam_use_occurrence 참조",
+      "reader": "자료판 package resolver 2소비자 및 APP04 보관 호환",
+      "candidateRows": 20,
+      "textBytes": 32819561,
+      "excluded": [
+        {
+          "reason": "비검토 옛 자료",
+          "rows": 6,
+          "textBytes": 3920103
+        },
+        {
+          "reason": "특수 긴 지문 자료",
+          "rows": 1,
+          "textBytes": 1163821
+        }
+      ],
+      "condition": "승인된 자료판; 원출현 수·고유source_row·배열 JSONB 동일; 최종 text SHA/파일/잠금 재검산",
+      "comparison": "private.resolve_exam_use_package_json_v1(uuid) 전체 문서 text SHA·원래 순서·승인 semantic SHA 일치; 상태/퇴역시각은 최신값 보존",
+      "rollback": "package_json.entries만 원문 삽입, 나머지 상태 보존",
+      "batch": "한 원행, 16MiB"
+    },
+    {
+      "order": 5,
+      "work": "APP-20261003-06",
+      "name": "원출현 반복 본문",
+      "table": "word_index.app_exam_use_occurrence",
+      "fields": [
+        "package_entry_json"
+      ],
+      "reference": "기존 24고정열 마스크 + 작은 extra + 원행 확인값",
+      "reader": "범위/출처/구형구성/오답준비 등 상위 패키지 재조립을 포함한 7소비자",
+      "candidateRows": 16894,
+      "textBytes": 32785773,
+      "referenceTextBytes": 3763256,
+      "residualTextBytes": 1552265,
+      "excluded": [
+        {
+          "reason": "비검토",
+          "rows": 1509,
+          "textBytes": 3917085
+        },
+        {
+          "reason": "특수 자료",
+          "rows": 604,
+          "textBytes": 1162613
+        }
+      ],
+      "condition": "승인/원형/키/1MiB 행/extra 4KiB 이하, 참조 본문이 원본문보다 작음; 기존 고정열/음원 JSON 불변",
+      "comparison": "24필드 text 동일인 값만 참조·나머지 extra 보존·resolver 문서 원형 text SHA 일치",
+      "rollback": "지정 release_id+source_row의 package_entry_json만 파일 복구",
+      "batch": "1~100행, SQL packet16MiB·외부 파일32MiB 상한; 초기 운영 계획은 더 작은4MiB 이하"
+    },
+    {
+      "order": 6,
+      "work": "APP-20261003-07",
+      "name": "검토 근거 중복 객체",
+      "table": "private.reviewed_mock_source_resources_v1",
+      "fields": [
+        "payload 내 검증된 evidence 위치"
+      ],
+      "reference": "reviewed_evidence_objects(SHA-256) + 위치별 참조 + 원형 확인값",
+      "reader": "검토 자원 공용 조회 1경로; 기존 JSON 원형 재구성",
+      "candidateRows": 16894,
+      "textBytes": 95968098,
+      "excluded": [
+        {
+          "reason": "실제 비용 조건은 실행 묶음/기존 공유표에 따라 결정",
+          "rows": null,
+          "textBytes": null
+        }
+      ],
+      "condition": "동일 객체만 전역 공유; 예약키/충돌/형식/원형/현재 행 검산 + 각 행/묶음 순절감 조건 모두 통과",
+      "comparison": "full resolved payload text SHA 원형 동일, 승인/자료판 확인값 동일; 객체만 공유·내용 생성/수정 없음",
+      "rollback": "지정 release_id+source_row의 payload만 원형 복구; 다른 행/새 학생 기록/공유 객체 유지",
+      "batch": "1~100행, SQL packet16MiB·외부 파일32MiB 상한; 초기 운영 계획은 더 작은4MiB 이하",
+      "costSimulation": {
+        "mode": "정렬 source order; 각 묶음이 빈 공유표에서 시작하는 독립 SELECT",
+        "batches": 169,
+        "passingBatches": 25,
+        "passingRows": 2500,
+        "passingOriginalTextBytes": 14719865,
+        "nonPassingBatchRows": 14394,
+        "notSmallerRows": 7676,
+        "noHashRows": 1,
+        "finalExecutionCount": false
+      }
+    },
+    {
+      "order": null,
+      "work": "보존",
+      "name": "구성 문항 원자료 증명",
+      "table": "private.vocabulary_composition_items",
+      "fields": [
+        "source_proof"
+      ],
+      "reference": "기존 고정 문항판 참조 유지",
+      "reader": "고정 구성 문항 소비자/검산",
+      "candidateRows": 0,
+      "textBytes": 0,
+      "excluded": [
+        {
+          "reason": "기존 읽기·복구 증거로 사용",
+          "rows": 15064,
+          "textBytes": 47138130
+        }
+      ],
+      "condition": "이번 여섯 이전 도구의 대상 아님",
+      "comparison": "APP03 구성 전체 문항판/해시 보존 검사",
+      "rollback": "수정하지 않음",
+      "batch": "해당 없음"
+    },
+    {
+      "order": null,
+      "work": "보존",
+      "name": "음원 정보",
+      "table": "word_index.app_exam_use_occurrence",
+      "fields": [
+        "audio_json"
+      ],
+      "reference": "기존 CDN URL/음원 메타데이터",
+      "reader": "기존 음원/발음 읽기",
+      "candidateRows": 0,
+      "textBytes": 0,
+      "excluded": [
+        {
+          "reason": "음원 기능 유지",
+          "rows": 19007,
+          "textBytes": 8076351
+        }
+      ],
+      "condition": "APP06은 package_entry_json의 중복만 줄이고 audio_json 유지",
+      "comparison": "APP06 전수 원형/DTO 검산",
+      "rollback": "수정하지 않음",
+      "batch": "해당 없음"
+    }
+  ],
+  "definitions": {
+    "candidate": "현재 구형 운영 스키마의 구조 후보. 새 보호표/함수 설치 전이므로 실행 승인 대상과 같지 않음",
+    "textBytes": "각 대상 열 JSON text 표현량; 물리/압축/인덱스/절감량과 다름",
+    "exclusions": "집계 표시 행은 앞의 부분집계와 더하지 않음",
+    "ids": "기존 UUID/bigint/복합키와 FK 전부 유지. 사전/단어/배정/학생을 새 ID로 복제하지 않음"
+  },
+  "peak": {
+    "method": "로컬 여섯 도구 동일 SQL의 준비/축약/복구 statement 완료 경계 측정",
+    "artifact": "OPS-20261003-01_공간계측.json",
+    "cloudTransactionPeakMeasured": false,
+    "walPeakMeasured": false,
+    "productionExecution": "M10 이후 정확한 묶음·외부사본·무료 용량/잠금 예산 재확인 전 실행 금지",
+    "bounds": "파일 묶음 크기는 응답 상한이며 DB/WAL 메모리/중간 디스크 상한이 아님. 동시 운영자 배치1개, 다음 묶음은 이전 완료/보존/크기 재확인 뒤."
+  },
+  "runOrder": [
+    "M10 최종 읽기/새쓰기 SQL 설치와 앱 검증",
+    "모든 원형 사본을 앱 Git 밖 접근제한 위치에 fsync→재읽기→SHA 확인",
+    "APP02→APP03→APP04→APP05→APP06→APP07 작은 묶음",
+    "각 묶음: 준비→파일→잠금/현재행 재검산→적용→이전/새 DTO 동일 확인→새 기준선",
+    "최대 ID를 완료 커서로 쓰지 않고 원행키+변경판 확인값으로 미처리 후보 재조회",
+    "일반 정리 후 재사용 공간 확인. VACUUM FULL/인덱스 재작성은 별도 측정·결정 없이 하지 않음"
+  ],
+  "globalPreservation": [
+    "학생 배정/상태/응시/최초·재시험 답/접수/결과/오답·해결/포인트/원파일 참조",
+    "현재 기기 미전송 답의 존재를 서버만 보고 추정하지 않음; 모든 M04/M05 연결을 APP02 후보에서 제외",
+    "대상 본문만 선택 복구; DB 전체를 과거 시점으로 복원하지 않음",
+    "보호 함수/RLS/불변 트리거를 끄지 않음"
+  ],
+  "notDone": [
+    "Production 백업·정리·배포·물리 파일 회수",
+    "운영 전환 직전 정확한 행 키 목록·M04/M05 보호 재조회",
+    "Supabase 내부 최대 임시공간/WAL/온라인 물리 재작성 측정"
+  ],
+  "productionWrites": 0
+}

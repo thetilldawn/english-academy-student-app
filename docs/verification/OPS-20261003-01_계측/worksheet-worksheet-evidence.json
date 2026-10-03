@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-03T03:35:41.734Z",
+  "synthetic": true,
+  "oldInputBefore": "20261001145444_share_vocabulary_question_content.sql",
+  "originalQuestions": 8,
+  "worksheetItems": 1,
+  "compactRows": 8,
+  "newSolveAnswers": 4,
+  "oldMeaningResolved": true,
+  "restoreRows": 8,
+  "worksheetEqualBeforeAfterCompactAfterNewSolveAfterRestore": true,
+  "latestStudentStateUnchangedOnRestore": true,
+  "archive": {
+    "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\m08-worksheet-fake-A8b9aa\\historical-questions-d83578bd-116b-4e4f-8b84-11497915c41d.json",
+    "sha256": "89d2b400fc3a4dd4f7bbfa4b4c32baf837845f5037fac3d33023690300904a27",
+    "bytes": 9125
+  },
+  "worksheetSha256": "4d57b5c07b3647c4b7f7a44c0e9976f80ec925e24f2128349df65ca5da4ed1c0"
+}

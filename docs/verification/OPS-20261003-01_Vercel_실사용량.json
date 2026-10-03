@@ -1,0 +1,59 @@
+{
+  "checkedAt": "2026-10-03T03:52:00Z",
+  "source": "Authenticated browser; Vercel Usage page",
+  "teamId": "team_XZeAoV0MqheWJHPvZNOSflMw",
+  "teamSlug": "thetilldawn-3859s-projects",
+  "projectId": "prj_7xrnd3opFQ8Pz7wsQMkCHF0qzD21",
+  "project": "english-academy-student-app",
+  "plan": "Hobby",
+  "url": "https://vercel.com/thetilldawn-3859s-projects/~/usage",
+  "periodControl": "Last 30 Days",
+  "displayedDateRange": "Sep 2, 오후 09:00 - Oct 2, 오후 09:00",
+  "uiUpdatedMinutesAgo": 4,
+  "metrics": {
+    "fastDataTransfer": {
+      "display": "552.81 MB / 100 GB",
+      "usedPercent": 0.5528108477592468
+    },
+    "fastOriginTransfer": {
+      "display": "74.95 MB / 10 GB",
+      "usedPercent": 0.7494678497314453
+    },
+    "cdnRequests": {
+      "used": 23781,
+      "limit": 1000000
+    },
+    "functionInvocations": {
+      "used": 14790,
+      "limit": 1000000,
+      "success": 14593,
+      "timeouts": 197,
+      "timeoutPercentDisplayed": 1.3
+    },
+    "functionThrottledRequests": {
+      "used": 0
+    },
+    "fluidActiveCpu": {
+      "display": "26m 15s / 4h",
+      "usedPercent": 10.93951416015625,
+      "projectBreakdown": "english-academy-student-app 26m 15s"
+    },
+    "fluidProvisionedMemory": {
+      "display": "11.7 GB-Hrs / 360 GB-Hrs",
+      "usedPercent": 3.2457780838012695
+    },
+    "buildCpuMinutes": {
+      "display": "6h 36m"
+    },
+    "isrReads": {
+      "used": 764
+    }
+  },
+  "limitsAndInterpretation": [
+    "Historical whole-team usage is not a synthetic load test, active student count or supported-user guarantee.",
+    "197 timeouts occurred within displayed window across deployments; route/date attribution not yet inspected.",
+    "Current maintenance code has not been deployed.",
+    "Storage tile overview differs from team-dashboard snapshot; do not use zero overview as proof of no deployments.",
+    "No upgrade, billing or project settings changed. MCP project getter was broken; browser read resolves current plan/usage evidence."
+  ]
+}

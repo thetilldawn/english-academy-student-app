@@ -1,0 +1,283 @@
+{
+  "schemaVersion": "m08-production-read-compact-v1",
+  "basisCommit": "e57f399",
+  "projectRef": "xdxhswjgksukjmpbzqgz",
+  "readWindowUtc": [
+    "2026-10-03T02:57:15.587303Z",
+    "2026-10-03T03:17:00Z"
+  ],
+  "collection": {
+    "readOnly": true,
+    "singleSnapshot": false,
+    "statementTimeoutMs": 20000,
+    "lockTimeoutMs": 1000,
+    "rawSourceOrStudentDataReturned": false,
+    "operatorCalls": 0,
+    "databaseWrites": 0,
+    "newArchiveTablesInstalled": false
+  },
+  "bytesMeaning": "octet_length(jsonb::text). Body text is not disk space or reclaimable bytes.",
+  "APP03": {
+    "scopes": 683,
+    "rows": 22324,
+    "candidateScopes": 296,
+    "candidateRows": 8690,
+    "candidateRowsBySource": {
+      "examUse": 8339,
+      "reviewedExam": 351
+    },
+    "candidateBodyBytes": 66552491,
+    "excludedScopes": 387,
+    "excludedRows": 13634,
+    "excludedReasons": [
+      {
+        "reason": "open",
+        "scopes": 281,
+        "rows": 9529
+      },
+      {
+        "reason": "open and protected attempt",
+        "scopes": 106,
+        "rows": 4105
+      }
+    ],
+    "protectedAttemptsDistinct": 5,
+    "candidateParts": {
+      "entry": 5593405,
+      "occurrence": 35640905,
+      "resources": 25318181
+    },
+    "excludedParts": {
+      "entry": 8793596,
+      "occurrence": 45169646,
+      "resources": 43819405
+    },
+    "composition": {
+      "versions": 1,
+      "rows": 7532,
+      "candidates": 0,
+      "reason": "open assignment",
+      "sourceEntryBytes": 63691264,
+      "resourcesBytes": 21933529,
+      "nestedResourcesEqual": true,
+      "buildHash": "b1f8fcfe09159fba3449030deffbd30a57a8e3161b83e106d63e4f8116015c3b",
+      "buildInvalid": 0,
+      "generatedItems": 15064
+    },
+    "conditionReference": "20261002192000_migrate_historical_learning_sources.sql: historical_learning_scopes/lock/prepare guards; readonly reproduction grouped existing scope versions and linked assignment states; new M04/M05 guards are absent on production."
+  },
+  "APP04": {
+    "candidateRows": 20,
+    "bodyBytes": 129103610,
+    "wholeRowBytes": 129118607,
+    "maxWholeRowBytes": 8773583,
+    "shapeApprovalSizeMarkerFailures": 0,
+    "semanticHashMismatches": 0,
+    "semanticHashCheckedRows": 20,
+    "formula": "reviewed_exam_sha256_v1(bundle-'content_sha256')=approval.content_sha256",
+    "partitions": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        9,
+        4
+      ],
+      [
+        13,
+        4
+      ],
+      [
+        17,
+        3
+      ]
+    ],
+    "hashWindowUtc": [
+      "03:01:35",
+      "03:02:46"
+    ],
+    "newReferenceBytes": null
+  },
+  "APP05": {
+    "candidateReleases": 20,
+    "entriesBytes": 32819561,
+    "packageBytes": 32836097,
+    "excluded": [
+      {
+        "kind": "not_reviewed",
+        "releases": 6,
+        "entriesBytes": 3920103
+      },
+      {
+        "kind": "special_catalog",
+        "releases": 1,
+        "entriesBytes": 1163821
+      }
+    ],
+    "approvedKeysSha256": "e0332f6c740947c8d5504061c94c35cab3c7327a4d7a4557791e1d1aeb5dd56c",
+    "semanticHashMismatches": 0,
+    "entryCountKeyOrJsonbMismatch": 0,
+    "formula": "reviewed_exam_sha256_v1(package_json-'package_version')=approval.package_version; source_row matches unique positive integer key; package_entry_json IS NOT DISTINCT FROM entries element",
+    "offsets": [
+      0,
+      5,
+      10,
+      15
+    ],
+    "limit": 5,
+    "checkWindowUtc": [
+      "03:04:18",
+      "03:04:35"
+    ],
+    "limitation": "JSONB equality does not verify reconstructed whole PostgreSQL text SHA including 1 versus 1.0 representation.",
+    "newReferenceBytes": null
+  },
+  "APP06": {
+    "candidateRows": 16894,
+    "releases": 20,
+    "originalBytes": 32785773,
+    "referenceBytes": 3763256,
+    "residualBytes": 1552265,
+    "columnTextDifferenceBytes": 29022517,
+    "excluded": [
+      {
+        "kind": "not_reviewed",
+        "rows": 1509,
+        "bytes": 3917085
+      },
+      {
+        "kind": "special_catalog",
+        "rows": 604,
+        "bytes": 1162613
+      }
+    ],
+    "maxResidualBytes": 110,
+    "maxReferenceBytes": 241,
+    "residualOrSizeOrKeyFailures": 0,
+    "partitionFormula": "mod(source_row,4)",
+    "checkWindowUtc": [
+      "03:05:36",
+      "03:05:48"
+    ],
+    "formula": "24-field order from migration; original ? field AND (original->field)::text=(candidate->field)::text; preserve unmatched extra. Reference {__exam_use_entry_ref_v1:{releaseId,sourceRow,fields:mask},extra}.",
+    "limitation": "Column text difference excludes manifests, indexes and actual restore SHA/physical storage."
+  },
+  "APP07": {
+    "structuralCandidateRows": 16894,
+    "releases": 20,
+    "payloadBytes": 95968098,
+    "structureFailures": 0,
+    "cost": {
+      "catalogAssumption": "Each sorted 100-row batch independently starts with an empty evidence catalog.",
+      "partitionFormula": "((row_number() over(order by release_id,source_row)-1)/100)::int",
+      "batchCount": 169,
+      "passingBatches": 25,
+      "passingRows": 2500,
+      "passingOriginalPayloadBytes": 14719865,
+      "passingRangesInclusive": [
+        [
+          34,
+          41
+        ],
+        [
+          103,
+          111
+        ],
+        [
+          120,
+          127
+        ]
+      ],
+      "noHashRows": 1,
+      "rowNotSmaller": 7676,
+      "withinBatchCollisions": 0,
+      "evidenceOccurrences": 220399,
+      "evidenceBytes": 60812585,
+      "allGroupsIncludingRejected": {
+        "savedPayloadTextBytes": 11066629,
+        "netBeforeNewObjects": 5611589,
+        "newObjectCost": 292342,
+        "chosenObjects": 568
+      },
+      "chooseFormula": "uses>=2 AND uses*(body_bytes-reference_bytes)>distinct_row_count*192+body_bytes+256",
+      "rowPass": "selected_hash_count>0 AND payload_saved>256+64*selected_hash_count",
+      "batchPass": "every row passes; sum(payload_saved-256-64*hash_count)>sum(new object body_bytes+256); no collision/marker",
+      "partitionResults": [
+        {
+          "range": [
+            0,
+            41
+          ],
+          "rows": 4200,
+          "payload": 23833943,
+          "passRows": 800,
+          "passOriginal": 4723252
+        },
+        {
+          "range": [
+            42,
+            83
+          ],
+          "rows": 4200,
+          "payload": 23693621,
+          "passRows": 0,
+          "passOriginal": 0
+        },
+        {
+          "range": [
+            84,
+            125
+          ],
+          "rows": 4200,
+          "payload": 24147284,
+          "passRows": 1500,
+          "passOriginal": 8849125
+        },
+        {
+          "range": [
+            126,
+            168
+          ],
+          "rows": 4294,
+          "payload": 24293250,
+          "passRows": 200,
+          "passOriginal": 1147488
+        }
+      ],
+      "checkWindowUtc": [
+        "03:07:54",
+        "03:09:27"
+      ]
+    },
+    "limitation": "Not a sequential simulation or final operation target. Totals including rejected rows cannot be claimed as feasible savings. Within-batch collision check is not global collision proof."
+  },
+  "preserved": {
+    "occurrenceAudio": {
+      "rows": 19007,
+      "bytes": 8076351
+    },
+    "compositionItemSourceProof": {
+      "rows": 15064,
+      "versions": 1,
+      "bytes": 47138130,
+      "empty": 0
+    }
+  },
+  "migrationReferences": [
+    "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
+    "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
+    "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+    "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql"
+  ],
+  "actualReclaimedBytes": 0,
+  "pending": "M10 then M08-B: current exact rows/guards, real external backup, resolver SHA, locked prepare/apply, physical reclamation and peak/WAL budget."
+}

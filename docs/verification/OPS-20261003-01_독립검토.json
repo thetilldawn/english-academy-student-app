@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-03T04:30:19.622Z",
+  "sourceCommit": "e57f399",
+  "reviewers": [
+    {
+      "name": "m05_record_review",
+      "scope": "space measurement; direct worksheet; real lock cases; fresh expiry correction",
+      "openDefects": 0
+    },
+    {
+      "name": "m05_db_review",
+      "scope": "production numeric inventory; file hashes; physical versus text and APP07 limits; manifest and links",
+      "correctionsApplied": [
+        "scope_id/occurrence_key",
+        "ready finished composition and question hash guard",
+        "16MiB packet/32MiB file versus planned4MiB",
+        "package resolver name and seven consumers count"
+      ]
+    }
+  ],
+  "failuresKeptSeparate": [
+    "old expiry replay did not prove fresh expiry; replaced by fresh transaction case",
+    "HTTP shell sandbox EACCES run rolled back and excluded"
+  ],
+  "finalState": {
+    "productionWrites": 0,
+    "productionBackupCompleted": false,
+    "physicalReclaimBytes": 0,
+    "previewHelpersRemoved": true
+  }
+}

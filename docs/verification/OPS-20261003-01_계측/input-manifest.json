@@ -1,0 +1,38 @@
+[
+  {
+    "name": "historical-question-migration",
+    "source": "src/lib/database/historical-question-migration.integration.test.ts",
+    "sourceSha256": "805b57a788b1a8e047d065bf90f7f6e17dd0fdabf64c8002dd7dfb03f2baf74e",
+    "copySha256": "4f74dc431b3bbcc1cab0f2769365ec862c003e0f2159e724e202073c2d8b408b"
+  },
+  {
+    "name": "historical-learning-migration",
+    "source": "src/lib/database/historical-learning-migration.integration.test.ts",
+    "sourceSha256": "ca9fbadfdaca90cc7ef46ca763392ccbe1d704319674499ef3a54d15624ae4ff",
+    "copySha256": "5b2b50cf2ceb565edd412a029f6af45b6c97b8067f07f3e0e469786eba50de4c"
+  },
+  {
+    "name": "reviewed-bundle-archive",
+    "source": "src/lib/database/reviewed-bundle-archive.integration.test.ts",
+    "sourceSha256": "00f314629c9b0f293791dba94d4191c4895fbd371a7065f2aa0a4fd12f820dc0",
+    "copySha256": "2406b97593d1f3ef6e6c13e4e33ef75092808294491554a2b3c0717af6599a38"
+  },
+  {
+    "name": "exam-use-package-archive",
+    "source": "src/lib/database/exam-use-package-archive.integration.test.ts",
+    "sourceSha256": "7f56de64f0ffa8a99b6c81db5678b988bcb554f8c7a3ff7b03fd55bde80c5796",
+    "copySha256": "a04b9f0d0559cc9eb15496be60f1710121104b93ea37b86628b929488c593028"
+  },
+  {
+    "name": "exam-use-occurrence-archive",
+    "source": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+    "sourceSha256": "ac885808815336b27237b8de4fd16220e09a0d02929f9b90ba3e7e580de091ca",
+    "copySha256": "766bbf340eaf77364229f115cace1e769f51a5283a0907818bebdac3164da70b"
+  },
+  {
+    "name": "reviewed-resource-archive",
+    "source": "src/lib/database/reviewed-resource-archive.integration.test.ts",
+    "sourceSha256": "b355fce1de764ac0598652ea7be7bcff7e874ab497c69829ef067545bfa58b0c",
+    "copySha256": "5e89eb4894a1b7387cda6cdf76c023fb3e6aecd55ad6dd3e19a422606018d24a"
+  }
+]
