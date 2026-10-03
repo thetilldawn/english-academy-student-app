@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 149,
-      "pathSetSha256": "734539620baf6ceadb2d2c98d6cabf31dfc97c0d4b947ddc414a3a1d40bcb78a"
+      "fileCount": 150,
+      "pathSetSha256": "533cddbdafcb3fbbf013976c0b0de0e88b77d9a43a62b2b20fc155358dd3d0b1"
     },
     {
       "path": "src/lib/deploy",
@@ -3115,6 +3115,11 @@
       "path": "supabase/migrations/20261003235930_order_student_notification_locks.sql",
       "owner": "notifications",
       "flow": "student-dashboard-read"
+    },
+    {
+      "path": "supabase/migrations/20261004000000_bound_template_search_document_reads.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
     }
   ],
   "features": [
@@ -8277,7 +8282,8 @@
           "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
           "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
           "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
-          "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql"
+          "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
+          "supabase/migrations/20261004000000_bound_template_search_document_reads.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -8322,7 +8328,8 @@
           "src/lib/database/reviewed-bundle-archive.integration.test.ts",
           "src/lib/database/exam-use-package-archive.integration.test.ts",
           "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
-          "src/lib/database/reviewed-resource-archive.integration.test.ts"
+          "src/lib/database/reviewed-resource-archive.integration.test.ts",
+          "src/lib/database/vocabulary-template-search-preservation.integration.test.ts"
         ]
       },
       "requiredImportEdges": [],
