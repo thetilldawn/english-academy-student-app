@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-03T15:51:33.820489+00:00",
+  "token": "e76000e0-b622-414f-90b7-0c6830254c9d",
+  "paused": false,
+  "controlRows": 1,
+  "whilePaused": {
+    "token": "e76000e0-b622-414f-90b7-0c6830254c9d",
+    "paused": true,
+    "attemptA": {
+      "id": "9860e65d-ed9d-4e30-82ef-ea22312a4ea6",
+      "wrong": 1,
+      "passed": false,
+      "finalScore": 75,
+      "initialScore": 50
+    },
+    "attemptsA": 1,
+    "attemptsB": 0,
+    "receiptsA": 2
+  },
+  "sql": "begin;set local statement_timeout='8s';set local lock_timeout='5s';do $$ begin update private.quiz_start_control set paused=false,changed_at=clock_timestamp() where singleton; if not found then raise exception 'm10_control_missing';end if;end $$;commit;select jsonb_build_object('token','e76000e0-b622-414f-90b7-0c6830254c9d','paused',(select paused from private.quiz_start_control where singleton),'controlRows',(select count(*) from private.quiz_start_control),'at',clock_timestamp()) verification;"
+}

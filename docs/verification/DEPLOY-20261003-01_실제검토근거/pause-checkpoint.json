@@ -1,0 +1,24 @@
+{
+  "token": "e76000e0-b622-414f-90b7-0c6830254c9d",
+  "origin": "https://english-academy-student-a-git-d9206d-thetilldawn-3859s-projects.vercel.app",
+  "targetSha": "3a8f6878334ef35055dfcdd6b3892379a6754d43",
+  "projectRef": "wojxpruvbjzbhrpmsbuy",
+  "stage": "completed",
+  "studentA": "ea6fd73f-013d-4c3f-9f8b-fcd1b674bfab",
+  "studentB": "ac0a3dac-0b75-4594-a998-590c9bfe0cae",
+  "assignmentA": "c20f0482-781f-432f-91b5-e0e9bdb709e6",
+  "assignmentB": "aea6dba0-cd38-4990-90ec-9038950a124e",
+  "attemptA": "9860e65d-ed9d-4e30-82ef-ea22312a4ea6",
+  "attemptB": "8a0df91c-9a91-4b18-867d-af4c4f3e703a",
+  "preparationB": "8a0df91c-9a91-4b18-867d-af4c4f3e703a",
+  "blockedBeginStatuses": [
+    503,
+    503
+  ],
+  "initialScoreA": 50,
+  "finalScoreA": 75,
+  "finalScoreB": 100,
+  "samePreparationAfterResume": true,
+  "sameBeginRequestAfterResume": true,
+  "at": "2026-10-03T15:51:39.139Z"
+}

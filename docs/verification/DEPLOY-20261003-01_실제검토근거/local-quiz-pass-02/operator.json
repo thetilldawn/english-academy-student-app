@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-03T16:28:37.991Z",
+  "scenario": "local-quiz",
+  "runnerSha": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "targetSha": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "productionWrites": 0,
+  "protectionDisabled": false,
+  "keyCreated": true,
+  "keyRevoked": true,
+  "checks": [
+    {
+      "id": "dpl_8CXU3DwXZF4jAw4np2fi6SLXCDuX",
+      "origin": "https://english-academy-student-pe7i6q02b-thetilldawn-3859s-projects.vercel.app",
+      "sha": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
+      "build": "8d940836e6884a9205be4900c11ae4c7592b90f2415e8211c0ff0f16c21f3e11",
+      "htmlHash": "8d940836e6884a9205be4900c11ae4c7592b90f2415e8211c0ff0f16c21f3e11",
+      "workerHash": "ed3332e13b03b561f0d607a966f51962976cd1f307388c8008b0a7ccee895379",
+      "assetCount": 25,
+      "workerCacheControl": "no-store, max-age=0"
+    },
+    {
+      "id": "dpl_GmgoCwXLt4Rj8iNjeC6xbxuxJQpM",
+      "origin": "https://english-academy-student-afh0ugqhm-thetilldawn-3859s-projects.vercel.app",
+      "sha": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+      "build": "082da485d0ea39df0b480a8ad9178e57c1a42edc4305b26d01168ef9341331c6",
+      "htmlHash": "082da485d0ea39df0b480a8ad9178e57c1a42edc4305b26d01168ef9341331c6",
+      "workerHash": "3a49033274241ceb6cee935a85a3a697042627130e41cf7657e3086f8a37a299",
+      "assetCount": 25,
+      "workerCacheControl": "no-store, max-age=0"
+    },
+    {
+      "route": "/api/admin/wordbook-library",
+      "status": 401,
+      "privateDataReturned": false
+    },
+    {
+      "route": "/api/student/session",
+      "status": 401,
+      "privateDataReturned": false
+    },
+    {
+      "route": "/api/student/notebook",
+      "status": 401,
+      "privateDataReturned": false
+    }
+  ],
+  "errors": [],
+  "e2eExitCode": 0,
+  "aliasRestored": true
+}

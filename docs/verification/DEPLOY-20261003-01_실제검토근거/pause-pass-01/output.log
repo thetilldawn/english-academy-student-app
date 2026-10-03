@@ -1,0 +1,13 @@
+
+[E2E] authenticated-preview
+
+Running 1 test using 1 worker
+
+(node:44572) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+M10 시작 제어: ready-to-pause (e76000e0-b622-414f-90b7-0c6830254c9d)
+M10 시작 제어: paused-checks-done (e76000e0-b622-414f-90b7-0c6830254c9d)
+M10 시작 제어: completed (e76000e0-b622-414f-90b7-0c6830254c9d)
+  ok 1 test\e2e\authenticated\maintenance-start-pause.spec.ts:35:7 › @authenticated 유지보수 새 시작 중지와 기존 답 보존 › 새 시작만 멈추고 기존 시험·재시험 저장과 같은 준비의 재개를 허용한다 (2.5m)
+
+  1 passed (2.6m)

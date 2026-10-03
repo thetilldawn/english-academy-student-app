@@ -1,0 +1,11 @@
+
+[E2E] authenticated-preview
+
+Running 2 tests using 1 worker
+
+(node:60032) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 test\e2e\authenticated\maintenance-compatibility.spec.ts:38:7 › @authenticated 유지보수 구형 시험과 기기·계정 보존 › 같은 기기의 두 탭·다른 기기·계정 변경에서 미제출 답을 보존한다 (17.4s)
+  ok 2 test\e2e\authenticated\maintenance-compatibility.spec.ts:94:7 › @authenticated 유지보수 구형 시험과 기기·계정 보존 › 구형 방식의 진행 답·기한·재시험과 포인트를 재접속 뒤에도 보존한다 (23.9s)
+
+  2 passed (50.8s)

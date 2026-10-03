@@ -1,0 +1,15 @@
+{
+  "token": "e76000e0-b622-414f-90b7-0c6830254c9d",
+  "paused": false,
+  "attemptB": {
+    "id": "8a0df91c-9a91-4b18-867d-af4c4f3e703a",
+    "passed": true,
+    "finalScore": 100
+  },
+  "attemptsA": 1,
+  "attemptsB": 1,
+  "receiptsA": 2,
+  "receiptsB": 1,
+  "deletedStudents": 2,
+  "sql": "begin read only;select jsonb_build_object('token','e76000e0-b622-414f-90b7-0c6830254c9d','paused',(select paused from private.quiz_start_control where singleton),'attemptsA',(select count(*) from public.quiz_attempts where student_id='ea6fd73f-013d-4c3f-9f8b-fcd1b674bfab'),'attemptsB',(select count(*) from public.quiz_attempts where student_id='ac0a3dac-0b75-4594-a998-590c9bfe0cae'),'attemptB',(select jsonb_build_object('id',id,'finalScore',final_score,'passed',passed) from public.quiz_attempts where id='8a0df91c-9a91-4b18-867d-af4c4f3e703a'),'receiptsA',(select count(*) from private.local_quiz_phase_receipts where attempt_id='9860e65d-ed9d-4e30-82ef-ea22312a4ea6'),'receiptsB',(select count(*) from private.local_quiz_phase_receipts where attempt_id='8a0df91c-9a91-4b18-867d-af4c4f3e703a'),'deletedStudents',(select count(*) from public.students where id in ('ea6fd73f-013d-4c3f-9f8b-fcd1b674bfab','ac0a3dac-0b75-4594-a998-590c9bfe0cae') and deleted_at is not null)) verification;commit;"
+}

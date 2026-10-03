@@ -1,0 +1,88 @@
+{
+  "work": "DEPLOY-20261003-01",
+  "stage": "preview-passed-production-transition-pending",
+  "recordedAt": "2026-10-03T16:40:44.483Z",
+  "rawPrivateTracesRemainIgnored": true,
+  "files": [
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/operator.json",
+      "sha256": "2e3c21810950c74821c776940d565ec7ad02ef0a092e7812c2dd07412b7e5972"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/output.log",
+      "sha256": "c8887a564df3d25c2ef6905e8d0567885f8e750fd06de823dcd575aaf5793fce"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/구형시험_보존.json",
+      "sha256": "32d760d8504c597c8026f2e14542a8615c7ebb0349c932281eeff91c8d7291ba"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/기기와계정.json",
+      "sha256": "b24211b2032f61e76607900181ea8197cd488b976302ddbf62d91e0a8d504ee6"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-pass-01/operator.json",
+      "sha256": "9539353dcf4f4632d085f79e89809ac9372e75d3070eb5f09a642caf90f0f17c"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-pass-01/output.log",
+      "sha256": "b9161daa740a5d472bf65f176121c46ba4876f0e0c67974057478e389752c145"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-pass-01/점검중_새시작과_기존답.json",
+      "sha256": "e6618573e27a06498a557818818e2b0e0615794b511d59313dd1d78f46c181b8"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/templates-pass-04/operator.json",
+      "sha256": "75358feccd95af5006b45ecd160854078961097d78b7a0ae5715ac58a421d708"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/templates-pass-04/output.log",
+      "sha256": "6ae355734572720f19adc30aec80d4278c619132c02d8b6837518fd2b1dbb8c2"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/templates-pass-04/종류별_템플릿.json",
+      "sha256": "0b09e26551b79e3b828e343c2293f441bbdc06c1ee8b7217c8d1ca0d6351719b"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/operator.json",
+      "sha256": "47c3832615f6717c9a67735c50e37d8b489bf621ccd91d1e605494002cae898d"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/output.log",
+      "sha256": "5beed23cc9bbdc079eb31221589e158e1972ee57c408a435557f476aeecfe45b"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/같은주소_복귀.json",
+      "sha256": "a277ea9940af701d7478bc3ebf0bc4f6953f204445b6c6031ce1bb4ed23ef700"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/학습과오답.json",
+      "sha256": "c1324c2e22e9da828a62f068b5892b85dddfc65072d7304fbe7b15542edfae68"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-checkpoint.json",
+      "sha256": "f494f4fdcf73c82e097efa91120e00b63f58328cbbb027cb91393034b282aef3"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-confirmed-db.json",
+      "sha256": "4a7d252a012d6bc70a99d88b68311e1fbea9f8bb23c8f0705276600b34b5dae1"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/resume-confirmed-db.json",
+      "sha256": "6313a53c86456e18fdd896bb5af434dab61ebca4fd7dd65d6bf05b14d666975d"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-final-db.json",
+      "sha256": "3eac9128a58e9f6be2761e1cc601a36f43500085bfc165601a7c00073f8ea7ce"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/preview-final-selection.json",
+      "sha256": "4342c9038a1e8044df9d41a62e165364c074950dff70784e2a4a7ca6a052b45f"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/production-preflight-20261004.json",
+      "sha256": "35bb920e29b9c8143af6ebea32890e61aee07d5fbbabfa69752091c2688543ed"
+    }
+  ]
+}

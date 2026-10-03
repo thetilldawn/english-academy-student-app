@@ -1,9 +1,9 @@
 {
   "work": "DEPLOY-20261003-01",
-  "status": "preview-validation-in-progress",
+  "status": "production-transition-compatibility-validation-pending",
   "baseline": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
-  "candidate": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
-  "recordedAt": "2026-10-03T15:26:01.769Z",
+  "candidate": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "recordedAt": "2026-10-03T16:40:44.485Z",
   "migrations": [
     {
       "order": 1,
@@ -335,6 +335,20 @@
       ],
       "production": [],
       "note": "APP-20261003-12: student notification lock order; preserve original body metadata and no existing row changes"
+    },
+    {
+      "order": 25,
+      "file": "supabase/migrations/20261004000000_bound_template_search_document_reads.sql",
+      "name": "bound_template_search_document_reads",
+      "sha256": "3d72914a773a858d822ffeb1670e5938e86b72b690fb162cc477a45acda0538c",
+      "preview": [
+        {
+          "name": "bound_template_search_document_reads",
+          "version": "20261003161522"
+        }
+      ],
+      "production": [],
+      "note": "APP-20261004-01; preserved actual151tables/826otherfunctions, exact18search strings"
     }
   ],
   "preview": {
@@ -590,19 +604,19 @@
     "teamId": "team_XZeAoV0MqheWJHPvZNOSflMw",
     "name": "english-academy-student-app",
     "currentProduction": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
-    "currentPreview": "dpl_HAcG5dXR1oKEK4KrPbECCYGv8E1v",
+    "currentPreview": "dpl_GmgoCwXLt4Rj8iNjeC6xbxuxJQpM",
     "observedCode": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
     "buildOverride": false,
     "node": "24.x",
-    "source": "logged-in browser project overview and build settings; git ls-remote exact repository URL"
+    "source": "logged-in browser project overview and build settings; git ls-remote exact repository URL",
+    "observedPreviewCode": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e"
   },
   "openGates": [
-    "same-origin update/compatible rollback with device answers",
-    "authenticated Preview complete fake flow",
-    "frozen per-operation production preservation manifest"
+    "production baseline app compatibility bridge and old-to-new SQL transition",
+    "frozen per-operation production preservation manifest and actual concurrent answers",
+    "final exact fake-admin/dataset cleanup and before/after preservation"
   ],
   "productionWrites": 0,
-  "appDeployments": 0,
   "previousCandidate": "39584224e9d3fc49237a85024d8ad1e9b1ca2721",
   "completedPrerequisites": [
     {
@@ -617,9 +631,26 @@
   "previewExecution": {
     "baselineA": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
     "baselineAIsCompatible": true,
-    "finalB": "검사 도구 보완 커밋 뒤 고정",
+    "finalB": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
     "sameRuntimeContract": true,
     "allowPreviewDeployment": true,
-    "allowProductionBeforeT1ThroughT5": false
-  }
+    "allowProductionBeforeT1ThroughT5": false,
+    "finalDeployment": "dpl_GmgoCwXLt4Rj8iNjeC6xbxuxJQpM",
+    "provenRuns": [
+      "compatibility-pass-03 @3a8f687",
+      "pause-pass-01 @3a8f687",
+      "templates-pass-04 @51e0141",
+      "local-quiz-pass-02 @51e0141"
+    ],
+    "evidence": "DEPLOY-20261003-01_실제검토근거/manifest.json"
+  },
+  "productionDeployments": 0,
+  "proposedProductionSequence": [
+    "independent #23 start-control and narrow transition reader preinstall; original metadata/rows preserved",
+    "separate short transaction pause new starts",
+    "tested baseline-compatible bridge app",
+    "one transaction for remaining #1..22,#24,#25 with per-source reset and original-column preservation",
+    "activate final candidate and verify reads",
+    "separate short transaction resume new starts"
+  ]
 }

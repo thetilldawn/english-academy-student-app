@@ -1,0 +1,11 @@
+
+[E2E] authenticated-preview
+
+Running 2 tests using 1 worker
+
+(node:51220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 test\e2e\authenticated\maintenance-local-quiz.spec.ts:52:7 › @authenticated 유지보수 실제 회차 제출과 배포 복귀 › 학습·최초·재시험·오답 해결과 과거 점수를 실제 앱에서 보존한다 (33.4s)
+  ok 2 test\e2e\authenticated\maintenance-local-quiz.spec.ts:99:7 › @authenticated 유지보수 실제 회차 제출과 배포 복귀 › 미접수 답을 같은 주소 B→A→B와 늦은 제출·응답 유실 뒤에도 보존한다 (1.3m)
+
+  2 passed (2.0m)

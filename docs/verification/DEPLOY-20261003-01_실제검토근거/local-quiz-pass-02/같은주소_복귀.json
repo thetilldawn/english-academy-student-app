@@ -1,0 +1,102 @@
+{
+  "studentId": "643265da-2e22-4203-b083-8159b5bb339b",
+  "assignmentId": "b22900ae-037a-444a-bcce-f74aafe63a56",
+  "attemptId": "a439b0f2-3599-494e-8254-33c27b451762",
+  "sequence": [
+    "dpl_GmgoCwXLt4Rj8iNjeC6xbxuxJQpM",
+    "dpl_8CXU3DwXZF4jAw4np2fi6SLXCDuX",
+    "dpl_GmgoCwXLt4Rj8iNjeC6xbxuxJQpM"
+  ],
+  "builds": [
+    "082da485d0ea39df0b480a8ad9178e57c1a42edc4305b26d01168ef9341331c6",
+    "8d940836e6884a9205be4900c11ae4c7592b90f2415e8211c0ff0f16c21f3e11",
+    "082da485d0ea39df0b480a8ad9178e57c1a42edc4305b26d01168ef9341331c6"
+  ],
+  "fingerprint": "cef21e2110525e3af38ced2ab788aca66a8a4564761d96123cde88981f49e9ea",
+  "answerCount": 4,
+  "submissionId": "a6a3ca47-d660-487f-9ad1-47de3674a052",
+  "actualPosts": 2,
+  "deadline": "2026-10-03T16:30:19.902Z",
+  "serverTimeBeforeFirstSubmit": "2026-10-03T16:30:21.000Z",
+  "acceptedBy": "dpl_8CXU3DwXZF4jAw4np2fi6SLXCDuX",
+  "replayedBy": "dpl_GmgoCwXLt4Rj8iNjeC6xbxuxJQpM",
+  "responseReplayIdentical": true,
+  "receipt": {
+    "protocol": "local_batch_v1",
+    "submissionId": "a6a3ca47-d660-487f-9ad1-47de3674a052",
+    "phase": "initial",
+    "planHash": "33607843f436ad9315e70d9d384cd06304387e2e42b5f5313f62d8ef9c43ea5b",
+    "payloadHash": "260f32a4ec32b2d7a201519d0ab61602a781eb894bdc726a1dd3aadc42b45479",
+    "accepted": [
+      {
+        "id": "b8ab26a4-1922-46f4-8cf0-3ff2ca90b0f0",
+        "answerHash": "2eda3727974abc2a100c04d67102d18cd26348ad6f94b54df9cfc129e629671f",
+        "sequence": 1
+      },
+      {
+        "id": "cfa5adb9-87ae-42be-8335-85041eeae369",
+        "answerHash": "8b839204bb252fd353ecfc3aa4c945da3d4a69887c39e8e83e044bfbd4e09600",
+        "sequence": 2
+      },
+      {
+        "id": "14a5edb1-a0f7-4f4a-bb4d-a17b045561c6",
+        "answerHash": "490bf01607b3d1c32f7f4f4569c5edfc46fb02ae4575f1bd5bcd6386197b470b",
+        "sequence": 3
+      },
+      {
+        "id": "b06504d1-ac30-4851-805f-49fee80b4201",
+        "answerHash": "a36a866b6421fd6fb719a6ca215abb2771afc74df93e58d9b0f5ac6325af0c41",
+        "sequence": 4
+      }
+    ],
+    "result": {
+      "state": "completed",
+      "finalized": true,
+      "phases": [
+        {
+          "phase": "initial",
+          "score": 100,
+          "passed": true,
+          "ended_at": "2026-10-03T16:29:51.284468+00:00",
+          "evidence": "recorded_answers",
+          "attempt_id": "a439b0f2-3599-494e-8254-33c27b451762",
+          "end_reason": "completed",
+          "started_at": "2026-10-03T16:29:49.902468+00:00",
+          "score_basis": "initial_total",
+          "wrong_count": 0,
+          "content_hash": "9707a9a005124d4e596b7bca918a18bfd8b7424b5a685d4c287abf47f3e2f056",
+          "target_count": 4,
+          "correct_count": 4,
+          "passing_score": 80,
+          "unanswered_count": 0
+        }
+      ],
+      "attempt": {
+        "phase": "completed",
+        "passed": true,
+        "status": "completed",
+        "startedAt": "2026-10-03T16:29:49.902468+00:00",
+        "deadlineAt": "2026-10-03T16:30:19.902468+00:00",
+        "finalScore": 100,
+        "completedAt": "2026-10-03T16:29:51.284468+00:00",
+        "initialScore": 100,
+        "attemptNumber": 1,
+        "questionCount": 4,
+        "elapsedSeconds": 1,
+        "retryStartedAt": null,
+        "retryCorrectCount": 0,
+        "initialCompletedAt": "2026-10-03T16:29:51.284468+00:00",
+        "initialCorrectCount": 4,
+        "unresolvedWrongCount": 0
+      },
+      "detailScope": "initial_mistakes",
+      "finalReason": "completed",
+      "finalizedAt": "2026-10-03T16:29:51.284468+00:00",
+      "retryStarted": false,
+      "resultVersion": "97f7280a1ed1f6aec3dfa6747e49d2128701254e78c1745bd7f6465301ffbb41",
+      "schemaVersion": "vocabulary-result-v1",
+      "retentionPolicy": "summary_and_mistakes_v1"
+    },
+    "retryTargets": []
+  }
+}

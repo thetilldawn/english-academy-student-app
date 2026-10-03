@@ -1,0 +1,13 @@
+{
+  "studentId": "17c14792-1ce1-4be6-81b9-e5eca3183098",
+  "assignmentId": "85904a57-b795-4eb0-9a8b-a2dab31db563",
+  "attemptId": "91f2eaaf-9a43-44a4-a6ce-0862ba5978b1",
+  "reviewAssignment": "33066746-0347-41dd-861f-156034987b4f",
+  "scores": [
+    50,
+    75,
+    100
+  ],
+  "remainingMistakes": 0,
+  "priorHistoryPreserved": true
+}

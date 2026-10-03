@@ -1,0 +1,10 @@
+
+[E2E] authenticated-preview
+
+Running 1 test using 1 worker
+
+(node:51960) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 test\e2e\authenticated\maintenance-templates.spec.ts:15:7 › @authenticated 유지보수 종류별 템플릿 실제 저장 › 네 종류와 구형 미분류를 저장·재조회하고 가짜 초안을 종료한다 (1.2m)
+
+  1 passed (1.4m)

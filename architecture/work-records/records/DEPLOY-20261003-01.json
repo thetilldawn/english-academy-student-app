@@ -117,6 +117,144 @@
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토_중간결과.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/operator.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/output.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/구형시험_보존.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/compatibility-pass-03/기기와계정.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-pass-01/operator.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-pass-01/output.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-pass-01/점검중_새시작과_기존답.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/templates-pass-04/operator.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/templates-pass-04/output.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/templates-pass-04/종류별_템플릿.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/operator.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/output.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/같은주소_복귀.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/local-quiz-pass-02/학습과오답.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-checkpoint.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-confirmed-db.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/resume-confirmed-db.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/pause-final-db.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/preview-final-selection.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/production-preflight-20261004.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/.gitattributes",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_실제검토근거/manifest.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
     }
   ],
   "requirements": [
