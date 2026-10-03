@@ -66,6 +66,14 @@ describe.sequential("50 frozen questions shared by 100 separate real assignments
     await owner();
     const students=(await db.query<{id:string}>(`insert into public.students(display_name,created_by,school_name,grade_label)
       select 'Fake sharing '||n,$1,'Fake school','고2' from generate_series(1,100)n returning id`,[adminId])).rows;
+    await db.exec(`create temp table observed_assignment_writes(operation text, reference_only boolean);
+      create function pg_temp.observe_assignment_write() returns trigger language plpgsql as $$begin
+        insert into pg_temp.observed_assignment_writes values(tg_op,
+          new.content_version_id is not null and new.prompt is null and new.choices is null);
+        return new;
+      end$$;
+      create trigger observe_assignment_write after insert or update on public.assignment_questions
+        for each row execute function pg_temp.observe_assignment_write();`);
     for(const student of students){
       await admin();
       const assignment=await scalar<string>("select public.create_assignment_with_delivery_v7('가짜 공유 검사',$1::uuid,$2::uuid[],50,100::smallint,300,80::smallint,false,null,'fixed',null,array[$3::uuid],'none',null,$4::jsonb) value",[prep.datasetId,units,student.id,plan]);
@@ -85,6 +93,12 @@ describe.sequential("50 frozen questions shared by 100 separate real assignments
       'minReuse',(select min(n) from(select count(*) n from public.assignment_questions group by content_version_id)x),
       'maxReuse',(select max(n) from(select count(*) n from public.assignment_questions group by content_version_id)x)) value`);
     expect(result).toEqual({assignments:100,bankLinks:5000,quizLinks:5000,sourceBodies:50,commonBodies:50,inlineBankBodies:0,inlineQuizBodies:0,duplicatedCommonBodies:0,preparedBodies:0,minReuse:100,maxReuse:100});
+    const writes = await scalar(`select jsonb_build_object(
+      'inserted',(select count(*) from pg_temp.observed_assignment_writes where operation='INSERT'),
+      'updated',(select count(*) from pg_temp.observed_assignment_writes where operation='UPDATE'),
+      'inlineAtInsert',(select count(*) from pg_temp.observed_assignment_writes where not reference_only),
+      'frozenMeanings',(select count(*) from private.assignment_vocabulary_meaning_refs)) value`);
+    expect(writes).toEqual({inserted:5000,updated:0,inlineAtInsert:0,frozenMeanings:5000});
     const mismatch=await scalar<number>(`select count(*)::int value from private.quiz_question_contents_v1 q
       join private.assignment_question_contents_v1 b on b.id=q.assignment_question_id
       where (q.prompt,q.choices,q.direction,q.correct_choice_index) is distinct from (b.prompt,b.choices,b.direction,b.correct_choice_index)`);
@@ -94,6 +108,6 @@ describe.sequential("50 frozen questions shared by 100 separate real assignments
       'expandedRows',(select sum(pg_column_size(to_jsonb(q)-'content_version_id')) from private.assignment_question_contents_v1 q),
       'commonContent',(select sum(pg_column_size(to_jsonb(v))) from private.vocabulary_question_content_versions v)) value`);
     expect(sizes.physicalRows+sizes.commonContent).toBeLessThan(sizes.expandedRows);
-    process.stdout.write(JSON.stringify({scenario:"50 questions x 100 separate assignments; sequential, not concurrent capacity",...result,rowRepresentationBytes:sizes})+"\n");
+    process.stdout.write(JSON.stringify({scenario:"50 questions x 100 separate assignments; sequential, not concurrent capacity",...result,writes,rowRepresentationBytes:sizes})+"\n");
   },120000);
 });

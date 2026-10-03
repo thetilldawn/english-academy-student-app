@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 144,
-      "pathSetSha256": "a9df345df72d3b468ec5f491bb9b507acf09ff472bbda83eacc44b1aa4428a5c"
+      "fileCount": 145,
+      "pathSetSha256": "22f76d8a7d53b4df233cedec712b3b67c9668b2574cb1a94ee7a3392b04781f8"
     },
     {
       "path": "src/lib/deploy",
@@ -3085,6 +3085,11 @@
       "path": "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261003234500_insert_composition_question_refs_directly.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
     }
   ],
   "features": [
@@ -4581,7 +4586,8 @@
           "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
-          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+          "supabase/migrations/20261003234500_insert_composition_question_refs_directly.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -4635,7 +4641,9 @@
           "src/features/assignments/server/planning/mixed-mistake-assignment.test.ts",
           "src/features/assignments/server/use-cases/mixed-mistake-assignment.test.ts",
           "src/features/assignments/domain/mixed-mistake-primary-plan.test.ts",
-          "src/lib/database/vocabulary-mixed-primary.integration.test.ts"
+          "src/lib/database/vocabulary-mixed-primary.integration.test.ts",
+          "src/lib/database/composition-question-direct-insert.integration.test.ts",
+          "src/lib/database/vocabulary-question-content-sharing.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
