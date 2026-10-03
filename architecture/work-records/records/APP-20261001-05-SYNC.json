@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261001-05-SYNC",
+  "title": "자율연습 종료 확인의 검토 환경 누락 보완",
+  "size": "small",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261001-05-SYNC.md",
+  "baseline": "f9730a962ad46a396e70cc36f13e41ae6184d399",
+  "owners": [
+    "quiz-player",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "docs/work-orders/APP-20261001-05-SYNC.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/lib/database/practice-completion-sync.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/lib/database/student-word-practice.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "engineering",
+      "text": "저장되지 않은 종료 표시와 미응답 정답 공개 방지",
+      "acceptance": "원래 M11의 종료 명령과 저장 상태로만 완료 확정",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-word-practice"
+      ],
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "후속 수정과 학생 기록·권한 보존",
+      "acceptance": "M02 공용본문·M03 종류·기존 행·OID/소유자/ACL/config 동일",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-word-practice"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "알려진 누락만 동기화",
+      "acceptance": "완성본 무변경·예상 밖 본문 중단",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-word-practice"
+      ],
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "작업 승인",
+      "answer": "기존 유지보수 완료·계속 진행과 M11 완료 확인 요구의 같은 오류 수리",
+      "source": "사용자 계속 진행 승인과 APP-20261001-05"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "동기화 범위",
+      "answer": "알려진 본문 hash만 세 곳 치환, 완성본 no-op, 기타 중단. OID/권한/설정과 모든 학생행 보존",
+      "source": "M10 두 환경 읽기 조사와 독립 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "적용 순서",
+      "answer": "로컬/운영 원래 순서 뒤 동기화는 no-op. 검토는 M11 원본 재실행 없이 동기화만 적용",
+      "source": "현재 검토 이력 M11 누락·후속 M02/M03 존재"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "화면·정책 경계",
+      "answer": "기존 로컬 최종 동작과 환경을 일치시키며 UI 파일/캐시/보관정책 불변. 새 화면 검증 주장은 하지 않음",
+      "source": "이 수리 지시서"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "state": {
+      "status": "not_applicable",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "알려진 누락의 DB 동기화와 계약 검사를 추가한다."
+    },
+    "api": {
+      "status": "checked",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "로컬 최종 M11 기능과 환경을 맞추는 수리이며 이 계층 구현은 변경하지 않는다."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "알려진 누락의 DB 동기화와 계약 검사를 추가한다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 권한·공용본문·미응답 정답 비공개와 학생행 보존을 대조한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 권한·공용본문·미응답 정답 비공개와 학생행 보존을 대조한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 권한·공용본문·미응답 정답 비공개와 학생행 보존을 대조한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "캐시 코드와 저장 규격을 변경하지 않는다.",
+      "checkIds": []
+    }
+  },
+  "design": {
+    "dataFlow": "종료 조회 내부 함수의 알려진 누락 본문→세 곳 보완→최종 본문/메타 확인",
+    "reuse": "원래 M11 종료 규칙과 M02 복원뷰·M03 문항 종류를 그대로 사용",
+    "cache": "새 캐시·API 호출·브라우저 데이터 변경 없음",
+    "compatibility": "이미 완성된 최종 스키마는 무변경, 검토만 누락 보완, 다른 본문은 중단",
+    "rollback": "적용 전 정의를 보관하고 대상 함수만 판단 후 복구 가능. 학생행/새 규격은 변경하지 않음"
+  },
+  "uiStates": [],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발 기준 v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "설계→검사→동일 SQL 검토 확인과 근거 보존"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/practice-completion-sync.integration.test.ts",
+      "scenario": "누락/완성/예상밖 본문·행/권한/공용복원/문항종류",
+      "expected": "누락만 보완·완성 무변경·거절시 전체취소·메타/행 보존",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/student-word-practice.integration.test.ts",
+      "scenario": "기존 마감/종료/타인권한 회귀와 타입/lint/구조/기록 관문",
+      "expected": "기존 최종 동작과 검사 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "review",
+      "target": "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql",
+      "scenario": "독립 검토와 같은 SQL 검토 DB 적용 전후 보존",
+      "expected": "최종 본문 일치·기존 학생행/권한/비대상 함수 동일·실학생쓰기0",
+      "topics": [
+        "structure",
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    }
+  ],
+  "verification": null
+}

@@ -278,6 +278,27 @@ describe.sequential("별도 자율연습과 정규 자료 보존",()=>{
     expect(savedRows.questions).toEqual(pendingRows.questions);
     expect(await snapshot()).toEqual(before);
   });
+  it("M11 환경 동기화는 진행 중 연습의 답·문항·정규 기록을 보존한다",async()=>{
+    const run=await start(settings("total"));await answer(run,0);
+    const original=(await owner("select pg_get_functiondef('private.word_practice_read_v1(private.student_word_practice_runs)'::regprocedure) body")).rows[0].body as string;
+    const missing=original
+      .replace("  -- A zero clock requests the existing expiry/timeout command. A read must not\n  -- invent a committed result or reveal unanswered keys before that command.\n  finished:=p_run.status<>'in_progress';","  finished:=p_run.status<>'in_progress' or at_time>=p_run.deadline_at;")
+      .replace("  state:=p_run.status;","  state:=case when p_run.status='in_progress' and finished then 'expired' else p_run.status end;")
+      .replace("'completionConfirmed',p_run.status in ('completed','expired'),'attempt'","'attempt'");
+    await db.exec(missing);
+    const saved=async()=>({regular:await snapshot(),
+      run:(await owner("select to_jsonb(r) value from private.student_word_practice_runs r where id=$1",[run.attempt.id])).rows,
+      questions:(await owner("select to_jsonb(q) value from private.student_word_practice_questions q where run_id=$1 order by ordinal",[run.attempt.id])).rows});
+    const before=await saved();
+    const patch=readFileSync("supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql","utf8")
+      .replace(/\r\n/g,"\n").replace(/^begin;$/m,"").replace(/^commit;$/m,"");
+    await db.exec(patch);
+    expect(await saved()).toEqual(before);
+    const resumed=await rpc<QuizAttemptResponse>("get_student_word_practice_v1",[student,run.attempt.id]);
+    expect(resumed.completionConfirmed).toBe(false);
+    expect(resumed.attempt.questions[0].initialChoiceIndex).toBe(0);
+    expect(resumed.attempt.questions.slice(1).every(q=>q.revealedCorrectChoiceIndex===null)).toBe(true);
+  });
   it("타인/차단 학생·직접표 접근과 비서비스 역할을 막는다",async()=>{
     const run=await start();expect(await rpc("get_student_word_practice_v1",[other,run.attempt.id])).toBeNull();
     await fails(()=>rpc("answer_student_word_practice_v1",[other,run.attempt.id,run.attempt.questions[0].id,0]),"practice_not_found");

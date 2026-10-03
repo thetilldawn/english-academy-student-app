@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 147,
-      "pathSetSha256": "07d15b88453bc051082b69b860c532b4b4c965ad3e5a544ffb5ecd1b256f3f40"
+      "fileCount": 148,
+      "pathSetSha256": "ef2abe5cf3a98e3f642ea05d9c3f0df09888c928d30031fe243ea454c6993bf6"
     },
     {
       "path": "src/lib/deploy",
@@ -3100,6 +3100,11 @@
       "path": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql",
+      "owner": "quiz-player",
+      "flow": "student-word-practice"
     }
   ],
   "features": [
@@ -8603,7 +8608,8 @@
           "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
-          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+          "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql"
         ],
         "cacheStreaming": [
           "src/features/quiz-player/server/practice-http.ts",
@@ -8643,7 +8649,8 @@
           "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
           "src/features/quiz-player/domain/mistake-practice-plan.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
-          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
+          "src/lib/database/practice-completion-sync.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
