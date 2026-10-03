@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 148,
-      "pathSetSha256": "ef2abe5cf3a98e3f642ea05d9c3f0df09888c928d30031fe243ea454c6993bf6"
+      "fileCount": 149,
+      "pathSetSha256": "734539620baf6ceadb2d2c98d6cabf31dfc97c0d4b947ddc414a3a1d40bcb78a"
     },
     {
       "path": "src/lib/deploy",
@@ -3110,6 +3110,11 @@
       "path": "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261003235930_order_student_notification_locks.sql",
+      "owner": "notifications",
+      "flow": "student-dashboard-read"
     }
   ],
   "features": [
@@ -5888,7 +5893,8 @@
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
           "supabase/migrations/20260929054833_gate_student_notifications_on_assignment_release.sql",
           "supabase/migrations/20260929110037_paginate_student_dashboard_sections.sql",
-          "supabase/migrations/20260930152638_require_passed_vocab_points.sql"
+          "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
+          "supabase/migrations/20261003235930_order_student_notification_locks.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/page.tsx",
@@ -5919,7 +5925,8 @@
           "src/features/student-dashboard/server/student-dashboard-section-cursor.test.ts",
           "src/features/student-dashboard/controller/use-student-assignment-page.test.tsx",
           "src/lib/database/student-dashboard-sections-final-schema.integration.test.ts",
-          "src/features/student-dashboard/ui/student-current-assignments.test.tsx"
+          "src/features/student-dashboard/ui/student-current-assignments.test.tsx",
+          "src/lib/database/notification-lock-order.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

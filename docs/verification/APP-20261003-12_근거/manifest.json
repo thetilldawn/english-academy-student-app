@@ -1,0 +1,90 @@
+{
+  "work": "APP-20261003-12",
+  "recordedAt": "2026-10-03T15:04:03.924Z",
+  "files": [
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-before.json",
+      "sha256": "c6938c39d5f408b6feccce79f047ec8240b0f7c585b9040c17d7e120c0f1758b"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-after.json",
+      "sha256": "a8cd50b382482d25e0d1c8d66634859c5f721d8a5d38ea5644ff0902b8c46ab0"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-apply.json",
+      "sha256": "2009f43f81ed0e9275edcb44eea7c32e106a522483a98035b84c39e47b6aa694"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-preview-apply.sql",
+      "sha256": "08df33694e90833954204999876f59938e66e0e64e5cd47a86cef7bb41fd58d7"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-snapshot.sql",
+      "sha256": "52798a5db0eb241be53fd70bc9d8e48b26148b81a61a26b438170108c72e2526"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-fixture.sql",
+      "sha256": "9ea94a99d5b5db96adcf80f8913388eb8470b47d50858d7964ed9f7880e83b84"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-fixture.json",
+      "sha256": "e910a7fb08d995f4dd6f7ab686b438382c397864ae8a22d5bdc04825e7136bac"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-first-success.json",
+      "sha256": "3e05645a0cfea54a83a3c4c5866fe259be5c2bcfc5873377678a57544030f242"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-second-success.json",
+      "sha256": "23ec0eb9d606ec2c29bc6f56ff98e2c4a1a199840236416e31c781ca1cf11229"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-http-notification_first.json",
+      "sha256": "cabe95de990d146f4c399e8f2107fc83fdf72536cacb84ee9356c70b13867f17"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-http-start_first.json",
+      "sha256": "d83d43edf20215b7838f1b23cf051f376b95ae6ad22228195d8534f4e2fa05da"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-race-notification_first-success.sql",
+      "sha256": "cfd4c40cc32926b9727512f72aba85d2e5f771c1c0ae43244ac510872f52ea29"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-race-start_first-success.sql",
+      "sha256": "004dbfa3bb1d22f6095ceba64886c74060e7d0ca1343d7930d523211e49f91c7"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-replay.json",
+      "sha256": "f79d8188648026cc2b6038e72f97c2305f67080a40049f9aeb59f93cb940e846"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup-before.json",
+      "sha256": "0362967645bfa92b77c8f5d7796edeab825ffde7aff379716686323bd743a8af"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup.json",
+      "sha256": "800c15722d440b61bee3fefd62d2460ebd8b0ae5d4875a093c6fad7b50d9828c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup-after.json",
+      "sha256": "769b729a6039e03a202754d6912eed2679512b0cde205cf39758b82e35ed3622"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup.sql",
+      "sha256": "372d2179794a83da6bd9119aa5179802b3c14f1d12f6926e2d10a8e6136e11bd"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-missed-overlap.json",
+      "sha256": "3784debc9c78572b0587a31b239c5e36fd96dfd1ca2d97d11cc59e9a7746b9b9"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-auth-fixture-failure.json",
+      "sha256": "bf1ecae1a3d65a12f406955eb90ab0666f6bb4143ce8b25a016f2483cdc7496f"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-local-tests.log",
+      "sha256": "18da2ce57ade52f7d84f44720949bda772880874ee07f6d179e3fbc14b567f3c"
+    }
+  ]
+}

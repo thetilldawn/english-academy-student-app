@@ -1,0 +1,12 @@
+[
+  {
+    "case": "notification_first",
+    "studentId": "b7120000-0000-4000-8000-000000000002",
+    "assignmentId": "c6068d04-b577-4bd6-9872-ee1061d7e2e3"
+  },
+  {
+    "case": "start_first",
+    "studentId": "b7120000-0000-4000-8000-000000000003",
+    "assignmentId": "71a11527-056a-46e1-a2fe-feeb20f5da68"
+  }
+]

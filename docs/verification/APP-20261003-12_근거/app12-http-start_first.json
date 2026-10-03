@@ -1,0 +1,17 @@
+{
+  "case": "start_first",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "fn": "claim_student_notifications_v1",
+  "studentId": "b7120000-0000-4000-8000-000000000003",
+  "assignmentId": "71a11527-056a-46e1-a2fe-feeb20f5da68",
+  "sentAt": "2026-10-03T15:00:03.896Z",
+  "finishedAt": "2026-10-03T15:00:04.726Z",
+  "durationMs": 830,
+  "status": 200,
+  "data": [
+    {
+      "new_assignment_count": 0,
+      "deadline_soon_count": 0
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "case": "notification_first",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "fn": "create_quiz_attempt_from_bank",
+  "studentId": "b7120000-0000-4000-8000-000000000002",
+  "assignmentId": "c6068d04-b577-4bd6-9872-ee1061d7e2e3",
+  "sentAt": "2026-10-03T14:57:16.207Z",
+  "finishedAt": "2026-10-03T14:57:16.972Z",
+  "durationMs": 765,
+  "status": 200,
+  "data": "ba5d31b2-9984-4a26-802a-8ce24bfcccb0"
+}

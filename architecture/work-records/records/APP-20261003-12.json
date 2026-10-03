@@ -1,0 +1,1116 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261003-12",
+  "title": "시험 시작과 학생 알림의 동시 요청 오류 수리",
+  "size": "small",
+  "gate": "verified",
+  "guide": "docs/work-orders/APP-20261003-12.md",
+  "baseline": "149171051a0e9f33fc4601c6f3daa2686df109fb",
+  "owners": [
+    "notifications",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "docs/work-orders/APP-20261003-12.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/migrations/20261003235930_order_student_notification_locks.sql",
+      "state": "existing",
+      "owner": "notifications",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/notification-lock-order.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/notification-release-final-schema.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_검증결과.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_검토DB_명세.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/.gitattributes",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-after.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-apply.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-auth-fixture-failure.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-before.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup-after.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup-before.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-cleanup.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-first-success.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-fixture.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-fixture.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-http-notification_first.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-http-start_first.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-local-tests.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-missed-overlap.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-preview-apply.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-race-notification_first-success.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-race-start_first-success.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-replay.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-second-success.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-snapshot.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/manifest.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "engineering",
+      "text": "같은 학생의 알림과 시험 시작 동시 요청에서 상호 대기를 제거한다",
+      "acceptance": "알림 먼저/시작 먼저 실제 두 연결이 순서대로 성공한다",
+      "disposition": "required",
+      "owners": [
+        "notifications"
+      ],
+      "flowIds": [
+        "student-dashboard-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "알림 수령 조건과 중복 방지·권한·학생 기록을 보존한다",
+      "acceptance": "기존 신규/8시간 마감/공개 조건·중복0·수신 이력·학생행·함수 메타 보존",
+      "disposition": "required",
+      "owners": [
+        "notifications"
+      ],
+      "flowIds": [
+        "student-dashboard-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "확인된 학생 함수만 수리한다",
+      "acceptance": "시험 시작·관리자 알림·UI·캐시·풀이 중 요청 횟수는 변경하지 않는다",
+      "disposition": "required",
+      "owners": [
+        "notifications"
+      ],
+      "flowIds": [
+        "student-dashboard-read"
+      ],
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "수리 승인",
+      "answer": "유지보수 완료와 계속 진행 승인 안에서 발견된 같은 오류 보완",
+      "source": "사용자 ㄱ 및 유지보수 완료 요청"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "최소 변경",
+      "answer": "학생 알림 함수만 PL/pgSQL로 바꾸고 학생 FOR UPDATE 뒤 별도 RETURN QUERY로 기존 CTE를 실행한다",
+      "source": "실제 40P01 로그·시험 시작과 외래키 잠금 순서·독립 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "권한·기록 경계",
+      "answer": "알림의 SECURITY INVOKER/ACL/OID/owner/search_path와 기존 행을 유지한다. 관리자 알림은 이번 전체해결 주장 밖이다",
+      "source": "현재 함수 메타와 기존 요청 계약"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "적용과 복구",
+      "answer": "로컬 검사 후 Preview에 한 SQL 적용, 실제 두 연결 증거와 보존 검사 후 M10 재개. 운영은 M10 전체 통과 후",
+      "source": "기존 검토→운영 승인 절차"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "state": {
+      "status": "not_applicable",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "학생 알림의 잠금 순서만 바꾸고 기존 동작과 보존을 검사한다."
+    },
+    "api": {
+      "status": "checked",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "동시 요청의 DB 수리로 이 계층 구현·기존 동작을 유지한다."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "학생 알림의 잠금 순서만 바꾸고 기존 동작과 보존을 검사한다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 service_role 전용 실행과 알림 수신 이력·학생행 보존을 확인한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 service_role 전용 실행과 알림 수신 이력·학생행 보존을 확인한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "not_applicable",
+      "reason": "알림 두 개의 수량만 반환하며 문항·답안 코드는 변경하지 않는다.",
+      "checkIds": []
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "캐시 코드와 저장 규격을 변경하지 않는다.",
+      "checkIds": []
+    }
+  },
+  "design": {
+    "dataFlow": "학생 행 선잠금→별도 문장에서 기존 신규/마감 알림 INSERT→기존 두 수량 반환",
+    "reuse": "현재 공개 조건·수신 이력 중복키·시험 시작 학생 잠금 순서를 재사용",
+    "cache": "새 호출·캐시·클라이언트 동작 변경 없음",
+    "compatibility": "기존 API 응답과 함수 OID·권한·소유자·설정 유지, 언어와 본문만 의도한 변경",
+    "rollback": "저장한 적용 전 함수 정의만 복구 가능. 수신 이력·시험 기록은 되돌리지 않으며 교착 재발 위험을 별도 고려"
+  },
+  "uiStates": [],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발 기준 v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "설계→검사→동일 SQL 검토 확인과 근거 보존"
+    },
+    {
+      "id": "S2",
+      "state": "adopted",
+      "version": "PostgreSQL 18 공식 문서 2026-10-03 조회",
+      "reference": "https://www.postgresql.org/docs/current/explicit-locking.html",
+      "reason": "교착 방지는 일관된 잠금 순서, VOLATILE 문장은 새 snapshot 사용"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/notification-lock-order.integration.test.ts",
+      "scenario": "원함수→보완 및 재적용·메타/기존행 보존",
+      "expected": "의도한 언어/본문 외 함수 메타·비대상 함수·수신 이력·학생행 동일",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/notification-release-final-schema.integration.test.ts",
+      "scenario": "기존 알림 공개/8시간/중복/타학생/역할 회귀 및 타입/lint/지도/기록 검사",
+      "expected": "기존 조건 유지·모든 지정 검사 통과",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "structure"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "review",
+      "target": "supabase/migrations/20261003235930_order_student_notification_locks.sql",
+      "scenario": "독립 검토·동일 SQL Preview 보존·실제 두 연결 알림 우선/시작 우선",
+      "expected": "잠금 대기 실제 관찰·40P01 없음·중복0·기존 권한/기록 보존",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "structure"
+      ]
+    }
+  ],
+  "verification": {
+    "fingerprint": "5eab0916a5d4564a431b116e16d91c5a6bf961a12e9c4b0c9f91034702d4fd5c",
+    "files": [
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "4e86dcd452436a5347f8323ce8fab0ab65c8e3ba7f1be3455ce2414eee70f1d8"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "9220aea242cf0d92776ea8a67d37334d632b3029cf9b0a31759691a1b292b173"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "3a4e58c471c0c8f2f3139349f4cb06d8f6d9d25df974b45877ed323aef0c769c"
+      },
+      {
+        "path": "package.json",
+        "sha256": "270a813421b5be605a19b70f5a24a2a51d440429ea9e2ff6290a447d9c351c68"
+      },
+      {
+        "path": "scripts/check-feature-map.mjs",
+        "sha256": "2ad96ff5c5f0e3e690a128eee90d24f6ad78a5bee650da42fcf7f43779d96e3b"
+      },
+      {
+        "path": "scripts/check-work-records.mjs",
+        "sha256": "b8a95754aa77e329ffd748ca91587996be221ea471a117ba816d0c61a0e2881f"
+      },
+      {
+        "path": "scripts/feature-map/change-impact.mjs",
+        "sha256": "a081f65b5915daf08e0e635c49e744a6b02ef480a46ae5ad0e2b63f203b71444"
+      },
+      {
+        "path": "scripts/feature-map/common.mjs",
+        "sha256": "69b9dad7ca7d05246233c00e0f10666486ed55890c120a6ebba7f496fb8130bc"
+      },
+      {
+        "path": "scripts/feature-map/flow-verification.mjs",
+        "sha256": "8cec86985fff2751e944ae60163c0f5ae8ab18e0a36981ae24eaebb66df4f0fd"
+      },
+      {
+        "path": "scripts/feature-map/import-graph.mjs",
+        "sha256": "82edb9b2bcc06ab69f6e7b545062e54a2b9b4363aa3e6dbc31a7298635622716"
+      },
+      {
+        "path": "scripts/feature-map/owner-output.mjs",
+        "sha256": "17d5ba87dc9b0796d84ca70703198e4bb8d150f56f0e3deda9e9c05fcc8ab187"
+      },
+      {
+        "path": "scripts/feature-map/ownership-catalog.mjs",
+        "sha256": "e88264dc3ecf42826152e060bad474a775fed1d66f6c7b5738352a7207235f76"
+      },
+      {
+        "path": "scripts/feature-map/runtime-flow.mjs",
+        "sha256": "9c2915e2b4be51b55840dbfda3ef8452f510412191980eeb4e914a5766317afc"
+      },
+      {
+        "path": "scripts/verify-ui-architecture.mjs",
+        "sha256": "dd7b31f9017f71e0777596a794c7e841c52923966881534666614935a39ed880"
+      },
+      {
+        "path": "scripts/work-records/context.mjs",
+        "sha256": "2d2b3f848e04db2b3ad76ba06fb480589e82243b51d714f0a98b37b70982adf8"
+      },
+      {
+        "path": "scripts/work-records/evidence.mjs",
+        "sha256": "d95c7d886a03dd96fe3dfb7fb67579b719063aa870c0131da21ce0967904874e"
+      },
+      {
+        "path": "scripts/work-records/schema.mjs",
+        "sha256": "9c33b3ffd2e27ad73be3c16a5be4513d3b69837b42fac8c1d00aa5d4dad4e5cd"
+      },
+      {
+        "path": "scripts/work-records/validation.mjs",
+        "sha256": "e87a560e851311222590505233c53896348a20bb0f58c46066e15e91a98ddd82"
+      },
+      {
+        "path": "src/app/api/admin/notifications/route.ts",
+        "sha256": "01009d6fbe6d9062611badaee7d5189ff2c3a9727a2a7aacc745ce4665f26926"
+      },
+      {
+        "path": "src/app/api/student/dashboard/completed/route.test.ts",
+        "sha256": "78d3a705d857b32fdecc3a5a60ef53da5725b80b3c90e1514fe6776b708c9eb8"
+      },
+      {
+        "path": "src/app/api/student/dashboard/completed/route.ts",
+        "sha256": "6b74c1a6240b07c5ab71946c772f6d685de3288a8beefe482c65921474d670e3"
+      },
+      {
+        "path": "src/app/api/student/dashboard/sections/route.test.ts",
+        "sha256": "73c87f274bcc250809ba5cf722f1395458bdd05700e03cf6a918e24b8ae963df"
+      },
+      {
+        "path": "src/app/api/student/dashboard/sections/route.ts",
+        "sha256": "e69b080816bed84506bcf083ec405846424b19b7e496c605083d9ca3ae66ffde"
+      },
+      {
+        "path": "src/app/api/student/notifications/route.ts",
+        "sha256": "7435d1f7b383a4e3733ce303a935cfca8b485a47cae4e853e976274af429bcda"
+      },
+      {
+        "path": "src/app/application-layer-boundaries.test.ts",
+        "sha256": "c3fbff0d6499cac6cb7d1fe515df9b188ffe66f8341cc0d02b9cb94055a91d98"
+      },
+      {
+        "path": "src/app/mobile-production-regression-ui-contract.test.ts",
+        "sha256": "cf577a5c06bcb7f305d93ff6e64aab763616026f9ad9f5717a26234ab2162e01"
+      },
+      {
+        "path": "src/app/notification-ui-contract.test.ts",
+        "sha256": "562f4bd8e6e295a409f60dea98216ffbfd891efd24c2dcf7908723119ca66abf"
+      },
+      {
+        "path": "src/app/preview-environment-contract.test.mjs",
+        "sha256": "d0185efa87e4906df970c921903569cea252982578c64f5cd3d34175aa0a6344"
+      },
+      {
+        "path": "src/app/server-architecture-ratchet.test.ts",
+        "sha256": "f689169488d158b9003b6e779df71cc0299b41b1265e344a8d248c66844431e8"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/[...catchAll]/page.tsx",
+        "sha256": "d9ec952833e9dd8b9f276bbbce6ed81eca1536b063d0db3dcc9e16dee22fc2e1"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/default.tsx",
+        "sha256": "abe73acf20601fee34f869a542e56084907f9a49c20b06e1bc136c5b8465de77"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/loading.tsx",
+        "sha256": "937746b73b10ef939368622853cce31caa0dbae9621ba0bdd72b1a40d3558680"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/page.tsx",
+        "sha256": "e02c3c9bf907e33385cdb5ca0ed9a8a128fa02c7c65b33196338ee9ea9d72adf"
+      },
+      {
+        "path": "src/app/student/(protected)/page.tsx",
+        "sha256": "146f17f9064d747f33ec41709a6284ca9f30c9357f8de91a0c4c1c27549453f9"
+      },
+      {
+        "path": "src/app/ui-architecture-ratchet.test.ts",
+        "sha256": "0157d6a24cb6a66dd4d0cb488aaa42a1d39b8266e29c2892475060f7f2d730ac"
+      },
+      {
+        "path": "src/app/work-records.test.mjs",
+        "sha256": "bd65c2f4ca62ca6d620b7f8982d6b0101490e1d85405b934e9c47c9c83c13a69"
+      },
+      {
+        "path": "src/components/notification-bootstrap.tsx",
+        "sha256": "0c01a258f9a66fc487bea3d4b053bb8be10eece9e062e56727cb1d1fe6a84c08"
+      },
+      {
+        "path": "src/components/route-title.contract.test.ts",
+        "sha256": "4f6492b47bc728d3d8cd28024c50cef16fcc704aa664833a44d531f1a4fe7017"
+      },
+      {
+        "path": "src/components/student-shell.test.tsx",
+        "sha256": "ca395e49a3b4037880d25aaee7e3674c39429ac15c9800eda3736663f3f70030"
+      },
+      {
+        "path": "src/design-system/architecture-boundary.test.ts",
+        "sha256": "4a7e637626250266989ba83e2aa14c9c89813d820491a2023d6ee0c796ef2fab"
+      },
+      {
+        "path": "src/features/assignments/architecture-boundary.test.ts",
+        "sha256": "8f5d79d3d04184c6fc171052e21205e7288af93507e7d05a486c29c7ed583cd3"
+      },
+      {
+        "path": "src/features/history/domain/learning-activity.ts",
+        "sha256": "b4e7d9e9f59666ec27361303a35394d1e93ac78298c9766cf004e3420f12a33c"
+      },
+      {
+        "path": "src/features/history/public-contracts.ts",
+        "sha256": "a5256ee277ffc9de89b992da795dbbd7b7998bd366a900bdafe583e493cb6dab"
+      },
+      {
+        "path": "src/features/history/public-ui.ts",
+        "sha256": "89308c49263b21867f30dabe7607945ec90a6092c8070340888c01118d45ca37"
+      },
+      {
+        "path": "src/features/history/ui/activity-status-timeline.tsx",
+        "sha256": "dddada58eda2552451e825acabeeacf2415a468ec48d954f1ba16002e7568441"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.module.css",
+        "sha256": "2ac39afc88f39785cfd040a8dc6f0b9ac176b6fab908391bee56364b82d8486a"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.test.tsx",
+        "sha256": "42265018ec6dd3a7ba8dfc4f0a5439844bc4a8436167e1cd990f5f801951a9e0"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.tsx",
+        "sha256": "fdd630d5d7208c67b86006dfd4fe06186feea3959c994ea4424cfbe04a8cb413"
+      },
+      {
+        "path": "src/features/history/ui/attempt-score-summary.tsx",
+        "sha256": "03f907c4cc6849a864e5711fa7daa1b949f762ab6b3c5b1fb70b44254d0ba130"
+      },
+      {
+        "path": "src/features/history/ui/history-activity-row.module.css",
+        "sha256": "9361f8c440c49b615262964cacb78d3ad2120d444668e5dd5db2bec1a5dba8ad"
+      },
+      {
+        "path": "src/features/history/ui/history-activity-row.tsx",
+        "sha256": "5a12925200e519abc2ebff6079539224e75f0517d3e4c79744ea668778fcc075"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.module.css",
+        "sha256": "c6949ab77bc8f2c4d595b470989a9a492f323545d9c64e4c999982bec67b7b4c"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.test.tsx",
+        "sha256": "dddb242f5e2a4b3faed232dc1044813d18b12e38831a6473577ab87defb5ac87"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.tsx",
+        "sha256": "3edcd5df242b107efe244446d19e6083fa04653bc14250947bac933f5934b123"
+      },
+      {
+        "path": "src/features/learning-points/server/components/student-header-points.test.tsx",
+        "sha256": "4a9a7cc57fc6247f55a535c96b0e3e870d6997b41a1edf4ba1fbbab8c615bb63"
+      },
+      {
+        "path": "src/features/learning-points/server/components/student-header-points.tsx",
+        "sha256": "2966918495c2f013f1daa175cde91c99815fcb0c15836a1b2f48ede9dfe38c41"
+      },
+      {
+        "path": "src/features/learning-points/ui/header-point-summary.module.css",
+        "sha256": "5670d15c9a85932c5c972efde21cde6f7c960053b18898e9a59d7ac05cb5eb42"
+      },
+      {
+        "path": "src/features/learning-points/ui/header-point-summary.test.tsx",
+        "sha256": "b64be67d92f3c32e6066ca70d7b43db1a08faeeb99ff936fa77cbe0bae1b0f45"
+      },
+      {
+        "path": "src/features/learning-points/ui/header-point-summary.tsx",
+        "sha256": "502d18d6d5c8f9aaeb94a54ab4b03c1cde79799cd51f367da79fbba6d80b9a26"
+      },
+      {
+        "path": "src/features/notifications/api/notification-delivery.ts",
+        "sha256": "ea2fdc822b707aa5e277cda03b37e557efe1e2d911953c48c37fe92ea6fa7659"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/live-school-schedule.test.tsx",
+        "sha256": "7aec49acbdf0ff7047dc7fb944aeb3616890cbf30929aa1aca5201842dc302c5"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/live-school-schedule.tsx",
+        "sha256": "7a4f4c6733b6dfc60fd3de113ba6e4543ea72556b6e3c88c58af8d88d87b176a"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/schedule-retry.test.tsx",
+        "sha256": "9d262948b66ba82d327fa8c6463757ce7d6707d3d06392710032936e99026b54"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/schedule-retry.tsx",
+        "sha256": "97e990d2268768f5745e51faf2fca0723436e339b9762f9981b6a5a727f36e2b"
+      },
+      {
+        "path": "src/features/school-schedules/contracts/school-schedule-import.ts",
+        "sha256": "3803334a36430a7e8f85e02b4a2bcd022045d6da7b814d78838e7eb0e6276810"
+      },
+      {
+        "path": "src/features/school-schedules/contracts/school-schedule.ts",
+        "sha256": "58df3df325602739857d578fc3b01b5f74d4f55a5613e7a25ed390afb023a05a"
+      },
+      {
+        "path": "src/features/school-schedules/domain/national-exams.ts",
+        "sha256": "f1645ebda2bdb433771ef66837851e7dbd15062a46e5c5a2ce36d1bf6e7b277d"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule.test.ts",
+        "sha256": "d1f2f825c9b3af1fe6a50de3b660aa81a6daa30571e10f40d23c4f1bdc3f021d"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule.ts",
+        "sha256": "437a8551177476b3a536be28cdfc05b2b2dc201604f214037009ee828a4407fa"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-timeline.test.ts",
+        "sha256": "77f6481d2369f296b65d4af96965c9325a921f92e8fcfe34437ec7e3f85992da"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-timeline.ts",
+        "sha256": "cb5e1758a9969aa95733c16f0edea85d068ed659a45463976c2ff1836bccac8b"
+      },
+      {
+        "path": "src/features/school-schedules/public-contracts.ts",
+        "sha256": "57bf559e18ab7739ad4e5d21b14038189ac1cdaf95b203cb718af708d0a4794e"
+      },
+      {
+        "path": "src/features/school-schedules/public-server.ts",
+        "sha256": "e914de0914a3648e210222b122e2b9047b107edb0fcfddd018cbae7b7011a562"
+      },
+      {
+        "path": "src/features/school-schedules/public-ui.ts",
+        "sha256": "89b1fafb41e326aa790fdba88e6cb0ae1e51c276ae87a09d29c0711dcacaf86a"
+      },
+      {
+        "path": "src/features/school-schedules/server/components/school-schedule-content.tsx",
+        "sha256": "046f86e3e6aece624eccbd41d891ade0fecd6e707c4ff31099b909f2e71b9e78"
+      },
+      {
+        "path": "src/features/school-schedules/server/components/school-schedule-editor-content.tsx",
+        "sha256": "876b3e8f09762de25661a32101817a61bfd3af38151acaf447a1ca72d26513af"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-editor-query.ts",
+        "sha256": "ca177311dcb08c2ac81a2bad5f39c055d7a7b8b32ccbdc1db57b61cdeac467f0"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-query.test.ts",
+        "sha256": "d332bc24b2af5c42d92ed4059c871b3a289032a3244263d67f4d68fd2daa572e"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-query.ts",
+        "sha256": "eac2c00f155314210c793be67e277c78dc8cd85ce06b62635a6cba70e5b9190e"
+      },
+      {
+        "path": "src/features/school-schedules/server/school-schedule-migration.test.ts",
+        "sha256": "560486d9985783692821a8fcb0b7545b33975058b9df54c25ef559eb3166bf6c"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-exam-identity.tsx",
+        "sha256": "a12ac071fe0c67ce82119fbb006c778baa109f7dd0003d3e8ae4c103df7041be"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-schedule.module.css",
+        "sha256": "fca7f3ecadd410ba36a79b1fdf8da3cf639477ef463e8678e1128044bfbee387"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-timeline.test.tsx",
+        "sha256": "19ea4ebe4b6b276ce0d9904e1762e28ccce5610c3bdd8cdf4913dded030c7608"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-timeline.tsx",
+        "sha256": "3f31a059d478624066f224af5f4ea5e7094f5ccdd6c74bf35c353f8b81b0bac7"
+      },
+      {
+        "path": "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
+        "sha256": "3f37a2f16b70ce3fa22cc28df97d803870317d7ac372036b7b082c4cf28f6aac"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-assignment-page.test.tsx",
+        "sha256": "3ec06bdec89125e24ef0a8afb9dda48993d378552a3797a152f9c4055d95f79e"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-assignment-page.ts",
+        "sha256": "6f91cf6750863b43febc83ebf6c0068239de3452fc9a92c351165ba561653219"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-completed-assignments.test.tsx",
+        "sha256": "d9f1a9c90fe3d3ccd32687dbab5886f40c5923ccdcadca95c5c90ba39b2ad8b5"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-completed-assignments.ts",
+        "sha256": "27782aa0a6e69f06f5cdc8582cd5c1f87eadd49a6415fa6238ca093416af2df9"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-lifecycle.test.ts",
+        "sha256": "3ac07e6c7eb1f7eb99237fd283bdb1467d5153f022b5c8cff8180c18e300dfd9"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-lifecycle.ts",
+        "sha256": "9305c99cd2e351566a2ddc51b16788d636183736b31558683468883f2fc754f6"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-sections.test.ts",
+        "sha256": "5604685c45d750f6cf06c4dea17e04a856a1e84be3e2535433f19831c3706c76"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-sections.ts",
+        "sha256": "d78a877e545a406592541ff26818c275f2f15d3fb09576574740c5b2cf744f72"
+      },
+      {
+        "path": "src/features/student-dashboard/model.ts",
+        "sha256": "4e54d440f03bc1240d21f9981d04cd033e6088145e877a0ab69b11e28adcd96a"
+      },
+      {
+        "path": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+        "sha256": "a16298ac0ed589cb03a7c56530a9c1498355429d7bedc1f662712bcd1f9ddca6"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-query.test.ts",
+        "sha256": "3abbe2fb9a6f38c2220715f73719ab477ee0e33faf009c1deba99edd845209c8"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
+        "sha256": "2cdb423a3c71f64650a47a69df130f4f78f53ddc9e24123b3232f1607b44d448"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-read-error.ts",
+        "sha256": "6ccc1206c586dae2563ee5cd25e529d3804f6f65b9480382299316f79a736ff5"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
+        "sha256": "6e201d75827ab63b1469cf5e6f2ad97b4bc8af4ae71c281a8858e39c2f0f14ef"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-cursor.test.ts",
+        "sha256": "6458d575800a025f8dabeaf87bd0da35c828994bdf6a925c9c93a6d5450bb57d"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-cursor.ts",
+        "sha256": "e588c36165e673ab4b9dc59bc6406f7d5440c45c59514f3a1bbb63c33bb4f5cd"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-section-cursor.test.ts",
+        "sha256": "22092d2402dda83399fb1fd04b8641624247fd305ad7810e60d5a1f0cf049b16"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-section-cursor.ts",
+        "sha256": "b6f1ce412d1a851e3b1183591fc2ea29ee885df47f21418ada7975bcaab5e893"
+      },
+      {
+        "path": "src/features/student-dashboard/transport/student-dashboard-pages.test.ts",
+        "sha256": "b61513ccc118aea3ac624b18ec1f3d9fae87e2202f2e690c179a99edf65397b2"
+      },
+      {
+        "path": "src/features/student-dashboard/transport/student-dashboard-pages.ts",
+        "sha256": "6e50c26daf29c6aef7b859ee440539b4d95490094f839909e8cc41456366e936"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.test.tsx",
+        "sha256": "92ef6efe93914d372439769a0a22fc10618c8bd26a138ee13a8bcd62eb3239d7"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.tsx",
+        "sha256": "4f9314a7363f783ff8564fbfaa7f0e34afe2a1fae48ecaa891ec2a999dd11c3f"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.module.css",
+        "sha256": "e2d68ad44aa00c2ae508e973b4fc05ef7a08e0229b5f660fea2ab86c2893b25c"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.test.tsx",
+        "sha256": "068fde99ca693ef83879c0949f4e7c46ecc05a28ed5bd1527cdca19d001a3bcd"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.tsx",
+        "sha256": "24e2cf360f6872acaf72f40f9070450ee5a83cd86da03f6154405b82aa333590"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/start-attempt-button.module.css",
+        "sha256": "efbd3e585fc2f7b6743eae57e5cb097fbc67b4d43deec0204c43ea97c7c341b8"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+        "sha256": "f8f99dadd017f8294f70c0242fbff3d055aa1b872b8606c251ea156e68d2fe9d"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-availability.tsx",
+        "sha256": "ae7ee700a34e2acf7ffd223593f81afab92b0356c30aac6db9c8e8835a83260c"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-card.module.css",
+        "sha256": "dabb2b75f9039491c05123d4287746da62cc3a6a6ede678b61c6fc67c69d689b"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+        "sha256": "68b556b0bae810672be48615c47cf2b778f74c19662222fa316e186782d3b4db"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-completed-assignments.test.tsx",
+        "sha256": "23a6d34c8f612c6dce29237cfbe86181abb07116311ac8ef9a09717feec796db"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-completed-assignments.tsx",
+        "sha256": "5631b5502ef5abebf17b5bd73d69efa26b361cf9e432334f0e2288569ea43fba"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-current-assignments.test.tsx",
+        "sha256": "cfa35e99e28b3bf5ed93cdb070c63eab2f1324d9c2cc1a86e6ca87c4546b3cf7"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-current-assignments.tsx",
+        "sha256": "33ed46a2fc4d727b0d21cbb3e8af750dafdd0e353f222d3da500a72e3d425207"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard-skeleton.tsx",
+        "sha256": "3d7bd8ca055730fc4be7c0f31c2744eb0a5eaf2d42bfd27db0b4861d7f30ca07"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.module.css",
+        "sha256": "0dba840112d1fbe4c5e0eb2be756d51896600406793bd5819bcfd6b2717b82fe"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.test.tsx",
+        "sha256": "335efb9838ec9799c206355154258b1d370c5e6884a891ca1c4f2098265b0d8c"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.tsx",
+        "sha256": "8804e4d651f8756f7b1744571b28c77ba83a9bc651d2b0ec45167e7075ec1756"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.test.ts",
+        "sha256": "394763e4374d5afe8a55dde5250b040f410c7d10e94bd533b3040010d8c9da82"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.ts",
+        "sha256": "0b113ca52d292c57f64f07ee4822ce8b896e06c53927b623954f5096e8aa70f5"
+      },
+      {
+        "path": "src/lib/admin/dataset-display.ts",
+        "sha256": "ef0a2dcb7528ba322cd52db80cf5cd51cbbdab1f261e50be03a80942b273f194"
+      },
+      {
+        "path": "src/lib/admin/history-route.test.ts",
+        "sha256": "f09dc7c27208f3b5ea3e627b325bee909bbc8a2f3866ff3971add189eaa25796"
+      },
+      {
+        "path": "src/lib/admin/history-route.ts",
+        "sha256": "f336f50c237f0449b6d8eabc05f3ed2720137cb4d97986bf8fabfd5fbc4489c4"
+      },
+      {
+        "path": "src/lib/admin/history.test.ts",
+        "sha256": "b244a11a2b617cffa35b4356f6bdad45475681dda180f15a0a3abd8e1fed19da"
+      },
+      {
+        "path": "src/lib/admin/history.ts",
+        "sha256": "d36c19100a1c78bb21acde44746d0a942582d593267f9fbcf0e8bece4b8cbdcc"
+      },
+      {
+        "path": "src/lib/admin/unit-range-display.test.ts",
+        "sha256": "58e80feb0c9545e0b4702d3b5b3a63d23f7e7445ef12da1a856e88a840a41c20"
+      },
+      {
+        "path": "src/lib/admin/unit-range-display.ts",
+        "sha256": "f6a9fb487325fd071dfcf27158541a97375f16dbad01e52cf9c5eb524eeb9445"
+      },
+      {
+        "path": "src/lib/assignment/assignment-release.test.ts",
+        "sha256": "6dac7837227d064e20c40d0c4d2f57619d42857f36ae0f49e4080a5c5680fea3"
+      },
+      {
+        "path": "src/lib/assignment/assignment-release.ts",
+        "sha256": "25d1157d6f1ece258d2e23b247198456772b081307ddfc15bf37a9607475d113"
+      },
+      {
+        "path": "src/lib/database/assignment-release-final-schema.integration.test.ts",
+        "sha256": "b29d88a1c3b113a980cfcf7e883a8b1332ea9b6368b5e64741d21e5b9c322bb9"
+      },
+      {
+        "path": "src/lib/database/notification-lock-order.integration.test.ts",
+        "sha256": "a3e397fc31232d897087ae36b0d3ba96870fb5e6f323a83281a3ad40cc3c114c"
+      },
+      {
+        "path": "src/lib/database/notification-release-final-schema.integration.test.ts",
+        "sha256": "61a63352f2dcb0eee1730e9fe2df694c5b7574893243860f9cc9ca2c1f075be1"
+      },
+      {
+        "path": "src/lib/database/student-dashboard-read-model-migration-contract.test.ts",
+        "sha256": "bc2f11f729d40e6f321623567fdca5ea9f11107ef419eb295843be31a95a5dbc"
+      },
+      {
+        "path": "src/lib/database/student-dashboard-read-model.integration.test.ts",
+        "sha256": "d7095274638577349f46fe6f4e2678813aaa0c5102c2d68a4db22c91db413fc1"
+      },
+      {
+        "path": "src/lib/database/student-dashboard-sections-final-schema.integration.test.ts",
+        "sha256": "e58c0f54efe9410b2824fab1ea5e6d50be53cf1a967ef75d5d214753a50c42a2"
+      },
+      {
+        "path": "src/lib/services/learning-point-read-service.test.ts",
+        "sha256": "3e027aac911c426a466587c179d3643dd623c0761475f81311fd19956d685d68"
+      },
+      {
+        "path": "src/lib/services/learning-point-read-service.ts",
+        "sha256": "5fa747da8dcaa1ddb4726a8e06e93f8eb334a7fd79319cd990595467bb55126d"
+      },
+      {
+        "path": "src/lib/services/notification-service.ts",
+        "sha256": "1171f158aec5b68289ff6ead3955e4ff7bb64b221c92222526808fb047a7372a"
+      },
+      {
+        "path": "src/lib/services/regular-assignment-scope-contract.test.ts",
+        "sha256": "df05754c0933ff191b8d3aa7a5fd6cbeb71e07e3cda04e9f94ba532659c878b4"
+      },
+      {
+        "path": "src/styles/reset.css",
+        "sha256": "41f92c739b234c5126dfa4f6ecf731497b79af7c6bc26fd2d221885dad1a0a0c"
+      },
+      {
+        "path": "src/styles/theme.css",
+        "sha256": "b8b531a742fd2647b8e83d6197cc759c9f544aa60e1a640a23fee53fc13c6840"
+      },
+      {
+        "path": "src/styles/tokens.css",
+        "sha256": "069040f318f41f14018564090afd8759e19daab78c6b57bb3439af20d9e55d5f"
+      },
+      {
+        "path": "src/test-support/module-boundary.test.ts",
+        "sha256": "d6dc252bef406aec356629a8c71dd3b1a8769e028f1a87e37b7991b0cfb2faa9"
+      },
+      {
+        "path": "src/test-support/module-boundary.ts",
+        "sha256": "88caa81a7f9e912cb0e3fc3667c0d82352e46f0999d61fd546597950ffc3b0c3"
+      },
+      {
+        "path": "src/test-support/server-architecture.ts",
+        "sha256": "fa5baed3795dffb7b7b9c1f6caa61726e9485981297b4777f88f2d22f50eb5b7"
+      },
+      {
+        "path": "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
+        "sha256": "8cee56fd459d41f1a798549216cb5d2ecd1ce8d91cddc49a003908b4ab47d76e"
+      },
+      {
+        "path": "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+        "sha256": "790a375052a12feafc678995100f73dd0ae73b823381029ac0bcbdc5e5cc8a06"
+      },
+      {
+        "path": "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+        "sha256": "a134db3dd30e1e32d3dcbc06046a899cb6dee1522ff6707171f068157ff4cef0"
+      },
+      {
+        "path": "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql",
+        "sha256": "892fd7408e19c395ecac17e43ea64882b1a9818f4719e418c2130b1bafee3e76"
+      },
+      {
+        "path": "supabase/migrations/20260929054833_gate_student_notifications_on_assignment_release.sql",
+        "sha256": "5a6ad8c45736322f4925a7fa78b963b35c5b33b2519874c5132b3514de05daf7"
+      },
+      {
+        "path": "supabase/migrations/20260929110037_paginate_student_dashboard_sections.sql",
+        "sha256": "29c76cffb5d42a7585c6924ebbafd9c55a5f80a3a09cc63416f2cd7745a56dd8"
+      },
+      {
+        "path": "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
+        "sha256": "7a46038ca661f54bcf7cabf465c34d774c73de7d9ac88091ffd9351f3c470681"
+      },
+      {
+        "path": "supabase/migrations/20261003235930_order_student_notification_locks.sql",
+        "sha256": "8a1a1aad356b3e4ec4feb49112a545b25ed39faa50ce47bc46700017263c3629"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-10-03T14:45:15Z",
+        "command": "vitest notification-lock-order + notification-release-final-schema + notification-receipts-migration-contract --maxWorkers=1",
+        "summary": "3파일23검사 통과·원정의에서 교체/재적용·기존 수신행/학생행/비대상 함수/메타 보존"
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-10-03T15:04:06.786Z",
+        "command": "tsc --noEmit; eslint changed test; feature-map --verify; work-records --phase design; tsx app12-wrapper-check.ts",
+        "summary": "타입/lint/기능107migration/설계 및 동일 보존 거래 검사 통과. UI/앱코드 변경 없음"
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "preview",
+        "ranAt": "2026-10-03T15:04:06.786Z",
+        "command": "independent source review; apply_migration order_student_notification_locks; before/after snapshot; two real connections; replay; exact fake cleanup",
+        "summary": "48표19875행·826함수·권한 보존, 실제두연결2방향 Lock 관찰/200/중복0. 가짜2학생4배정 종료·12문항16은행8수신행 동일"
+      }
+    ]
+  }
+}

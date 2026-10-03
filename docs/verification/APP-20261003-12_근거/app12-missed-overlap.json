@@ -1,0 +1,28 @@
+{
+  "sqlResult": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"error\":{\"name\":\"HttpException\",\"message\":\"Failed to run sql query: ERROR:  P0001: app12_overlap_not_observed\\nCONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE\\n\"}}"
+        }
+      ],
+      "structuredContent": {
+        "error_code": "INVALID_ARGUMENT"
+      },
+      "isError": true
+    }
+  },
+  "httpResult": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "ac325d",
+      "wall_time_seconds": 9.5285972,
+      "exit_code": 0,
+      "original_token_count": 42,
+      "output": "{\"case\":\"notification_first\",\"ready\":true,\"delayMs\":8000}\n{\"case\":\"notification_first\",\"status\":200,\"durationMs\":1174,\"data\":\"abf37f6c-80d7-4c50-a50f-be3553886c31\"}\n"
+    }
+  },
+  "oldAssignment": "4e48baae-46bf-459c-92f2-c4edeead4533"
+}
