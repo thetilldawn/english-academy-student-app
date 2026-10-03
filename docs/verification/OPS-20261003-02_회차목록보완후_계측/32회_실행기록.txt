@@ -1,0 +1,105 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":1,"databaseBytes":28631163,"answers":60}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":2,"databaseBytes":28860539,"answers":120}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":3,"databaseBytes":29081723,"answers":180}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":4,"databaseBytes":29433979,"answers":240}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":5,"databaseBytes":30720123,"answers":300}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":6,"databaseBytes":30974075,"answers":360}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":7,"databaseBytes":33432079,"answers":420}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":8,"databaseBytes":33571343,"answers":480}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":9,"databaseBytes":33792527,"answers":540}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":10,"databaseBytes":34013711,"answers":600}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":11,"databaseBytes":34161167,"answers":660}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":12,"databaseBytes":34333199,"answers":720}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":13,"databaseBytes":34546191,"answers":780}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":14,"databaseBytes":34718223,"answers":840}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":15,"databaseBytes":34963983,"answers":900}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":16,"databaseBytes":35160591,"answers":960}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":17,"databaseBytes":35947023,"answers":1020}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":18,"databaseBytes":36110863,"answers":1080}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":19,"databaseBytes":36332047,"answers":1140}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":20,"databaseBytes":36561423,"answers":1200}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":21,"databaseBytes":36766223,"answers":1260}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":22,"databaseBytes":36995599,"answers":1320}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":23,"databaseBytes":37241359,"answers":1380}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":24,"databaseBytes":37413391,"answers":1440}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":25,"databaseBytes":37626383,"answers":1500}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":26,"databaseBytes":37765647,"answers":1560}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":27,"databaseBytes":38019599,"answers":1620}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":28,"databaseBytes":38273551,"answers":1680}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":29,"databaseBytes":38552079,"answers":1740}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":30,"databaseBytes":38724111,"answers":1800}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":31,"databaseBytes":38896143,"answers":1860}
+
+stdout | .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables
+{"run":32,"databaseBytes":39076367,"answers":1920}
+
+ ✓ .codex-tmp/m09-after-phase-plan/model.test.ts > measures committed final-schema local batches and all related tables 257434ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:02:36
+   Duration  257.88s (transform 109ms, setup 0ms, import 241ms, tests 257.44s, environment 0ms)

@@ -1,0 +1,609 @@
+{
+  "checkedAt": "2026-10-03T10:11:17.957Z",
+  "beforeRawSha256": "5933fec3891f7391df056bcd45392d8668f8809bbad1303428db843584fa8574",
+  "afterRawSha256": "cbb5f72b7507af95d10343df881d51fc0a42a88e5fe21bf0dc212b20d4ce4982",
+  "sourceCommit": "79cb19526f3bbec2ac23b5b72183958206c8f860",
+  "interval": "run-16-vacuum -> run-32-vacuum",
+  "runs": 16,
+  "perAttempt": {
+    "row_count": {
+      "before": 299,
+      "after": 299,
+      "change": 0
+    },
+    "row_datum_bytes": {
+      "before": 102539.5,
+      "after": 99732,
+      "change": -2807.5
+    },
+    "total_bytes": {
+      "before": 202240,
+      "after": 204800,
+      "change": 2560
+    },
+    "index_bytes": {
+      "before": 89088,
+      "after": 95232,
+      "change": 6144
+    }
+  },
+  "tables": [
+    {
+      "relation": "public.assignment_questions",
+      "row_count": {
+        "before": 50,
+        "after": 50,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 29341,
+        "after": 29341,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 52224,
+        "after": 56832,
+        "change": 4608
+      },
+      "index_bytes": {
+        "before": 20480,
+        "after": 25088,
+        "change": 4608
+      }
+    },
+    {
+      "relation": "private.vocabulary_answer_receipts",
+      "row_count": {
+        "before": 60,
+        "after": 60,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 21752,
+        "after": 21752,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 37888,
+        "after": 37376,
+        "change": -512
+      },
+      "index_bytes": {
+        "before": 15360,
+        "after": 14848,
+        "change": -512
+      }
+    },
+    {
+      "relation": "public.student_point_events",
+      "row_count": {
+        "before": 60,
+        "after": 60,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 18096,
+        "after": 18096,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 40960,
+        "after": 41472,
+        "change": 512
+      },
+      "index_bytes": {
+        "before": 22016,
+        "after": 22528,
+        "change": 512
+      }
+    },
+    {
+      "relation": "public.quiz_questions",
+      "row_count": {
+        "before": 50,
+        "after": 50,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 6860,
+        "after": 6860,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 30208,
+        "after": 32256,
+        "change": 2048
+      },
+      "index_bytes": {
+        "before": 20480,
+        "after": 22528,
+        "change": 2048
+      }
+    },
+    {
+      "relation": "private.quiz_attempt_preparations",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 6823,
+        "after": 6815,
+        "change": -8
+      },
+      "total_bytes": {
+        "before": 8192,
+        "after": 8192,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.assignment_vocabulary_meaning_refs",
+      "row_count": {
+        "before": 50,
+        "after": 50,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 6050,
+        "after": 6050,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 8704,
+        "after": 8704,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 2048,
+        "after": 2048,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.local_quiz_phase_receipts",
+      "row_count": {
+        "before": 2,
+        "after": 2,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 4048.5,
+        "after": 4048,
+        "change": -0.5
+      },
+      "total_bytes": {
+        "before": 4608,
+        "after": 4608,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.local_quiz_phase_plans",
+      "row_count": {
+        "before": 2,
+        "after": 2,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 5729,
+        "after": 2930,
+        "change": -2799
+      },
+      "total_bytes": {
+        "before": 7168,
+        "after": 3584,
+        "change": -3584
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.student_vocab_wrong_events",
+      "row_count": {
+        "before": 12,
+        "after": 12,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 1632,
+        "after": 1632,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 5632,
+        "after": 5120,
+        "change": -512
+      },
+      "index_bytes": {
+        "before": 4096,
+        "after": 3584,
+        "change": -512
+      }
+    },
+    {
+      "relation": "public.assignments",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 514,
+        "after": 514,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 512,
+        "after": 512,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.vocabulary_phase_results",
+      "row_count": {
+        "before": 2,
+        "after": 2,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 424,
+        "after": 424,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 512,
+        "after": 512,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.audit_events",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 280,
+        "after": 280,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 512,
+        "after": 512,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.quiz_attempts",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 196,
+        "after": 196,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.local_quiz_runs",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 185,
+        "after": 185,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.local_quiz_preparations",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 170,
+        "after": 170,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.vocabulary_result_policies",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 114,
+        "after": 114,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.notification_receipts",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 112,
+        "after": 112,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.assignment_students",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 80,
+        "after": 80,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.assignment_units",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 77,
+        "after": 77,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.assignment_sources",
+      "row_count": {
+        "before": 1,
+        "after": 1,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 56,
+        "after": 56,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.assignment_vocabulary_new_questions",
+      "row_count": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 1536,
+        "after": 1536,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 1536,
+        "after": 1536,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.student_vocabulary_meaning_states",
+      "row_count": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "private.student_vocabulary_versions",
+      "row_count": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.student_point_totals",
+      "row_count": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      }
+    },
+    {
+      "relation": "public.student_vocab_state",
+      "row_count": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "row_datum_bytes": {
+        "before": 0,
+        "after": 0,
+        "change": 0
+      },
+      "total_bytes": {
+        "before": 3584,
+        "after": 3584,
+        "change": 0
+      },
+      "index_bytes": {
+        "before": 3072,
+        "after": 3072,
+        "change": 0
+      }
+    }
+  ],
+  "physicalReductionObservedPercent": -1.2658227848101267,
+  "caveat": "Two independently seeded runs. UUIDs/times/index page allocation differ. Total physical change is an observation, not a causal or cloud upper-bound guarantee."
+}

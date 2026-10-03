@@ -1,0 +1,96 @@
+import fs from 'node:fs';
+import {createHash,randomUUID} from 'node:crypto';
+import {it,expect} from 'vitest';
+import {createFinalSchemaDatabase} from '@/test-support/final-schema-database';
+import {EMPTY_LIBRARY_FILTERS,libraryCatalogSchema,libraryCommandResultSchema} from '@/features/wordbook-compositions/contracts/library';
+import {compositionQuestionInputSchema,compositionStepSchema} from '@/features/wordbook-compositions/contracts/library-materialization';
+const adminId='a9090000-0000-4000-8000-000000000001';
+const project='wojxpruvbjzbhrpmsbuy';
+const sha=(s:string)=>createHash('sha256').update(s).digest('hex');
+it('measures committed final-schema local batches and all related tables',async()=>{
+ const db=await createFinalSchemaDatabase();
+ const result:any={schemaVersion:'m09-final-schema-cost-v1',sourceCommit:'79cb19526f3bbec2ac23b5b72183958206c8f860',environment:'isolated PGlite; synthetic data; no cloud performance claim',startedAt:new Date().toISOString(),snapshots:[],runs:[]};
+ const save=()=>fs.writeFileSync('.codex-tmp/m09-after-phase-plan/result.json',JSON.stringify(result,null,2)+'\n');
+ const scalar=async<T=any>(sql:string,args:unknown[]=[]) => (await db.query<{value:T}>(sql,args)).rows[0].value;
+ const owner=()=>db.exec('reset role');
+ const admin=()=>db.exec(`reset role;set role authenticated;select set_config('request.jwt.claim.sub','${adminId}',false);select set_config('request.jwt.claim.role','authenticated',false)`);
+ const service=()=>db.exec("reset role;set role service_role;select set_config('request.jwt.claim.role','service_role',false)");
+ const rpc=async(name:string,args:unknown[])=>{await service();return scalar('select public.'+name+'('+args.map((_,i)=>'$'+(i+1)).join(',')+') value',args);};
+ try{
+  await db.exec(`grant usage on schema auth,extensions to service_role;alter role service_role bypassrls;set time zone 'UTC';set datestyle='ISO,YMD';select set_config('request.jwt.claims','{"ref":"${project}"}',false)`);
+  await db.exec(`create function pg_temp.m09_table_sizes() returns table(relation_name text,row_count bigint,row_text_bytes bigint,row_datum_bytes bigint,heap_main_bytes bigint,table_with_toast_bytes bigint,index_bytes bigint,total_bytes bigint) language plpgsql as $$declare r record;begin
+   for r in select n.nspname,c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in('public','private','word_index','auth','cron') and c.relkind='r' order by n.nspname,c.relname loop
+   return query execute format('select %L::text,count(*)::bigint,coalesce(sum(octet_length(to_jsonb(t)::text)),0)::bigint,coalesce(sum(pg_column_size(t)),0)::bigint,pg_relation_size(%L::regclass),pg_table_size(%L::regclass),pg_indexes_size(%L::regclass),pg_total_relation_size(%L::regclass) from %I.%I t',r.nspname||'.'||r.relname,r.nspname||'.'||r.relname,r.nspname||'.'||r.relname,r.nspname||'.'||r.relname,r.nspname||'.'||r.relname,r.nspname,r.relname);end loop;end$$;`);
+  async function snapshot(label:string,keep=true){await owner();const rows=(await db.query<any>('select * from pg_temp.m09_table_sizes()')).rows.map(r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k,k==='relation_name'?v:Number(v)])));if(keep){const databaseBytes=Number(await scalar('select pg_database_size(current_database()) value'));result.snapshots.push({label,at:new Date().toISOString(),databaseBytes,tables:rows});save();}return rows;}
+  await snapshot('schema');
+  await db.exec(`insert into auth.users(id)values('${adminId}');insert into public.admin_profiles(user_id,display_name)values('${adminId}','M09 가짜 관리자')`);
+  const students=(await db.query<{id:string}>("insert into public.students(display_name,created_by,school_name,grade_label,status) select 'M09 가짜 '||n,$1,'가상고','고2','active' from generate_series(1,100)n returning id",[adminId])).rows.map(r=>r.id);
+  await snapshot('100-students');
+  async function book(key:string){
+   await owner();
+   const source=await scalar<string>("insert into public.vocab_datasets(dataset_key,title,source_label,source_sha256,row_count,status,is_active)values($1,$2,'fake',repeat('A',64),50,'ready',true)returning id value",['fake-m09-'+key,'M09 가짜 자료 '+key]);
+   const unit=await scalar<string>("insert into public.vocab_units(dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count)values($1,'DAY 1','day1','day',1,1,50)returning id value",[source]);
+   await db.query("insert into public.vocab_dataset_catalog(dataset_id,display_name,catalog_group,material_kind)values($1,$2,'high','wordbook')",[source,'M09 가짜 '+key]);
+   await db.query(`insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
+    select $1,n,'m09'||$3||'word'||n,'m09'||lower($3)||'word'||n,array['가짜 '||$3||' 뜻 '||n],'가짜 '||$3||' 뜻 '||n,upper(encode(extensions.digest('m09:'||$3||':'||n,'sha256'),'hex')),$2,n,'word' from generate_series(1,50)n`,[source,unit,key]);
+   await db.query("insert into public.vocab_entry_quiz_eligibility(vocab_entry_id,dataset_id,quiz_mode,status,input_content_hash,rule_version,evaluated_at_utc)select id,dataset_id,'book_meaning_en_to_ko','eligible',row_sha256,'fake',now()from public.vocab_entries where dataset_id=$1",[source]);
+   const rows=(await db.query<{source_row:number;row_hash:string}>('select source_row,lower(row_sha256)row_hash from public.vocab_entries where dataset_id=$1 order by source_row',[source])).rows;
+   const selected={schemaVersion:'vocabulary-resource-snapshot-v1',sourceFields:{},proofs:{},pronunciation:{displayKo:null,variantId:null,audioUrl:null,available:false},lexicalPos:null,dictionary:null,senseId:null,definitionEn:null,exampleEn:null,exampleKo:null};
+   const bundle={schemaVersion:'vocabulary-library-import-v1',sourceCatalogHash:sha('catalog'+key),linksHash:sha('links'+key),referenceCatalogHash:sha('refs'+key),scopes:[{key:'m09-50-'+key,name:'M09 가짜 '+key,sourceTitle:'M09 가짜 자료 '+key,source:{datasetId:source,unitId:unit,kind:'legacy_vocab',releaseId:null,releaseVersion:'a'.repeat(64),fileHash:sha('file'+key),locator:'fake-'+key+'.json'},classification:{kind:'wordbook',sourceGrade:'g11',exam:null,lesson:null,day:1,publisher:null,school:null,targetGrade:null,schoolYear:null,semester:null,assessment:null,purpose:null},rows:rows.map(r=>({sourceRow:r.source_row,rowHash:r.row_hash,resources:{entryHash:r.row_hash,linkRecordHash:sha(key+':'+r.source_row),selected}}))}]};
+   const input=JSON.stringify(bundle),hash=await scalar<string>('select private.reviewed_exam_sha256_v1($1::jsonb)value',[input]);
+   await db.query('insert into private.vocabulary_library_import_approvals values($1,$2,$3,1,$4)',[project,sha(input),hash,'fake-m09-'+key]);
+   await service();await db.query('select public.import_vocabulary_library_v1($1::text)',[input]);await admin();
+   const scopes=libraryCatalogSchema.parse(await scalar('select public.list_vocabulary_library_v1()value')).scopes.filter(s=>s.source.datasetId===source);expect(scopes).toHaveLength(1);
+   const template=libraryCommandResultSchema.parse(await scalar('select public.save_vocabulary_library_template_v1($1::jsonb)value',[JSON.stringify({action:'create',requestId:randomUUID(),metadata:{title:'M09 가짜 '+key,tags:[],school:null,targetGrade:null,schoolYear:null,semester:null,assessment:null,purpose:null},recipe:{filters:EMPTY_LIBRARY_FILTERS,scopes:scopes.map(s=>({id:s.id,version:s.version})),excludedOccurrenceKeys:[],scopeStatus:'confirmed'}})])).template;
+   const command={action:'materialize',requestId:randomUUID(),templateId:template.id,versionId:template.versions[0]!.id,contentHash:template.versions[0]!.contentHash};
+   let done=false;
+   for(let n=0;n<5;n++){const state=compositionStepSchema.parse(await scalar('select public.advance_vocabulary_template_book_v1($1::jsonb)value',[command]));if(state.stage==='prepared'){done=true;break;}}
+   expect(done).toBe(true);
+   const prep=compositionQuestionInputSchema.parse(await scalar('select public.prepare_vocabulary_template_question_input_v1($1::jsonb)value',[command]));expect(prep.entries).toHaveLength(50);
+   const questions=prep.entries.map((e,i)=>{const choices=Array.from({length:4},(_,j)=>prep.entries[(i+j)%50]);return {vocabEntryId:e.id,direction:'english_to_korean',prompt:e.headword,choices:choices.map(c=>c.primaryMeaning),choiceVocabEntryIds:choices.map(c=>c.id),correctChoiceIndex:0};});
+   await service();done=false;
+   for(let n=0;n<6;n++){const step=compositionStepSchema.parse(await scalar('select public.advance_vocabulary_composition_questions_v1($1,$2,$3::jsonb)value',[command.versionId,command.contentHash,n===0?questions:null]));if(step.state==='ready'){done=true;break;}}expect(done).toBe(true);
+   const units=[...new Set(prep.entries.map(e=>e.unitId))];await admin();
+   const items=(await db.query<any>("select * from public.list_active_vocabulary_composition_questions_v1($1,$2::uuid[],'book_meaning_choice')",[prep.datasetId,units])).rows;expect(items).toHaveLength(50);
+   const plan=items.map((q,i)=>({vocab_entry_id:q.vocab_entry_id,base_order_index:i+1,direction:'english_to_korean',composition_bank:{mode:'book_meaning_choice',version_id:command.versionId,content_sha256:command.contentHash,question_item_id:q.question_item_id,question_item_sha256:q.question_item_sha256}}));
+   await snapshot('book-'+key);return {key,datasetId:prep.datasetId,units,plan};
+  }
+  const books=[await book('a')];
+  const responseHash=(r:any)=>sha(JSON.stringify(r));
+  const totals=(rows:any[])=>Object.fromEntries(rows.map(r=>[r.relation_name,{count:r.row_count,text:r.row_text_bytes,datum:r.row_datum_bytes}]));
+  async function attempt(n:number,student:string,b:any,wrongStart:number,detailed:boolean){
+   const device=sha(student),prefix='run-'+n;
+   await admin();const assignment=await scalar<string>("select public.create_assignment_with_delivery_v7('M09 가짜 50문항',$1::uuid,$2::uuid[],50,100::smallint,300,90::smallint,true,90::smallint,'fixed',null,array[$3::uuid],'none',null,$4::jsonb)value",[b.datasetId,b.units,student,b.plan]);if(detailed)await snapshot(prefix+'-assignment');
+   const prepared=await rpc('prepare_local_quiz_v1',[student,assignment,device,null]);if(detailed)await snapshot(prefix+'-prepared');
+   const plan=await rpc('begin_local_quiz_v1',[student,prepared.preparationId,device,prepared.planHash]);expect(plan.items).toHaveLength(50);if(detailed)await snapshot(prefix+'-started');
+   const submit=async(p:any,start:number,wrong:number)=>{
+    const answers=p.items.map((q:any,i:number)=>({id:q.id,order:i+1,kind:'answer',choice:i>=start&&i<start+wrong?(q.correctChoiceIndex+1)%4:q.correctChoiceIndex,openedMs:i*100,elapsedMs:i*100}));
+    await owner();const elapsed=await scalar<number>('select extract(epoch from(clock_timestamp()-$1::timestamptz))*1000 value',[p.startedAt]);
+    await new Promise(resolve=>setTimeout(resolve,Math.max(0,(answers.length-1)*100-Number(elapsed)+50)));
+    const params=[student,p.attemptId,p.phase,device,p.planHash,randomUUID(),answers,{elapsedMs:(answers.length-1)*100,reason:'answered'}];const at=performance.now();const returned=await rpc('submit_local_quiz_phase_v1',params);const elapsedMs=performance.now()-at;
+    const before=await snapshot(prefix+'-'+p.phase+'-accepted',detailed);
+    const replay=await rpc('submit_local_quiz_phase_v1',params);expect(responseHash(replay)).toBe(responseHash(returned));
+    const after=await snapshot(prefix+'-'+p.phase+'-replayed',detailed);expect(totals(after)).toEqual(totals(before));
+    return {returned,elapsedMs,requestJsonBytes:Buffer.byteLength(JSON.stringify(params)),responseJsonBytes:Buffer.byteLength(JSON.stringify(returned)),replayEqual:true};
+   };
+   const initial=await submit(plan,wrongStart,10);expect(initial.returned.result.state).toBe('retry_waiting');expect(initial.returned.retryTargets).toHaveLength(10);
+   const retry=await rpc('begin_local_quiz_retry_v1',[student,plan.attemptId,device]);expect(retry.items).toHaveLength(10);if(detailed)await snapshot(prefix+'-retry-started');
+   const final=await submit(retry,0,2);expect(final.returned.result.finalized).toBe(true);expect(final.returned.result.attempt.finalScore).toBe(96);expect(final.returned.result.attempt.passed).toBe(true);
+   const compact=(v:any)=>({localSqlElapsedMs:v.elapsedMs,requestJsonBytes:v.requestJsonBytes,responseJsonBytes:v.responseJsonBytes,replayEqual:v.replayEqual});
+   result.runs.push({number:n,studentIndex:students.indexOf(student),book:b.key,wrongStart,initialCount:50,retryCount:10,finalScore:96,passed:true,initial:compact(initial),retry:compact(final),preparedJsonBytes:Buffer.byteLength(JSON.stringify(prepared)),initialPlanJsonBytes:Buffer.byteLength(JSON.stringify(plan)),retryPlanJsonBytes:Buffer.byteLength(JSON.stringify(retry))});
+   const rows=await snapshot(prefix+'-complete');console.log(JSON.stringify({run:n,databaseBytes:result.snapshots.at(-1).databaseBytes,answers:rows.find(r=>r.relation_name==='private.vocabulary_answer_receipts')?.row_count}));
+  }
+  for(let n=1;n<=6;n++){if(n===5)books.push(await book('b'));await attempt(n,students[n===3||n===6?1:0],books[n>=5?1:0],n===4?10:0,true);}
+  await owner();result.sixRunCounts=await scalar(`select jsonb_build_object('attempts',(select count(*)from public.quiz_attempts),'quizQuestions',(select count(*)from public.quiz_questions),'answerReceipts',(select count(*)from private.vocabulary_answer_receipts),'phaseReceipts',(select count(*)from private.local_quiz_phase_receipts),'wrongEvents',(select count(*)from public.student_vocab_wrong_events),'points',(select count(*)from public.student_point_events))value`);
+  expect(result.sixRunCounts).toEqual({attempts:6,quizQuestions:300,answerReceipts:360,phaseReceipts:12,wrongEvents:72,points:360});
+  await owner();await db.exec('vacuum analyze');await snapshot('run-6-vacuum');
+  for(let n=7;n<=32;n++){
+   await attempt(n,students[0],books[0],0,false);
+   if(n===16||n===32){await owner();await db.exec('vacuum analyze');await snapshot('run-'+n+'-vacuum');}
+  }
+  result.finalCounts=await scalar(`select jsonb_build_object('attempts',(select count(*)from public.quiz_attempts),'quizQuestions',(select count(*)from public.quiz_questions),'answerReceipts',(select count(*)from private.vocabulary_answer_receipts),'phaseReceipts',(select count(*)from private.local_quiz_phase_receipts),'wrongEvents',(select count(*)from public.student_vocab_wrong_events),'points',(select count(*)from public.student_point_events))value`);
+  expect(result.finalCounts).toEqual({attempts:32,quizQuestions:1600,answerReceipts:1920,phaseReceipts:64,wrongEvents:384,points:1920});
+  result.maintenance='Normal local VACUUM ANALYZE after6/16/32 runs; no FULL/rewrite. Observed allocated pages include the chosen maintenance cadence, not cloud steady-state proof.';
+  result.finishedAt=new Date().toISOString();result.passed=true;save();
+ }finally{await db.close();}
+},360000);

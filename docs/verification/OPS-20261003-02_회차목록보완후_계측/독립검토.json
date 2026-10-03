@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-03T10:23:13.201Z",
+  "reviewer": "/root/m05_record_review",
+  "blockingFindings": 0,
+  "mismatches": 0,
+  "rawSnapshots": 87,
+  "intervalsRecomputed": 15,
+  "forecastRows": 15,
+  "inputFiles": 1917,
+  "sqlFiles": 240,
+  "evidenceFiles": 11,
+  "method": "Read-only raw gzip/JSON/CSV/hash and code comparison; no database call or full model re-execution.",
+  "results": {
+    "rawAndGzipByteEquality": true,
+    "inputAndEvidenceHashesEqual": true,
+    "priorFourBaselinesUnchanged": true,
+    "modelConfigAnalyzerOnlyPathAndCommitChanged": true,
+    "exactReplays": 64,
+    "trackedPerAttempt": 204800,
+    "databasePerAttempt": 209920,
+    "unexplainedLast16": 81920,
+    "forecast100Students6Months": 2457600000
+  },
+  "limits": [
+    "Aggregate row-count/datum/JSON replay check, not every-cell cryptographic comparison.",
+    "Physical page differences do not establish causal/cloud upper-bound savings."
+  ]
+}
