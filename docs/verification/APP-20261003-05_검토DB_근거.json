@@ -1,0 +1,5646 @@
+{
+  "task": "APP-20261003-05",
+  "environment": "preview",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "implementationCommit": "6e0ba8a",
+  "migrationSha256": "4c83da3a6ece9a1a9fc6e0e0f0a149431569c552f571ac630bd995e3cbd3e985",
+  "migrations": [
+    {
+      "version": "20261002234601",
+      "name": "share_reviewed_package_entries"
+    },
+    {
+      "version": "20261002235300",
+      "name": "m08_package_preview_probe"
+    },
+    {
+      "version": "20261002235358",
+      "name": "m08_package_preview_probe_candidate_join"
+    },
+    {
+      "version": "20261003000649",
+      "name": "remove_m08_package_preview_probe"
+    }
+  ],
+  "beforeSnapshot": "1523645:1523645:",
+  "beforeRows": [
+    {
+      "hash": "4348a4d68fbfb6c8d764f216035127c0",
+      "name": "private.app_migration_snapshots",
+      "rows": 5
+    },
+    {
+      "hash": "2ad88c52e488590c3bb9dc8bbc83027e",
+      "name": "private.assignment_release_links_v1",
+      "rows": 22
+    },
+    {
+      "hash": "6ef5c614c355f86a66ac8b713178d5ff",
+      "name": "private.assignment_replacement_requests",
+      "rows": 2
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.assignment_study_examples_v1",
+      "rows": 0
+    },
+    {
+      "hash": "5d736a181f58d7dd6ec708d091066603",
+      "name": "private.assignment_vocabulary_meaning_refs",
+      "rows": 136
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.assignment_vocabulary_new_questions",
+      "rows": 0
+    },
+    {
+      "hash": "004ad61fc3743573c30147ac9e504278",
+      "name": "private.bulk_canonical_question_preview_requests",
+      "rows": 9
+    },
+    {
+      "hash": "dc16b934247abef5f5ec30af7dc2fb34",
+      "name": "private.bulk_vocab_series_requests",
+      "rows": 72
+    },
+    {
+      "hash": "75c267cf32528f91b35321a2e5b20557",
+      "name": "private.current_wrong_review_assignment_requests",
+      "rows": 4
+    },
+    {
+      "hash": "60c8cf2cb7e8724463010a0aecb81b25",
+      "name": "private.entry_source_pronunciations_v1",
+      "rows": 855
+    },
+    {
+      "hash": "9599568b564d29bbfbd27a2e02a7d01b",
+      "name": "private.historical_learning_migrations",
+      "rows": 24
+    },
+    {
+      "hash": "be62a8594677e350171c8483b94a335c",
+      "name": "private.historical_learning_receipts",
+      "rows": 9
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.historical_learning_write_permits",
+      "rows": 0
+    },
+    {
+      "hash": "5882d16214d35a8a1463b455f7b032f8",
+      "name": "private.historical_question_migration_receipts",
+      "rows": 3
+    },
+    {
+      "hash": "3300e52615057d29036994e7d829ff3a",
+      "name": "private.historical_question_migrations",
+      "rows": 8
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.historical_question_write_permits",
+      "rows": 0
+    },
+    {
+      "hash": "b16c26e09dcf13088591acc1b5f36ba8",
+      "name": "private.local_quiz_phase_plans",
+      "rows": 10
+    },
+    {
+      "hash": "999b23cd31e8c61d6cbbb419322ac3f3",
+      "name": "private.local_quiz_phase_receipts",
+      "rows": 10
+    },
+    {
+      "hash": "7eb174eb6171dbcdd10d13218a130268",
+      "name": "private.local_quiz_preparations",
+      "rows": 9
+    },
+    {
+      "hash": "426ac751ae22fe82433f0496b43c5680",
+      "name": "private.local_quiz_runs",
+      "rows": 9
+    },
+    {
+      "hash": "9dbbddcf2fd63d17b313c66c6be9380b",
+      "name": "private.notebook_assignment_requests",
+      "rows": 2
+    },
+    {
+      "hash": "8719df0af271bf9ae0a148990eb3d392",
+      "name": "private.notebook_question_origins_v2",
+      "rows": 6
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.operational_retention_holds",
+      "rows": 0
+    },
+    {
+      "hash": "72a8a08237876bde2d16aa13b2e5e611",
+      "name": "private.operational_retention_jobs",
+      "rows": 4
+    },
+    {
+      "hash": "b8abb7ee4329a2e13c1cf9ac30967a0d",
+      "name": "private.operational_retention_policy",
+      "rows": 1
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.operational_retention_state",
+      "rows": 0
+    },
+    {
+      "hash": "88e9da3e60d59b5f4b0d47f9749819fb",
+      "name": "private.pronunciation_audio_corrections_v1",
+      "rows": 2
+    },
+    {
+      "hash": "d06f80d901ec9e77939deb878778f346",
+      "name": "private.quiz_attempt_preparations",
+      "rows": 35
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.quiz_preparation_compaction_checks",
+      "rows": 0
+    },
+    {
+      "hash": "4e24addb2bd7758b2f87edc275076d41",
+      "name": "private.quiz_preparation_expirations",
+      "rows": 2
+    },
+    {
+      "hash": "5c44710ecdf9d4ccc19b42cedff41517",
+      "name": "private.reviewed_bundle_archive_receipts",
+      "rows": 6
+    },
+    {
+      "hash": "0a8a370fc63f81a0a17db237d47f7cca",
+      "name": "private.reviewed_bundle_archives",
+      "rows": 3
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.reviewed_bundle_write_permits",
+      "rows": 0
+    },
+    {
+      "hash": "70f98c0e06371c5e172609607bd2c28a",
+      "name": "private.reviewed_entry_resource_approvals_v1",
+      "rows": 2
+    },
+    {
+      "hash": "d4fd721348b0fc219bafd99abf3a2d58",
+      "name": "private.reviewed_entry_resource_releases_v1",
+      "rows": 2
+    },
+    {
+      "hash": "6ad0606069351ca1b2dfdc7e2c181c7e",
+      "name": "private.reviewed_entry_resources_v1",
+      "rows": 864
+    },
+    {
+      "hash": "6525908f405d200782c32113b1bc49a9",
+      "name": "private.reviewed_exam_entries",
+      "rows": 1061
+    },
+    {
+      "hash": "b68e8711acf8510de6ff1527d03d4f8b",
+      "name": "private.reviewed_exam_import_approvals",
+      "rows": 1
+    },
+    {
+      "hash": "4f4089ffebcf5eed332dbb3d8e01f6ca",
+      "name": "private.reviewed_exam_items",
+      "rows": 3380
+    },
+    {
+      "hash": "a6c1b2e03023cf7684ddf122740ce621",
+      "name": "private.reviewed_exam_releases",
+      "rows": 4
+    },
+    {
+      "hash": "e5ea3c1e4fc7cee90032328645cb2e89",
+      "name": "private.reviewed_mock_source_approvals_v1",
+      "rows": 23
+    },
+    {
+      "hash": "e1cff6cce39f739b2b582e39a6bee86c",
+      "name": "private.reviewed_mock_source_releases_v1",
+      "rows": 23
+    },
+    {
+      "hash": "c4947a896b496bd1c1bc16b0c52fadf0",
+      "name": "private.reviewed_mock_source_resources_v1",
+      "rows": 16912
+    },
+    {
+      "hash": "6548d80ab6070ab0e9e45b52434f06d5",
+      "name": "private.reviewed_pronunciation_asset_approvals_v1",
+      "rows": 1
+    },
+    {
+      "hash": "3e0d8575e3c8655b47d9d861d4cb86c3",
+      "name": "private.reviewed_pronunciation_assets_v1",
+      "rows": 127
+    },
+    {
+      "hash": "5b30d97644127a58e1139e53d324f418",
+      "name": "private.school_handout_import_approvals_v1",
+      "rows": 3
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.school_schedule_manual_edits",
+      "rows": 0
+    },
+    {
+      "hash": "f38ae3021603e18ab1bc621fcbacba28",
+      "name": "private.school_schedule_versions",
+      "rows": 3
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.student_app_maintenance_retry_state",
+      "rows": 0
+    },
+    {
+      "hash": "ae0b24d1e0eda03445b525fb2635183a",
+      "name": "private.student_vocabulary_meaning_states",
+      "rows": 41
+    },
+    {
+      "hash": "0e4d863f4d074c3f7c918d1bc7bc3159",
+      "name": "private.student_vocabulary_versions",
+      "rows": 26
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.student_word_practice_questions",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.student_word_practice_runs",
+      "rows": 0
+    },
+    {
+      "hash": "9b8c130e1e285e734648694803ab06ec",
+      "name": "private.vocab_assignment_queue_requests",
+      "rows": 32
+    },
+    {
+      "hash": "a28d7861ba9eda4878d5b8d4979f9023",
+      "name": "private.vocab_assignment_series",
+      "rows": 42
+    },
+    {
+      "hash": "55788bfca5ba69f17aab73062fa9db54",
+      "name": "private.vocab_assignment_series_events",
+      "rows": 148
+    },
+    {
+      "hash": "b0b01e4d75bafc0c37f30994db66edc2",
+      "name": "private.vocab_assignment_series_items",
+      "rows": 114
+    },
+    {
+      "hash": "0d0ae7a328d0155c3cab8654973f93ef",
+      "name": "private.vocabulary_answer_receipts",
+      "rows": 110
+    },
+    {
+      "hash": "a5c24976a386a40f5f22fa67ccae2f64",
+      "name": "private.vocabulary_composition_build_positions",
+      "rows": 14329
+    },
+    {
+      "hash": "2e942c53b93e45ffccee76e03a09e5e2",
+      "name": "private.vocabulary_composition_builds",
+      "rows": 1
+    },
+    {
+      "hash": "f6bcbb7c3691d6e98637a1d1ee970905",
+      "name": "private.vocabulary_composition_entries",
+      "rows": 15933
+    },
+    {
+      "hash": "91a2dd42b241e2ce2ae345f18693cdff",
+      "name": "private.vocabulary_composition_items",
+      "rows": 31866
+    },
+    {
+      "hash": "ad9b901ff25cfdc15d9145cc1134568f",
+      "name": "private.vocabulary_composition_management_approvals",
+      "rows": 5
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.vocabulary_composition_management_chunks",
+      "rows": 0
+    },
+    {
+      "hash": "c0526e3d3ea8d314daf5ef9cb949171c",
+      "name": "private.vocabulary_composition_management_inputs",
+      "rows": 5
+    },
+    {
+      "hash": "3dd53de1135a6042542def0c396db55d",
+      "name": "private.vocabulary_composition_management_requests",
+      "rows": 5
+    },
+    {
+      "hash": "4fb62401513df0a1aa5a233a84d18e87",
+      "name": "private.vocabulary_composition_management_results",
+      "rows": 5
+    },
+    {
+      "hash": "a8f0d948bb86fc847c1a5db829e547b1",
+      "name": "private.vocabulary_composition_question_plans",
+      "rows": 2
+    },
+    {
+      "hash": "6d8b15d43fc5e55c774e19e8dbf488b9",
+      "name": "private.vocabulary_composition_storage_formats",
+      "rows": 2
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.vocabulary_composition_write_context",
+      "rows": 0
+    },
+    {
+      "hash": "7f5bb2772bcd7d33324444d3780d97f5",
+      "name": "private.vocabulary_compositions",
+      "rows": 10
+    },
+    {
+      "hash": "5b3adfd84937bb698d67e3e80dc9463b",
+      "name": "private.vocabulary_expired_answer_results",
+      "rows": 1
+    },
+    {
+      "hash": "f8fbd4d23ad01a7c88ed403e9e92a75a",
+      "name": "private.vocabulary_learning_value_bindings",
+      "rows": 9
+    },
+    {
+      "hash": "d2c0a272f07f710afee76083d33eb78d",
+      "name": "private.vocabulary_learning_value_versions",
+      "rows": 8
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.vocabulary_legacy_question_baselines",
+      "rows": 0
+    },
+    {
+      "hash": "ec2f125c6e7c1d26bb7cffae1460531c",
+      "name": "private.vocabulary_legacy_state_baselines",
+      "rows": 88
+    },
+    {
+      "hash": "24982d5d3284c53d1803d690d1f8ef8e",
+      "name": "private.vocabulary_library_import_approvals",
+      "rows": 55
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.vocabulary_library_import_chunks",
+      "rows": 0
+    },
+    {
+      "hash": "8b42b42f0415f067b1f0213d3d46fc96",
+      "name": "private.vocabulary_library_management_requests",
+      "rows": 10
+    },
+    {
+      "hash": "6404de4a141980066e1f87442ed3aeca",
+      "name": "private.vocabulary_library_management_results",
+      "rows": 10
+    },
+    {
+      "hash": "28405c6de372001c45aabfbade166cb0",
+      "name": "private.vocabulary_library_requests",
+      "rows": 13
+    },
+    {
+      "hash": "919c90ae55b6e559a308a12395d383be",
+      "name": "private.vocabulary_library_row_fingerprints",
+      "rows": 22333
+    },
+    {
+      "hash": "ac1ae53d9a5b738ab8da70e9a3daf53f",
+      "name": "private.vocabulary_library_scope_rows",
+      "rows": 22333
+    },
+    {
+      "hash": "b3d75aaf0f4222beedcae4030d119360",
+      "name": "private.vocabulary_library_scopes",
+      "rows": 687
+    },
+    {
+      "hash": "4aa403a4bc0ecc4f0ae492827b7fd894",
+      "name": "private.vocabulary_library_template_approvals",
+      "rows": 10
+    },
+    {
+      "hash": "82f924d46f62d4300fca4985e73b3827",
+      "name": "private.vocabulary_library_templates",
+      "rows": 18
+    },
+    {
+      "hash": "862ef7c59ef4372dbbd5a7b07fe192ea",
+      "name": "private.vocabulary_library_versions",
+      "rows": 18
+    },
+    {
+      "hash": "996483c9a87895602f951c6e7b2a6950",
+      "name": "private.vocabulary_phase_results",
+      "rows": 19
+    },
+    {
+      "hash": "350a0c511b19a33f809d4ce69586ed8d",
+      "name": "private.vocabulary_question_content_versions",
+      "rows": 37
+    },
+    {
+      "hash": "265dfb0d5416eac774746d0844dfcf84",
+      "name": "private.vocabulary_question_meaning_versions",
+      "rows": 22
+    },
+    {
+      "hash": "563c60e960a2b231205073661cd5aa44",
+      "name": "private.vocabulary_result_policies",
+      "rows": 15
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "private.worksheet_mistake_items",
+      "rows": 0
+    },
+    {
+      "hash": "79c4cb6b4da516a66c38ef330c047b2d",
+      "name": "public.admin_history_hidden_entries",
+      "rows": 10
+    },
+    {
+      "hash": "8ec6a5cbeafbafe7055b4cdd60a293cf",
+      "name": "public.admin_profiles",
+      "rows": 11
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "public.admin_vocab_assignment_time_templates",
+      "rows": 0
+    },
+    {
+      "hash": "720c8a178da6edf312a79d2008996344",
+      "name": "public.assignment_question_exam_use_snapshot",
+      "rows": 4755
+    },
+    {
+      "hash": "7a6a1e3391b0902c20da432bb22ca073",
+      "name": "public.assignment_questions",
+      "rows": 5559
+    },
+    {
+      "hash": "f658e9d91509571cb90d4e2e205b27dc",
+      "name": "public.assignment_quiz_mode_snapshots",
+      "rows": 144
+    },
+    {
+      "hash": "917ea9d715566e14306debac77c9c97c",
+      "name": "public.assignment_review_targets",
+      "rows": 42
+    },
+    {
+      "hash": "1c7d4e08692c2779278dd83c4194ef23",
+      "name": "public.assignment_sources",
+      "rows": 230
+    },
+    {
+      "hash": "52082ae2983106aa6a08018de4acca69",
+      "name": "public.assignment_students",
+      "rows": 232
+    },
+    {
+      "hash": "9e8c8138538bd473f517f47f9b3deeb2",
+      "name": "public.assignment_units",
+      "rows": 1545
+    },
+    {
+      "hash": "096a8f6c263d5855767be87b11bffa1c",
+      "name": "public.assignments",
+      "rows": 230
+    },
+    {
+      "hash": "d6dcc53f69c7e49b93394848376aa981",
+      "name": "public.audit_events",
+      "rows": 1097
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "public.class_group_students",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "public.class_groups",
+      "rows": 0
+    },
+    {
+      "hash": "00747bafc8c822dc086e44f0a3e600f9",
+      "name": "public.notification_receipts",
+      "rows": 329
+    },
+    {
+      "hash": "ebb329b8df54a9beed1bbc26ad3e0f39",
+      "name": "public.quiz_attempts",
+      "rows": 135
+    },
+    {
+      "hash": "1db3535bfdeaf9b1890997dcd8e5432d",
+      "name": "public.quiz_questions",
+      "rows": 1604
+    },
+    {
+      "hash": "2c4253d2c02009589f20970f8bdeaa07",
+      "name": "public.student_codes",
+      "rows": 32
+    },
+    {
+      "hash": "a2d4f30135faa16baf77537b8dea9c14",
+      "name": "public.student_learning_sources",
+      "rows": 41
+    },
+    {
+      "hash": "76f77a2a58aa9ffb82266904db08ca26",
+      "name": "public.student_login_attempts",
+      "rows": 72
+    },
+    {
+      "hash": "c18a370453e22b7723fbb70e44ce1217",
+      "name": "public.student_point_events",
+      "rows": 1077
+    },
+    {
+      "hash": "d482d63e4550427e02160e33589d110b",
+      "name": "public.student_point_totals",
+      "rows": 33
+    },
+    {
+      "hash": "18ab0dda7d3741a256879cd0de2915a8",
+      "name": "public.student_sessions",
+      "rows": 73
+    },
+    {
+      "hash": "499c6272f080d4298560bbe10bfaff39",
+      "name": "public.student_vocab_review_assignment_draft_items",
+      "rows": 2
+    },
+    {
+      "hash": "174c2205650a9758919f641dfb79ad8b",
+      "name": "public.student_vocab_review_assignment_drafts",
+      "rows": 2
+    },
+    {
+      "hash": "5305b79fe3304effdbaac93eb8f482a4",
+      "name": "public.student_vocab_review_queue",
+      "rows": 40
+    },
+    {
+      "hash": "928badc7241549e38e0ea2613c896565",
+      "name": "public.student_vocab_state",
+      "rows": 754
+    },
+    {
+      "hash": "21847445e2249ac15e7790be0f069a8c",
+      "name": "public.student_vocab_wrong_events",
+      "rows": 840
+    },
+    {
+      "hash": "2af8eccf42af4086f9ebeeedb5484b1d",
+      "name": "public.students",
+      "rows": 121
+    },
+    {
+      "hash": "a835d15682b139bbdef94d573754fcf0",
+      "name": "public.vocab_approved_korean_pronunciations",
+      "rows": 496
+    },
+    {
+      "hash": "528906509a52120bfbe9885c33434892",
+      "name": "public.vocab_dataset_capabilities",
+      "rows": 22
+    },
+    {
+      "hash": "e496936d7000342aa0cdd05fd39fef46",
+      "name": "public.vocab_dataset_catalog",
+      "rows": 53
+    },
+    {
+      "hash": "5ac5ee70778f230ca0654ed3e4ffe0c7",
+      "name": "public.vocab_datasets",
+      "rows": 61
+    },
+    {
+      "hash": "f82b6c72c11c0e4541e22a90c8e05fca",
+      "name": "public.vocab_entries",
+      "rows": 39456
+    },
+    {
+      "hash": "68f5a7821419af6d3feb8e3a26287d05",
+      "name": "public.vocab_entry_pronunciation_bindings_v2",
+      "rows": 10512
+    },
+    {
+      "hash": "97ba60a72ad2f31330ae1ce53219e5ff",
+      "name": "public.vocab_entry_pronunciations",
+      "rows": 60
+    },
+    {
+      "hash": "31a68ad0b64f27cbad4d1f01e3014d26",
+      "name": "public.vocab_entry_quiz_eligibility",
+      "rows": 6086
+    },
+    {
+      "hash": "d6336bd5c749940e41aae7143dc9db20",
+      "name": "public.vocab_pronunciation_identities_v2",
+      "rows": 7195
+    },
+    {
+      "hash": "e3dd2723fcd77593bd2039e3e12d78a1",
+      "name": "public.vocab_pronunciation_releases_v2",
+      "rows": 9
+    },
+    {
+      "hash": "6cf703dcdea0fa124fda1bc33cb4b1bd",
+      "name": "public.vocab_pronunciation_tts_assets_v2",
+      "rows": 1300
+    },
+    {
+      "hash": "386bdfca3871ce58aab23b88bad7728d",
+      "name": "public.vocab_rule_derived_korean_pronunciations",
+      "rows": 582
+    },
+    {
+      "hash": "a420e0e1162425434f530c8754fcedbf",
+      "name": "public.vocab_synthetic_audio_assets",
+      "rows": 412
+    },
+    {
+      "hash": "68744c4de987cae8a6b2ecdf1f3324a6",
+      "name": "public.vocab_synthetic_audio_bindings",
+      "rows": 418
+    },
+    {
+      "hash": "36f47ee0a67308bb13150c8e0ab5bc27",
+      "name": "public.vocab_unit_catalog",
+      "rows": 1190
+    },
+    {
+      "hash": "620b6b8989edb1a03d257b43d50bfaa9",
+      "name": "public.vocab_units",
+      "rows": 1269
+    },
+    {
+      "hash": "cf3da27caf3e9425f7f424e6bba8c440",
+      "name": "public.worksheet_request_items",
+      "rows": 3
+    },
+    {
+      "hash": "09f723ea1dfa7fb4ac0645a1332cf550",
+      "name": "public.worksheet_requests",
+      "rows": 1
+    },
+    {
+      "hash": "cf3fa529fa1714236bc3869cffb52d8f",
+      "name": "word_index.app_canonical_question_preview_item",
+      "rows": 2785
+    },
+    {
+      "hash": "579c941111b51d7b312bf29bd35dfb25",
+      "name": "word_index.app_canonical_question_preview_release",
+      "rows": 9
+    },
+    {
+      "hash": "5c3244d887ebe6656cfef1b349d6e7dc",
+      "name": "word_index.app_exam_use_occurrence",
+      "rows": 19326
+    },
+    {
+      "hash": "29e6eed299a92884b0fe64356e089e03",
+      "name": "word_index.app_exam_use_release",
+      "rows": 33
+    },
+    {
+      "hash": "0f01987942f966e6025ca21828841062",
+      "name": "word_index.assignment_exam_use_release_snapshot",
+      "rows": 122
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.data_issue",
+      "rows": 0
+    },
+    {
+      "hash": "b8b133f4d8caf84048d38d97136a867d",
+      "name": "word_index.dataset_source",
+      "rows": 7
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.etymology",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.example",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.import_batch",
+      "rows": 0
+    },
+    {
+      "hash": "8c5fac61a4631b2606e149dfacb23cf2",
+      "name": "word_index.import_run",
+      "rows": 1
+    },
+    {
+      "hash": "353b6cb9ea9b1557d68a02a142399a72",
+      "name": "word_index.index_build",
+      "rows": 5
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.input_file_manifest",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.legacy_freeze",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.level_mapping",
+      "rows": 0
+    },
+    {
+      "hash": "0e539df932c8378c3ec24c2370285da9",
+      "name": "word_index.lexeme",
+      "rows": 2277
+    },
+    {
+      "hash": "a3d967bb87bdcd320b81a51b4e023de0",
+      "name": "word_index.lexeme_metric",
+      "rows": 15
+    },
+    {
+      "hash": "03afacacd33e87d994523ad4bd917f77",
+      "name": "word_index.lexeme_tag",
+      "rows": 7
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.mock_wordbook_composition",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.mock_wordbook_identity_review",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.mock_wordbook_lineage",
+      "rows": 0
+    },
+    {
+      "hash": "3f956e4508d5e640a3365a74e9b880d9",
+      "name": "word_index.mock_wordbook_scope",
+      "rows": 516
+    },
+    {
+      "hash": "d8df40a1a29945662930f39f2b15ac4c",
+      "name": "word_index.occurrence",
+      "rows": 2129
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.pipeline_rule",
+      "rows": 0
+    },
+    {
+      "hash": "0e086ec8cf7fa5185ff6fe3c35e571d0",
+      "name": "word_index.preview_vocab_link_lexeme_seed_batch",
+      "rows": 11
+    },
+    {
+      "hash": "1febae248b1528a947ef1cb5a84ca42f",
+      "name": "word_index.preview_vocab_link_lexeme_seed_member",
+      "rows": 1979
+    },
+    {
+      "hash": "f233a2344530f92c3187101755c637df",
+      "name": "word_index.preview_vocab_link_lexeme_seed_run",
+      "rows": 1
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.raw_pointer",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.relation",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.relation_evidence",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.review",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.schema_meta",
+      "rows": 0
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.sense",
+      "rows": 0
+    },
+    {
+      "hash": "c55292f89827308e8d2caf686a1b1f22",
+      "name": "word_index.source",
+      "rows": 7
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.type_decision",
+      "rows": 0
+    },
+    {
+      "hash": "034b06776250cac1ac8cc7878c8b86fa",
+      "name": "word_index.vocab_entry_link",
+      "rows": 3029
+    },
+    {
+      "hash": "803cace0d6d60e721c12908535e12270",
+      "name": "word_index.vocab_entry_mapping_candidate",
+      "rows": 2
+    },
+    {
+      "hash": "73edb1ddd34ba6585f5867cc3923548c",
+      "name": "word_index.vocab_link_import_batch",
+      "rows": 34
+    },
+    {
+      "hash": "7641803a30803d51684ec44c89003787",
+      "name": "word_index.vocab_link_import_run",
+      "rows": 7
+    },
+    {
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "name": "word_index.work_queue",
+      "rows": 0
+    }
+  ],
+  "afterOriginalRows": [
+    {
+      "name": "private.app_migration_snapshots",
+      "rows": 5,
+      "hash": "4348a4d68fbfb6c8d764f216035127c0"
+    },
+    {
+      "name": "private.assignment_release_links_v1",
+      "rows": 22,
+      "hash": "2ad88c52e488590c3bb9dc8bbc83027e"
+    },
+    {
+      "name": "private.assignment_replacement_requests",
+      "rows": 2,
+      "hash": "6ef5c614c355f86a66ac8b713178d5ff"
+    },
+    {
+      "name": "private.assignment_study_examples_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.assignment_vocabulary_meaning_refs",
+      "rows": 136,
+      "hash": "5d736a181f58d7dd6ec708d091066603"
+    },
+    {
+      "name": "private.assignment_vocabulary_new_questions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.bulk_canonical_question_preview_requests",
+      "rows": 9,
+      "hash": "004ad61fc3743573c30147ac9e504278"
+    },
+    {
+      "name": "private.bulk_vocab_series_requests",
+      "rows": 72,
+      "hash": "dc16b934247abef5f5ec30af7dc2fb34"
+    },
+    {
+      "name": "private.current_wrong_review_assignment_requests",
+      "rows": 4,
+      "hash": "75c267cf32528f91b35321a2e5b20557"
+    },
+    {
+      "name": "private.entry_source_pronunciations_v1",
+      "rows": 855,
+      "hash": "60c8cf2cb7e8724463010a0aecb81b25"
+    },
+    {
+      "name": "private.historical_learning_migrations",
+      "rows": 24,
+      "hash": "9599568b564d29bbfbd27a2e02a7d01b"
+    },
+    {
+      "name": "private.historical_learning_receipts",
+      "rows": 9,
+      "hash": "be62a8594677e350171c8483b94a335c"
+    },
+    {
+      "name": "private.historical_learning_write_permits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.historical_question_migration_receipts",
+      "rows": 3,
+      "hash": "5882d16214d35a8a1463b455f7b032f8"
+    },
+    {
+      "name": "private.historical_question_migrations",
+      "rows": 8,
+      "hash": "3300e52615057d29036994e7d829ff3a"
+    },
+    {
+      "name": "private.historical_question_write_permits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.local_quiz_phase_plans",
+      "rows": 10,
+      "hash": "b16c26e09dcf13088591acc1b5f36ba8"
+    },
+    {
+      "name": "private.local_quiz_phase_receipts",
+      "rows": 10,
+      "hash": "999b23cd31e8c61d6cbbb419322ac3f3"
+    },
+    {
+      "name": "private.local_quiz_preparations",
+      "rows": 9,
+      "hash": "7eb174eb6171dbcdd10d13218a130268"
+    },
+    {
+      "name": "private.local_quiz_runs",
+      "rows": 9,
+      "hash": "426ac751ae22fe82433f0496b43c5680"
+    },
+    {
+      "name": "private.notebook_assignment_requests",
+      "rows": 2,
+      "hash": "9dbbddcf2fd63d17b313c66c6be9380b"
+    },
+    {
+      "name": "private.notebook_question_origins_v2",
+      "rows": 6,
+      "hash": "8719df0af271bf9ae0a148990eb3d392"
+    },
+    {
+      "name": "private.operational_retention_holds",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.operational_retention_jobs",
+      "rows": 4,
+      "hash": "72a8a08237876bde2d16aa13b2e5e611"
+    },
+    {
+      "name": "private.operational_retention_policy",
+      "rows": 1,
+      "hash": "b8abb7ee4329a2e13c1cf9ac30967a0d"
+    },
+    {
+      "name": "private.operational_retention_state",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.pronunciation_audio_corrections_v1",
+      "rows": 2,
+      "hash": "88e9da3e60d59b5f4b0d47f9749819fb"
+    },
+    {
+      "name": "private.quiz_attempt_preparations",
+      "rows": 35,
+      "hash": "d06f80d901ec9e77939deb878778f346"
+    },
+    {
+      "name": "private.quiz_preparation_compaction_checks",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.quiz_preparation_expirations",
+      "rows": 2,
+      "hash": "4e24addb2bd7758b2f87edc275076d41"
+    },
+    {
+      "name": "private.reviewed_bundle_archive_receipts",
+      "rows": 6,
+      "hash": "5c44710ecdf9d4ccc19b42cedff41517"
+    },
+    {
+      "name": "private.reviewed_bundle_archives",
+      "rows": 3,
+      "hash": "0a8a370fc63f81a0a17db237d47f7cca"
+    },
+    {
+      "name": "private.reviewed_bundle_write_permits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_entry_resource_approvals_v1",
+      "rows": 2,
+      "hash": "70f98c0e06371c5e172609607bd2c28a"
+    },
+    {
+      "name": "private.reviewed_entry_resource_releases_v1",
+      "rows": 2,
+      "hash": "d4fd721348b0fc219bafd99abf3a2d58"
+    },
+    {
+      "name": "private.reviewed_entry_resources_v1",
+      "rows": 864,
+      "hash": "6ad0606069351ca1b2dfdc7e2c181c7e"
+    },
+    {
+      "name": "private.reviewed_exam_entries",
+      "rows": 1061,
+      "hash": "6525908f405d200782c32113b1bc49a9"
+    },
+    {
+      "name": "private.reviewed_exam_import_approvals",
+      "rows": 1,
+      "hash": "b68e8711acf8510de6ff1527d03d4f8b"
+    },
+    {
+      "name": "private.reviewed_exam_items",
+      "rows": 3380,
+      "hash": "4f4089ffebcf5eed332dbb3d8e01f6ca"
+    },
+    {
+      "name": "private.reviewed_exam_releases",
+      "rows": 4,
+      "hash": "a6c1b2e03023cf7684ddf122740ce621"
+    },
+    {
+      "name": "private.reviewed_mock_source_approvals_v1",
+      "rows": 23,
+      "hash": "e5ea3c1e4fc7cee90032328645cb2e89"
+    },
+    {
+      "name": "private.reviewed_mock_source_releases_v1",
+      "rows": 23,
+      "hash": "e1cff6cce39f739b2b582e39a6bee86c"
+    },
+    {
+      "name": "private.reviewed_mock_source_resources_v1",
+      "rows": 16912,
+      "hash": "c4947a896b496bd1c1bc16b0c52fadf0"
+    },
+    {
+      "name": "private.reviewed_pronunciation_asset_approvals_v1",
+      "rows": 1,
+      "hash": "6548d80ab6070ab0e9e45b52434f06d5"
+    },
+    {
+      "name": "private.reviewed_pronunciation_assets_v1",
+      "rows": 127,
+      "hash": "3e0d8575e3c8655b47d9d861d4cb86c3"
+    },
+    {
+      "name": "private.school_handout_import_approvals_v1",
+      "rows": 3,
+      "hash": "5b30d97644127a58e1139e53d324f418"
+    },
+    {
+      "name": "private.school_schedule_manual_edits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.school_schedule_versions",
+      "rows": 3,
+      "hash": "f38ae3021603e18ab1bc621fcbacba28"
+    },
+    {
+      "name": "private.student_app_maintenance_retry_state",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.student_vocabulary_meaning_states",
+      "rows": 41,
+      "hash": "ae0b24d1e0eda03445b525fb2635183a"
+    },
+    {
+      "name": "private.student_vocabulary_versions",
+      "rows": 26,
+      "hash": "0e4d863f4d074c3f7c918d1bc7bc3159"
+    },
+    {
+      "name": "private.student_word_practice_questions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.student_word_practice_runs",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocab_assignment_queue_requests",
+      "rows": 32,
+      "hash": "9b8c130e1e285e734648694803ab06ec"
+    },
+    {
+      "name": "private.vocab_assignment_series",
+      "rows": 42,
+      "hash": "a28d7861ba9eda4878d5b8d4979f9023"
+    },
+    {
+      "name": "private.vocab_assignment_series_events",
+      "rows": 148,
+      "hash": "55788bfca5ba69f17aab73062fa9db54"
+    },
+    {
+      "name": "private.vocab_assignment_series_items",
+      "rows": 114,
+      "hash": "b0b01e4d75bafc0c37f30994db66edc2"
+    },
+    {
+      "name": "private.vocabulary_answer_receipts",
+      "rows": 110,
+      "hash": "0d0ae7a328d0155c3cab8654973f93ef"
+    },
+    {
+      "name": "private.vocabulary_composition_build_positions",
+      "rows": 14329,
+      "hash": "a5c24976a386a40f5f22fa67ccae2f64"
+    },
+    {
+      "name": "private.vocabulary_composition_builds",
+      "rows": 1,
+      "hash": "2e942c53b93e45ffccee76e03a09e5e2"
+    },
+    {
+      "name": "private.vocabulary_composition_entries",
+      "rows": 15933,
+      "hash": "f6bcbb7c3691d6e98637a1d1ee970905"
+    },
+    {
+      "name": "private.vocabulary_composition_items",
+      "rows": 31866,
+      "hash": "91a2dd42b241e2ce2ae345f18693cdff"
+    },
+    {
+      "name": "private.vocabulary_composition_management_approvals",
+      "rows": 5,
+      "hash": "ad9b901ff25cfdc15d9145cc1134568f"
+    },
+    {
+      "name": "private.vocabulary_composition_management_chunks",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_management_inputs",
+      "rows": 5,
+      "hash": "c0526e3d3ea8d314daf5ef9cb949171c"
+    },
+    {
+      "name": "private.vocabulary_composition_management_requests",
+      "rows": 5,
+      "hash": "3dd53de1135a6042542def0c396db55d"
+    },
+    {
+      "name": "private.vocabulary_composition_management_results",
+      "rows": 5,
+      "hash": "4fb62401513df0a1aa5a233a84d18e87"
+    },
+    {
+      "name": "private.vocabulary_composition_question_plans",
+      "rows": 2,
+      "hash": "a8f0d948bb86fc847c1a5db829e547b1"
+    },
+    {
+      "name": "private.vocabulary_composition_storage_formats",
+      "rows": 2,
+      "hash": "6d8b15d43fc5e55c774e19e8dbf488b9"
+    },
+    {
+      "name": "private.vocabulary_composition_write_context",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_compositions",
+      "rows": 10,
+      "hash": "7f5bb2772bcd7d33324444d3780d97f5"
+    },
+    {
+      "name": "private.vocabulary_expired_answer_results",
+      "rows": 1,
+      "hash": "5b3adfd84937bb698d67e3e80dc9463b"
+    },
+    {
+      "name": "private.vocabulary_learning_value_bindings",
+      "rows": 9,
+      "hash": "f8fbd4d23ad01a7c88ed403e9e92a75a"
+    },
+    {
+      "name": "private.vocabulary_learning_value_versions",
+      "rows": 8,
+      "hash": "d2c0a272f07f710afee76083d33eb78d"
+    },
+    {
+      "name": "private.vocabulary_legacy_question_baselines",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_legacy_state_baselines",
+      "rows": 88,
+      "hash": "ec2f125c6e7c1d26bb7cffae1460531c"
+    },
+    {
+      "name": "private.vocabulary_library_import_approvals",
+      "rows": 55,
+      "hash": "24982d5d3284c53d1803d690d1f8ef8e"
+    },
+    {
+      "name": "private.vocabulary_library_import_chunks",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_management_requests",
+      "rows": 10,
+      "hash": "8b42b42f0415f067b1f0213d3d46fc96"
+    },
+    {
+      "name": "private.vocabulary_library_management_results",
+      "rows": 10,
+      "hash": "6404de4a141980066e1f87442ed3aeca"
+    },
+    {
+      "name": "private.vocabulary_library_requests",
+      "rows": 13,
+      "hash": "28405c6de372001c45aabfbade166cb0"
+    },
+    {
+      "name": "private.vocabulary_library_row_fingerprints",
+      "rows": 22333,
+      "hash": "919c90ae55b6e559a308a12395d383be"
+    },
+    {
+      "name": "private.vocabulary_library_scope_rows",
+      "rows": 22333,
+      "hash": "ac1ae53d9a5b738ab8da70e9a3daf53f"
+    },
+    {
+      "name": "private.vocabulary_library_scopes",
+      "rows": 687,
+      "hash": "b3d75aaf0f4222beedcae4030d119360"
+    },
+    {
+      "name": "private.vocabulary_library_template_approvals",
+      "rows": 10,
+      "hash": "4aa403a4bc0ecc4f0ae492827b7fd894"
+    },
+    {
+      "name": "private.vocabulary_library_templates",
+      "rows": 18,
+      "hash": "82f924d46f62d4300fca4985e73b3827"
+    },
+    {
+      "name": "private.vocabulary_library_versions",
+      "rows": 18,
+      "hash": "862ef7c59ef4372dbbd5a7b07fe192ea"
+    },
+    {
+      "name": "private.vocabulary_phase_results",
+      "rows": 19,
+      "hash": "996483c9a87895602f951c6e7b2a6950"
+    },
+    {
+      "name": "private.vocabulary_question_content_versions",
+      "rows": 37,
+      "hash": "350a0c511b19a33f809d4ce69586ed8d"
+    },
+    {
+      "name": "private.vocabulary_question_meaning_versions",
+      "rows": 22,
+      "hash": "265dfb0d5416eac774746d0844dfcf84"
+    },
+    {
+      "name": "private.vocabulary_result_policies",
+      "rows": 15,
+      "hash": "563c60e960a2b231205073661cd5aa44"
+    },
+    {
+      "name": "private.worksheet_mistake_items",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.admin_history_hidden_entries",
+      "rows": 10,
+      "hash": "79c4cb6b4da516a66c38ef330c047b2d"
+    },
+    {
+      "name": "public.admin_profiles",
+      "rows": 11,
+      "hash": "8ec6a5cbeafbafe7055b4cdd60a293cf"
+    },
+    {
+      "name": "public.admin_vocab_assignment_time_templates",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.assignment_question_exam_use_snapshot",
+      "rows": 4755,
+      "hash": "720c8a178da6edf312a79d2008996344"
+    },
+    {
+      "name": "public.assignment_questions",
+      "rows": 5559,
+      "hash": "7a6a1e3391b0902c20da432bb22ca073"
+    },
+    {
+      "name": "public.assignment_quiz_mode_snapshots",
+      "rows": 144,
+      "hash": "f658e9d91509571cb90d4e2e205b27dc"
+    },
+    {
+      "name": "public.assignment_review_targets",
+      "rows": 42,
+      "hash": "917ea9d715566e14306debac77c9c97c"
+    },
+    {
+      "name": "public.assignment_sources",
+      "rows": 230,
+      "hash": "1c7d4e08692c2779278dd83c4194ef23"
+    },
+    {
+      "name": "public.assignment_students",
+      "rows": 232,
+      "hash": "52082ae2983106aa6a08018de4acca69"
+    },
+    {
+      "name": "public.assignment_units",
+      "rows": 1545,
+      "hash": "9e8c8138538bd473f517f47f9b3deeb2"
+    },
+    {
+      "name": "public.assignments",
+      "rows": 230,
+      "hash": "096a8f6c263d5855767be87b11bffa1c"
+    },
+    {
+      "name": "public.audit_events",
+      "rows": 1097,
+      "hash": "d6dcc53f69c7e49b93394848376aa981"
+    },
+    {
+      "name": "public.class_group_students",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.class_groups",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.notification_receipts",
+      "rows": 329,
+      "hash": "00747bafc8c822dc086e44f0a3e600f9"
+    },
+    {
+      "name": "public.quiz_attempts",
+      "rows": 135,
+      "hash": "ebb329b8df54a9beed1bbc26ad3e0f39"
+    },
+    {
+      "name": "public.quiz_questions",
+      "rows": 1604,
+      "hash": "1db3535bfdeaf9b1890997dcd8e5432d"
+    },
+    {
+      "name": "public.student_codes",
+      "rows": 32,
+      "hash": "2c4253d2c02009589f20970f8bdeaa07"
+    },
+    {
+      "name": "public.student_learning_sources",
+      "rows": 41,
+      "hash": "a2d4f30135faa16baf77537b8dea9c14"
+    },
+    {
+      "name": "public.student_login_attempts",
+      "rows": 72,
+      "hash": "76f77a2a58aa9ffb82266904db08ca26"
+    },
+    {
+      "name": "public.student_point_events",
+      "rows": 1077,
+      "hash": "c18a370453e22b7723fbb70e44ce1217"
+    },
+    {
+      "name": "public.student_point_totals",
+      "rows": 33,
+      "hash": "d482d63e4550427e02160e33589d110b"
+    },
+    {
+      "name": "public.student_sessions",
+      "rows": 73,
+      "hash": "18ab0dda7d3741a256879cd0de2915a8"
+    },
+    {
+      "name": "public.student_vocab_review_assignment_draft_items",
+      "rows": 2,
+      "hash": "499c6272f080d4298560bbe10bfaff39"
+    },
+    {
+      "name": "public.student_vocab_review_assignment_drafts",
+      "rows": 2,
+      "hash": "174c2205650a9758919f641dfb79ad8b"
+    },
+    {
+      "name": "public.student_vocab_review_queue",
+      "rows": 40,
+      "hash": "5305b79fe3304effdbaac93eb8f482a4"
+    },
+    {
+      "name": "public.student_vocab_state",
+      "rows": 754,
+      "hash": "928badc7241549e38e0ea2613c896565"
+    },
+    {
+      "name": "public.student_vocab_wrong_events",
+      "rows": 840,
+      "hash": "21847445e2249ac15e7790be0f069a8c"
+    },
+    {
+      "name": "public.students",
+      "rows": 121,
+      "hash": "2af8eccf42af4086f9ebeeedb5484b1d"
+    },
+    {
+      "name": "public.vocab_approved_korean_pronunciations",
+      "rows": 496,
+      "hash": "a835d15682b139bbdef94d573754fcf0"
+    },
+    {
+      "name": "public.vocab_dataset_capabilities",
+      "rows": 22,
+      "hash": "528906509a52120bfbe9885c33434892"
+    },
+    {
+      "name": "public.vocab_dataset_catalog",
+      "rows": 53,
+      "hash": "e496936d7000342aa0cdd05fd39fef46"
+    },
+    {
+      "name": "public.vocab_datasets",
+      "rows": 61,
+      "hash": "5ac5ee70778f230ca0654ed3e4ffe0c7"
+    },
+    {
+      "name": "public.vocab_entries",
+      "rows": 39456,
+      "hash": "f82b6c72c11c0e4541e22a90c8e05fca"
+    },
+    {
+      "name": "public.vocab_entry_pronunciation_bindings_v2",
+      "rows": 10512,
+      "hash": "68f5a7821419af6d3feb8e3a26287d05"
+    },
+    {
+      "name": "public.vocab_entry_pronunciations",
+      "rows": 60,
+      "hash": "97ba60a72ad2f31330ae1ce53219e5ff"
+    },
+    {
+      "name": "public.vocab_entry_quiz_eligibility",
+      "rows": 6086,
+      "hash": "31a68ad0b64f27cbad4d1f01e3014d26"
+    },
+    {
+      "name": "public.vocab_pronunciation_identities_v2",
+      "rows": 7195,
+      "hash": "d6336bd5c749940e41aae7143dc9db20"
+    },
+    {
+      "name": "public.vocab_pronunciation_releases_v2",
+      "rows": 9,
+      "hash": "e3dd2723fcd77593bd2039e3e12d78a1"
+    },
+    {
+      "name": "public.vocab_pronunciation_tts_assets_v2",
+      "rows": 1300,
+      "hash": "6cf703dcdea0fa124fda1bc33cb4b1bd"
+    },
+    {
+      "name": "public.vocab_rule_derived_korean_pronunciations",
+      "rows": 582,
+      "hash": "386bdfca3871ce58aab23b88bad7728d"
+    },
+    {
+      "name": "public.vocab_synthetic_audio_assets",
+      "rows": 412,
+      "hash": "a420e0e1162425434f530c8754fcedbf"
+    },
+    {
+      "name": "public.vocab_synthetic_audio_bindings",
+      "rows": 418,
+      "hash": "68744c4de987cae8a6b2ecdf1f3324a6"
+    },
+    {
+      "name": "public.vocab_unit_catalog",
+      "rows": 1190,
+      "hash": "36f47ee0a67308bb13150c8e0ab5bc27"
+    },
+    {
+      "name": "public.vocab_units",
+      "rows": 1269,
+      "hash": "620b6b8989edb1a03d257b43d50bfaa9"
+    },
+    {
+      "name": "public.worksheet_request_items",
+      "rows": 3,
+      "hash": "cf3da27caf3e9425f7f424e6bba8c440"
+    },
+    {
+      "name": "public.worksheet_requests",
+      "rows": 1,
+      "hash": "09f723ea1dfa7fb4ac0645a1332cf550"
+    },
+    {
+      "name": "word_index.app_canonical_question_preview_item",
+      "rows": 2785,
+      "hash": "cf3fa529fa1714236bc3869cffb52d8f"
+    },
+    {
+      "name": "word_index.app_canonical_question_preview_release",
+      "rows": 9,
+      "hash": "579c941111b51d7b312bf29bd35dfb25"
+    },
+    {
+      "name": "word_index.app_exam_use_occurrence",
+      "rows": 19326,
+      "hash": "5c3244d887ebe6656cfef1b349d6e7dc"
+    },
+    {
+      "name": "word_index.app_exam_use_release",
+      "rows": 33,
+      "hash": "29e6eed299a92884b0fe64356e089e03"
+    },
+    {
+      "name": "word_index.assignment_exam_use_release_snapshot",
+      "rows": 122,
+      "hash": "0f01987942f966e6025ca21828841062"
+    },
+    {
+      "name": "word_index.data_issue",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.dataset_source",
+      "rows": 7,
+      "hash": "b8b133f4d8caf84048d38d97136a867d"
+    },
+    {
+      "name": "word_index.etymology",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.example",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.import_batch",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.import_run",
+      "rows": 1,
+      "hash": "8c5fac61a4631b2606e149dfacb23cf2"
+    },
+    {
+      "name": "word_index.index_build",
+      "rows": 5,
+      "hash": "353b6cb9ea9b1557d68a02a142399a72"
+    },
+    {
+      "name": "word_index.input_file_manifest",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.legacy_freeze",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.level_mapping",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.lexeme",
+      "rows": 2277,
+      "hash": "0e539df932c8378c3ec24c2370285da9"
+    },
+    {
+      "name": "word_index.lexeme_metric",
+      "rows": 15,
+      "hash": "a3d967bb87bdcd320b81a51b4e023de0"
+    },
+    {
+      "name": "word_index.lexeme_tag",
+      "rows": 7,
+      "hash": "03afacacd33e87d994523ad4bd917f77"
+    },
+    {
+      "name": "word_index.mock_wordbook_composition",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.mock_wordbook_identity_review",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.mock_wordbook_lineage",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.mock_wordbook_scope",
+      "rows": 516,
+      "hash": "3f956e4508d5e640a3365a74e9b880d9"
+    },
+    {
+      "name": "word_index.occurrence",
+      "rows": 2129,
+      "hash": "d8df40a1a29945662930f39f2b15ac4c"
+    },
+    {
+      "name": "word_index.pipeline_rule",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.preview_vocab_link_lexeme_seed_batch",
+      "rows": 11,
+      "hash": "0e086ec8cf7fa5185ff6fe3c35e571d0"
+    },
+    {
+      "name": "word_index.preview_vocab_link_lexeme_seed_member",
+      "rows": 1979,
+      "hash": "1febae248b1528a947ef1cb5a84ca42f"
+    },
+    {
+      "name": "word_index.preview_vocab_link_lexeme_seed_run",
+      "rows": 1,
+      "hash": "f233a2344530f92c3187101755c637df"
+    },
+    {
+      "name": "word_index.raw_pointer",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.relation",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.relation_evidence",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.review",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.schema_meta",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.sense",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.source",
+      "rows": 7,
+      "hash": "c55292f89827308e8d2caf686a1b1f22"
+    },
+    {
+      "name": "word_index.type_decision",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.vocab_entry_link",
+      "rows": 3029,
+      "hash": "034b06776250cac1ac8cc7878c8b86fa"
+    },
+    {
+      "name": "word_index.vocab_entry_mapping_candidate",
+      "rows": 2,
+      "hash": "803cace0d6d60e721c12908535e12270"
+    },
+    {
+      "name": "word_index.vocab_link_import_batch",
+      "rows": 34,
+      "hash": "73edb1ddd34ba6585f5867cc3923548c"
+    },
+    {
+      "name": "word_index.vocab_link_import_run",
+      "rows": 7,
+      "hash": "7641803a30803d51684ec44c89003787"
+    },
+    {
+      "name": "word_index.work_queue",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+  ],
+  "oldDifferences": [],
+  "firstSeedXid": "1523946",
+  "fixtures": [
+    {
+      "version": 8501,
+      "seed_xid": "1523946",
+      "imported": {
+        "links": {
+          "pos": 6,
+          "example": 1,
+          "definition": 1,
+          "dictionary": 6,
+          "pronunciation": 0
+        },
+        "status": "active",
+        "datasetId": "f0d1958c-ad84-4268-8fed-435d01983063",
+        "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+        "idempotent": false,
+        "scopeCount": 2,
+        "scopeResult": 2,
+        "includedCount": 5,
+        "dictionaryCount": 6,
+        "occurrenceCount": 6,
+        "registeredScopeCount": 2
+      }
+    },
+    {
+      "version": 8502,
+      "seed_xid": "1523947",
+      "imported": {
+        "links": {
+          "pos": 6,
+          "example": 1,
+          "definition": 1,
+          "dictionary": 6,
+          "pronunciation": 0
+        },
+        "status": "active",
+        "datasetId": "b9ef7ae2-ad6a-42dd-8b7d-46b25795286c",
+        "releaseId": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+        "idempotent": false,
+        "scopeCount": 2,
+        "scopeResult": 2,
+        "includedCount": 6,
+        "dictionaryCount": 6,
+        "occurrenceCount": 6,
+        "registeredScopeCount": 2
+      }
+    },
+    {
+      "version": 8503,
+      "imported": {
+        "links": {
+          "pos": 6,
+          "example": 1,
+          "definition": 1,
+          "dictionary": 6,
+          "pronunciation": 0
+        },
+        "status": "active",
+        "datasetId": "47438b7e-7eb4-48d0-bc27-8c730d00ae65",
+        "releaseId": "3d034a81-5fe3-4078-ae55-d787cf611974",
+        "idempotent": false,
+        "scopeCount": 2,
+        "scopeResult": 2,
+        "includedCount": 6,
+        "dictionaryCount": 6,
+        "occurrenceCount": 6,
+        "registeredScopeCount": 2
+      }
+    }
+  ],
+  "newRows": [
+    {
+      "name": "private.app_migration_snapshots",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.assignment_release_links_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.assignment_replacement_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.assignment_study_examples_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.assignment_vocabulary_meaning_refs",
+      "rows": 10,
+      "hash": "15ea6281489c95b60d8a177cb3f5b0b8"
+    },
+    {
+      "name": "private.assignment_vocabulary_new_questions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.bulk_canonical_question_preview_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.bulk_vocab_series_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.current_wrong_review_assignment_requests",
+      "rows": 1,
+      "hash": "01c829b507d13217b771c584d65e52c3"
+    },
+    {
+      "name": "private.entry_source_pronunciations_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.historical_learning_migrations",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.historical_learning_receipts",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.historical_learning_write_permits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.historical_question_migration_receipts",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.historical_question_migrations",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.historical_question_write_permits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.local_quiz_phase_plans",
+      "rows": 3,
+      "hash": "eef15098a8af01d038246ae0d31ca232"
+    },
+    {
+      "name": "private.local_quiz_phase_receipts",
+      "rows": 3,
+      "hash": "5ccb5d7bfd38aacb633949cf85c09da9"
+    },
+    {
+      "name": "private.local_quiz_preparations",
+      "rows": 2,
+      "hash": "348ce02e358f1ae69b04af511f5d08e1"
+    },
+    {
+      "name": "private.local_quiz_runs",
+      "rows": 2,
+      "hash": "0af7ccf5423dcaff9e212e5ce5af24a8"
+    },
+    {
+      "name": "private.notebook_assignment_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.notebook_question_origins_v2",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.operational_retention_holds",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.operational_retention_jobs",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.operational_retention_policy",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.operational_retention_state",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.pronunciation_audio_corrections_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.quiz_attempt_preparations",
+      "rows": 2,
+      "hash": "4af2b1737f9b4f780d1d55ba8ad66c57"
+    },
+    {
+      "name": "private.quiz_preparation_compaction_checks",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.quiz_preparation_expirations",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_bundle_archive_receipts",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_bundle_archives",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_bundle_write_permits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_entry_resource_approvals_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_entry_resource_releases_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_entry_resources_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_exam_entries",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_exam_import_approvals",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_exam_items",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_exam_releases",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_mock_source_approvals_v1",
+      "rows": 3,
+      "hash": "633871d128ffd929746df3cdee73355d"
+    },
+    {
+      "name": "private.reviewed_mock_source_releases_v1",
+      "rows": 3,
+      "hash": "3692e44e10486256f75fcfad9824cffd"
+    },
+    {
+      "name": "private.reviewed_mock_source_resources_v1",
+      "rows": 18,
+      "hash": "7859e581bd8127f5ea6d1f31f308e4d1"
+    },
+    {
+      "name": "private.reviewed_pronunciation_asset_approvals_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.reviewed_pronunciation_assets_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.school_handout_import_approvals_v1",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.school_schedule_manual_edits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.school_schedule_versions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.student_app_maintenance_retry_state",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.student_vocabulary_meaning_states",
+      "rows": 6,
+      "hash": "550fd7fe1ae70cdfa3d529fe6ccf72d0"
+    },
+    {
+      "name": "private.student_vocabulary_versions",
+      "rows": 2,
+      "hash": "e59a360a737831a9c87d4d2f29692808"
+    },
+    {
+      "name": "private.student_word_practice_questions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.student_word_practice_runs",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocab_assignment_queue_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocab_assignment_series",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocab_assignment_series_events",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocab_assignment_series_items",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_answer_receipts",
+      "rows": 10,
+      "hash": "7eeda0a016d243e4ce158192f30787db"
+    },
+    {
+      "name": "private.vocabulary_composition_build_positions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_builds",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_entries",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_items",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_management_approvals",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_management_chunks",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_management_inputs",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_management_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_management_results",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_question_plans",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_storage_formats",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_composition_write_context",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_compositions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_expired_answer_results",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_learning_value_bindings",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_learning_value_versions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_legacy_question_baselines",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_legacy_state_baselines",
+      "rows": 8,
+      "hash": "3a4aa8692442d717e90a68e815b4199c"
+    },
+    {
+      "name": "private.vocabulary_library_import_approvals",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_import_chunks",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_management_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_management_results",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_row_fingerprints",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_scope_rows",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_scopes",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_template_approvals",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_templates",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_library_versions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "private.vocabulary_phase_results",
+      "rows": 3,
+      "hash": "dbc85340e6c0a8dd215442472d946f2d"
+    },
+    {
+      "name": "private.vocabulary_question_content_versions",
+      "rows": 8,
+      "hash": "180f9dcccda507a0cc49def535f2b939"
+    },
+    {
+      "name": "private.vocabulary_question_meaning_versions",
+      "rows": 4,
+      "hash": "2d569682a7dd57b0088fdccf2bda57c8"
+    },
+    {
+      "name": "private.vocabulary_result_policies",
+      "rows": 2,
+      "hash": "a79f02a85934733bac2cf66af32a22c2"
+    },
+    {
+      "name": "private.worksheet_mistake_items",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.admin_history_hidden_entries",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.admin_profiles",
+      "rows": 1,
+      "hash": "8e6e59d8863a8415c2819872a224265e"
+    },
+    {
+      "name": "public.admin_vocab_assignment_time_templates",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.assignment_question_exam_use_snapshot",
+      "rows": 10,
+      "hash": "8e59e4a27cb156bd7c88a992f96a21f0"
+    },
+    {
+      "name": "public.assignment_questions",
+      "rows": 10,
+      "hash": "8f7ef523833371fcf964965163cdf55c"
+    },
+    {
+      "name": "public.assignment_quiz_mode_snapshots",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.assignment_review_targets",
+      "rows": 2,
+      "hash": "24fc7b4c93fb3c39ef0ac35bf7a135aa"
+    },
+    {
+      "name": "public.assignment_sources",
+      "rows": 3,
+      "hash": "07a34f5d04f7c329ec654d0b66af6d0e"
+    },
+    {
+      "name": "public.assignment_students",
+      "rows": 3,
+      "hash": "a40891e112c00eb80d0007fbaad71dab"
+    },
+    {
+      "name": "public.assignment_units",
+      "rows": 6,
+      "hash": "0665b4e296409ccfd74d39aec4e23144"
+    },
+    {
+      "name": "public.assignments",
+      "rows": 3,
+      "hash": "ed73f7eb2318f5b33b2a34e5ad12ef62"
+    },
+    {
+      "name": "public.audit_events",
+      "rows": 17,
+      "hash": "0deb5a06671b14643c7cf06dfd0f859d"
+    },
+    {
+      "name": "public.class_group_students",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.class_groups",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.notification_receipts",
+      "rows": 3,
+      "hash": "e6452651dc131e3c32299104743d21c0"
+    },
+    {
+      "name": "public.quiz_attempts",
+      "rows": 2,
+      "hash": "6aecd625c2785672d132fb6d5de41727"
+    },
+    {
+      "name": "public.quiz_questions",
+      "rows": 8,
+      "hash": "82c11108c0c6eb132ed46d90d0fb0719"
+    },
+    {
+      "name": "public.student_codes",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.student_learning_sources",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.student_login_attempts",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.student_point_events",
+      "rows": 6,
+      "hash": "287c44561bf0e40b34de77170333663e"
+    },
+    {
+      "name": "public.student_point_totals",
+      "rows": 1,
+      "hash": "1ab2e9958e19e4d89cb68e232438056f"
+    },
+    {
+      "name": "public.student_sessions",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.student_vocab_review_assignment_draft_items",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.student_vocab_review_assignment_drafts",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.student_vocab_review_queue",
+      "rows": 2,
+      "hash": "5a3c7c02fa4a3e8c45c0cab5a6f643d8"
+    },
+    {
+      "name": "public.student_vocab_state",
+      "rows": 8,
+      "hash": "f3c7afd781f1b0efc551bebb0ca32215"
+    },
+    {
+      "name": "public.student_vocab_wrong_events",
+      "rows": 6,
+      "hash": "4b0e38727d77b5f66882f296dca48160"
+    },
+    {
+      "name": "public.students",
+      "rows": 2,
+      "hash": "9c34a6c181709c1dacc2b41b88a7ae3c"
+    },
+    {
+      "name": "public.vocab_approved_korean_pronunciations",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_dataset_capabilities",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_dataset_catalog",
+      "rows": 3,
+      "hash": "fb1a3246649da8dc205da2e2f29ef472"
+    },
+    {
+      "name": "public.vocab_datasets",
+      "rows": 3,
+      "hash": "969e9cf1b07bebc329fa26ff4d8c05bb"
+    },
+    {
+      "name": "public.vocab_entries",
+      "rows": 17,
+      "hash": "515740688ef7dd60e7afc8d5e4fc38b8"
+    },
+    {
+      "name": "public.vocab_entry_pronunciation_bindings_v2",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_entry_pronunciations",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_entry_quiz_eligibility",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_pronunciation_identities_v2",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_pronunciation_releases_v2",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_pronunciation_tts_assets_v2",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_rule_derived_korean_pronunciations",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_synthetic_audio_assets",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_synthetic_audio_bindings",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.vocab_unit_catalog",
+      "rows": 6,
+      "hash": "e6c83f1033c26a7add2b4b640b1404d2"
+    },
+    {
+      "name": "public.vocab_units",
+      "rows": 6,
+      "hash": "362cd28cedb56cc0ab824fa016e5ac1a"
+    },
+    {
+      "name": "public.worksheet_request_items",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "public.worksheet_requests",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.app_canonical_question_preview_item",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.app_canonical_question_preview_release",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.app_exam_use_occurrence",
+      "rows": 18,
+      "hash": "30f28fa3b48a72feca4b81c67e2b5491"
+    },
+    {
+      "name": "word_index.assignment_exam_use_release_snapshot",
+      "rows": 3,
+      "hash": "4c909932b77dac78e0cc707a93d429b1"
+    },
+    {
+      "name": "word_index.data_issue",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.dataset_source",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.etymology",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.example",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.import_batch",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.import_run",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.index_build",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.input_file_manifest",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.legacy_freeze",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.level_mapping",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.lexeme",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.lexeme_metric",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.lexeme_tag",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.mock_wordbook_composition",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.mock_wordbook_identity_review",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.mock_wordbook_lineage",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.mock_wordbook_scope",
+      "rows": 6,
+      "hash": "8ba5c9760170a1b8b080498d0fc6ad56"
+    },
+    {
+      "name": "word_index.occurrence",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.pipeline_rule",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.preview_vocab_link_lexeme_seed_batch",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.preview_vocab_link_lexeme_seed_member",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.preview_vocab_link_lexeme_seed_run",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.raw_pointer",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.relation",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.relation_evidence",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.review",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.schema_meta",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.sense",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.source",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.type_decision",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.vocab_entry_link",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.vocab_entry_mapping_candidate",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.vocab_link_import_batch",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.vocab_link_import_run",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.work_queue",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "word_index.app_exam_use_release",
+      "rows": 3,
+      "hash": "6d06d3894fb264ef5ff5a534fba0d2ff"
+    },
+    {
+      "name": "private.exam_use_package_archives",
+      "rows": 3,
+      "hash": "55d5e0afcfaba9f784ddd8469080039a"
+    },
+    {
+      "name": "private.exam_use_package_archive_receipts",
+      "rows": 6,
+      "hash": "a55859cb322bdc3c8f7c6f98913b0564"
+    },
+    {
+      "name": "private.exam_use_package_write_permits",
+      "rows": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+  ],
+  "newRowOwnership": {
+    "rows": 257,
+    "withinTrackedTablesLinked": 245,
+    "viaSyntheticAuthRoot": 12,
+    "unexplained": 0,
+    "syntheticAuthRoot": {
+      "id": "a8060000-0000-4000-8000-000000000001",
+      "added_in_rehearsal": true
+    },
+    "basis": "PK/FK graph over new rows; 4 synthetic roots plus separately verified auth.users root. Original rows are independently identical."
+  },
+  "functionChecks": [
+    {
+      "name": "catalog_g12_exam_use_release_trigger_v1",
+      "metadataSame": true,
+      "definitionSameOrExpected": true
+    },
+    {
+      "name": "current_wrong_review_material_fingerprint_v1",
+      "metadataSame": true,
+      "definitionSameOrExpected": true
+    },
+    {
+      "name": "guard_reviewed_bundle_write_v1",
+      "metadataSame": true,
+      "definitionSameOrExpected": true
+    },
+    {
+      "name": "guard_reviewed_mock_source_v1",
+      "metadataSame": true,
+      "definitionSameOrExpected": true
+    },
+    {
+      "name": "import_app_exam_use_package_core_v1",
+      "metadataSame": true,
+      "definitionSameOrExpected": true
+    },
+    {
+      "name": "mock_wordbook_source_version",
+      "metadataSame": true,
+      "definitionSameOrExpected": true
+    }
+  ],
+  "functionsBefore": [
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "21256",
+      "args": "",
+      "name": "catalog_g12_exam_use_release_trigger_v1",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "definitionHash": "1b8bb7b4f0f5e50e882ee404b1516a3d"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "371466",
+      "args": "p_dataset_id uuid, p_questions jsonb, p_source_question_ids uuid[]",
+      "name": "current_wrong_review_material_fingerprint_v1",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "definitionHash": "caad5608f083b074fcc0a03f5f41a936"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "410650",
+      "args": "",
+      "name": "guard_reviewed_bundle_write_v1",
+      "owner": "postgres",
+      "security": false,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC",
+        "DateStyle=ISO, MDY"
+      ],
+      "definitionHash": "ab69f89e0328d4c58ee642e92c9f0fb0"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "36959",
+      "args": "",
+      "name": "guard_reviewed_mock_source_v1",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "definitionHash": "78edac13d327b549131da8ec977916da"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "19614",
+      "args": "p_package jsonb",
+      "name": "import_app_exam_use_package_core_v1",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "definitionHash": "8922c23312f1f81bcc05eac6fd35c43a"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "36861",
+      "args": "p_release uuid, p_unit uuid, p_metadata jsonb, p_evidence text",
+      "name": "mock_wordbook_source_version",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "definitionHash": "26a6467071e178d1e9e8d2b9e4b0fde4"
+    }
+  ],
+  "functionsAfter": [
+    {
+      "name": "catalog_g12_exam_use_release_trigger_v1",
+      "oid": "21256",
+      "args": "",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "definitionHash": "1b8bb7b4f0f5e50e882ee404b1516a3d"
+    },
+    {
+      "name": "current_wrong_review_material_fingerprint_v1",
+      "oid": "371466",
+      "args": "p_dataset_id uuid, p_questions jsonb, p_source_question_ids uuid[]",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "definitionHash": "40c128454cd416b3a1b50b5628a1a4c0"
+    },
+    {
+      "name": "guard_reviewed_bundle_write_v1",
+      "oid": "410650",
+      "args": "",
+      "owner": "postgres",
+      "security": false,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC",
+        "DateStyle=ISO, MDY"
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "definitionHash": "ab69f89e0328d4c58ee642e92c9f0fb0"
+    },
+    {
+      "name": "guard_reviewed_mock_source_v1",
+      "oid": "36959",
+      "args": "",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "definitionHash": "78edac13d327b549131da8ec977916da"
+    },
+    {
+      "name": "import_app_exam_use_package_core_v1",
+      "oid": "19614",
+      "args": "p_package jsonb",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "definitionHash": "7fbd1818437c86653d5abb4e5b8b9d0f"
+    },
+    {
+      "name": "mock_wordbook_source_version",
+      "oid": "36861",
+      "args": "p_release uuid, p_unit uuid, p_metadata jsonb, p_evidence text",
+      "owner": "postgres",
+      "security": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "definitionHash": "26a6467071e178d1e9e8d2b9e4b0fde4"
+    }
+  ],
+  "onlineBefore": {
+    "scopes": {
+      "hash": "aa672e7aecb4e99425a4b254b1d34a71",
+      "same": true,
+      "count": 4
+    },
+    "releases": [
+      {
+        "id": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+        "packageHash": "f8f8ed7ffc91abe825e1c361e91d9cb6",
+        "metadataHash": "7ae83e0b06376d2021060f5bf21865e2"
+      },
+      {
+        "id": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+        "packageHash": "5d3a09cb05223966129078d55615297b",
+        "metadataHash": "b4279846b27cabbf549f8d9353b86505"
+      }
+    ],
+    "resources": {
+      "hash": "77bfd473f62fb36c1902f832d0d4078a",
+      "count": 11
+    }
+  },
+  "onlineCompacted": {
+    "scopes": {
+      "hash": "aa672e7aecb4e99425a4b254b1d34a71",
+      "same": true,
+      "count": 4
+    },
+    "releases": [
+      {
+        "id": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+        "packageHash": "f8f8ed7ffc91abe825e1c361e91d9cb6",
+        "metadataHash": "7ae83e0b06376d2021060f5bf21865e2"
+      },
+      {
+        "id": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+        "packageHash": "5d3a09cb05223966129078d55615297b",
+        "metadataHash": "b4279846b27cabbf549f8d9353b86505"
+      }
+    ],
+    "resources": {
+      "hash": "77bfd473f62fb36c1902f832d0d4078a",
+      "count": 11
+    }
+  },
+  "compatibility": {
+    "coreReplay": {
+      "status": "active",
+      "datasetId": "f0d1958c-ad84-4268-8fed-435d01983063",
+      "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+      "idempotent": true,
+      "includedCount": 5,
+      "dictionaryCount": 6,
+      "occurrenceCount": 6
+    },
+    "fingerprint": "76a6a6857ec3296e2c556d66616471da164f893d1dcdc17091eb463dda12337b",
+    "rejectedDifferentBody": "exam_use_package_identity_conflict"
+  },
+  "archives": [
+    {
+      "version": 8501,
+      "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\english-app-private-rehearsal\\APP-20261003-05\\exam-use-package-c6040a75-4af2-4573-910a-c1d8a1914c51.json",
+      "bytes": 12671,
+      "sha256": "f9d2af00c62bc13b8aff68ac42c827f91b9d05fe2d804929b93f420ecfa11aa0",
+      "origin": "preview"
+    },
+    {
+      "version": 8502,
+      "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\english-app-private-rehearsal\\APP-20261003-05\\exam-use-package-4102fb2e-6216-41b2-a615-9f5a25b602f9.json",
+      "bytes": 12548,
+      "sha256": "acd50d4b1897f47aa16d9aa6769834c23a7ce1e293ecb50ba11ae49877f79600",
+      "origin": "preview"
+    },
+    {
+      "version": 8503,
+      "path": "C:\\Users\\임성열\\AppData\\Local\\Temp\\english-app-private-rehearsal\\APP-20261003-05\\exam-use-package-e6cc05a4-aab6-483e-809f-d181540ba6e3.json",
+      "bytes": 12548,
+      "sha256": "d823dbcdc6645fa6183bf00d7d98f4ec5e30b4d028b62ad9eb3fc08762b11601",
+      "origin": "preview"
+    }
+  ],
+  "races": [
+    {
+      "name": "import-lock",
+      "a": {
+        "pid": 31461,
+        "bPid": 31460,
+        "case": "import-lock",
+        "heldMs": 143.079,
+        "result": {
+          "links": {
+            "pos": 6,
+            "example": 1,
+            "definition": 1,
+            "dictionary": 6,
+            "pronunciation": 0
+          },
+          "status": "active",
+          "datasetId": "f0d1958c-ad84-4268-8fed-435d01983063",
+          "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+          "idempotent": true,
+          "scopeCount": 2,
+          "scopeResult": 2,
+          "includedCount": 5,
+          "dictionaryCount": 6,
+          "occurrenceCount": 6,
+          "registeredScopeCount": 2
+        },
+        "observedBlocked": false
+      },
+      "b": {
+        "name": "import-lock",
+        "sentAt": "2026-10-02T23:56:09.294Z",
+        "finishedAt": "2026-10-02T23:56:13.907Z",
+        "status": 200,
+        "data": {
+          "pid": 31460,
+          "aPid": 31461,
+          "mode": "operator",
+          "result": {
+            "sqlstate": "55P03"
+          }
+        }
+      }
+    },
+    {
+      "name": "operator-lock",
+      "a": {
+        "pid": 31479,
+        "bPid": 31478,
+        "case": "operator-lock",
+        "heldMs": 167.183,
+        "result": {
+          "action": "compact",
+          "changed": 1,
+          "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+          "requestId": "a8060000-0000-4000-8000-000000008504",
+          "archiveHash": "f9d2af00c62bc13b8aff68ac42c827f91b9d05fe2d804929b93f420ecfa11aa0"
+        },
+        "observedBlocked": true
+      },
+      "b": {
+        "name": "operator-lock",
+        "sentAt": "2026-10-02T23:56:45.105Z",
+        "finishedAt": "2026-10-02T23:56:46.403Z",
+        "status": 200,
+        "data": {
+          "pid": 31478,
+          "aPid": 31479,
+          "mode": "import",
+          "result": {
+            "links": {
+              "pos": 6,
+              "example": 1,
+              "definition": 1,
+              "dictionary": 6,
+              "pronunciation": 0
+            },
+            "status": "active",
+            "datasetId": "f0d1958c-ad84-4268-8fed-435d01983063",
+            "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+            "idempotent": true,
+            "scopeCount": 2,
+            "scopeResult": 2,
+            "includedCount": 5,
+            "dictionaryCount": 6,
+            "occurrenceCount": 6,
+            "registeredScopeCount": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "same-request",
+      "a": {
+        "pid": 31481,
+        "bPid": 31478,
+        "case": "same-request",
+        "heldMs": 78.692,
+        "result": {
+          "action": "compact",
+          "changed": 1,
+          "releaseId": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+          "requestId": "a8060000-0000-4000-8000-000000008502",
+          "archiveHash": "acd50d4b1897f47aa16d9aa6769834c23a7ce1e293ecb50ba11ae49877f79600"
+        },
+        "observedBlocked": false
+      },
+      "b": {
+        "name": "same-request",
+        "sentAt": "2026-10-02T23:56:52.749Z",
+        "finishedAt": "2026-10-02T23:56:54.759Z",
+        "status": 200,
+        "data": {
+          "pid": 31478,
+          "aPid": 31481,
+          "mode": "operator",
+          "result": {
+            "sqlstate": "55P03"
+          }
+        }
+      }
+    },
+    {
+      "name": "review-lock",
+      "a": {
+        "pid": 31496,
+        "bPid": 31495,
+        "case": "review-lock",
+        "heldMs": 1247.419,
+        "result": "008b9357-fe45-4b85-9d14-5bbc07fc444e",
+        "observedBlocked": false
+      },
+      "b": {
+        "name": "review-lock",
+        "sentAt": "2026-10-02T23:58:21.771Z",
+        "finishedAt": "2026-10-02T23:58:24.717Z",
+        "status": 200,
+        "data": {
+          "pid": 31495,
+          "aPid": 31496,
+          "mode": "operator",
+          "result": {
+            "sqlstate": "55P03"
+          }
+        }
+      }
+    },
+    {
+      "name": "retire-lock",
+      "a": {
+        "pid": 31497,
+        "bPid": 31495,
+        "case": "retire-lock",
+        "heldMs": 106.564,
+        "result": {
+          "status": "retired",
+          "releaseId": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+          "retiredAt": "2026-10-02T23:58:33.25187+00:00"
+        },
+        "observedBlocked": false
+      },
+      "b": {
+        "name": "retire-lock",
+        "sentAt": "2026-10-02T23:58:31.776Z",
+        "finishedAt": "2026-10-02T23:58:33.762Z",
+        "status": 200,
+        "data": {
+          "pid": 31495,
+          "aPid": 31497,
+          "mode": "operator",
+          "result": {
+            "sqlstate": "55P03"
+          }
+        }
+      }
+    },
+    {
+      "name": "late",
+      "a": {
+        "pid": 31520,
+        "bPid": 31519,
+        "result": {
+          "links": {
+            "pos": 6,
+            "example": 1,
+            "definition": 1,
+            "dictionary": 6,
+            "pronunciation": 0
+          },
+          "status": "active",
+          "datasetId": "47438b7e-7eb4-48d0-bc27-8c730d00ae65",
+          "releaseId": "3d034a81-5fe3-4078-ae55-d787cf611974",
+          "idempotent": false,
+          "scopeCount": 2,
+          "scopeResult": 2,
+          "includedCount": 6,
+          "dictionaryCount": 6,
+          "occurrenceCount": 6,
+          "registeredScopeCount": 2
+        },
+        "uuidAttempts": null
+      },
+      "b": {
+        "name": "late",
+        "sentAt": "2026-10-02T23:59:08.259Z",
+        "finishedAt": "2026-10-02T23:59:10.558Z",
+        "status": 200,
+        "data": {
+          "pid": 31519,
+          "aPid": 31520,
+          "mode": "late",
+          "result": {
+            "lowKey": "3d034a81-5fe3-4078-ae55-d787cf611974",
+            "afterFound": true,
+            "beforeFound": false,
+            "lowerThanProcessed": true
+          }
+        }
+      }
+    }
+  ],
+  "sameRequestReplay": {
+    "action": "compact",
+    "changed": 1,
+    "releaseId": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+    "requestId": "a8060000-0000-4000-8000-000000008502",
+    "archiveHash": "acd50d4b1897f47aa16d9aa6769834c23a7ce1e293ecb50ba11ae49877f79600"
+  },
+  "reviewReplay": "008b9357-fe45-4b85-9d14-5bbc07fc444e",
+  "studentAfter": {
+    "proof": {
+      "result": {
+        "state": "completed",
+        "phases": [
+          {
+            "phase": "initial",
+            "score": 50,
+            "passed": false,
+            "ended_at": "2026-10-02T23:45:12.785306+00:00",
+            "evidence": "recorded_answers",
+            "attempt_id": "364f6327-8552-417a-9cf4-7642a4a12559",
+            "end_reason": "completed",
+            "started_at": "2026-10-02T23:45:12.485306+00:00",
+            "score_basis": "initial_total",
+            "wrong_count": 2,
+            "content_hash": "4c2e6cf294c8515ae96ad220ad17cb857b69805cff35622a3c8e5c0701b752aa",
+            "target_count": 4,
+            "correct_count": 2,
+            "passing_score": 80,
+            "unanswered_count": 0
+          },
+          {
+            "phase": "retry",
+            "score": 100,
+            "passed": true,
+            "ended_at": "2026-10-03T00:02:20.168376+00:00",
+            "evidence": "recorded_answers",
+            "attempt_id": "364f6327-8552-417a-9cf4-7642a4a12559",
+            "end_reason": "completed",
+            "started_at": "2026-10-03T00:02:20.068376+00:00",
+            "score_basis": "cumulative_after_retry",
+            "wrong_count": 0,
+            "content_hash": "188245281a1ce5e2e13c79025b4d638fd893c0124a8726b2240d67680d4fb1e8",
+            "target_count": 2,
+            "correct_count": 2,
+            "passing_score": 80,
+            "unanswered_count": 0
+          }
+        ],
+        "attempt": {
+          "phase": "completed",
+          "passed": true,
+          "status": "completed",
+          "startedAt": "2026-10-02T23:45:12.485306+00:00",
+          "deadlineAt": null,
+          "finalScore": 100,
+          "completedAt": "2026-10-03T00:02:20.168376+00:00",
+          "initialScore": 50,
+          "attemptNumber": 1,
+          "questionCount": 4,
+          "elapsedSeconds": 0,
+          "retryStartedAt": "2026-10-03T00:02:20.068376+00:00",
+          "retryCorrectCount": 2,
+          "initialCompletedAt": "2026-10-02T23:45:12.785306+00:00",
+          "initialCorrectCount": 2,
+          "unresolvedWrongCount": 0
+        },
+        "finalized": true,
+        "detailScope": "initial_mistakes",
+        "finalReason": "completed",
+        "finalizedAt": "2026-10-03T00:02:20.168376+00:00",
+        "retryStarted": true,
+        "resultVersion": "b009a1a9eab52e99767c5db27f873ef6fa2894e872f06af1c2751f985cc5ea31",
+        "schemaVersion": "vocabulary-result-v1",
+        "retentionPolicy": "summary_and_mistakes_v1"
+      },
+      "attemptId": "364f6327-8552-417a-9cf4-7642a4a12559",
+      "firstAccepted": 4,
+      "retryAccepted": 2,
+      "firstReplaySame": true,
+      "retryReplaySame": true
+    },
+    "receipts": 6
+  },
+  "partial": {
+    "before": [
+      {
+        "name": "private.app_migration_snapshots",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_release_links_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_replacement_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_study_examples_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 10,
+        "hash": "15ea6281489c95b60d8a177cb3f5b0b8"
+      },
+      {
+        "name": "private.assignment_vocabulary_new_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.bulk_canonical_question_preview_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.bulk_vocab_series_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.current_wrong_review_assignment_requests",
+        "rows": 1,
+        "hash": "01c829b507d13217b771c584d65e52c3"
+      },
+      {
+        "name": "private.entry_source_pronunciations_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_learning_migrations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_learning_receipts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_learning_write_permits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_question_migration_receipts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_question_migrations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_question_write_permits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.local_quiz_phase_plans",
+        "rows": 3,
+        "hash": "eef15098a8af01d038246ae0d31ca232"
+      },
+      {
+        "name": "private.local_quiz_phase_receipts",
+        "rows": 3,
+        "hash": "5ccb5d7bfd38aacb633949cf85c09da9"
+      },
+      {
+        "name": "private.local_quiz_preparations",
+        "rows": 2,
+        "hash": "348ce02e358f1ae69b04af511f5d08e1"
+      },
+      {
+        "name": "private.local_quiz_runs",
+        "rows": 2,
+        "hash": "0af7ccf5423dcaff9e212e5ce5af24a8"
+      },
+      {
+        "name": "private.notebook_assignment_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.notebook_question_origins_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_holds",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_jobs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_policy",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.pronunciation_audio_corrections_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.quiz_attempt_preparations",
+        "rows": 2,
+        "hash": "4af2b1737f9b4f780d1d55ba8ad66c57"
+      },
+      {
+        "name": "private.quiz_preparation_compaction_checks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.quiz_preparation_expirations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_bundle_archive_receipts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_bundle_archives",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_bundle_write_permits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_entry_resource_approvals_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_entry_resource_releases_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_entry_resources_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_entries",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_import_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_releases",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_mock_source_approvals_v1",
+        "rows": 3,
+        "hash": "633871d128ffd929746df3cdee73355d"
+      },
+      {
+        "name": "private.reviewed_mock_source_releases_v1",
+        "rows": 3,
+        "hash": "3692e44e10486256f75fcfad9824cffd"
+      },
+      {
+        "name": "private.reviewed_mock_source_resources_v1",
+        "rows": 18,
+        "hash": "7859e581bd8127f5ea6d1f31f308e4d1"
+      },
+      {
+        "name": "private.reviewed_pronunciation_asset_approvals_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_pronunciation_assets_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.school_handout_import_approvals_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.school_schedule_manual_edits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.school_schedule_versions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_app_maintenance_retry_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_vocabulary_meaning_states",
+        "rows": 6,
+        "hash": "550fd7fe1ae70cdfa3d529fe6ccf72d0"
+      },
+      {
+        "name": "private.student_vocabulary_versions",
+        "rows": 2,
+        "hash": "e59a360a737831a9c87d4d2f29692808"
+      },
+      {
+        "name": "private.student_word_practice_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_word_practice_runs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_queue_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_series",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_series_events",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_series_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_answer_receipts",
+        "rows": 10,
+        "hash": "7eeda0a016d243e4ce158192f30787db"
+      },
+      {
+        "name": "private.vocabulary_composition_build_positions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_builds",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_entries",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_chunks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_inputs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_results",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_question_plans",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_storage_formats",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_write_context",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_compositions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_expired_answer_results",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_learning_value_bindings",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_learning_value_versions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_legacy_question_baselines",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_legacy_state_baselines",
+        "rows": 8,
+        "hash": "3a4aa8692442d717e90a68e815b4199c"
+      },
+      {
+        "name": "private.vocabulary_library_import_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_import_chunks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_management_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_management_results",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_row_fingerprints",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_scope_rows",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_scopes",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_template_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_templates",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_versions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_phase_results",
+        "rows": 3,
+        "hash": "dbc85340e6c0a8dd215442472d946f2d"
+      },
+      {
+        "name": "private.vocabulary_question_content_versions",
+        "rows": 8,
+        "hash": "180f9dcccda507a0cc49def535f2b939"
+      },
+      {
+        "name": "private.vocabulary_question_meaning_versions",
+        "rows": 4,
+        "hash": "2d569682a7dd57b0088fdccf2bda57c8"
+      },
+      {
+        "name": "private.vocabulary_result_policies",
+        "rows": 2,
+        "hash": "a79f02a85934733bac2cf66af32a22c2"
+      },
+      {
+        "name": "private.worksheet_mistake_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.admin_history_hidden_entries",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.admin_profiles",
+        "rows": 1,
+        "hash": "4b7aa00b0d6954a8fed5baf84c99c948"
+      },
+      {
+        "name": "public.admin_vocab_assignment_time_templates",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.assignment_question_exam_use_snapshot",
+        "rows": 10,
+        "hash": "8e59e4a27cb156bd7c88a992f96a21f0"
+      },
+      {
+        "name": "public.assignment_questions",
+        "rows": 10,
+        "hash": "8f7ef523833371fcf964965163cdf55c"
+      },
+      {
+        "name": "public.assignment_quiz_mode_snapshots",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.assignment_review_targets",
+        "rows": 2,
+        "hash": "f6f5416f37c1fec978e832031f0e4ae9"
+      },
+      {
+        "name": "public.assignment_sources",
+        "rows": 3,
+        "hash": "07a34f5d04f7c329ec654d0b66af6d0e"
+      },
+      {
+        "name": "public.assignment_students",
+        "rows": 3,
+        "hash": "420169da3e8bd438fb864a3bee694b49"
+      },
+      {
+        "name": "public.assignment_units",
+        "rows": 6,
+        "hash": "0665b4e296409ccfd74d39aec4e23144"
+      },
+      {
+        "name": "public.assignments",
+        "rows": 3,
+        "hash": "d555417e66b32aed98d44af9a33fda89"
+      },
+      {
+        "name": "public.audit_events",
+        "rows": 11,
+        "hash": "ad38a5146533c99f140833340fdf4dec"
+      },
+      {
+        "name": "public.class_group_students",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.class_groups",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.notification_receipts",
+        "rows": 3,
+        "hash": "e6452651dc131e3c32299104743d21c0"
+      },
+      {
+        "name": "public.quiz_attempts",
+        "rows": 2,
+        "hash": "6aecd625c2785672d132fb6d5de41727"
+      },
+      {
+        "name": "public.quiz_questions",
+        "rows": 8,
+        "hash": "82c11108c0c6eb132ed46d90d0fb0719"
+      },
+      {
+        "name": "public.student_codes",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_learning_sources",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_login_attempts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_point_events",
+        "rows": 6,
+        "hash": "287c44561bf0e40b34de77170333663e"
+      },
+      {
+        "name": "public.student_point_totals",
+        "rows": 1,
+        "hash": "1ab2e9958e19e4d89cb68e232438056f"
+      },
+      {
+        "name": "public.student_sessions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_draft_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_drafts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_vocab_review_queue",
+        "rows": 2,
+        "hash": "5a3c7c02fa4a3e8c45c0cab5a6f643d8"
+      },
+      {
+        "name": "public.student_vocab_state",
+        "rows": 8,
+        "hash": "f3c7afd781f1b0efc551bebb0ca32215"
+      },
+      {
+        "name": "public.student_vocab_wrong_events",
+        "rows": 6,
+        "hash": "4b0e38727d77b5f66882f296dca48160"
+      },
+      {
+        "name": "public.students",
+        "rows": 2,
+        "hash": "727caeb890e8f87d67f564ceed66dd75"
+      },
+      {
+        "name": "public.vocab_approved_korean_pronunciations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_dataset_capabilities",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_dataset_catalog",
+        "rows": 3,
+        "hash": "48a31e545451c43ea2dfdb941e0d3108"
+      },
+      {
+        "name": "public.vocab_datasets",
+        "rows": 3,
+        "hash": "a0e268985a893884f98859cbfebf1837"
+      },
+      {
+        "name": "public.vocab_entries",
+        "rows": 17,
+        "hash": "515740688ef7dd60e7afc8d5e4fc38b8"
+      },
+      {
+        "name": "public.vocab_entry_pronunciation_bindings_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_entry_pronunciations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_entry_quiz_eligibility",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_pronunciation_identities_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_pronunciation_releases_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_pronunciation_tts_assets_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_rule_derived_korean_pronunciations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_synthetic_audio_assets",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_synthetic_audio_bindings",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_unit_catalog",
+        "rows": 6,
+        "hash": "e6c83f1033c26a7add2b4b640b1404d2"
+      },
+      {
+        "name": "public.vocab_units",
+        "rows": 6,
+        "hash": "362cd28cedb56cc0ab824fa016e5ac1a"
+      },
+      {
+        "name": "public.worksheet_request_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.worksheet_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.app_canonical_question_preview_item",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.app_canonical_question_preview_release",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.app_exam_use_occurrence",
+        "rows": 18,
+        "hash": "30f28fa3b48a72feca4b81c67e2b5491"
+      },
+      {
+        "name": "word_index.assignment_exam_use_release_snapshot",
+        "rows": 3,
+        "hash": "4c909932b77dac78e0cc707a93d429b1"
+      },
+      {
+        "name": "word_index.data_issue",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.dataset_source",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.etymology",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.example",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.import_batch",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.import_run",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.index_build",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.input_file_manifest",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.legacy_freeze",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.level_mapping",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.lexeme",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.lexeme_metric",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.lexeme_tag",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_composition",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_identity_review",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_lineage",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_scope",
+        "rows": 6,
+        "hash": "8ba5c9760170a1b8b080498d0fc6ad56"
+      },
+      {
+        "name": "word_index.occurrence",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.pipeline_rule",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_batch",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_member",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_run",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.raw_pointer",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.relation",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.relation_evidence",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.review",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.schema_meta",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.sense",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.source",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.type_decision",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_entry_link",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_entry_mapping_candidate",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_link_import_batch",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_link_import_run",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.work_queue",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    ],
+    "after": [
+      {
+        "name": "private.app_migration_snapshots",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_release_links_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_replacement_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_study_examples_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 10,
+        "hash": "15ea6281489c95b60d8a177cb3f5b0b8"
+      },
+      {
+        "name": "private.assignment_vocabulary_new_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.bulk_canonical_question_preview_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.bulk_vocab_series_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.current_wrong_review_assignment_requests",
+        "rows": 1,
+        "hash": "01c829b507d13217b771c584d65e52c3"
+      },
+      {
+        "name": "private.entry_source_pronunciations_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_learning_migrations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_learning_receipts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_learning_write_permits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_question_migration_receipts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_question_migrations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.historical_question_write_permits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.local_quiz_phase_plans",
+        "rows": 3,
+        "hash": "eef15098a8af01d038246ae0d31ca232"
+      },
+      {
+        "name": "private.local_quiz_phase_receipts",
+        "rows": 3,
+        "hash": "5ccb5d7bfd38aacb633949cf85c09da9"
+      },
+      {
+        "name": "private.local_quiz_preparations",
+        "rows": 2,
+        "hash": "348ce02e358f1ae69b04af511f5d08e1"
+      },
+      {
+        "name": "private.local_quiz_runs",
+        "rows": 2,
+        "hash": "0af7ccf5423dcaff9e212e5ce5af24a8"
+      },
+      {
+        "name": "private.notebook_assignment_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.notebook_question_origins_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_holds",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_jobs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_policy",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.operational_retention_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.pronunciation_audio_corrections_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.quiz_attempt_preparations",
+        "rows": 2,
+        "hash": "4af2b1737f9b4f780d1d55ba8ad66c57"
+      },
+      {
+        "name": "private.quiz_preparation_compaction_checks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.quiz_preparation_expirations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_bundle_archive_receipts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_bundle_archives",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_bundle_write_permits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_entry_resource_approvals_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_entry_resource_releases_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_entry_resources_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_entries",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_import_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_exam_releases",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_mock_source_approvals_v1",
+        "rows": 3,
+        "hash": "633871d128ffd929746df3cdee73355d"
+      },
+      {
+        "name": "private.reviewed_mock_source_releases_v1",
+        "rows": 3,
+        "hash": "3692e44e10486256f75fcfad9824cffd"
+      },
+      {
+        "name": "private.reviewed_mock_source_resources_v1",
+        "rows": 18,
+        "hash": "7859e581bd8127f5ea6d1f31f308e4d1"
+      },
+      {
+        "name": "private.reviewed_pronunciation_asset_approvals_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.reviewed_pronunciation_assets_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.school_handout_import_approvals_v1",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.school_schedule_manual_edits",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.school_schedule_versions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_app_maintenance_retry_state",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_vocabulary_meaning_states",
+        "rows": 6,
+        "hash": "550fd7fe1ae70cdfa3d529fe6ccf72d0"
+      },
+      {
+        "name": "private.student_vocabulary_versions",
+        "rows": 2,
+        "hash": "e59a360a737831a9c87d4d2f29692808"
+      },
+      {
+        "name": "private.student_word_practice_questions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.student_word_practice_runs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_queue_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_series",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_series_events",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocab_assignment_series_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_answer_receipts",
+        "rows": 10,
+        "hash": "7eeda0a016d243e4ce158192f30787db"
+      },
+      {
+        "name": "private.vocabulary_composition_build_positions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_builds",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_entries",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_chunks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_inputs",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_management_results",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_question_plans",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_storage_formats",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_composition_write_context",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_compositions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_expired_answer_results",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_learning_value_bindings",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_learning_value_versions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_legacy_question_baselines",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_legacy_state_baselines",
+        "rows": 8,
+        "hash": "3a4aa8692442d717e90a68e815b4199c"
+      },
+      {
+        "name": "private.vocabulary_library_import_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_import_chunks",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_management_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_management_results",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_row_fingerprints",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_scope_rows",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_scopes",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_template_approvals",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_templates",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_library_versions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "private.vocabulary_phase_results",
+        "rows": 3,
+        "hash": "dbc85340e6c0a8dd215442472d946f2d"
+      },
+      {
+        "name": "private.vocabulary_question_content_versions",
+        "rows": 8,
+        "hash": "180f9dcccda507a0cc49def535f2b939"
+      },
+      {
+        "name": "private.vocabulary_question_meaning_versions",
+        "rows": 4,
+        "hash": "2d569682a7dd57b0088fdccf2bda57c8"
+      },
+      {
+        "name": "private.vocabulary_result_policies",
+        "rows": 2,
+        "hash": "a79f02a85934733bac2cf66af32a22c2"
+      },
+      {
+        "name": "private.worksheet_mistake_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.admin_history_hidden_entries",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.admin_profiles",
+        "rows": 1,
+        "hash": "4b7aa00b0d6954a8fed5baf84c99c948"
+      },
+      {
+        "name": "public.admin_vocab_assignment_time_templates",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.assignment_question_exam_use_snapshot",
+        "rows": 10,
+        "hash": "8e59e4a27cb156bd7c88a992f96a21f0"
+      },
+      {
+        "name": "public.assignment_questions",
+        "rows": 10,
+        "hash": "8f7ef523833371fcf964965163cdf55c"
+      },
+      {
+        "name": "public.assignment_quiz_mode_snapshots",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.assignment_review_targets",
+        "rows": 2,
+        "hash": "f6f5416f37c1fec978e832031f0e4ae9"
+      },
+      {
+        "name": "public.assignment_sources",
+        "rows": 3,
+        "hash": "07a34f5d04f7c329ec654d0b66af6d0e"
+      },
+      {
+        "name": "public.assignment_students",
+        "rows": 3,
+        "hash": "420169da3e8bd438fb864a3bee694b49"
+      },
+      {
+        "name": "public.assignment_units",
+        "rows": 6,
+        "hash": "0665b4e296409ccfd74d39aec4e23144"
+      },
+      {
+        "name": "public.assignments",
+        "rows": 3,
+        "hash": "d555417e66b32aed98d44af9a33fda89"
+      },
+      {
+        "name": "public.audit_events",
+        "rows": 11,
+        "hash": "ad38a5146533c99f140833340fdf4dec"
+      },
+      {
+        "name": "public.class_group_students",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.class_groups",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.notification_receipts",
+        "rows": 3,
+        "hash": "e6452651dc131e3c32299104743d21c0"
+      },
+      {
+        "name": "public.quiz_attempts",
+        "rows": 2,
+        "hash": "6aecd625c2785672d132fb6d5de41727"
+      },
+      {
+        "name": "public.quiz_questions",
+        "rows": 8,
+        "hash": "82c11108c0c6eb132ed46d90d0fb0719"
+      },
+      {
+        "name": "public.student_codes",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_learning_sources",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_login_attempts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_point_events",
+        "rows": 6,
+        "hash": "287c44561bf0e40b34de77170333663e"
+      },
+      {
+        "name": "public.student_point_totals",
+        "rows": 1,
+        "hash": "1ab2e9958e19e4d89cb68e232438056f"
+      },
+      {
+        "name": "public.student_sessions",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_draft_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_vocab_review_assignment_drafts",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.student_vocab_review_queue",
+        "rows": 2,
+        "hash": "5a3c7c02fa4a3e8c45c0cab5a6f643d8"
+      },
+      {
+        "name": "public.student_vocab_state",
+        "rows": 8,
+        "hash": "f3c7afd781f1b0efc551bebb0ca32215"
+      },
+      {
+        "name": "public.student_vocab_wrong_events",
+        "rows": 6,
+        "hash": "4b0e38727d77b5f66882f296dca48160"
+      },
+      {
+        "name": "public.students",
+        "rows": 2,
+        "hash": "727caeb890e8f87d67f564ceed66dd75"
+      },
+      {
+        "name": "public.vocab_approved_korean_pronunciations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_dataset_capabilities",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_dataset_catalog",
+        "rows": 3,
+        "hash": "48a31e545451c43ea2dfdb941e0d3108"
+      },
+      {
+        "name": "public.vocab_datasets",
+        "rows": 3,
+        "hash": "a0e268985a893884f98859cbfebf1837"
+      },
+      {
+        "name": "public.vocab_entries",
+        "rows": 17,
+        "hash": "515740688ef7dd60e7afc8d5e4fc38b8"
+      },
+      {
+        "name": "public.vocab_entry_pronunciation_bindings_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_entry_pronunciations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_entry_quiz_eligibility",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_pronunciation_identities_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_pronunciation_releases_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_pronunciation_tts_assets_v2",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_rule_derived_korean_pronunciations",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_synthetic_audio_assets",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_synthetic_audio_bindings",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.vocab_unit_catalog",
+        "rows": 6,
+        "hash": "e6c83f1033c26a7add2b4b640b1404d2"
+      },
+      {
+        "name": "public.vocab_units",
+        "rows": 6,
+        "hash": "362cd28cedb56cc0ab824fa016e5ac1a"
+      },
+      {
+        "name": "public.worksheet_request_items",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "public.worksheet_requests",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.app_canonical_question_preview_item",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.app_canonical_question_preview_release",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.app_exam_use_occurrence",
+        "rows": 18,
+        "hash": "30f28fa3b48a72feca4b81c67e2b5491"
+      },
+      {
+        "name": "word_index.assignment_exam_use_release_snapshot",
+        "rows": 3,
+        "hash": "4c909932b77dac78e0cc707a93d429b1"
+      },
+      {
+        "name": "word_index.data_issue",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.dataset_source",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.etymology",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.example",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.import_batch",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.import_run",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.index_build",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.input_file_manifest",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.legacy_freeze",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.level_mapping",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.lexeme",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.lexeme_metric",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.lexeme_tag",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_composition",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_identity_review",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_lineage",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.mock_wordbook_scope",
+        "rows": 6,
+        "hash": "8ba5c9760170a1b8b080498d0fc6ad56"
+      },
+      {
+        "name": "word_index.occurrence",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.pipeline_rule",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_batch",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_member",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.preview_vocab_link_lexeme_seed_run",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.raw_pointer",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.relation",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.relation_evidence",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.review",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.schema_meta",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.sense",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.source",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.type_decision",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_entry_link",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_entry_mapping_candidate",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_link_import_batch",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.vocab_link_import_run",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "word_index.work_queue",
+        "rows": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    ],
+    "result": {
+      "result": {
+        "action": "restore",
+        "changed": 1,
+        "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+        "requestId": "a8060000-0000-4000-8000-000000019501",
+        "archiveHash": "f9d2af00c62bc13b8aff68ac42c827f91b9d05fe2d804929b93f420ecfa11aa0"
+      }
+    },
+    "releasesBefore": [
+      {
+        "proof": {
+          "manifest": {
+            "state": "compacted",
+            "created_at": "2026-10-03T00:02:24.57386+00:00",
+            "release_id": "3d034a81-5fe3-4078-ae55-d787cf611974",
+            "source_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "header_sha256": "ac75b439b945400a8a8e445a110356f28f56e5da49782388ab1431b694368b66",
+            "original_bytes": 11398,
+            "package_sha256": "109887d5ffb93f6bad2c2ace4a0e75c20222b80a6564a4922a967e77ad083440",
+            "identity_sha256": "0f6c922364b75cb7816509b41dffedd3945b206b7c14102bac8b092d59609aa3",
+            "original_sha256": "5917706879dc520d16d78fa03331449681e1c0a21445a4ee573195b5c45dca8c",
+            "reference_sha256": "74574d2e96df8c96ad30ab0ea5f64129294e85979baea6ed8c9f17291a4b26a1",
+            "original_lifecycle": {
+              "status": "active",
+              "retired_at_utc": null
+            },
+            "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+          },
+          "lifecycle": {
+            "status": "active",
+            "retiredAt": null
+          },
+          "releaseId": "3d034a81-5fe3-4078-ae55-d787cf611974",
+          "wholeHash": "ef76373ba571e1961947ac4342a767d4",
+          "packageHash": "a00e0cfc9c8e9f61364eda1046762127",
+          "metadataHash": "ccaa4c6a52100a8b6c4fba9be53a70a9"
+        }
+      },
+      {
+        "proof": {
+          "manifest": {
+            "state": "compacted",
+            "created_at": "2026-10-02T23:47:49.00728+00:00",
+            "release_id": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+            "source_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "header_sha256": "fd111530edde5e9956a3291c20787aa2c150c36f1a10177224e8c6eb56acc10a",
+            "original_bytes": 11398,
+            "package_sha256": "c307754fd368778dabe8b9c192ea9df2c63647699098d1fbe8a0bf1d7c950615",
+            "identity_sha256": "1e29b96028f66993a815c65ce83d91796c779482afdc653240b2fc929c652119",
+            "original_sha256": "2ece7484fed492a3f13e6797cc513ff3da343bb5b15a4d955bff01bf74662e68",
+            "reference_sha256": "3adb5a6b9bff1fbbdbb326c564aa418a70d4bd79d69d4d269eb4e982b28613ed",
+            "original_lifecycle": {
+              "status": "active",
+              "retired_at_utc": null
+            },
+            "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+          },
+          "lifecycle": {
+            "status": "retired",
+            "retiredAt": "2026-10-02T23:58:33.25187+00:00"
+          },
+          "releaseId": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+          "wholeHash": "6710f126602cf5442ac71c5523ce3125",
+          "packageHash": "199937dc7ca68720c7740e5f01018853",
+          "metadataHash": "7eaa02dcc4a8a28517e591c75b06dd70"
+        }
+      },
+      {
+        "proof": {
+          "manifest": {
+            "state": "compacted",
+            "created_at": "2026-10-02T23:47:46.371746+00:00",
+            "release_id": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+            "source_rows": [
+              3,
+              1,
+              6,
+              2,
+              5,
+              4
+            ],
+            "header_sha256": "67630b1aa793507aee08d9d5cb3990d4ba8aacd65f9474577e95faa1093a23b2",
+            "original_bytes": 11507,
+            "package_sha256": "27f77ae631e5d162f05f47be97db2b63bc6dee75d94e09cd3a63b1c5c6338d83",
+            "identity_sha256": "e25b44951750b22efd67666c7cbcdc5860fe0a1b8e6492ec646ec376fe2b4577",
+            "original_sha256": "6430d7aa77a9e9654966c445d4ef83a045f8be97e342533e0d57015f20cbbd1a",
+            "reference_sha256": "471818963458306dfd9b5e1249a0c4ceffc97980415912103faac5652203c6b6",
+            "original_lifecycle": {
+              "status": "active",
+              "retired_at_utc": null
+            },
+            "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+          },
+          "lifecycle": {
+            "status": "active",
+            "retiredAt": null
+          },
+          "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+          "wholeHash": "8047ed0249e0917a86791b532a3b52d5",
+          "packageHash": "7ccda999459df2cdc1ebdfd2d79be3af",
+          "metadataHash": "b4279846b27cabbf549f8d9353b86505"
+        }
+      }
+    ],
+    "releasesAfter": [
+      {
+        "proof": {
+          "manifest": {
+            "state": "compacted",
+            "created_at": "2026-10-03T00:02:24.57386+00:00",
+            "release_id": "3d034a81-5fe3-4078-ae55-d787cf611974",
+            "source_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "header_sha256": "ac75b439b945400a8a8e445a110356f28f56e5da49782388ab1431b694368b66",
+            "original_bytes": 11398,
+            "package_sha256": "109887d5ffb93f6bad2c2ace4a0e75c20222b80a6564a4922a967e77ad083440",
+            "identity_sha256": "0f6c922364b75cb7816509b41dffedd3945b206b7c14102bac8b092d59609aa3",
+            "original_sha256": "5917706879dc520d16d78fa03331449681e1c0a21445a4ee573195b5c45dca8c",
+            "reference_sha256": "74574d2e96df8c96ad30ab0ea5f64129294e85979baea6ed8c9f17291a4b26a1",
+            "original_lifecycle": {
+              "status": "active",
+              "retired_at_utc": null
+            },
+            "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+          },
+          "lifecycle": {
+            "status": "active",
+            "retiredAt": null
+          },
+          "releaseId": "3d034a81-5fe3-4078-ae55-d787cf611974",
+          "wholeHash": "ef76373ba571e1961947ac4342a767d4",
+          "packageHash": "a00e0cfc9c8e9f61364eda1046762127",
+          "metadataHash": "ccaa4c6a52100a8b6c4fba9be53a70a9"
+        }
+      },
+      {
+        "proof": {
+          "manifest": {
+            "state": "compacted",
+            "created_at": "2026-10-02T23:47:49.00728+00:00",
+            "release_id": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+            "source_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "header_sha256": "fd111530edde5e9956a3291c20787aa2c150c36f1a10177224e8c6eb56acc10a",
+            "original_bytes": 11398,
+            "package_sha256": "c307754fd368778dabe8b9c192ea9df2c63647699098d1fbe8a0bf1d7c950615",
+            "identity_sha256": "1e29b96028f66993a815c65ce83d91796c779482afdc653240b2fc929c652119",
+            "original_sha256": "2ece7484fed492a3f13e6797cc513ff3da343bb5b15a4d955bff01bf74662e68",
+            "reference_sha256": "3adb5a6b9bff1fbbdbb326c564aa418a70d4bd79d69d4d269eb4e982b28613ed",
+            "original_lifecycle": {
+              "status": "active",
+              "retired_at_utc": null
+            },
+            "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+          },
+          "lifecycle": {
+            "status": "retired",
+            "retiredAt": "2026-10-02T23:58:33.25187+00:00"
+          },
+          "releaseId": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+          "wholeHash": "6710f126602cf5442ac71c5523ce3125",
+          "packageHash": "199937dc7ca68720c7740e5f01018853",
+          "metadataHash": "7eaa02dcc4a8a28517e591c75b06dd70"
+        }
+      },
+      {
+        "proof": {
+          "manifest": {
+            "state": "restored",
+            "created_at": "2026-10-02T23:47:46.371746+00:00",
+            "release_id": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+            "source_rows": [
+              3,
+              1,
+              6,
+              2,
+              5,
+              4
+            ],
+            "header_sha256": "67630b1aa793507aee08d9d5cb3990d4ba8aacd65f9474577e95faa1093a23b2",
+            "original_bytes": 11507,
+            "package_sha256": "27f77ae631e5d162f05f47be97db2b63bc6dee75d94e09cd3a63b1c5c6338d83",
+            "identity_sha256": "e25b44951750b22efd67666c7cbcdc5860fe0a1b8e6492ec646ec376fe2b4577",
+            "original_sha256": "6430d7aa77a9e9654966c445d4ef83a045f8be97e342533e0d57015f20cbbd1a",
+            "reference_sha256": "471818963458306dfd9b5e1249a0c4ceffc97980415912103faac5652203c6b6",
+            "original_lifecycle": {
+              "status": "active",
+              "retired_at_utc": null
+            },
+            "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+          },
+          "lifecycle": {
+            "status": "active",
+            "retiredAt": null
+          },
+          "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+          "wholeHash": "181d19b145ac200d1fbd2ab3b9ff3d20",
+          "packageHash": "5d3a09cb05223966129078d55615297b",
+          "metadataHash": "b4279846b27cabbf549f8d9353b86505"
+        }
+      }
+    ]
+  },
+  "rollback": {
+    "result": {
+      "result": {
+        "action": "restore",
+        "changed": 1,
+        "releaseId": "3d034a81-5fe3-4078-ae55-d787cf611974",
+        "requestId": "a8060000-0000-4000-8000-000000019503",
+        "archiveHash": "d823dbcdc6645fa6183bf00d7d98f4ec5e30b4d028b62ad9eb3fc08762b11601"
+      }
+    },
+    "releaseRowsAndManifestsSame": true
+  },
+  "restored": [
+    {
+      "proof": {
+        "manifest": {
+          "state": "restored",
+          "created_at": "2026-10-03T00:02:24.57386+00:00",
+          "release_id": "3d034a81-5fe3-4078-ae55-d787cf611974",
+          "source_rows": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "header_sha256": "ac75b439b945400a8a8e445a110356f28f56e5da49782388ab1431b694368b66",
+          "original_bytes": 11398,
+          "package_sha256": "109887d5ffb93f6bad2c2ace4a0e75c20222b80a6564a4922a967e77ad083440",
+          "identity_sha256": "0f6c922364b75cb7816509b41dffedd3945b206b7c14102bac8b092d59609aa3",
+          "original_sha256": "5917706879dc520d16d78fa03331449681e1c0a21445a4ee573195b5c45dca8c",
+          "reference_sha256": "74574d2e96df8c96ad30ab0ea5f64129294e85979baea6ed8c9f17291a4b26a1",
+          "original_lifecycle": {
+            "status": "active",
+            "retired_at_utc": null
+          },
+          "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+        },
+        "lifecycle": {
+          "status": "active",
+          "retiredAt": null
+        },
+        "releaseId": "3d034a81-5fe3-4078-ae55-d787cf611974",
+        "wholeHash": "ee38c5311ea83c793d8f8ff125bdfb77",
+        "packageHash": "3a0be105a25d7fbdf6ad77c9b01d423f",
+        "metadataHash": "ccaa4c6a52100a8b6c4fba9be53a70a9"
+      }
+    },
+    {
+      "proof": {
+        "manifest": {
+          "state": "restored",
+          "created_at": "2026-10-02T23:47:49.00728+00:00",
+          "release_id": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+          "source_rows": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "header_sha256": "fd111530edde5e9956a3291c20787aa2c150c36f1a10177224e8c6eb56acc10a",
+          "original_bytes": 11398,
+          "package_sha256": "c307754fd368778dabe8b9c192ea9df2c63647699098d1fbe8a0bf1d7c950615",
+          "identity_sha256": "1e29b96028f66993a815c65ce83d91796c779482afdc653240b2fc929c652119",
+          "original_sha256": "2ece7484fed492a3f13e6797cc513ff3da343bb5b15a4d955bff01bf74662e68",
+          "reference_sha256": "3adb5a6b9bff1fbbdbb326c564aa418a70d4bd79d69d4d269eb4e982b28613ed",
+          "original_lifecycle": {
+            "status": "active",
+            "retired_at_utc": null
+          },
+          "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+        },
+        "lifecycle": {
+          "status": "retired",
+          "retiredAt": "2026-10-02T23:58:33.25187+00:00"
+        },
+        "releaseId": "5f3c8c8a-1de2-4093-a7f1-a40383607d61",
+        "wholeHash": "d06cb5fb1ffc9afbc3c4b49d060ee4fa",
+        "packageHash": "f8f8ed7ffc91abe825e1c361e91d9cb6",
+        "metadataHash": "7eaa02dcc4a8a28517e591c75b06dd70"
+      }
+    },
+    {
+      "proof": {
+        "manifest": {
+          "state": "restored",
+          "created_at": "2026-10-02T23:47:46.371746+00:00",
+          "release_id": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+          "source_rows": [
+            3,
+            1,
+            6,
+            2,
+            5,
+            4
+          ],
+          "header_sha256": "67630b1aa793507aee08d9d5cb3990d4ba8aacd65f9474577e95faa1093a23b2",
+          "original_bytes": 11507,
+          "package_sha256": "27f77ae631e5d162f05f47be97db2b63bc6dee75d94e09cd3a63b1c5c6338d83",
+          "identity_sha256": "e25b44951750b22efd67666c7cbcdc5860fe0a1b8e6492ec646ec376fe2b4577",
+          "original_sha256": "6430d7aa77a9e9654966c445d4ef83a045f8be97e342533e0d57015f20cbbd1a",
+          "reference_sha256": "471818963458306dfd9b5e1249a0c4ceffc97980415912103faac5652203c6b6",
+          "original_lifecycle": {
+            "status": "active",
+            "retired_at_utc": null
+          },
+          "target_project_ref": "wojxpruvbjzbhrpmsbuy"
+        },
+        "lifecycle": {
+          "status": "active",
+          "retiredAt": null
+        },
+        "releaseId": "87c34a51-cf22-49f6-ac0a-5c260cdb3950",
+        "wholeHash": "181d19b145ac200d1fbd2ab3b9ff3d20",
+        "packageHash": "5d3a09cb05223966129078d55615297b",
+        "metadataHash": "b4279846b27cabbf549f8d9353b86505"
+      }
+    }
+  ],
+  "allOriginalPacketsReissued": true,
+  "cleanup": {
+    "permits": 0,
+    "students": [
+      {
+        "id": "a8060000-0000-4000-8000-000000000002",
+        "status": "blocked",
+        "deleted": true
+      },
+      {
+        "id": "a8060000-0000-4000-8000-000000000003",
+        "status": "blocked",
+        "deleted": true
+      }
+    ],
+    "assignments": [
+      {
+        "id": "008b9357-fe45-4b85-9d14-5bbc07fc444e",
+        "status": "closed"
+      },
+      {
+        "id": "cf3a777f-cd7c-473e-81f0-e851e1a66e39",
+        "status": "closed"
+      },
+      {
+        "id": "dc74ea7a-81cc-4359-b0ac-2dbb0b2e9e73",
+        "status": "closed"
+      }
+    ],
+    "probeRemoved": true,
+    "adminInactive": true,
+    "answerReceipts": 10,
+    "restoredBodies": 3,
+    "archiveReceipts": 6,
+    "retiredReleases": 3,
+    "inactiveDatasets": 3
+  },
+  "security": {
+    "tables": 3,
+    "functions": 8,
+    "tableAppGrants": 0,
+    "functionAppGrants": 0,
+    "maintenanceControl": [
+      {
+        "job_name": "english-academy-expire-review-drafts",
+        "updated_at": "2026-10-03T00:06:00.062444+00:00",
+        "failed_count": 0,
+        "last_clean_at": "2026-10-03T00:06:00.062444+00:00",
+        "oldest_due_at": null,
+        "pending_count": 0,
+        "attention_count": 0,
+        "last_error_code": null,
+        "last_started_at": "2026-10-03T00:06:00.034548+00:00",
+        "processed_count": 0,
+        "last_completed_at": "2026-10-03T00:06:00.062444+00:00",
+        "consecutive_failed_runs": 0,
+        "pending_count_is_lower_bound": false
+      },
+      {
+        "job_name": "english-academy-finalize-stale-attempts",
+        "updated_at": "2026-10-03T00:07:00.087612+00:00",
+        "failed_count": 0,
+        "last_clean_at": "2026-10-03T00:07:00.087612+00:00",
+        "oldest_due_at": null,
+        "pending_count": 0,
+        "attention_count": 0,
+        "last_error_code": null,
+        "last_started_at": "2026-10-03T00:07:00.078449+00:00",
+        "processed_count": 0,
+        "last_completed_at": "2026-10-03T00:07:00.087612+00:00",
+        "consecutive_failed_runs": 0,
+        "pending_count_is_lower_bound": false
+      },
+      {
+        "job_name": "english-academy-materialize-ready-vocab-queues",
+        "updated_at": "2026-10-03T00:07:00.13646+00:00",
+        "failed_count": 0,
+        "last_clean_at": null,
+        "oldest_due_at": null,
+        "pending_count": 0,
+        "attention_count": 35,
+        "last_error_code": "queue_attention_required",
+        "last_started_at": "2026-10-03T00:07:00.080065+00:00",
+        "processed_count": 0,
+        "last_completed_at": "2026-10-03T00:07:00.13646+00:00",
+        "consecutive_failed_runs": 0,
+        "pending_count_is_lower_bound": false
+      }
+    ]
+  },
+  "operationalWrites": 0,
+  "productionDeployment": 0,
+  "physicalReclamation": 0,
+  "limits": [
+    "35 bounded before reads and 35 after reads are not a single instant snapshot; scheduled maintenance control table excluded and separately recorded.",
+    "Synthetic archives in restricted temporary directory are not durable Production backups.",
+    "A first concurrent-call harness attempt did not overlap, both transactions timed out and rolled back. The final six proofs used independent hidden Node HTTP and MCP connections with verified backend PIDs.",
+    "A score assertion initially cast PostgreSQL 100.00 to integer and rolled back; corrected numeric comparison and reran successfully.",
+    "Candidate helper initially expected datasetKey in releaseId/packageVersion listing; corrected temporary probe only before the late-commit case."
+  ]
+}
