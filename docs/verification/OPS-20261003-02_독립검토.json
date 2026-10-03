@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-03",
+  "scope": "M09 intermediate local storage measurement and current usage evidence; not cloud capacity approval",
+  "baselineDocumentationCommit": "a0c7f42",
+  "rawMeasurementSha256": "f77e00cb886925840837e9a89b231f36ab686bb69ea708f7d8a73c65e43c28c5",
+  "reviews": [
+    {"agent":"capacity_code_audit","scope":"32-run arithmetic, actual bulk assignment path, capacity limitations, reproduction inputs","findingsCorrected":["Reproducer rejects additions or removals in migration file set","Receipt row representation corrected to 10144 bytes and phase plan to 5738 bytes","Even-sized sample median averages the two middle values"],"finalAdditionalFindings":0},
+    {"agent":"m05_db_review","scope":"Repeated assignment metadata, post-insert body clearing, current receipt consumers and compatibility requirements","conclusion":"Common question bodies are shared. Additional storage contraction must preserve question and student IDs, frozen plans, original responses, answer receipt history and point transactions."}
+  ],
+  "sourceHashCheck": {"inputs":1909,"evidenceFiles":6,"passed":true},
+  "notVerified": ["Supabase monthly egress and organization average restriction state","Cloud HTTP concurrency and latency distributions","Final capacity after storage supplements and Production reclamation","F02 multi-administrator isolation"],
+  "productionWrites": 0,
+  "studentDataWrites": 0,
+  "deployments": 0
+}
