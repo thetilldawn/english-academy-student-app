@@ -49,13 +49,10 @@ async function chooseQuestionMode(
     ? "영영풀이 → 영어"
     : "예문 → 영어";
   const tabs = page.getByRole("tablist", { name: "출제 자료" });
-  await expect(tabs.getByRole("tab")).toHaveCount(3);
+  await expect(tabs.getByRole("tab")).toHaveCount(4);
   const tab = tabs.getByRole("tab", { name: label, exact: true });
   await tab.click();
   await expect(tab).toHaveAttribute("aria-selected", "true");
-  await expect(
-    page.getByText("검수된 영어 선택지 4개로 바로 배정하는 Preview 전용 유형입니다."),
-  ).toBeVisible();
 }
 
 async function chooseRange(page: Page, mode: AssignmentPlan["rangeMode"]) {
@@ -232,7 +229,7 @@ export async function assignCanonicalRange(
   const scheduleCheckbox = page
     .getByText("시험일 사용", { exact: true })
     .locator("xpath=../label/input[@type='checkbox']");
-  await expect(scheduleCheckbox).toBeDisabled();
+  await expect(scheduleCheckbox).toBeEnabled();
   await expect(scheduleCheckbox).not.toBeChecked();
 
   const response = await waitForAssignmentSave(
