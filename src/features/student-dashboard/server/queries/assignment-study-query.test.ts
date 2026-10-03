@@ -137,4 +137,3 @@ describe("배정 단어장 서버 조회", () => {
     expect(result?.words?.[0]).toMatchObject({ example: word.example, exampleRanges: null });
   });
 });
-

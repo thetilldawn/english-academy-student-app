@@ -6823,7 +6823,8 @@
           "src/features/quiz-player/server/attempt-preparation.integration.test.ts",
           "src/features/quiz-player/server/queries/transition-question-content-query.test.ts",
           "src/lib/database/transition-question-reader.integration.test.ts",
-          "src/features/quiz-player/server/transition-preparation.test.ts"
+          "src/features/quiz-player/server/transition-preparation.test.ts",
+          "test/e2e/authenticated/transition-read.spec.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7135,7 +7136,8 @@
           "src/lib/quiz/pronunciation-snapshot.test.ts",
           "src/lib/quiz/pronunciation-storage.test.ts",
           "src/features/quiz-player/server/queries/transition-question-content-query.test.ts",
-          "src/lib/database/transition-question-reader.integration.test.ts"
+          "src/lib/database/transition-question-reader.integration.test.ts",
+          "test/e2e/authenticated/transition-read.spec.ts"
         ]
       },
       "requiredImportEdges": [

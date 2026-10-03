@@ -155,6 +155,15 @@
       "state": "planned",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "test/e2e/authenticated/transition-read.spec.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
     }
   ],
   "requirements": [
@@ -174,7 +183,8 @@
       ],
       "checkIds": [
         "T1",
-        "T2"
+        "T2",
+        "T5"
       ]
     },
     {
@@ -194,7 +204,8 @@
       "checkIds": [
         "T1",
         "T2",
-        "T4"
+        "T4",
+        "T5"
       ]
     },
     {
@@ -213,7 +224,8 @@
       ],
       "checkIds": [
         "T3",
-        "T4"
+        "T4",
+        "T5"
       ]
     },
     {
@@ -234,7 +246,8 @@
         "T1",
         "T2",
         "T3",
-        "T4"
+        "T4",
+        "T5"
       ]
     }
   ],
@@ -432,6 +445,19 @@
         "data-leak",
         "answer-leak",
         "structure"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "browser",
+      "target": "test/e2e/authenticated/transition-read.spec.ts",
+      "scenario": "실제 검토 호환 앱에서 뜻/예문 새 참조배정 학습 화면과 서버 준비를 읽고 새 응시는 만들지 않음",
+      "expected": "각4개 표시/준비 성공/응시404/가짜학생 정리, 운영변경0",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
       ]
     }
   ],
