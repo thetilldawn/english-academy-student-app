@@ -16,7 +16,7 @@ for (const example of [false, true]) {
     const page = await previewRun.openStudent(student);
     await page.goto(`/student/assignments/${assignment}/words`);
     await expect(page.getByRole("main").locator("h3[lang=en]")).toHaveCount(expectedCount);
-    if (example) await expect(page.getByRole("main").locator("li p[lang=en]")).toHaveCount(expectedCount);
+    if (example) await expect(page.getByRole("main").locator("p[lang=en]")).toHaveCount(expectedCount);
     const words = await page.getByRole("main").locator("h3[lang=en]").allTextContents();
     const response = await page.request.post(`/api/student/assignments/${assignment}/attempts`, { headers: { "x-quiz-preparation": "1" } });
     expect(response.status()).toBe(201);
