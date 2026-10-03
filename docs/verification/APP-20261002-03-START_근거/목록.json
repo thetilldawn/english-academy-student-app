@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "implementation": "c2376fbea89627445a75748003d0c41da5606169",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 20,
+      "sha256": "2199d532e3836627014a38692a34c49da747cd5baeb033c2a88b90d1490f1fe0"
+    },
+    {
+      "path": "http_pause_commit.json",
+      "bytes": 1537,
+      "sha256": "b6d88d2c66ad51445f06ed2cddcf36df0a7842f2dac11aa4a4c6efefb9b50a37"
+    },
+    {
+      "path": "http_pause_commit_verified.json",
+      "bytes": 316,
+      "sha256": "4a635d39838cd28a23084efc0266e19c5bf890c02befc5b41714d85b5311bd75"
+    },
+    {
+      "path": "http_start_commit_lock_verified.json",
+      "bytes": 1551,
+      "sha256": "cc178895ea1e142c1c6f505d096a81f2ba83014c592a7ccdd2d7ff4d5149568d"
+    },
+    {
+      "path": "http_start_commit_verified.json",
+      "bytes": 337,
+      "sha256": "abae87a1dc66d9726a8843276d0362c16a407a7ebe1966290d6e76ddb570e7ab"
+    },
+    {
+      "path": "가짜_준비목록.json",
+      "bytes": 6771,
+      "sha256": "5b8ecfad99ac8e37348966a17050f67761db1830480608bbbd5cbd80d6222563"
+    },
+    {
+      "path": "가짜자료_종료.json",
+      "bytes": 2233,
+      "sha256": "f0e4a0140fa228e0be56a0c663abf2e64d430c7911d8eaccc420bb7e51b2cc3a"
+    },
+    {
+      "path": "가짜자료_종료.sql",
+      "bytes": 3361,
+      "sha256": "4c7aac8977efde179de963ada976c7a955be9420a8763140f8be35ca98e1331a"
+    },
+    {
+      "path": "가짜환경_전체빌드.log",
+      "bytes": 5482,
+      "sha256": "db7361b70ff3c94184ff1b460304875e489a79c0e7127004f6d1b4b2d9e403f1"
+    },
+    {
+      "path": "검토DB_검사종료.json",
+      "bytes": 11672,
+      "sha256": "ad799c58bed83297339d904565ba2c56b6d014759ebfd62f522a290bc847adf0"
+    },
+    {
+      "path": "검토DB_적용전.json",
+      "bytes": 11454,
+      "sha256": "b41bfccd23758c7c46d6517fe8927bb10c5f43324785a56a222ad229e0398d4a"
+    },
+    {
+      "path": "검토DB_적용후.json",
+      "bytes": 11672,
+      "sha256": "5fb31d628b404e02cbde2330bd386dbf2c6f8e447b7414263d476eefd25620b6"
+    },
+    {
+      "path": "검토DB_정의권한.json",
+      "bytes": 759,
+      "sha256": "efdaf4f84d8281db9a3c2e7d3e2034d3001faa0808b1d769283144e68e2be531"
+    },
+    {
+      "path": "기능지도.log",
+      "bytes": 557,
+      "sha256": "ba9613ed20f461f9ac3c3a8348de66700b69dbd9f61f0b004d6923708552c74e"
+    },
+    {
+      "path": "기록형식.log",
+      "bytes": 100,
+      "sha256": "dc68b3141a2c5bef4fdee2805dacaf91511bf3fae1f25b6583502c09f10e43d5"
+    },
+    {
+      "path": "기존기록_최종보존.json",
+      "bytes": 636,
+      "sha256": "74e1e4bcceb824151fd449e98783a77b48b65cd6e97eceded0f19c18868ffcb6"
+    },
+    {
+      "path": "기존기록_최종보존.sql",
+      "bytes": 2525,
+      "sha256": "ff7236a726f154d1c2b03196cf1e3b31c2f7995657f40a33975f18f1053d7904"
+    },
+    {
+      "path": "동시호출_HTTP준비시간.json",
+      "bytes": 2263,
+      "sha256": "1c3f4bbe8f268d321b3ec2ea9bc90d8141b7bb107d030a8cc43773f90fdde47d"
+    },
+    {
+      "path": "동시호출_첫시도.json",
+      "bytes": 1098,
+      "sha256": "b38152266dac49fdf898754e108bde06a883d1f57ffb1afd5d852f2494fe9724"
+    },
+    {
+      "path": "두연결_시작우선.json",
+      "bytes": 889,
+      "sha256": "8c1eefc5d285d58ba29f3593373d11db686dfe80a49c21acb1bdb31d661f1cc8"
+    },
+    {
+      "path": "두연결_중지우선.json",
+      "bytes": 862,
+      "sha256": "69698b7393db9fc27ff4fad43d566e4fd983ac429fd9e28a3fe2973cd4546a7f"
+    },
+    {
+      "path": "로컬검사_실행요약.json",
+      "bytes": 1806,
+      "sha256": "fda60c637747655ad98ae7ec76f98e7a240e3524b3534189821553040026a9e6"
+    },
+    {
+      "path": "로컬빌드_실행도구.txt",
+      "bytes": 1101,
+      "sha256": "a625c3cada80a67c75b5078ad7d52f1ca478dd5f973db8455b812decd0b2fa79"
+    },
+    {
+      "path": "변경파일_lint.log",
+      "bytes": 12,
+      "sha256": "21fefdddd9e88788ddbe4699e83f74a76d6d388dbf5015cc5ece40a0b27d0455"
+    },
+    {
+      "path": "보안권고_관련항목.json",
+      "bytes": 1370,
+      "sha256": "587f490e046bc0cfacd090f7aeda6754f9436d2cda9a5ce151ccfcf0a858808d"
+    },
+    {
+      "path": "보완검사.log",
+      "bytes": 472,
+      "sha256": "ef7b5508737c8c770bb1f910df1cf4de6333a794bd6d9950542015f23c8cc86f"
+    },
+    {
+      "path": "보존적용.sql",
+      "bytes": 5124,
+      "sha256": "dc92d13d026768db887a46d6d1675d7638d47e605871292d0b347c1fc14600a5"
+    },
+    {
+      "path": "시작우선.sql",
+      "bytes": 1037,
+      "sha256": "f827405c635491cb5959491b404e7275ed30b160a497ae41bbb689eb9995e33c"
+    },
+    {
+      "path": "시작우선_관찰설치.sql",
+      "bytes": 1673,
+      "sha256": "7c199dd4d3eecb33834ecac5b73caeb81457c6dc430629f574fda649cbfde66c"
+    },
+    {
+      "path": "앱빌드.log",
+      "bytes": 1967,
+      "sha256": "d7dd4f5ae1b7cb66304df8b9221cd1f9a165d6b139475ca6aca52978dffc4f64"
+    },
+    {
+      "path": "적용명세.json",
+      "bytes": 293,
+      "sha256": "42bc0a249a2dcf5c3f36f52fe64caed6744861efcd9024aa81c5cce935137fbb"
+    },
+    {
+      "path": "중지우선.sql",
+      "bytes": 1310,
+      "sha256": "74493f8245403c3e115a8d80db1c2cf272a412b33084aff627e4700e81d9477b"
+    },
+    {
+      "path": "중지중_답접수.json",
+      "bytes": 9970,
+      "sha256": "eee7f0523dc977d712410c8c0a01be0bfbbd9bfedc6b162b4318c07b005465fc"
+    },
+    {
+      "path": "중지중_접수검사.sql",
+      "bytes": 6376,
+      "sha256": "6003ae742d917c94a27ffe7e9f7ccf86f131253d8654be61eb905b0de2ea3736"
+    },
+    {
+      "path": "타입검사.log",
+      "bytes": 12,
+      "sha256": "21fefdddd9e88788ddbe4699e83f74a76d6d388dbf5015cc5ece40a0b27d0455"
+    }
+  ]
+}

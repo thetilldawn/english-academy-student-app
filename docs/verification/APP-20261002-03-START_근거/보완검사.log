@@ -1,0 +1,11 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+Not implemented: navigation to another Document
+···································································
+
+ Test Files  5 passed (5)
+      Tests  67 passed (67)
+   Start at  20:59:43
+   Duration  62.70s (transform 1.58s, setup 0ms, import 3.06s, tests 70.42s, environment 2.33s)
+

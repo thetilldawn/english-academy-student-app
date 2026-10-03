@@ -1,0 +1,327 @@
+[
+  {
+    "value": {
+      "tables": [
+        {
+          "amount": 22,
+          "table_name": "assignment_release_links_v1",
+          "fingerprint": "9e1d3a02a2cebeee9529bd0267e203059318ba627b67f4be11004be150e8f318",
+          "schema_name": "private"
+        },
+        {
+          "amount": 2,
+          "table_name": "assignment_replacement_requests",
+          "fingerprint": "daf0f39ca5029190c3122c28ed053cae8e8fa5fb0b704ef44c74cb30ccc6fd6c",
+          "schema_name": "private"
+        },
+        {
+          "amount": 0,
+          "table_name": "assignment_study_examples_v1",
+          "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "schema_name": "private"
+        },
+        {
+          "amount": 206,
+          "table_name": "assignment_vocabulary_meaning_refs",
+          "fingerprint": "0b5a64b4e4eafdae91f3855f4864d40b728d1522756bbfdd49093e0ab4f760cd",
+          "schema_name": "private"
+        },
+        {
+          "amount": 0,
+          "table_name": "assignment_vocabulary_new_questions",
+          "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "schema_name": "private"
+        },
+        {
+          "amount": 28,
+          "table_name": "local_quiz_phase_plans",
+          "fingerprint": "a9862bc9a56d6e39299ef16a8956783d9d884a5957fc259835033df24bfdc6ae",
+          "schema_name": "private"
+        },
+        {
+          "amount": 28,
+          "table_name": "local_quiz_phase_receipts",
+          "fingerprint": "f23a59e474eafc40497367324459be2ca003f58a9bbd35a748587cc39415aaa2",
+          "schema_name": "private"
+        },
+        {
+          "amount": 22,
+          "table_name": "local_quiz_preparations",
+          "fingerprint": "b735a0b4a04b92195d81080a18b276d46458d377ceec837451cd4c71660c716e",
+          "schema_name": "private"
+        },
+        {
+          "amount": 22,
+          "table_name": "local_quiz_runs",
+          "fingerprint": "40924b5f3461c824c3f978eba0cb509739dd5cde84cdcd211df74446e790352b",
+          "schema_name": "private"
+        },
+        {
+          "amount": 6,
+          "table_name": "notebook_question_origins_v2",
+          "fingerprint": "4c02cd5662ce047fe8cae2bf0a8fe273486489d067bf4c45b49dc1d1da13f2bd",
+          "schema_name": "private"
+        },
+        {
+          "amount": 48,
+          "table_name": "quiz_attempt_preparations",
+          "fingerprint": "36bc8ffad31b58e85fea127a7aa1b96adce2898edfcd85fafa016435f8bebb9b",
+          "schema_name": "private"
+        },
+        {
+          "amount": 0,
+          "table_name": "quiz_preparation_compaction_checks",
+          "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "schema_name": "private"
+        },
+        {
+          "amount": 2,
+          "table_name": "quiz_preparation_expirations",
+          "fingerprint": "cf2a9a8c8e3baaf2b25507b95545fcfa0a78bb5cfd5cc7688ae97f5681da9a82",
+          "schema_name": "private"
+        },
+        {
+          "amount": 1,
+          "table_name": "quiz_start_control",
+          "fingerprint": "010bde7ffacdbb3f47aaf999bb2e4778b4106ad979aba2a2082886a4d58d8d31",
+          "schema_name": "private"
+        },
+        {
+          "amount": 72,
+          "table_name": "student_vocabulary_meaning_states",
+          "fingerprint": "7a2ab3fd8eb8fc0a7a43b04a5bf27c88a42490850318f9518edc7e714404c8a2",
+          "schema_name": "private"
+        },
+        {
+          "amount": 41,
+          "table_name": "student_vocabulary_versions",
+          "fingerprint": "a799fa2a2af40da3f524518247f26c73c0915f7a0d8f99eb31b4ade7491d10af",
+          "schema_name": "private"
+        },
+        {
+          "amount": 0,
+          "table_name": "student_word_practice_questions",
+          "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "schema_name": "private"
+        },
+        {
+          "amount": 0,
+          "table_name": "student_word_practice_runs",
+          "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "schema_name": "private"
+        },
+        {
+          "amount": 185,
+          "table_name": "vocabulary_answer_receipts",
+          "fingerprint": "1d0ac4de9146504e2cf798de7e9ccde8d7134c749553770f530c29b2b67d148e",
+          "schema_name": "private"
+        },
+        {
+          "amount": 1,
+          "table_name": "vocabulary_expired_answer_results",
+          "fingerprint": "935bf384d4a6aee937ec495e0fb8a729c9e3edd2d2a6679f8ead01616a7430e7",
+          "schema_name": "private"
+        },
+        {
+          "amount": 0,
+          "table_name": "vocabulary_legacy_question_baselines",
+          "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "schema_name": "private"
+        },
+        {
+          "amount": 148,
+          "table_name": "vocabulary_legacy_state_baselines",
+          "fingerprint": "f1f88afbc4b3c8243b3b27d1538c978acc94a2e5725d982d1b8378a1ddd24f1a",
+          "schema_name": "private"
+        },
+        {
+          "amount": 62,
+          "table_name": "vocabulary_question_meaning_versions",
+          "fingerprint": "d4f736e19e28194be74a4ebf42d67719deed095c8c1baf656c7bed984ae6bbc1",
+          "schema_name": "private"
+        },
+        {
+          "amount": 0,
+          "table_name": "worksheet_mistake_items",
+          "fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "schema_name": "private"
+        },
+        {
+          "amount": 20,
+          "table_name": "admin_profiles",
+          "fingerprint": "ff4e6a7fae0923d0ef54eb2b67a0ccea2b7539b71f239006576bffd5eea154b9",
+          "schema_name": "public"
+        },
+        {
+          "amount": 4785,
+          "table_name": "assignment_question_exam_use_snapshot",
+          "fingerprint": "615bbddbe9752fd7994985da8b7ace61ec86ca3e55b62bd87544ff4f20649a24",
+          "schema_name": "public"
+        },
+        {
+          "amount": 5645,
+          "table_name": "assignment_questions",
+          "fingerprint": "97915db77237153be864959785a2e662fc4bfe079cf0561896c9ddc10302ce7c",
+          "schema_name": "public"
+        },
+        {
+          "amount": 144,
+          "table_name": "assignment_quiz_mode_snapshots",
+          "fingerprint": "3fd0e737421fb3cd0b1cc05dc61ad8e8ad3755b48099567eb9ed8900be0253ec",
+          "schema_name": "public"
+        },
+        {
+          "amount": 48,
+          "table_name": "assignment_review_targets",
+          "fingerprint": "0657b4e7d6c7984677d274b4723d9c411634702a7644e3c41286ad04e1bdd9ab",
+          "schema_name": "public"
+        },
+        {
+          "amount": 256,
+          "table_name": "assignment_sources",
+          "fingerprint": "a4ebf00e1c382f316e65f1950b706728249886008a873d5aef31bef68b4258f4",
+          "schema_name": "public"
+        },
+        {
+          "amount": 262,
+          "table_name": "assignment_students",
+          "fingerprint": "12e3e45ce2d2e4265495a97313b209da3067bb6a042a6ec28e89347818f0d0a6",
+          "schema_name": "public"
+        },
+        {
+          "amount": 1580,
+          "table_name": "assignment_units",
+          "fingerprint": "46dd69dfba54df403b7ea57739f2b448dd97ac0c1653c7ae98ddb19d1e54730b",
+          "schema_name": "public"
+        },
+        {
+          "amount": 256,
+          "table_name": "assignments",
+          "fingerprint": "642783cdc1f67b40fbb2a6a767877da2a76e017327f40ac4a7bb72fb5ab15184",
+          "schema_name": "public"
+        },
+        {
+          "amount": 152,
+          "table_name": "quiz_attempts",
+          "fingerprint": "7a487f2df3e3ef7eadb0770c37a154fa9a2d6de5180d6f21f8b421d020f08252",
+          "schema_name": "public"
+        },
+        {
+          "amount": 1672,
+          "table_name": "quiz_questions",
+          "fingerprint": "f3b4580030e519d5a86837c13cff813d02eace6aa68f0e990b0dfeafb64bf4e3",
+          "schema_name": "public"
+        },
+        {
+          "amount": 32,
+          "table_name": "student_codes",
+          "fingerprint": "f81778555ddcaeaab85b1d25fd37758ae492b3cb8c048c891134e800438ff7eb",
+          "schema_name": "public"
+        },
+        {
+          "amount": 41,
+          "table_name": "student_learning_sources",
+          "fingerprint": "dec0411ae17e9a17543d32d6d16f2ad3f8dce609b36c27d982750a891af68213",
+          "schema_name": "public"
+        },
+        {
+          "amount": 72,
+          "table_name": "student_login_attempts",
+          "fingerprint": "14a42788ea03e487366a78778fac8d12b682b93d6b008b5c2f86b058bd8d8da8",
+          "schema_name": "public"
+        },
+        {
+          "amount": 1115,
+          "table_name": "student_point_events",
+          "fingerprint": "6efc895000303de3006ac19d8a6dfb28ab6b3dcbd32a4ecf3b8af38413a23786",
+          "schema_name": "public"
+        },
+        {
+          "amount": 40,
+          "table_name": "student_point_totals",
+          "fingerprint": "8a6a7d4c3b2584dadf0c5a8944e87c8bf1e560bb5afe900b96c74d25fae63280",
+          "schema_name": "public"
+        },
+        {
+          "amount": 73,
+          "table_name": "student_sessions",
+          "fingerprint": "def07dcf4514fa983b9e7c63ced59cf96f5f83f3ed999d7465c1341363c5f9ce",
+          "schema_name": "public"
+        },
+        {
+          "amount": 2,
+          "table_name": "student_vocab_review_assignment_draft_items",
+          "fingerprint": "00277fa9aa2f7f5ba6ef522cc2e873967af0971dd519aae1b534ea7cf75d0655",
+          "schema_name": "public"
+        },
+        {
+          "amount": 2,
+          "table_name": "student_vocab_review_assignment_drafts",
+          "fingerprint": "4afe7b45368d0ed33dd0ab1c66ba6e703ac88521a14ca23334ff557eea47e06d",
+          "schema_name": "public"
+        },
+        {
+          "amount": 46,
+          "table_name": "student_vocab_review_queue",
+          "fingerprint": "f5d6a62862f563ef7832922981480e8dc18d9a15014ba5d8aba7958532823f9b",
+          "schema_name": "public"
+        },
+        {
+          "amount": 814,
+          "table_name": "student_vocab_state",
+          "fingerprint": "f63319d830339929a787c835c0463cc37cc133d2422d70d8763a3ddef9746c0f",
+          "schema_name": "public"
+        },
+        {
+          "amount": 873,
+          "table_name": "student_vocab_wrong_events",
+          "fingerprint": "7184a0845aed63ce85fd095987de92667a0a1c51dc38e51da0a6a39390388407",
+          "schema_name": "public"
+        },
+        {
+          "amount": 138,
+          "table_name": "students",
+          "fingerprint": "78c6412d5cac4c43aa8bba492f48a3463c758fd3b141f2a7bf99ef157eeaf866",
+          "schema_name": "public"
+        }
+      ],
+      "checkedAt": "2026-10-03T12:03:49.684732+00:00",
+      "guardMeta": {
+        "oid": "34753",
+        "proacl": [
+          "postgres=X/postgres"
+        ],
+        "probin": null,
+        "procost": 100,
+        "prokind": "f",
+        "prolang": "13619",
+        "proname": "guard_new_attempt_release_v1",
+        "prorows": 0,
+        "pronargs": 0,
+        "proowner": "16388",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "proretset": false,
+        "prosecdef": true,
+        "prorettype": "2279",
+        "prosqlbody": null,
+        "prosupport": "-",
+        "proargmodes": null,
+        "proargnames": null,
+        "proargtypes": [],
+        "proisstrict": false,
+        "proparallel": "u",
+        "protrftypes": null,
+        "provariadic": "0",
+        "provolatile": "v",
+        "proleakproof": false,
+        "pronamespace": "17372",
+        "proallargtypes": null,
+        "proargdefaults": null,
+        "pronargdefaults": 0
+      },
+      "otherFunctions": 826
+    }
+  }
+]

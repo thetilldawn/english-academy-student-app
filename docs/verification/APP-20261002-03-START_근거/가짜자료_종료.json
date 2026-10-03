@@ -1,0 +1,75 @@
+[
+  {
+    "value": {
+      "paused": false,
+      "tables": [
+        {
+          "name": "public.quiz_attempts",
+          "amount": 2,
+          "fingerprint": "1869f453af773f5e1a08e27b76c5c9f5"
+        },
+        {
+          "name": "public.quiz_questions",
+          "amount": 8,
+          "fingerprint": "ab854684dfaa724c7cbbd42e01a40be5"
+        },
+        {
+          "name": "public.student_vocab_wrong_events",
+          "amount": 2,
+          "fingerprint": "971fbdf18b9af516494cdddf84789ca4"
+        },
+        {
+          "name": "public.student_point_events",
+          "amount": 10,
+          "fingerprint": "9377a9b16c56f34302d73803a1d642f5"
+        },
+        {
+          "name": "public.student_point_totals",
+          "amount": 1,
+          "fingerprint": "40fc51c98b092d4349374f4657a90c00"
+        },
+        {
+          "name": "private.vocabulary_answer_receipts",
+          "amount": 10,
+          "fingerprint": "e74e4d0f56aa5a228a3c1a5b469b509c"
+        },
+        {
+          "name": "private.vocabulary_phase_results",
+          "amount": 3,
+          "fingerprint": "f011a71c2f98eaf1d5ad7e9f9c414e7c"
+        },
+        {
+          "name": "private.vocabulary_result_policies",
+          "amount": 2,
+          "fingerprint": "1415db327a3a446de17e09f1f77195ac"
+        },
+        {
+          "name": "private.local_quiz_runs",
+          "amount": 2,
+          "fingerprint": "af583fc47276d7205aea95d33e38f322"
+        },
+        {
+          "name": "private.local_quiz_phase_plans",
+          "amount": 3,
+          "fingerprint": "1dbbc9c66e6ed3881f74a5900fe2619c"
+        },
+        {
+          "name": "private.local_quiz_phase_receipts",
+          "amount": 3,
+          "fingerprint": "815cf078e275406bc13ebb8d2f9b451d"
+        }
+      ],
+      "fakeQuestions": [
+        "0fbdb8f3-d1d7-4627-b229-0e45f284be63",
+        "35dc4848-425a-4941-b17d-867b7c358630",
+        "3321e88b-1472-4798-8f12-59a313d11fb5",
+        "785237e4-9efc-4969-91e4-bf857759e10b",
+        "fa98c01d-f87c-48d1-8aa0-eaa9ff3f1b32",
+        "6a195323-eb53-48d0-b44f-c00a4d65da52",
+        "d40307ed-b229-438a-9741-6a376bd11604",
+        "3a560b0e-e0f6-4aa0-a10d-397b7bcae9bf"
+      ],
+      "temporaryFunction": null
+    }
+  }
+]

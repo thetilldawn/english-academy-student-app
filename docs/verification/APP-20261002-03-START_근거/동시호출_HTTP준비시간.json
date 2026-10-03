@@ -1,0 +1,69 @@
+{
+  "result": "operator wait timed out before HTTP began; not a concurrency pass; fake attempt 1 started normally and retained for submission checks",
+  "operator": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"error\":{\"name\":\"HttpException\",\"message\":\"Failed to run sql query: ERROR:  P0001: start_control_overlap_not_observed\\nCONTEXT:  PL/pgSQL function inline_code_block line 1 at RAISE\\n\"}}"
+        }
+      ],
+      "structuredContent": {
+        "error_code": "INVALID_ARGUMENT"
+      },
+      "isError": true
+    }
+  },
+  "http": {
+    "case": "pause_commit",
+    "project": "wojxpruvbjzbhrpmsbuy",
+    "sentAt": "2026-10-03T12:10:50.233Z",
+    "finishedAt": "2026-10-03T12:10:51.188Z",
+    "durationMs": 955,
+    "status": 200,
+    "data": {
+      "items": [
+        {
+          "id": "0fbdb8f3-d1d7-4627-b229-0e45f284be63",
+          "order": 1,
+          "contentId": "22944a95-7336-4854-b478-5be785df256f",
+          "priorWrongCount": 0,
+          "correctChoiceIndex": 0
+        },
+        {
+          "id": "35dc4848-425a-4941-b17d-867b7c358630",
+          "order": 2,
+          "contentId": "4669f35f-fd20-45d4-ad7c-59c8c71e4d64",
+          "priorWrongCount": 0,
+          "correctChoiceIndex": 1
+        },
+        {
+          "id": "3321e88b-1472-4798-8f12-59a313d11fb5",
+          "order": 3,
+          "contentId": "2ea04e99-e022-4939-93ff-e1b97844ba5b",
+          "priorWrongCount": 0,
+          "correctChoiceIndex": 2
+        },
+        {
+          "id": "785237e4-9efc-4969-91e4-bf857759e10b",
+          "order": 4,
+          "contentId": "9ba7b6da-4833-4a2d-9d20-fa70d40dc502",
+          "priorWrongCount": 0,
+          "correctChoiceIndex": 3
+        }
+      ],
+      "phase": "initial",
+      "status": "in_progress",
+      "limitMs": 240000,
+      "planHash": "fce4c0f068889215995408eb0059006d5bb6a2c6f0b4cec964f0b74ae4475ff8",
+      "protocol": "local_batch_v1",
+      "attemptId": "4647ed5a-4f22-47ad-8396-972e9e2263ac",
+      "serverNow": "2026-10-03T12:10:51.631543+00:00",
+      "startedAt": "2026-10-03T12:10:51.602019+00:00",
+      "timePolicy": "local-elapsed-v1",
+      "officialPhase": "initial",
+      "questionLimitMs": 5000
+    }
+  }
+}

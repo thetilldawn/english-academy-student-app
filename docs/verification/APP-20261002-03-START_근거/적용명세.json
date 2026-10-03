@@ -1,0 +1,6 @@
+{
+  "coreSha256": "b8439c04248da8d30b5d239f9944de7a6f60a4c97cc3394b41bac5f10cd6e6c5",
+  "wrapperSha256": "dc92d13d026768db887a46d6d1675d7638d47e605871292d0b347c1fc14600a5",
+  "scope": "Preview only; private control row plus existing insert guard; no student update",
+  "productionWrites": 0
+}

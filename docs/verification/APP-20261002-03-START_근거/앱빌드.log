@@ -1,0 +1,29 @@
+
+> english-academy-student-app@0.1.0 prebuild
+> node scripts/verify-preview-environment.mjs && node scripts/check-feature-map.mjs --verify && node scripts/check-work-records.mjs --phase format
+
+기능 지도 정상: 기능 12, page 33, Route Handler 69, Next.js 특수 진입점 41, Next.js 루트 설정 1, App Router 보조 파일 48, server service 45, 공유 시험 계산 18, 공유 배정 계산 4, lib 루트 파일 11, lib 기반 디렉터리 9, src 공용 디렉터리 3, 관리자 계약 35, 기존 component 26, 공용 UI 44, 구조 보호선 44, 공통 server 0, 기능 server 103, 관리 migration 106, 상세 흐름 19, 기능 간 직접 import 113, lib→기능 import 14, 기능→lib 중계 8, 기능→lib→기능 간접 import 15
+작업 기록 format 검사 통과 (112건). 자동검사는 누락·불일치만 확인합니다.
+
+> english-academy-student-app@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.12 (webpack)
+- Experiments (use with caution):
+  ✓ typedEnv
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 14.1s
+  Running TypeScript ...
+  Finished TypeScript in 25.8s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/53) ...
+Error occurred prerendering page "/admin/students". Read more: https://nextjs.org/docs/messages/prerender-error
+Error [AppConfigurationError]: 운영환경에는 APP_ORIGIN이 필요합니다.
+    at q (C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\vocabulary-templates-20260920\.next\server\chunks\1151.js:1:6028)
+    at l (C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\vocabulary-templates-20260920\.next\server\app\admin\(protected)\students\page.js:1:5132)
+    at stringify (<anonymous>) {
+  digest: '88635453'
+}
+Export encountered an error on /admin/(protected)/students/page: /admin/students, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null

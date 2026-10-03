@@ -1,0 +1,254 @@
+[
+  {
+    "value": {
+      "retry": {
+        "phase": "retry",
+        "result": {
+          "state": "completed",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 50,
+              "passed": false,
+              "ended_at": "2026-10-03T12:10:51.902019+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "4647ed5a-4f22-47ad-8396-972e9e2263ac",
+              "end_reason": "completed",
+              "started_at": "2026-10-03T12:10:51.602019+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 2,
+              "content_hash": "e46d68e21557264d4389af2e9a802e8c60a4b29d18fe3e89c79c22afeab857c3",
+              "target_count": 4,
+              "correct_count": 2,
+              "passing_score": 80,
+              "unanswered_count": 0
+            },
+            {
+              "phase": "retry",
+              "score": 100,
+              "passed": true,
+              "ended_at": "2026-10-03T12:19:57.014035+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "4647ed5a-4f22-47ad-8396-972e9e2263ac",
+              "end_reason": "completed",
+              "started_at": "2026-10-03T12:19:56.914035+00:00",
+              "score_basis": "cumulative_after_retry",
+              "wrong_count": 0,
+              "content_hash": "a5b37a1c320ce3fabc1a5977d312ec087c9c3bc4be1303b57828562a5c5ea0d3",
+              "target_count": 2,
+              "correct_count": 2,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "completed",
+            "passed": true,
+            "status": "completed",
+            "startedAt": "2026-10-03T12:10:51.602019+00:00",
+            "deadlineAt": "2026-10-03T12:23:56.914035+00:00",
+            "finalScore": 100,
+            "completedAt": "2026-10-03T12:19:57.014035+00:00",
+            "initialScore": 50,
+            "attemptNumber": 1,
+            "questionCount": 4,
+            "elapsedSeconds": 0,
+            "retryStartedAt": "2026-10-03T12:19:56.914035+00:00",
+            "retryCorrectCount": 2,
+            "initialCompletedAt": "2026-10-03T12:10:51.902019+00:00",
+            "initialCorrectCount": 2,
+            "unresolvedWrongCount": 0
+          },
+          "finalized": true,
+          "detailScope": "initial_mistakes",
+          "finalReason": "completed",
+          "finalizedAt": "2026-10-03T12:19:57.014035+00:00",
+          "retryStarted": true,
+          "resultVersion": "fbd643abf7340b1989d5d5db2aca5d21dc52be9124773b170f7f1042d5050d6f",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": [
+          {
+            "id": "0fbdb8f3-d1d7-4627-b229-0e45f284be63",
+            "sequence": 5,
+            "answerHash": "caa8643f3c7e64ae2cf3db471cc692ace75662003538b82945327dc2a215e9fd"
+          },
+          {
+            "id": "35dc4848-425a-4941-b17d-867b7c358630",
+            "sequence": 6,
+            "answerHash": "5de4c07d7c97ca5a50aef0817b467e3cb2557ee9d1c7f3ff7e34248fc21d4cbd"
+          }
+        ],
+        "planHash": "2cf9a6887e0409fea131e0a4b12bb64fcf7aa5b8973bf1f2871de774fad57a36",
+        "protocol": "local_batch_v1",
+        "payloadHash": "28e86f6f335eb3b42ea23c96e21d489018d0581ade9372998983e126c639b382",
+        "retryTargets": [],
+        "submissionId": "a5100000-0000-4000-8000-000000000951"
+      },
+      "second": {
+        "phase": "initial",
+        "result": {
+          "state": "completed",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 100,
+              "passed": true,
+              "ended_at": "2026-10-03T12:17:37.822912+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "e9ed6127-4117-4dd9-bbb1-4da9113409a6",
+              "end_reason": "completed",
+              "started_at": "2026-10-03T12:17:37.522912+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 0,
+              "content_hash": "d6faa15163802f070a87fdd5cc9c2f98c1f2587eed473cd705983ec19e287705",
+              "target_count": 4,
+              "correct_count": 4,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "completed",
+            "passed": true,
+            "status": "completed",
+            "startedAt": "2026-10-03T12:17:37.522912+00:00",
+            "deadlineAt": "2026-10-03T12:21:37.522912+00:00",
+            "finalScore": 100,
+            "completedAt": "2026-10-03T12:17:37.822912+00:00",
+            "initialScore": 100,
+            "attemptNumber": 1,
+            "questionCount": 4,
+            "elapsedSeconds": 0,
+            "retryStartedAt": null,
+            "retryCorrectCount": 0,
+            "initialCompletedAt": "2026-10-03T12:17:37.822912+00:00",
+            "initialCorrectCount": 4,
+            "unresolvedWrongCount": 0
+          },
+          "finalized": true,
+          "detailScope": "initial_mistakes",
+          "finalReason": "completed",
+          "finalizedAt": "2026-10-03T12:17:37.822912+00:00",
+          "retryStarted": false,
+          "resultVersion": "49e10c851bd2043e15e07931a1c4c8ab3f912177118d95123fddf9062f5c139f",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": [
+          {
+            "id": "fa98c01d-f87c-48d1-8aa0-eaa9ff3f1b32",
+            "sequence": 7,
+            "answerHash": "da307aced19cdb2d9c4dc671f5d5d6ec8c8fb0c347ccc5acf3ca5c026d369eba"
+          },
+          {
+            "id": "6a195323-eb53-48d0-b44f-c00a4d65da52",
+            "sequence": 8,
+            "answerHash": "6f832e7fcb5a23b69828726072bd2eff9b7fd910c63af3bad03f6a4ed30ec9d4"
+          },
+          {
+            "id": "d40307ed-b229-438a-9741-6a376bd11604",
+            "sequence": 9,
+            "answerHash": "601afbc87003328e2fa058298fb73b2bfbd2744cbbcbd2421fe01118b3e6f8d4"
+          },
+          {
+            "id": "3a560b0e-e0f6-4aa0-a10d-397b7bcae9bf",
+            "sequence": 10,
+            "answerHash": "3a91ce4b2bb59961ae225f373f5cdb63500e0967e103690d237f748c747a4b7f"
+          }
+        ],
+        "planHash": "2a6851af2433a64d768c402728743ec707a435e157c7908a409c422550056ddd",
+        "protocol": "local_batch_v1",
+        "payloadHash": "af1f5c6f782ae2349c7735a8518e042b63e7fedc96eff9c3b8283c698b2c80fb",
+        "retryTargets": [],
+        "submissionId": "a5100000-0000-4000-8000-000000000952"
+      },
+      "initial": {
+        "phase": "initial",
+        "result": {
+          "state": "retry_waiting",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 50,
+              "passed": false,
+              "ended_at": "2026-10-03T12:10:51.902019+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "4647ed5a-4f22-47ad-8396-972e9e2263ac",
+              "end_reason": "completed",
+              "started_at": "2026-10-03T12:10:51.602019+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 2,
+              "content_hash": "e46d68e21557264d4389af2e9a802e8c60a4b29d18fe3e89c79c22afeab857c3",
+              "target_count": 4,
+              "correct_count": 2,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "review",
+            "passed": null,
+            "status": "in_progress",
+            "startedAt": "2026-10-03T12:10:51.602019+00:00",
+            "deadlineAt": "2026-10-03T12:14:51.602019+00:00",
+            "finalScore": null,
+            "completedAt": null,
+            "initialScore": 50,
+            "attemptNumber": 1,
+            "questionCount": 4,
+            "elapsedSeconds": 0,
+            "retryStartedAt": null,
+            "retryCorrectCount": 0,
+            "initialCompletedAt": "2026-10-03T12:10:51.902019+00:00",
+            "initialCorrectCount": 2,
+            "unresolvedWrongCount": 2
+          },
+          "finalized": false,
+          "detailScope": "initial_mistakes",
+          "finalReason": null,
+          "finalizedAt": null,
+          "retryStarted": false,
+          "resultVersion": "33f1d8b13580530041effbe76fb31a99969f8dc852dc894ff8e2225e3a44769e",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": [
+          {
+            "id": "0fbdb8f3-d1d7-4627-b229-0e45f284be63",
+            "sequence": 1,
+            "answerHash": "99269a5ca4a1a3bb446aaad5149bbb54310abe89b431f49bab1d58036c5806df"
+          },
+          {
+            "id": "35dc4848-425a-4941-b17d-867b7c358630",
+            "sequence": 2,
+            "answerHash": "bdb6b12c3dc95f7cd3a31a0c2721df8d5e537f2c7964171f7dd174eb7b11572d"
+          },
+          {
+            "id": "3321e88b-1472-4798-8f12-59a313d11fb5",
+            "sequence": 3,
+            "answerHash": "1c5af87213272e1caf8ae77b6f757a0fa0641bf7bca3818dacc68bba6e1676b9"
+          },
+          {
+            "id": "785237e4-9efc-4969-91e4-bf857759e10b",
+            "sequence": 4,
+            "answerHash": "f7b0b34cde198a966be6b919ed09fed4b6e98ba591ddd63f38ef91b780c56fac"
+          }
+        ],
+        "planHash": "fce4c0f068889215995408eb0059006d5bb6a2c6f0b4cec964f0b74ae4475ff8",
+        "protocol": "local_batch_v1",
+        "payloadHash": "1c7b5517b04b39bdff51f2b2435ba02c8f8d3cfe714a5cf5d3b7b27047f323f7",
+        "retryTargets": [
+          "0fbdb8f3-d1d7-4627-b229-0e45f284be63",
+          "35dc4848-425a-4941-b17d-867b7c358630"
+        ],
+        "submissionId": "a5100000-0000-4000-8000-000000000950"
+      },
+      "wasLate": true,
+      "checkedAt": "2026-10-03T12:19:57.080053+00:00",
+      "newAttemptCount": 0,
+      "refusedPreparation": "1bd69af3-b28a-443f-8fc1-268ab5e8e441"
+    }
+  }
+]

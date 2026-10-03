@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-10-03T12:22:46.844Z",
+  "summary": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 140,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+      "related": [
+        {
+          "detail": "Table \\`private.quiz_start_control\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "quiz_start_control",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-03T12:22:46.844Z"
+        }
+      ]
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "count": 82,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+      "related": []
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+      "related": []
+    }
+  ],
+  "disposition": "quiz_start_control INFO is intentional default-deny private table: no app role table privileges, no public API, no policies to grant app access. Other findings pre-existing and outside this change."
+}

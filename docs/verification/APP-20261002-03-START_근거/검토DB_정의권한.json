@@ -1,0 +1,36 @@
+[
+  {
+    "value": {
+      "rls": true,
+      "roles": [
+        {
+          "role": "anon",
+          "select": false,
+          "update": false
+        },
+        {
+          "role": "authenticated",
+          "select": false,
+          "update": false
+        },
+        {
+          "role": "service_role",
+          "select": false,
+          "update": false
+        }
+      ],
+      "control": {
+        "paused": false,
+        "singleton": true,
+        "changed_at": "2026-10-03T12:03:14.381827+00:00"
+      },
+      "guardHash": "766640f3535bb09c4b868b34b93ae9db9359327258777ca1cd4b3c4441a133f9",
+      "migration": [
+        {
+          "name": "pause_new_assigned_quiz_attempts",
+          "version": "20261003120312"
+        }
+      ]
+    }
+  }
+]

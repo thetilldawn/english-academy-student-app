@@ -1,0 +1,8 @@
+import {spawnSync} from 'node:child_process';
+import fs from 'node:fs';
+const env={...process.env,APP_ORIGIN:'http://127.0.0.1:3037',NEXT_PUBLIC_SUPABASE_URL:'http://127.0.0.1:3038',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'local-public-placeholder-not-a-real-key',SUPABASE_SECRET_KEY:'local-server-placeholder-not-a-real-key',NEXT_TELEMETRY_DISABLED:'1'};
+for(const [key,n] of [['STUDENT_CODE_PEPPER',1],['STUDENT_SESSION_PEPPER',2],['STUDENT_CODE_ENCRYPTION_KEY',3],['LOGIN_IP_PEPPER',4]])env[key]=Buffer.alloc(32,n).toString('base64');
+if(process.env.VERCEL||process.env.VERCEL_ENV||process.env.CI)throw Error('local build only');
+const out=fs.openSync('docs/verification/APP-20261002-03-START_근거/가짜환경_전체빌드.log','w');
+const result=spawnSync(process.execPath,['C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js','run','build'],{env,windowsHide:true,stdio:['ignore',out,out]});fs.closeSync(out);
+console.log(JSON.stringify({exitCode:result.status,localBuild:true,realCredentials:false,command:'npm run build (prebuild + build + postbuild)'}));process.exitCode=result.status??1;

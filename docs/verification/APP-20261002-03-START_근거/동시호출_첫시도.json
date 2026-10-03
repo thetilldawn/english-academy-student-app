@@ -1,0 +1,36 @@
+{
+  "method": "two MCP execute_sql calls",
+  "result": "overlap not observed; both queries rolled back; not counted as concurrency pass",
+  "raw": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"name\":\"HttpException\",\"message\":\"Failed to run sql query: ERROR:  P0001: start_control_overlap_not_observed\\nCONTEXT:  PL/pgSQL function inline_code_block line 1 at RAISE\\n\"}}"
+          }
+        ],
+        "structuredContent": {
+          "error_code": "INVALID_ARGUMENT"
+        },
+        "isError": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"name\":\"HttpException\",\"message\":\"Failed to run sql query: ERROR:  P0001: unexpected_start\\nCONTEXT:  PL/pgSQL function inline_code_block line 1 at RAISE\\n\"}}"
+          }
+        ],
+        "structuredContent": {
+          "error_code": "INVALID_ARGUMENT"
+        },
+        "isError": true
+      }
+    }
+  ]
+}

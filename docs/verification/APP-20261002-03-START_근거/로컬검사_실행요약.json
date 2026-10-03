@@ -1,0 +1,64 @@
+{
+  "implementation": "c2376fbea89627445a75748003d0c41da5606169",
+  "unique": {
+    "files": 10,
+    "passed": 134
+  },
+  "runs": [
+    {
+      "at": "2026-10-03T20:51:00+09:00",
+      "files": 5,
+      "passed": 67,
+      "seconds": 70.38,
+      "evidence": "현재 작업의 실행 출력. 전체 원본 로그는 별도 저장하지 않음",
+      "targets": [
+        "local-quiz-batches.integration",
+        "vocabulary-result-records.integration",
+        "local-quiz-service",
+        "attempt-preparation",
+        "assignment-release"
+      ]
+    },
+    {
+      "at": "2026-10-03T20:54:00+09:00",
+      "files": 3,
+      "passed": 31,
+      "seconds": 3.15,
+      "evidence": "현재 작업의 실행 출력. 다음 묶음에 같은 31검사 포함",
+      "targets": [
+        "quiz-ready-http",
+        "prepared-quiz-player",
+        "use-local-quiz-player-controller"
+      ]
+    },
+    {
+      "at": "2026-10-03T20:59:00+09:00",
+      "files": 5,
+      "passed": 67,
+      "seconds": 62.7,
+      "evidence": "보완검사.log",
+      "additionalUniqueTests": 36,
+      "targets": [
+        "quiz-ready-http",
+        "prepared-quiz-player",
+        "use-local-quiz-player-controller",
+        "assignment-release-final-schema.integration",
+        "quiz-attempt-preparations.integration"
+      ]
+    }
+  ],
+  "build": {
+    "command": "npm run build",
+    "prebuild": true,
+    "postbuild": true,
+    "realCredentials": false,
+    "assets": 25,
+    "assetVersion": "be5215555d81",
+    "evidence": "가짜환경_전체빌드.log"
+  },
+  "limitations": [
+    "실제 인증 앱 전체 흐름과 같은 주소 배포/복귀는 M10 검사",
+    "전체 5121검사는 이번 작은 보완에서 재실행하지 않음",
+    "DB 동시 실행 취소 사례는 이번 작업에서 미실행"
+  ]
+}

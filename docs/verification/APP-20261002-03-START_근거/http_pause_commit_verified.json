@@ -1,0 +1,14 @@
+{
+  "case": "pause_commit_verified",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "sentAt": "2026-10-03T12:12:53.857Z",
+  "finishedAt": "2026-10-03T12:12:54.727Z",
+  "durationMs": 870,
+  "status": 500,
+  "data": {
+    "code": "55000",
+    "details": null,
+    "hint": null,
+    "message": "quiz_new_attempts_paused"
+  }
+}

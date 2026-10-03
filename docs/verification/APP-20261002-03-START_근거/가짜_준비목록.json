@@ -1,0 +1,215 @@
+[
+  {
+    "assignment": "a5100000-0000-4000-8000-000000000010",
+    "preparation": {
+      "plan": [
+        {
+          "id": "0fbdb8f3-d1d7-4627-b229-0e45f284be63",
+          "prompt": "fake1",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 1,
+          "vocab_entry_id": 193275,
+          "content_version_id": "22944a95-7336-4854-b478-5be785df256f",
+          "correct_choice_index": 0
+        },
+        {
+          "id": "35dc4848-425a-4941-b17d-867b7c358630",
+          "prompt": "fake2",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 2,
+          "vocab_entry_id": 193276,
+          "content_version_id": "4669f35f-fd20-45d4-ad7c-59c8c71e4d64",
+          "correct_choice_index": 1
+        },
+        {
+          "id": "3321e88b-1472-4798-8f12-59a313d11fb5",
+          "prompt": "fake3",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 3,
+          "vocab_entry_id": 193277,
+          "content_version_id": "2ea04e99-e022-4939-93ff-e1b97844ba5b",
+          "correct_choice_index": 2
+        },
+        {
+          "id": "785237e4-9efc-4969-91e4-bf857759e10b",
+          "prompt": "fake4",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 4,
+          "vocab_entry_id": 193278,
+          "content_version_id": "9ba7b6da-4833-4a2d-9d20-fa70d40dc502",
+          "correct_choice_index": 3
+        }
+      ],
+      "planHash": "4104fbe411d2c0198a01fbd4b4994e949c621589490bcb01cce6f21dc3838947",
+      "protocol": "local_batch_v1",
+      "assignmentId": "a5100000-0000-4000-8000-000000000010",
+      "preparationId": "4647ed5a-4f22-47ad-8396-972e9e2263ac"
+    }
+  },
+  {
+    "assignment": "a5100000-0000-4000-8000-000000000011",
+    "preparation": {
+      "plan": [
+        {
+          "id": "fa98c01d-f87c-48d1-8aa0-eaa9ff3f1b32",
+          "prompt": "fake1",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 1,
+          "vocab_entry_id": 193275,
+          "content_version_id": "22944a95-7336-4854-b478-5be785df256f",
+          "correct_choice_index": 0
+        },
+        {
+          "id": "6a195323-eb53-48d0-b44f-c00a4d65da52",
+          "prompt": "fake2",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 2,
+          "vocab_entry_id": 193276,
+          "content_version_id": "4669f35f-fd20-45d4-ad7c-59c8c71e4d64",
+          "correct_choice_index": 1
+        },
+        {
+          "id": "d40307ed-b229-438a-9741-6a376bd11604",
+          "prompt": "fake3",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 3,
+          "vocab_entry_id": 193277,
+          "content_version_id": "2ea04e99-e022-4939-93ff-e1b97844ba5b",
+          "correct_choice_index": 2
+        },
+        {
+          "id": "3a560b0e-e0f6-4aa0-a10d-397b7bcae9bf",
+          "prompt": "fake4",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 4,
+          "vocab_entry_id": 193278,
+          "content_version_id": "9ba7b6da-4833-4a2d-9d20-fa70d40dc502",
+          "correct_choice_index": 3
+        }
+      ],
+      "planHash": "67d728bdfc27a05325f32c020a8f5514c712fd255ddcf9190e6323d78de4b771",
+      "protocol": "local_batch_v1",
+      "assignmentId": "a5100000-0000-4000-8000-000000000011",
+      "preparationId": "e9ed6127-4117-4dd9-bbb1-4da9113409a6"
+    }
+  },
+  {
+    "assignment": "a5100000-0000-4000-8000-000000000012",
+    "preparation": {
+      "plan": [
+        {
+          "id": "7836e4df-c3df-4854-b0b9-b5e829019ecf",
+          "prompt": "fake1",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 1,
+          "vocab_entry_id": 193275,
+          "content_version_id": "22944a95-7336-4854-b478-5be785df256f",
+          "correct_choice_index": 0
+        },
+        {
+          "id": "8f09c2bc-d1da-4ede-a775-cc29efb6ecc8",
+          "prompt": "fake2",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 2,
+          "vocab_entry_id": 193276,
+          "content_version_id": "4669f35f-fd20-45d4-ad7c-59c8c71e4d64",
+          "correct_choice_index": 1
+        },
+        {
+          "id": "ee61b56d-3e32-40c5-8275-1fd6ac709c23",
+          "prompt": "fake3",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 3,
+          "vocab_entry_id": 193277,
+          "content_version_id": "2ea04e99-e022-4939-93ff-e1b97844ba5b",
+          "correct_choice_index": 2
+        },
+        {
+          "id": "fc49c08a-640f-4e78-b324-429b01cb966a",
+          "prompt": "fake4",
+          "choices": [
+            "Fake meaning1",
+            "Fake meaning2",
+            "Fake meaning3",
+            "Fake meaning4"
+          ],
+          "direction": "english_to_korean",
+          "order_index": 4,
+          "vocab_entry_id": 193278,
+          "content_version_id": "9ba7b6da-4833-4a2d-9d20-fa70d40dc502",
+          "correct_choice_index": 3
+        }
+      ],
+      "planHash": "c8361363267e0a6f61e9d64e98739daed1b726b2e3f4458eb803025fd19c75fc",
+      "protocol": "local_batch_v1",
+      "assignmentId": "a5100000-0000-4000-8000-000000000012",
+      "preparationId": "1bd69af3-b28a-443f-8fc1-268ab5e8e441"
+    }
+  }
+]

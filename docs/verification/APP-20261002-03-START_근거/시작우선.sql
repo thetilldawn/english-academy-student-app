@@ -1,0 +1,5 @@
+begin;set local statement_timeout='45s';set local lock_timeout='30s';set local application_name='start-control-operator-pause';
+do $ready$ declare finish timestamptz:=clock_timestamp()+interval '25 seconds';begin loop perform pg_stat_clear_snapshot();exit when exists(select 1 from pg_stat_activity where pid<>pg_backend_pid() and query like '%begin_local_quiz_v1%' and state='active' and exists(select 1 from pg_locks l where l.pid=pg_stat_activity.pid and l.relation='private.quiz_start_control'::regclass and l.mode='RowShareLock' and l.granted));if clock_timestamp()>finish then raise exception 'start_control_holder_not_ready';end if;perform pg_sleep(0.1);end loop;end $ready$;
+update private.quiz_start_control set paused=true,changed_at=clock_timestamp() where singleton;
+select jsonb_build_object('operatorPid',pg_backend_pid(),'paused',(select paused from private.quiz_start_control),'proof',(select metadata->'startControlConcurrency' from public.vocab_datasets where id='a5100000-0000-4000-8000-000000000004')) value;
+commit;

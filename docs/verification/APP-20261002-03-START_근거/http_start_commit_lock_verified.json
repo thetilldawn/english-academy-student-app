@@ -1,0 +1,51 @@
+{
+  "case": "start_commit_lock_verified",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "sentAt": "2026-10-03T12:17:36.440Z",
+  "finishedAt": "2026-10-03T12:17:37.327Z",
+  "durationMs": 887,
+  "status": 200,
+  "data": {
+    "items": [
+      {
+        "id": "fa98c01d-f87c-48d1-8aa0-eaa9ff3f1b32",
+        "order": 1,
+        "contentId": "22944a95-7336-4854-b478-5be785df256f",
+        "priorWrongCount": 0,
+        "correctChoiceIndex": 0
+      },
+      {
+        "id": "6a195323-eb53-48d0-b44f-c00a4d65da52",
+        "order": 2,
+        "contentId": "4669f35f-fd20-45d4-ad7c-59c8c71e4d64",
+        "priorWrongCount": 0,
+        "correctChoiceIndex": 1
+      },
+      {
+        "id": "d40307ed-b229-438a-9741-6a376bd11604",
+        "order": 3,
+        "contentId": "2ea04e99-e022-4939-93ff-e1b97844ba5b",
+        "priorWrongCount": 0,
+        "correctChoiceIndex": 2
+      },
+      {
+        "id": "3a560b0e-e0f6-4aa0-a10d-397b7bcae9bf",
+        "order": 4,
+        "contentId": "9ba7b6da-4833-4a2d-9d20-fa70d40dc502",
+        "priorWrongCount": 0,
+        "correctChoiceIndex": 3
+      }
+    ],
+    "phase": "initial",
+    "status": "in_progress",
+    "limitMs": 240000,
+    "planHash": "2a6851af2433a64d768c402728743ec707a435e157c7908a409c422550056ddd",
+    "protocol": "local_batch_v1",
+    "attemptId": "e9ed6127-4117-4dd9-bbb1-4da9113409a6",
+    "serverNow": "2026-10-03T12:17:37.772545+00:00",
+    "startedAt": "2026-10-03T12:17:37.522912+00:00",
+    "timePolicy": "local-elapsed-v1",
+    "officialPhase": "initial",
+    "questionLimitMs": 5000
+  }
+}
