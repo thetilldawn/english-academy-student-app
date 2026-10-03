@@ -1,0 +1,22 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import * as k from './receipt-preview-kit.mjs';
+const plans=JSON.parse(fs.readFileSync('.codex-tmp/receipt-preview-plans.json','utf8'));
+assert.equal(plans.length,2);
+const expression=p=>'public.submit_local_quiz_phase_v1('+Object.entries(p).map(([key,value])=>key+'=>'+k.lit(value)+(['p_answers','p_completion'].includes(key)?'::jsonb':'')).join(',')+')';
+for(const [i,c] of plans.entries()){
+ assert.equal(c.student_id,k.students[i]);const plan=c.plan;assert.equal(plan.items.length,4);assert.equal(plan.phase,'initial');
+ const p={p_student_id:c.student_id,p_attempt_id:plan.attemptId,p_phase:plan.phase,p_device_hash:k.device,p_plan_hash:plan.planHash,p_submission_id:k.id(810+i),
+  p_answers:plan.items.map((q,j)=>({id:q.id,order:j+1,kind:'answer',choice:q.correctChoiceIndex,openedMs:j*100,elapsedMs:j*100})),p_completion:{elapsedMs:300,reason:'answered'}};
+ const caseName=i===0?'same':'conflict';const b=structuredClone(p);if(i===1)b.p_answers[0].choice=(b.p_answers[0].choice+1)%4;
+ const guard=`do $$begin if not exists(select 1 from public.quiz_attempts t join public.assignments a on a.id=t.assignment_id join public.students s on s.id=t.student_id where t.id=${k.lit(plan.attemptId)} and t.student_id=${k.lit(c.student_id)} and a.created_by='${k.admin}' and a.dataset_id='${k.dataset}' and s.note='APP08-a908: 실제 학생 아님') then raise exception 'receipt_fixture_guard';end if;end$$;`;
+ const sql=`begin;set local statement_timeout='45s';set local lock_timeout='30s';set local application_name='receipt-race-${caseName}-A';
+ select set_config('request.jwt.claim.role','service_role',true);select set_config('request.jwt.claims','{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+ ${guard}select set_config('receipt.a_result',(${expression(p)})::text,true);
+ do $observe$declare other_pid integer;proof jsonb;finish timestamptz:=clock_timestamp()+interval '30 seconds';begin loop
+ perform pg_stat_clear_snapshot();select s.pid,jsonb_build_object('aPid',pg_backend_pid(),'bPid',s.pid,'waitType',s.wait_event_type,'waitEvent',s.wait_event,'blockedBy',pg_blocking_pids(s.pid),'observedAt',clock_timestamp())
+ into other_pid,proof from pg_stat_activity s where s.pid<>pg_backend_pid() and s.query like '%submit_local_quiz_phase_v1%' and s.wait_event_type='Lock' and pg_backend_pid()=any(pg_blocking_pids(s.pid)) limit 1;
+ exit when other_pid is not null;if clock_timestamp()>finish then raise exception 'receipt_overlap_not_observed';end if;perform pg_sleep(0.1);
+ end loop;perform set_config('receipt.race_proof',proof::text,true);end $observe$;
+ select jsonb_build_object('case','${caseName}','proof',current_setting('receipt.race_proof')::jsonb,'aResult',current_setting('receipt.a_result')::jsonb) as result;commit;`;
+ fs.writeFileSync(`.codex-tmp/receipt-preview-race-${caseName}.sql`,sql+'\n');
+ fs.writeFileSync(`.codex-tmp/receipt-preview-request-${caseName}.json`,JSON.stringify({case:caseName,params:b},null,2)+'\n');
+}

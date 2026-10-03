@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 143,
-      "pathSetSha256": "a36299ed1c2784456c4aa6bdc71b03998266fa379eaf9a79e0a1c85ed150ceea"
+      "fileCount": 144,
+      "pathSetSha256": "a9df345df72d3b468ec5f491bb9b507acf09ff472bbda83eacc44b1aa4428a5c"
     },
     {
       "path": "src/lib/deploy",
@@ -3080,6 +3080,11 @@
       "path": "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
     }
   ],
   "features": [
@@ -7430,7 +7435,8 @@
           "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
           "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
           "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
-          "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql"
+          "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
+          "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7514,7 +7520,8 @@
           "src/lib/database/historical-learning-migration.integration.test.ts",
           "src/lib/database/exam-use-package-archive.integration.test.ts",
           "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
-          "src/lib/database/reviewed-resource-archive.integration.test.ts"
+          "src/lib/database/reviewed-resource-archive.integration.test.ts",
+          "src/lib/database/local-quiz-receipt-storage.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8761,4 +8768,3 @@
     }
   ]
 }
-

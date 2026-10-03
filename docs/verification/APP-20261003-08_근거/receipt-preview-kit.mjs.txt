@@ -1,0 +1,54 @@
+import fs from 'node:fs';
+export const prefix='a9080000-0000-4000-8000-';
+export const id=n=>prefix+String(n).padStart(12,'0');
+export const admin=id(1), students=[id(2),id(3)], dataset=id(4),unit=id(5),device='d'.repeat(64);
+export const lit=x=>x===null?'null':typeof x==='number'?String(x):"'"+(typeof x==='string'?x:JSON.stringify(x)).replaceAll("'","''")+"'";
+export const tables=['public.quiz_attempts','public.quiz_questions','public.student_vocab_wrong_events','public.student_vocab_state',
+ 'public.student_point_events','public.student_point_totals','private.vocabulary_answer_receipts','private.student_vocabulary_meaning_states',
+ 'private.student_vocabulary_versions','private.vocabulary_question_meaning_versions','private.vocabulary_legacy_state_baselines',
+ 'private.vocabulary_result_policies','private.vocabulary_phase_results','private.local_quiz_phase_receipts','private.local_quiz_phase_plans'];
+export const snapshotSql=`begin;set local time zone 'UTC';with fake_ids as (
+ select id::text key from public.students where created_by='${admin}' and id in('${students.join("','")}')
+ union select id::text from public.quiz_attempts where student_id in('${students.join("','")}')
+ union select q.id::text from public.quiz_questions q join public.quiz_attempts a on a.id=q.attempt_id where a.student_id in('${students.join("','")}')
+) ${tables.map(table=>`select '${table}' as table_name,count(*)::int as rows,coalesce(md5(string_agg(md5(to_jsonb(t)::text),'' order by md5(to_jsonb(t)::text))),'empty') as rows_md5 from ${table} t
+ where not exists(select 1 from fake_ids f where f.key in(to_jsonb(t)->>'id',to_jsonb(t)->>'student_id',to_jsonb(t)->>'attempt_id',to_jsonb(t)->>'quiz_question_id',to_jsonb(t)->>'question_id'))`).join(' union all ')} order by table_name;commit;`;
+export const metaSql=`select jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'definer',prosecdef,'volatility',provolatile,'parallel',proparallel,
+ 'definition_md5',md5(replace(pg_get_functiondef(oid),E'\\r\\n',E'\\n'))) as attributes from pg_proc where oid='public.submit_local_quiz_phase_v1(uuid,uuid,text,text,text,uuid,jsonb,jsonb)'::regprocedure`;
+export const seedSql=`begin;set local statement_timeout='30s';set local time zone 'UTC';
+do $$begin if exists(select 1 from auth.users where id::text like '${prefix}%') or exists(select 1 from public.vocab_datasets where id='${dataset}' or dataset_key='receipt-preview-a908') then raise exception 'receipt_fixture_collision';end if;end$$;
+insert into auth.users(id)values('${admin}');
+insert into public.admin_profiles(user_id,display_name)values('${admin}','[접수 검증] 가짜 관리자');
+insert into public.students(id,display_name,status,created_by,note)
+ select id::uuid,'[접수 검증] 가짜 학생','active','${admin}','APP08-a908: 실제 학생 아님' from unnest(array['${students.join("','")}'])id;
+insert into public.vocab_datasets(id,dataset_key,title,source_label,source_sha256,row_count,status,is_active,imported_by)
+ values('${dataset}','receipt-preview-a908','[접수 검증] 가짜 자료','fake',repeat('A',64),4,'ready',true,'${admin}');
+insert into public.vocab_units(id,dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count)
+ values('${unit}','${dataset}','DAY 1','day1','day',1,1,4);
+insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
+ select '${dataset}',n,'receiptword'||n,'receiptword'||n,array['가짜 뜻 '||n],'가짜 뜻 '||n,upper(encode(extensions.digest('receipt-preview:'||n,'sha256'),'hex')),'${unit}',n,'word' from generate_series(1,4)n;
+create temporary table fixture_plans(student_id uuid,assignment_id uuid,plan jsonb) on commit drop;
+select set_config('request.jwt.claim.role','service_role',true);select set_config('request.jwt.claims','{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+do $$declare s uuid;a uuid;p jsonb;q jsonb;begin
+ select jsonb_agg(jsonb_build_object('vocab_entry_id',id,'order_index',source_row,'direction','english_to_korean','prompt',headword,
+ 'choices',jsonb_build_array(primary_meaning,'다른 가짜 뜻 A','다른 가짜 뜻 B','다른 가짜 뜻 C'),'correct_choice_index',0) order by source_row)
+ into q from public.vocab_entries where dataset_id='${dataset}';
+ foreach s in array array['${students.join("','")}']::uuid[] loop
+ a:=gen_random_uuid();
+ insert into public.assignments(id,title,dataset_id,range_start,range_end,question_count,english_to_korean_ratio,time_limit_seconds,timing_mode,passing_score,status,created_by,retake_allowed,retry_enabled,retry_passing_score)
+ values(a,'[접수 검증] 가짜 시험','${dataset}',1,4,4,100,30,'none',80,'active','${admin}',true,true,80);
+ insert into public.assignment_units(assignment_id,dataset_id,unit_id,position,is_primary)values(a,'${dataset}','${unit}',1,true);
+ insert into public.assignment_students(assignment_id,student_id,assigned_by)values(a,s,'${admin}');
+ p:=public.prepare_local_quiz_v1(s,a,'${device}',q);
+ insert into fixture_plans values(s,a,public.begin_local_quiz_v1(s,(p->>'preparationId')::uuid,'${device}',p->>'planHash'));
+ end loop;
+end$$;select * from fixture_plans order by student_id;commit;`;
+export const cleanupSql=`begin;set local statement_timeout='30s';select set_config('request.jwt.claim.sub','${admin}',true);select set_config('request.jwt.claim.role','authenticated',true);select set_config('request.jwt.claims','{"role":"authenticated","sub":"${admin}","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+do $$declare r record;begin
+ if not exists(select 1 from public.admin_profiles where user_id='${admin}' and display_name='[접수 검증] 가짜 관리자') then raise exception 'fixture_owner_missing';end if;
+ for r in select id from public.students where created_by='${admin}' and note='APP08-a908: 실제 학생 아님' and id in('${students.join("','")}') loop perform public.delete_student_v2(r.id);end loop;
+ for r in select id from public.assignments where created_by='${admin}' and dataset_id='${dataset}' and title='[접수 검증] 가짜 시험' loop perform public.delete_assignment_v2(r.id,'가짜 접수 검사 종료');end loop;
+ update public.vocab_datasets set is_active=false where id='${dataset}' and imported_by='${admin}';
+ update public.admin_profiles set is_active=false where user_id='${admin}';
+end$$;commit;`;
+for(const [name,value]of Object.entries({snapshot:snapshotSql,meta:metaSql,seed:seedSql,cleanup:cleanupSql}))fs.writeFileSync('.codex-tmp/receipt-preview-'+name+'.sql',value+'\n');

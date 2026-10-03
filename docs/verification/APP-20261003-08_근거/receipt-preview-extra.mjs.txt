@@ -1,0 +1,7 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import * as k from './receipt-preview-kit.mjs';
+let s=fs.readFileSync('.codex-tmp/receipt-preview-seed.sql','utf8');
+const both=`array['${k.students.join("','")}']::uuid[]`;
+assert.ok(s.includes(both));
+s=`begin;set local statement_timeout='30s';do $$begin if not exists(select 1 from public.students where id='${k.students[0]}' and created_by='${k.admin}' and note='APP08-a908: 실제 학생 아님') then raise exception 'fixture_missing';end if;end$$;`+s.slice(s.indexOf('create temporary table fixture_plans'));
+s=s.replace(both,`array['${k.students[0]}']::uuid[]`);
+fs.writeFileSync('.codex-tmp/receipt-preview-one-extra.sql',s);

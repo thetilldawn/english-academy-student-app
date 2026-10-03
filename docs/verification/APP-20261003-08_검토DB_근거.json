@@ -1,0 +1,896 @@
+{
+  "work": "APP-20261003-08",
+  "capturedAt": "2026-10-03T06:09:35.122Z",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "productionWrites": 0,
+  "deployment": 0,
+  "migration": {
+    "path": "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
+    "sha256": "4fe0715962439c03956aed5f939a3745283aeab77c34871bce57ba0271b4fc3e",
+    "apply": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ],
+      "isError": false
+    },
+    "verification": [
+      {
+        "existing_rows": 19,
+        "unchanged_responses": 19,
+        "privileges": [
+          {
+            "role": "anon",
+            "allowed": false,
+            "function": "compact_local_quiz_receipt_v1"
+          },
+          {
+            "role": "anon",
+            "allowed": false,
+            "function": "local_quiz_receipt_accepted_v1"
+          },
+          {
+            "role": "anon",
+            "allowed": false,
+            "function": "resolve_local_quiz_receipt_v1"
+          },
+          {
+            "role": "authenticated",
+            "allowed": false,
+            "function": "compact_local_quiz_receipt_v1"
+          },
+          {
+            "role": "authenticated",
+            "allowed": false,
+            "function": "local_quiz_receipt_accepted_v1"
+          },
+          {
+            "role": "authenticated",
+            "allowed": false,
+            "function": "resolve_local_quiz_receipt_v1"
+          },
+          {
+            "role": "service_role",
+            "allowed": false,
+            "function": "compact_local_quiz_receipt_v1"
+          },
+          {
+            "role": "service_role",
+            "allowed": false,
+            "function": "local_quiz_receipt_accepted_v1"
+          },
+          {
+            "role": "service_role",
+            "allowed": false,
+            "function": "resolve_local_quiz_receipt_v1"
+          }
+        ],
+        "triggers": [
+          {
+            "name": "local_quiz_plans_immutable",
+            "enabled": "O"
+          },
+          {
+            "name": "local_quiz_receipts_immutable",
+            "enabled": "O"
+          }
+        ],
+        "migration": [
+          {
+            "name": "compact_local_quiz_receipt_responses",
+            "version": "20261003055205"
+          }
+        ]
+      }
+    ]
+  },
+  "preserved": {
+    "tableCount": 15,
+    "rows": 5094,
+    "before": [
+      {
+        "table_name": "private.local_quiz_phase_plans",
+        "rows": 19,
+        "rows_md5": "f6d4b93b1d3126633ac32938aeb567d3"
+      },
+      {
+        "table_name": "private.local_quiz_phase_receipts",
+        "rows": 19,
+        "rows_md5": "d39404eaed77bc61c0ce93eef55f9e63"
+      },
+      {
+        "table_name": "private.student_vocabulary_meaning_states",
+        "rows": 68,
+        "rows_md5": "1a574d185bc880966d569d64be65c352"
+      },
+      {
+        "table_name": "private.student_vocabulary_versions",
+        "rows": 35,
+        "rows_md5": "b13834d4c3b4be9537496741a79adadc"
+      },
+      {
+        "table_name": "private.vocabulary_answer_receipts",
+        "rows": 153,
+        "rows_md5": "8c6cc8206b2a3140229132ff47ea4685"
+      },
+      {
+        "table_name": "private.vocabulary_legacy_state_baselines",
+        "rows": 124,
+        "rows_md5": "9bb74002c5de67d89877daf4a041412e"
+      },
+      {
+        "table_name": "private.vocabulary_phase_results",
+        "rows": 32,
+        "rows_md5": "61dcf9a6b69e1dfa220cea7d2186ed90"
+      },
+      {
+        "table_name": "private.vocabulary_question_meaning_versions",
+        "rows": 42,
+        "rows_md5": "5e379d5dfbd784e9877f5a3018aed282"
+      },
+      {
+        "table_name": "private.vocabulary_result_policies",
+        "rows": 25,
+        "rows_md5": "527cd9195680d8f9ac1198e669fb0048"
+      },
+      {
+        "table_name": "public.quiz_attempts",
+        "rows": 145,
+        "rows_md5": "956a7bf8048594ab42c120fab98b581a"
+      },
+      {
+        "table_name": "public.quiz_questions",
+        "rows": 1644,
+        "rows_md5": "88d2c94923e5b9ef318a97a5436ee34e"
+      },
+      {
+        "table_name": "public.student_point_events",
+        "rows": 1095,
+        "rows_md5": "44974e67398562c7b83fe1a5f711beb7"
+      },
+      {
+        "table_name": "public.student_point_totals",
+        "rows": 36,
+        "rows_md5": "6e05a79c729c0efbd7008f6f9464222b"
+      },
+      {
+        "table_name": "public.student_vocab_state",
+        "rows": 790,
+        "rows_md5": "a864eb26a3878afe49ce5c4e93651784"
+      },
+      {
+        "table_name": "public.student_vocab_wrong_events",
+        "rows": 867,
+        "rows_md5": "162bd117272ab3cb8e00f058bc297683"
+      }
+    ],
+    "after": [
+      {
+        "table_name": "private.local_quiz_phase_plans",
+        "rows": 19,
+        "rows_md5": "f6d4b93b1d3126633ac32938aeb567d3"
+      },
+      {
+        "table_name": "private.local_quiz_phase_receipts",
+        "rows": 19,
+        "rows_md5": "d39404eaed77bc61c0ce93eef55f9e63"
+      },
+      {
+        "table_name": "private.student_vocabulary_meaning_states",
+        "rows": 68,
+        "rows_md5": "1a574d185bc880966d569d64be65c352"
+      },
+      {
+        "table_name": "private.student_vocabulary_versions",
+        "rows": 35,
+        "rows_md5": "b13834d4c3b4be9537496741a79adadc"
+      },
+      {
+        "table_name": "private.vocabulary_answer_receipts",
+        "rows": 153,
+        "rows_md5": "8c6cc8206b2a3140229132ff47ea4685"
+      },
+      {
+        "table_name": "private.vocabulary_legacy_state_baselines",
+        "rows": 124,
+        "rows_md5": "9bb74002c5de67d89877daf4a041412e"
+      },
+      {
+        "table_name": "private.vocabulary_phase_results",
+        "rows": 32,
+        "rows_md5": "61dcf9a6b69e1dfa220cea7d2186ed90"
+      },
+      {
+        "table_name": "private.vocabulary_question_meaning_versions",
+        "rows": 42,
+        "rows_md5": "5e379d5dfbd784e9877f5a3018aed282"
+      },
+      {
+        "table_name": "private.vocabulary_result_policies",
+        "rows": 25,
+        "rows_md5": "527cd9195680d8f9ac1198e669fb0048"
+      },
+      {
+        "table_name": "public.quiz_attempts",
+        "rows": 145,
+        "rows_md5": "956a7bf8048594ab42c120fab98b581a"
+      },
+      {
+        "table_name": "public.quiz_questions",
+        "rows": 1644,
+        "rows_md5": "88d2c94923e5b9ef318a97a5436ee34e"
+      },
+      {
+        "table_name": "public.student_point_events",
+        "rows": 1095,
+        "rows_md5": "44974e67398562c7b83fe1a5f711beb7"
+      },
+      {
+        "table_name": "public.student_point_totals",
+        "rows": 36,
+        "rows_md5": "6e05a79c729c0efbd7008f6f9464222b"
+      },
+      {
+        "table_name": "public.student_vocab_state",
+        "rows": 790,
+        "rows_md5": "a864eb26a3878afe49ce5c4e93651784"
+      },
+      {
+        "table_name": "public.student_vocab_wrong_events",
+        "rows": 867,
+        "rows_md5": "162bd117272ab3cb8e00f058bc297683"
+      }
+    ],
+    "attributesBefore": [
+      {
+        "attributes": {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres"
+          ],
+          "oid": "402273",
+          "owner": "16388",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "parallel": "u",
+          "volatility": "v",
+          "definition_md5": "cce2778adb90de60b5bda15702aae2cf"
+        }
+      }
+    ],
+    "attributesAfter": [
+      {
+        "attributes": {
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres"
+          ],
+          "oid": "402273",
+          "owner": "16388",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "parallel": "u",
+          "volatility": "v",
+          "definition_md5": "4624726997ab253dd29972312689ad95"
+        }
+      }
+    ]
+  },
+  "concurrency": [
+    {
+      "case": "same",
+      "proof": {
+        "aPid": 59653,
+        "bPid": 59632,
+        "waitType": "Lock",
+        "blockedBy": [
+          59653
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-03T05:59:34.774735+00:00"
+      },
+      "aResult": {
+        "phase": "initial",
+        "result": {
+          "state": "completed",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 100,
+              "passed": true,
+              "ended_at": "2026-10-03T05:58:37.344934+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "ead6f419-a901-4f00-bd74-3f3ada27904a",
+              "end_reason": "completed",
+              "started_at": "2026-10-03T05:58:37.044934+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 0,
+              "content_hash": "fbf5f41fb2460f56a98a5acd3010e9b59965cc4a1ea442f21edd5b64a1648474",
+              "target_count": 4,
+              "correct_count": 4,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "completed",
+            "passed": true,
+            "status": "completed",
+            "startedAt": "2026-10-03T05:58:37.044934+00:00",
+            "deadlineAt": null,
+            "finalScore": 100,
+            "completedAt": "2026-10-03T05:58:37.344934+00:00",
+            "initialScore": 100,
+            "attemptNumber": 1,
+            "questionCount": 4,
+            "elapsedSeconds": 0,
+            "retryStartedAt": null,
+            "retryCorrectCount": 0,
+            "initialCompletedAt": "2026-10-03T05:58:37.344934+00:00",
+            "initialCorrectCount": 4,
+            "unresolvedWrongCount": 0
+          },
+          "finalized": true,
+          "detailScope": "initial_mistakes",
+          "finalReason": "completed",
+          "finalizedAt": "2026-10-03T05:58:37.344934+00:00",
+          "retryStarted": false,
+          "resultVersion": "744c631db7732e9d9fea1210133457044f3f66ace6fee081f70d24d4aed05e1e",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": [
+          {
+            "id": "b5e79c03-c4bc-451d-a6b4-67475ad56ac6",
+            "sequence": 5,
+            "answerHash": "c0814994c627828393012b57c674716e76296ceafd54eebbd104c1edf495e131"
+          },
+          {
+            "id": "47fa88a3-9d22-445e-b9d2-da82fe7a6295",
+            "sequence": 6,
+            "answerHash": "3f28f6fbb31cac0dbeed2d4aea7c817d642d4aa7216175dff70f2236a794364e"
+          },
+          {
+            "id": "3f38ec26-f2d3-4214-b355-a356a114a6a7",
+            "sequence": 7,
+            "answerHash": "e79fbd9f6a53e3ea18101e82ca561849276a6fa832f42428c6c99016b7c965d5"
+          },
+          {
+            "id": "c00d5fcb-8b0e-48e4-b986-8fc36a5b3c86",
+            "sequence": 8,
+            "answerHash": "f0f8727cb5d87563b274420b5053c2af332d0e6cce1344a7eb4a34670750c36b"
+          }
+        ],
+        "planHash": "77b6c68f202d923075f2c07890a7317ceac153a5b2b2f4d74442c9bae3161005",
+        "protocol": "local_batch_v1",
+        "payloadHash": "8d9aa13e99499032841cd0a3c7d4c1e19ad0cb811bbd25ba5c55b81f697ac658",
+        "retryTargets": [],
+        "submissionId": "a9080000-0000-4000-8000-000000000810"
+      },
+      "http": {
+        "case": "same",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "sentAt": "2026-10-03T05:59:34.262Z",
+        "finishedAt": "2026-10-03T05:59:34.495Z",
+        "durationMs": 233,
+        "status": 200,
+        "data": {
+          "phase": "initial",
+          "result": {
+            "state": "completed",
+            "phases": [
+              {
+                "phase": "initial",
+                "score": 100,
+                "passed": true,
+                "ended_at": "2026-10-03T05:58:37.344934+00:00",
+                "evidence": "recorded_answers",
+                "attempt_id": "ead6f419-a901-4f00-bd74-3f3ada27904a",
+                "end_reason": "completed",
+                "started_at": "2026-10-03T05:58:37.044934+00:00",
+                "score_basis": "initial_total",
+                "wrong_count": 0,
+                "content_hash": "fbf5f41fb2460f56a98a5acd3010e9b59965cc4a1ea442f21edd5b64a1648474",
+                "target_count": 4,
+                "correct_count": 4,
+                "passing_score": 80,
+                "unanswered_count": 0
+              }
+            ],
+            "attempt": {
+              "phase": "completed",
+              "passed": true,
+              "status": "completed",
+              "startedAt": "2026-10-03T05:58:37.044934+00:00",
+              "deadlineAt": null,
+              "finalScore": 100,
+              "completedAt": "2026-10-03T05:58:37.344934+00:00",
+              "initialScore": 100,
+              "attemptNumber": 1,
+              "questionCount": 4,
+              "elapsedSeconds": 0,
+              "retryStartedAt": null,
+              "retryCorrectCount": 0,
+              "initialCompletedAt": "2026-10-03T05:58:37.344934+00:00",
+              "initialCorrectCount": 4,
+              "unresolvedWrongCount": 0
+            },
+            "finalized": true,
+            "detailScope": "initial_mistakes",
+            "finalReason": "completed",
+            "finalizedAt": "2026-10-03T05:58:37.344934+00:00",
+            "retryStarted": false,
+            "resultVersion": "744c631db7732e9d9fea1210133457044f3f66ace6fee081f70d24d4aed05e1e",
+            "schemaVersion": "vocabulary-result-v1",
+            "retentionPolicy": "summary_and_mistakes_v1"
+          },
+          "accepted": [
+            {
+              "id": "b5e79c03-c4bc-451d-a6b4-67475ad56ac6",
+              "sequence": 5,
+              "answerHash": "c0814994c627828393012b57c674716e76296ceafd54eebbd104c1edf495e131"
+            },
+            {
+              "id": "47fa88a3-9d22-445e-b9d2-da82fe7a6295",
+              "sequence": 6,
+              "answerHash": "3f28f6fbb31cac0dbeed2d4aea7c817d642d4aa7216175dff70f2236a794364e"
+            },
+            {
+              "id": "3f38ec26-f2d3-4214-b355-a356a114a6a7",
+              "sequence": 7,
+              "answerHash": "e79fbd9f6a53e3ea18101e82ca561849276a6fa832f42428c6c99016b7c965d5"
+            },
+            {
+              "id": "c00d5fcb-8b0e-48e4-b986-8fc36a5b3c86",
+              "sequence": 8,
+              "answerHash": "f0f8727cb5d87563b274420b5053c2af332d0e6cce1344a7eb4a34670750c36b"
+            }
+          ],
+          "planHash": "77b6c68f202d923075f2c07890a7317ceac153a5b2b2f4d74442c9bae3161005",
+          "protocol": "local_batch_v1",
+          "payloadHash": "8d9aa13e99499032841cd0a3c7d4c1e19ad0cb811bbd25ba5c55b81f697ac658",
+          "retryTargets": [],
+          "submissionId": "a9080000-0000-4000-8000-000000000810"
+        }
+      }
+    },
+    {
+      "case": "conflict",
+      "proof": {
+        "aPid": 59673,
+        "bPid": 59632,
+        "waitType": "Lock",
+        "blockedBy": [
+          59673
+        ],
+        "waitEvent": "transactionid",
+        "observedAt": "2026-10-03T06:00:44.044242+00:00"
+      },
+      "aResult": {
+        "phase": "initial",
+        "result": {
+          "state": "completed",
+          "phases": [
+            {
+              "phase": "initial",
+              "score": 100,
+              "passed": true,
+              "ended_at": "2026-10-03T05:53:17.910708+00:00",
+              "evidence": "recorded_answers",
+              "attempt_id": "63a7968c-2828-47ed-8115-ce205328719f",
+              "end_reason": "completed",
+              "started_at": "2026-10-03T05:53:17.610708+00:00",
+              "score_basis": "initial_total",
+              "wrong_count": 0,
+              "content_hash": "2b307f16e79eabf6324e7554b43ef7ce24a15d3ad8e37ec84e6c8127fa7cfe50",
+              "target_count": 4,
+              "correct_count": 4,
+              "passing_score": 80,
+              "unanswered_count": 0
+            }
+          ],
+          "attempt": {
+            "phase": "completed",
+            "passed": true,
+            "status": "completed",
+            "startedAt": "2026-10-03T05:53:17.610708+00:00",
+            "deadlineAt": null,
+            "finalScore": 100,
+            "completedAt": "2026-10-03T05:53:17.910708+00:00",
+            "initialScore": 100,
+            "attemptNumber": 1,
+            "questionCount": 4,
+            "elapsedSeconds": 0,
+            "retryStartedAt": null,
+            "retryCorrectCount": 0,
+            "initialCompletedAt": "2026-10-03T05:53:17.910708+00:00",
+            "initialCorrectCount": 4,
+            "unresolvedWrongCount": 0
+          },
+          "finalized": true,
+          "detailScope": "initial_mistakes",
+          "finalReason": "completed",
+          "finalizedAt": "2026-10-03T05:53:17.910708+00:00",
+          "retryStarted": false,
+          "resultVersion": "ccb1cd0627c8aa7980c8966dfb14b600b7037d06590cfec9ea7e1333ec18086c",
+          "schemaVersion": "vocabulary-result-v1",
+          "retentionPolicy": "summary_and_mistakes_v1"
+        },
+        "accepted": [
+          {
+            "id": "82bc6858-abc0-4e8d-a17a-d7a66c0f4c0b",
+            "sequence": 1,
+            "answerHash": "9c8c4af4847744447f55cd310e9a4d2c4435cedf35b05f42fedb719d687f6513"
+          },
+          {
+            "id": "0b25493c-c837-46f6-a4e1-f9d7b93bfb2a",
+            "sequence": 2,
+            "answerHash": "68859b7e031f93bdae048aacf470635c2bdf43116274aa8c5c2efe7074eeb265"
+          },
+          {
+            "id": "e72f9861-7f07-4808-8c8d-1aba6e31dbd6",
+            "sequence": 3,
+            "answerHash": "331886efd8483c3f26765551f448a8b2966e1a218ac917541b3c565427975501"
+          },
+          {
+            "id": "8d1e5d08-6411-4245-9bb7-2cd1b4681d04",
+            "sequence": 4,
+            "answerHash": "4b93a154751d94e6ef54aea7efd91af07556cd7f24fe5129027162b848a7dd44"
+          }
+        ],
+        "planHash": "ebf22a7e2ac7d40c4e759de466a3d7322383df55841db261e47be7469dc6b714",
+        "protocol": "local_batch_v1",
+        "payloadHash": "8545008da539073cb52c672a8c9fd74253c186f0eb2d9ebeb9d79c378d04705f",
+        "retryTargets": [],
+        "submissionId": "a9080000-0000-4000-8000-000000000811"
+      },
+      "http": {
+        "case": "conflict",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "sentAt": "2026-10-03T06:00:43.622Z",
+        "finishedAt": "2026-10-03T06:00:43.728Z",
+        "durationMs": 107,
+        "status": 409,
+        "data": {
+          "code": "PT409",
+          "details": null,
+          "hint": null,
+          "message": "local_quiz_submission_conflict"
+        }
+      }
+    }
+  ],
+  "contract": {
+    "sameResponse": true,
+    "sameStatus": 200,
+    "conflictStatus": 409,
+    "independentPidLocks": 2,
+    "apiContracts": 2,
+    "deviceConfirmations": 2
+  },
+  "cleanup": {
+    "before": [
+      {
+        "result": {
+          "answers": 12,
+          "attempts": 3,
+          "receipts": [
+            {
+              "format": "local-quiz-receipt-ref-v1",
+              "receivedAt": "2026-10-03T05:56:08.973267+00:00",
+              "storedHash": "94f7bb3a1faf60782026cb0844b6fddf",
+              "restoredHash": "f111df9a43f25251eb02743359af2058",
+              "submissionId": "a9080000-0000-4000-8000-000000000800",
+              "acceptedCount": "4"
+            },
+            {
+              "format": "local-quiz-receipt-ref-v1",
+              "receivedAt": "2026-10-03T05:59:29.795819+00:00",
+              "storedHash": "8912840620f893f30c252311a721dc75",
+              "restoredHash": "e96ebda64c118da3384fa8757d9678b0",
+              "submissionId": "a9080000-0000-4000-8000-000000000810",
+              "acceptedCount": "4"
+            },
+            {
+              "format": "local-quiz-receipt-ref-v1",
+              "receivedAt": "2026-10-03T06:00:38.067547+00:00",
+              "storedHash": "d67179162d0715ceae364934216da2f2",
+              "restoredHash": "e5ea5c0b4370d7572a0996ce34910ef3",
+              "submissionId": "a9080000-0000-4000-8000-000000000811",
+              "acceptedCount": "4"
+            }
+          ],
+          "completed": 3,
+          "pointEvents": 12
+        }
+      }
+    ],
+    "after": [
+      {
+        "result": {
+          "answers": 12,
+          "attempts": 3,
+          "receipts": [
+            {
+              "format": "local-quiz-receipt-ref-v1",
+              "receivedAt": "2026-10-03T05:56:08.973267+00:00",
+              "storedHash": "94f7bb3a1faf60782026cb0844b6fddf",
+              "restoredHash": "f111df9a43f25251eb02743359af2058",
+              "submissionId": "a9080000-0000-4000-8000-000000000800",
+              "acceptedCount": "4"
+            },
+            {
+              "format": "local-quiz-receipt-ref-v1",
+              "receivedAt": "2026-10-03T05:59:29.795819+00:00",
+              "storedHash": "8912840620f893f30c252311a721dc75",
+              "restoredHash": "e96ebda64c118da3384fa8757d9678b0",
+              "submissionId": "a9080000-0000-4000-8000-000000000810",
+              "acceptedCount": "4"
+            },
+            {
+              "format": "local-quiz-receipt-ref-v1",
+              "receivedAt": "2026-10-03T06:00:38.067547+00:00",
+              "storedHash": "d67179162d0715ceae364934216da2f2",
+              "restoredHash": "e5ea5c0b4370d7572a0996ce34910ef3",
+              "submissionId": "a9080000-0000-4000-8000-000000000811",
+              "acceptedCount": "4"
+            }
+          ],
+          "completed": 3,
+          "pointEvents": 12
+        }
+      }
+    ],
+    "status": [
+      {
+        "students": [
+          {
+            "id": "a9080000-0000-4000-8000-000000000002",
+            "status": "blocked",
+            "deleted": true
+          },
+          {
+            "id": "a9080000-0000-4000-8000-000000000003",
+            "status": "blocked",
+            "deleted": true
+          }
+        ],
+        "assignments": [
+          {
+            "id": "31a13ce1-87aa-4f43-a731-3ec6f4acf0d8",
+            "status": "closed",
+            "deleted": true
+          },
+          {
+            "id": "a8f97c73-014f-4021-b6c7-90dd976b34f2",
+            "status": "closed",
+            "deleted": true
+          },
+          {
+            "id": "fa87b2b0-2587-4687-8565-bdbbac8b72c7",
+            "status": "closed",
+            "deleted": true
+          }
+        ],
+        "admin_active": false,
+        "dataset_active": false
+      }
+    ]
+  },
+  "sizes": [
+    {
+      "receiptCount": 1,
+      "stored_bytes": 1337,
+      "original_bytes": 1912,
+      "answers": 1,
+      "compacted": false,
+      "storedPair": [
+        {
+          "compacted": false,
+          "result_bytes": 1337,
+          "row_bytes": 1480
+        },
+        {
+          "compacted": false,
+          "result_bytes": 1337,
+          "row_bytes": 1480
+        }
+      ]
+    },
+    {
+      "receiptCount": 4,
+      "stored_bytes": 1351,
+      "original_bytes": 2388,
+      "answers": 4,
+      "compacted": true,
+      "storedPair": [
+        {
+          "compacted": false,
+          "result_bytes": 1708,
+          "row_bytes": 1848
+        },
+        {
+          "compacted": true,
+          "result_bytes": 1351,
+          "row_bytes": 1496
+        }
+      ]
+    },
+    {
+      "receiptCount": 50,
+      "stored_bytes": 1351,
+      "original_bytes": 9752,
+      "answers": 50,
+      "compacted": true,
+      "storedPair": [
+        {
+          "compacted": false,
+          "result_bytes": 6895,
+          "row_bytes": 7040
+        },
+        {
+          "compacted": true,
+          "result_bytes": 1351,
+          "row_bytes": 1496
+        }
+      ]
+    },
+    {
+      "receiptCount": 500,
+      "stored_bytes": 1360,
+      "original_bytes": 81752,
+      "answers": 500,
+      "compacted": true,
+      "storedPair": [
+        {
+          "compacted": false,
+          "result_bytes": 57175,
+          "row_bytes": 57320
+        },
+        {
+          "compacted": true,
+          "result_bytes": 1360,
+          "row_bytes": 1504
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "full": {
+      "files": 628,
+      "passed": 5097,
+      "existingSkipped": 1,
+      "seconds": 365
+    },
+    "targeted": {
+      "passed": 12,
+      "seconds": 100.6
+    },
+    "finalSizeChecks": {
+      "passed": 4,
+      "filteredOut": 8,
+      "seconds": 63.2
+    },
+    "typecheck": "pass",
+    "lint": {
+      "errors": 0,
+      "warnings": 1,
+      "warning": "previous M09 evidence analyze.mjs unused tables variable"
+    },
+    "build": {
+      "pages": 53,
+      "offlineAssets": 25,
+      "appOrigin": "http://127.0.0.1:3000"
+    },
+    "newUI": "not applicable: storage representation only, unchanged app contract"
+  },
+  "failedSetups": [
+    {
+      "case": "real-time local timeout",
+      "cause": "5-second test limit overlapped real 5-second wait; raised test limit to15s, final12 passed"
+    },
+    {
+      "case": "local build",
+      "cause": "APP_ORIGIN absent; same source rebuilt with local loopback origin, passed"
+    },
+    {
+      "case": "first two-connection setup",
+      "cause": "default shell outbound blocked EACCES; SQL observer timed out and rolled back; answer/receipt readback both0"
+    },
+    {
+      "case": "second two-connection setup",
+      "cause": "approval delay prevented overlap; SQL rolled back, HTTP alone submitted first fake attempt; preserved and added one fake assignment, ready marker then two overlap cases passed"
+    }
+  ],
+  "notes": [
+    "Result sizes use original JSONB reconstructed inside DB and identical temp-table columns/storage settings; no JS numeric round-trip in final pair.",
+    "Small1-question raw form preserved.",
+    "No whole-receipt COUNT; planned PK predicates plus response SHA. Actual planner choice or global corrupt unrelated rows not asserted.",
+    "Row datum size is not total physical database savings or free capacity.",
+    "Preview synthetic12 answers,3 receipts,12 point events retained; students2/assignments3 closed.",
+    "All current production data and deployment unchanged."
+  ],
+  "files": [
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-storage-final.log",
+      "sha256": "4b348d101e78e0773fa3ce04233564f271f0b6e6adac452e1c5400baa7103afa",
+      "bytes": 4657
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-size-final.log",
+      "sha256": "1203a4e2a744f4fa598ede70235fbd247c57695a1d1247a721729fa6bf5db298",
+      "bytes": 4617
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-full.log",
+      "sha256": "24a0de72346eb717e09d3a27d1393c8b63f51b986bb2484f2cbd4614455c8a7d",
+      "bytes": 1971
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-lint.log",
+      "sha256": "52bddf0e415673ae912ce1ce3250aa203849a8e7c61479f4f9e1c50c9847375f",
+      "bytes": 275
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-build-final.log",
+      "sha256": "8e07c6cf9c42d0066d025cac68d8c32a15cc3fb3504b2ff5c43427e8d3445acf",
+      "bytes": 4592
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-kit-check.log",
+      "sha256": "fd55120d9792dc4d0dcd8c7c047e4d58174a5d71a8f990cca138c219c2ccafa4",
+      "bytes": 46
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-kit.mjs.txt",
+      "sha256": "c6c3af7affa6a960f8b623bd8b9b93c4c046c37c16fe32ca808518c3583c8b10",
+      "bytes": 6599
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-extra.mjs.txt",
+      "sha256": "50d8e7648cf62d9e04908135088bee4a4e0f7ab1d0b568dabfe871d48254057f",
+      "bytes": 700
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-races.mjs.txt",
+      "sha256": "317a68b01ee1c8ad9a5dfa58a9deabf5e0bd3d48a4a63930256a55bb895da253",
+      "bytes": 3022
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-http.mjs.txt",
+      "sha256": "d9687956b472a3eb8ffc8b4d7d7e92707e68c92f71a9603b4460b64ca6a91711",
+      "bytes": 2381
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-verify.mts.txt",
+      "sha256": "04553b5777d2993c0175394dd666a49a2b42a036b9dad79a6218438f008b599c",
+      "bytes": 1731
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-plans.json",
+      "sha256": "8ec3112526cf333f9dbd1d06a845844eb4e04a08d6e5f4957089fe7ff2a8a94f",
+      "bytes": 3123
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-request-same.json",
+      "sha256": "69b1cbeede62c1ccb93489bc604e284cb5f40aed2d98d572309c61db6acfa0ef",
+      "bytes": 1277
+    },
+    {
+      "path": "docs/verification/APP-20261003-08_근거/receipt-preview-request-conflict.json",
+      "sha256": "e7178abaaa912635e483aabc554c1ad23a5c840772f42fcf78eb6a0c7804d726",
+      "bytes": 1281
+    }
+  ]
+}

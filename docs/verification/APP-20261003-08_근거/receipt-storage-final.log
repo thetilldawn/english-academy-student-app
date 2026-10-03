@@ -1,0 +1,33 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 적용 전 원형 접수와 공개 함수의 OID·권한을 보존한다 13ms
+stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 1문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":1,"stored_bytes":1339,"original_bytes":1912,"answers":1,"compacted":false,"storedPair":[{"compacted":false,"result_bytes":1337,"row_bytes":1480},{"compacted":false,"result_bytes":1339,"row_bytes":1480}]}
+
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 재시험과 다른 시험 뒤에도 최초 응답을 당시 값 그대로 복원한다 1007ms
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 1문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다 70ms
+stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 4문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":4,"stored_bytes":1346,"original_bytes":2392,"answers":4,"compacted":true,"storedPair":[{"compacted":false,"result_bytes":1706,"row_bytes":1848},{"compacted":true,"result_bytes":1346,"row_bytes":1488}]}
+
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 4문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다 375ms
+stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 50문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":50,"stored_bytes":1356,"original_bytes":9752,"answers":50,"compacted":true,"storedPair":[{"compacted":false,"result_bytes":6910,"row_bytes":7056},{"compacted":true,"result_bytes":1356,"row_bytes":1496}]}
+
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 50문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다 5133ms
+stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 500문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":500,"stored_bytes":1360,"original_bytes":81752,"answers":500,"compacted":true,"storedPair":[{"compacted":false,"result_bytes":57030,"row_bytes":57176},{"compacted":true,"result_bytes":1360,"row_bytes":1504}]}
+
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 500문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다 53657ms
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 훼손된 저장판·헤더·개수·해시·응시 연결을 접수 성공으로 돌려주지 않는다 399ms
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 같은 제출의 다른 답을 거절하고 마지막 INSERT 실패는 전체 학생 기록을 되돌린다 416ms
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 저장 직후 원형 검산이 실패해도 답과 결과 전체를 취소한다 404ms
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 문항 시간초과와 원래 접수 시각을 실제 경과시간으로 보존한다 5057ms
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 총시간 종료의 미응답 배열과 점수를 순서대로 복원한다 30073ms
+ ✓ src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 내부 복원 함수의 앱 접근을 막고 기존 불변 보호를 유지한다 7ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  14:38:07
+   Duration  100.60s (transform 69ms, setup 0ms, import 175ms, tests 100.27s, environment 0ms)
+

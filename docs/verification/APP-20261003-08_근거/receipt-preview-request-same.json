@@ -1,0 +1,49 @@
+{
+  "case": "same",
+  "params": {
+    "p_student_id": "a9080000-0000-4000-8000-000000000002",
+    "p_attempt_id": "ead6f419-a901-4f00-bd74-3f3ada27904a",
+    "p_phase": "initial",
+    "p_device_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "p_plan_hash": "77b6c68f202d923075f2c07890a7317ceac153a5b2b2f4d74442c9bae3161005",
+    "p_submission_id": "a9080000-0000-4000-8000-000000000810",
+    "p_answers": [
+      {
+        "id": "b5e79c03-c4bc-451d-a6b4-67475ad56ac6",
+        "order": 1,
+        "kind": "answer",
+        "choice": 0,
+        "openedMs": 0,
+        "elapsedMs": 0
+      },
+      {
+        "id": "47fa88a3-9d22-445e-b9d2-da82fe7a6295",
+        "order": 2,
+        "kind": "answer",
+        "choice": 0,
+        "openedMs": 100,
+        "elapsedMs": 100
+      },
+      {
+        "id": "3f38ec26-f2d3-4214-b355-a356a114a6a7",
+        "order": 3,
+        "kind": "answer",
+        "choice": 0,
+        "openedMs": 200,
+        "elapsedMs": 200
+      },
+      {
+        "id": "c00d5fcb-8b0e-48e4-b986-8fc36a5b3c86",
+        "order": 4,
+        "kind": "answer",
+        "choice": 0,
+        "openedMs": 300,
+        "elapsedMs": 300
+      }
+    ],
+    "p_completion": {
+      "elapsedMs": 300,
+      "reason": "answered"
+    }
+  }
+}

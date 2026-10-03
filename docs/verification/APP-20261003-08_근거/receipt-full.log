@@ -1,0 +1,20 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+{"scenario":"50 questions x 100 separate assignments; sequential, not concurrent capacity","maxReuse":100,"minReuse":100,"bankLinks":5000,"quizLinks":5000,"assignments":100,"commonBodies":50,"sourceBodies":50,"preparedBodies":0,"inlineBankBodies":0,"inlineQuizBodies":0,"duplicatedCommonBodies":0,"rowRepresentationBytes":{"expandedRows":17767176,"physicalRows":11172900,"commonContent":134764}}
+{"scenario":"M04 100 synthetic students x50 questions, sequential storage example; not concurrent capacity","counts":{"policies":100,"phases":160,"inline_bodies":0,"receipts":6200},"size":{"policies":{"rows":100,"row_bytes":11317,"table_bytes_all_fixtures":57344,"index_bytes_all_fixtures":16384},"phases":{"rows":160,"row_bytes":33760,"table_bytes_all_fixtures":73728,"index_bytes_all_fixtures":16384},"questionKeysAndOldAnswerFields":{"rows":5000,"row_bytes":689200,"table_bytes_all_fixtures":1605632,"index_bytes_all_fixtures":2424832},"receipts":{"rows":6200,"row_bytes":3545440,"table_bytes_all_fixtures":3735552,"index_bytes_all_fixtures":1482752},"meaningStates":{"rows":2000,"row_bytes":432000,"table_bytes_all_fixtures":1146880,"index_bytes_all_fixtures":540672},"sharedContent":{"rows":50,"row_bytes":86400,"table_bytes_all_fixtures":139264,"index_bytes_all_fixtures":32768}}}
+capacity test started
+가짜10001개 검사 단어 시드 2388ms
+가짜10001개 검사 문항 시드 8866ms
+가짜10001개 검사 오답 시드 1017ms
+가짜10001개 검사 목록501 2871ms
+가짜10001개 검사 선택1 1010ms
+가짜10001개 검사 선택500 2593ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+
+ Test Files  628 passed (628)
+      Tests  5097 passed | 1 skipped (5098)
+   Start at  14:41:37
+   Duration  365.00s (transform 20.68s, setup 0ms, import 115.84s, tests 1097.09s, environment 131.53s)
+

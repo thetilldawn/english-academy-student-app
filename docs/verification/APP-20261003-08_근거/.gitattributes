@@ -1,0 +1,3 @@
+* -text
+# Tool-output evidence retains original Windows line endings and whitespace.
+*.log -whitespace

@@ -1,0 +1,17 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+import {localReceiptSchema}from'../src/features/quiz-player/contracts/local-quiz.ts';
+import{receiptConfirmsBatch}from'../src/features/quiz-player/domain/local-quiz.ts';
+const read=(f:string)=>JSON.parse(fs.readFileSync('.codex-tmp/receipt-preview-'+f+'.json','utf8'));
+function mcp(r:any){const raw=JSON.parse(r.content.find((c:any)=>c.type==='text').text).result;return JSON.parse(raw.match(/<untrusted-data-[a-f0-9-]+>\s*(\[[\s\S]*?\])\s*<\/untrusted-data/)[1]);}
+const same=mcp(read('race-same-success'))[0].result,conflict=mcp(read('race-conflict-success'))[0].result;
+const http=read('http-same'),bad=read('http-conflict');
+assert.equal(http.status,200);assert.deepEqual(http.data,same.aResult);assert.equal(bad.status,409);assert.equal(bad.data.message,'local_quiz_submission_conflict');
+for(const c of[same,conflict]){
+ assert.notEqual(c.proof.aPid,c.proof.bPid);assert.equal(c.proof.waitType,'Lock');assert.ok(c.proof.blockedBy.includes(c.proof.aPid));
+ const parsed=localReceiptSchema.parse(c.aResult);assert.deepEqual(parsed,c.aResult);
+ const p=read('request-'+c.case).params;if(c.case==='conflict')p.p_answers[0].choice=(p.p_answers[0].choice+3)%4;
+ const batch={submissionId:p.p_submission_id,attemptId:p.p_attempt_id,phase:p.p_phase,planHash:p.p_plan_hash,answers:p.p_answers,completion:p.p_completion};
+ assert.equal(await receiptConfirmsBatch(batch,parsed),true);
+}
+const report={sameResponse:true,sameStatus:http.status,conflictStatus:bad.status,independentPidLocks:2,apiContracts:2,deviceConfirmations:2};
+fs.writeFileSync('.codex-tmp/receipt-preview-contract-result.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));

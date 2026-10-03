@@ -1,0 +1,6 @@
+
+C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\vocabulary-templates-20260920\docs\verification\OPS-20261003-02_계측\analyze.mjs
+  27:125  warning  'tables' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+
