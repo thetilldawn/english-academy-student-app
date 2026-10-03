@@ -16,7 +16,9 @@ for (const example of [false, true]) {
     const page = await previewRun.openStudent(student);
     await page.goto(`/student/assignments/${assignment}/words`);
     await expect(page.getByRole("main").locator("h3[lang=en]")).toHaveCount(expectedCount);
-    if (example) await expect(page.getByRole("main").locator("p[lang=en]")).toHaveCount(expectedCount);
+    // This Preview source has canonical quiz prompts but no registered full study examples.
+    // The local transition fixture separately verifies complete examples remain unchanged.
+    if (example) await expect(page.getByRole("main").getByText("등록된 학습 문장이 없습니다.", { exact: true })).toHaveCount(expectedCount);
     const words = await page.getByRole("main").locator("h3[lang=en]").allTextContents();
     const response = await page.request.post(`/api/student/assignments/${assignment}/attempts`, { headers: { "x-quiz-preparation": "1" } });
     expect(response.status()).toBe(201);
@@ -33,6 +35,6 @@ for (const example of [false, true]) {
     expect(notStarted.status()).toBe(404);
     const folder = path.join(process.cwd(), "test-results", "transition-read");
     fs.mkdirSync(folder, { recursive: true });
-    fs.writeFileSync(path.join(folder, `${example ? "example" : "meaning"}.json`), JSON.stringify({ studentId: student.id, assignmentId: assignment, preparationId: preparation, wordCount: words.length, studyRendered: true, preparationRendered: true, attemptStatus: notStarted.status(), actualQuizStarted: false }, null, 2) + "\n");
+    fs.writeFileSync(path.join(folder, `${example ? "example" : "meaning"}.json`), JSON.stringify({ studentId: student.id, assignmentId: assignment, preparationId: preparation, wordCount: words.length, studyRendered: true, preparationRendered: true, attemptStatus: notStarted.status(), actualQuizStarted: false, fullExampleAvailableInPreview: example ? false : null, missingExampleNoticeCount: example ? expectedCount : 0 }, null, 2) + "\n");
   });
 }
