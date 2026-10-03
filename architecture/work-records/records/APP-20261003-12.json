@@ -208,6 +208,12 @@
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-replay.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
     }
   ],
   "requirements": [
@@ -439,7 +445,7 @@
     }
   ],
   "verification": {
-    "fingerprint": "5eab0916a5d4564a431b116e16d91c5a6bf961a12e9c4b0c9f91034702d4fd5c",
+    "fingerprint": "de6d8a8d07ed173374f3550bdf69daa59be9d46f4e1144013e48b5529e38337b",
     "files": [
       {
         "path": "architecture/기능_소유권.json",

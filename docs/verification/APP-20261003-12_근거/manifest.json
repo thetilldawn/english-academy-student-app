@@ -85,6 +85,10 @@
     {
       "path": "docs/verification/APP-20261003-12_근거/app12-local-tests.log",
       "sha256": "18da2ce57ade52f7d84f44720949bda772880874ee07f6d179e3fbc14b567f3c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-12_근거/app12-replay.sql",
+      "sha256": "dfae25c3f9a14c2c42b995ccb1824845f370e29054ea4d94111de9f9ebc042aa"
     }
   ]
 }
