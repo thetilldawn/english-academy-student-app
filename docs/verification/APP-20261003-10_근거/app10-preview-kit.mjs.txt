@@ -1,0 +1,59 @@
+import fs from'node:fs';import{createHash}from'node:crypto';
+const id=n=>'a91b0000-0000-4000-8000-'+String(n).padStart(12,'0'),admin=id(1),students=[id(2),id(3)],source=id(4),device='d'.repeat(64);
+const prior=fs.readFileSync('.codex-tmp/app09-preview-kit.mjs','utf8');
+let kit=prior.replaceAll('a90b','a91b').replaceAll('app09','app10').replaceAll('APP09','APP10').replaceAll('배정 저장 검증','공용 확인값 검증').replaceAll('배정 저장 검사','공용 확인값 검사');
+// Extract reviewed SQL templates in a separate module; no tool or DB is run.
+kit=kit.slice(0,kit.indexOf('for(const [name,sql]'));
+fs.writeFileSync('.codex-tmp/app10-preview-base.mjs',kit);
+const base=await import('./app10-preview-base.mjs');
+let seed=base.seedSql;
+seed=seed.replace("perform set_config('app10.seed_result'",`perform private.configure_assignment_retry_v1(a,true,80::smallint);
+ perform set_config('request.jwt.claim.role','service_role',true);
+ perform set_config('app10.old_preparation',public.prepare_local_quiz_v1('${students[0]}',a,'${device}',null)::text,true);
+ perform set_config('app10.seed_result'`);
+seed=seed.replace("select current_setting('app10.seed_result')::jsonb value;", "select current_setting('app10.seed_result')::jsonb||jsonb_build_object('oldPreparation',current_setting('app10.old_preparation')::jsonb) value;");
+// Filter new synthetic attempts only. Earlier fake/real records stay in baseline.
+const excludedStudents=`student_id<>all(array['${students.join("','")}']::uuid[])`;
+let snapshot=base.snapshotSql.replace('fake_meanings as(',`fake_attempts as(select id from public.quiz_attempts where student_id=any(array['${students.join("','")}']::uuid[])),
+fake_preparations as(select id from private.quiz_attempt_preparations where student_id=any(array['${students.join("','")}']::uuid[])),fake_meanings as(`);
+for(const t of ['public.quiz_attempts','public.student_vocab_wrong_events','public.student_vocab_state','public.student_point_events','public.student_point_totals','private.vocabulary_answer_receipts','private.student_vocabulary_meaning_states','private.student_vocabulary_versions','private.vocabulary_legacy_state_baselines'])snapshot=snapshot.replace(`from ${t} t where true`,`from ${t} t where ${excludedStudents}`);
+for(const t of ['public.quiz_questions','private.vocabulary_result_policies','private.vocabulary_phase_results','private.local_quiz_phase_receipts','private.local_quiz_phase_plans'])snapshot=snapshot.replace(`from ${t} t where true`,`from ${t} t where attempt_id not in(select id from fake_attempts)`);
+const extra=[['private.quiz_attempt_preparations',excludedStudents],['private.local_quiz_preparations','preparation_id not in(select id from fake_preparations)'],['private.local_quiz_runs','attempt_id not in(select id from fake_attempts)']];
+snapshot=snapshot.replace(' order by table_name;',extra.map(([table,condition])=>` union all select '${table}',count(*)::int,coalesce(md5(string_agg(md5(to_jsonb(t)::text),''order by md5(to_jsonb(t)::text))),'empty') from ${table} t where ${condition}`).join('')+' order by table_name;');
+const meta=`select jsonb_build_object(
+ 'functions',(select jsonb_agg(jsonb_build_object('name',oid::regprocedure::text,'oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'definer',prosecdef)order by oid)from pg_proc where pronamespace='private'::regnamespace and proname in('resolve_assignment_question_content_v1','resolve_quiz_question_content_v1','exam_use_question_binding_v1')),
+ 'view',(select jsonb_build_object('oid',oid,'owner',relowner,'acl',relacl,'options',reloptions)from pg_class where oid='private.assignment_question_contents_v1'::regclass),
+ 'columns',(select jsonb_agg(jsonb_build_object('name',attname,'type',atttypid,'order',attnum,'notNull',attnotnull)order by attnum)from pg_attribute where attrelid='public.assignment_questions'::regclass and attnum>0 and not attisdropped),
+ 'constraints',(select jsonb_agg(jsonb_build_object('oid',oid,'name',conname,'definition',pg_get_constraintdef(oid))order by oid)from pg_constraint where conrelid='public.assignment_questions'::regclass))value;`;
+const create=`begin;set local statement_timeout='30s';set local time zone 'UTC';
+select set_config('request.jwt.claim.sub','${admin}',true);select set_config('request.jwt.claim.role','authenticated',true);select set_config('request.jwt.claims','{"role":"authenticated","sub":"${admin}","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+do $$declare c private.vocabulary_compositions;units uuid[];plan jsonb;a uuid;begin
+ if not exists(select 1 from public.admin_profiles where user_id='${admin}' and is_active and display_name='[공용 확인값 검증] 가짜 관리자') or exists(select 1 from public.assignments where created_by='${admin}' and title='[공용 확인값 검증] 신규 배정')then raise exception 'app10_fake_guard';end if;
+ select * into strict c from private.vocabulary_compositions v where created_by='${admin}' and exists(select 1 from private.vocabulary_composition_entries l join public.vocab_entries e on e.id=l.source_entry_id where l.version_id=v.version_id and e.dataset_id='${source}');
+ select array_agg(distinct unit_id)into units from public.vocab_entries where dataset_id=c.dataset_id;
+ select jsonb_agg(jsonb_build_object('vocab_entry_id',i.vocab_entry_id,'base_order_index',e.source_row,'direction','english_to_korean','composition_bank',jsonb_build_object('mode','book_meaning_choice','version_id',i.version_id,'content_sha256',c.content_sha256,'question_item_id',i.item_id,'question_item_sha256',i.item_sha256))order by e.source_row)
+ into plan from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id where i.version_id=c.version_id and e.source_row<=4;
+ a:=public.create_assignment_with_delivery_v7('[공용 확인값 검증] 신규 배정',c.dataset_id,units,4,100::smallint,300,80::smallint,true,80::smallint,'fixed',null,array['${students[1]}']::uuid[],'none',null,plan);
+ perform set_config('request.jwt.claim.role','service_role',true);
+ perform set_config('app10.new_preparation',public.prepare_local_quiz_v1('${students[1]}',a,'${device}',null)::text,true);
+ perform set_config('app10.created',jsonb_build_object('assignment',a,'student','${students[1]}')::text,true);
+end$$; select current_setting('app10.created')::jsonb||jsonb_build_object('preparation',current_setting('app10.new_preparation')::jsonb) value;commit;`;
+const oldState=`select jsonb_build_object('questions',(select jsonb_agg(to_jsonb(q)order by q.base_order_index)from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='${admin}' and a.title='[공용 확인값 검증] 이전 배정'),
+'preparation',(select jsonb_agg(to_jsonb(p)order by id)from private.quiz_attempt_preparations p where student_id='${students[0]}'),
+'binding',(select jsonb_agg(to_jsonb(l)order by preparation_id)from private.local_quiz_preparations l join private.quiz_attempt_preparations p on p.id=l.preparation_id where p.student_id='${students[0]}'))value;`;
+const readback=`select jsonb_build_object(
+'history',(select jsonb_agg(jsonb_build_object('version',version,'name',name)order by version)from supabase_migrations.schema_migrations where name like '%share_composition_assignment_hashes%'),
+'triggers',(select jsonb_agg(jsonb_build_object('name',tgname,'enabled',tgenabled,'definition',pg_get_triggerdef(oid))order by tgname)from pg_trigger where tgrelid='public.assignment_questions'::regclass and not tgisinternal),
+'newFunctions',(select jsonb_agg(jsonb_build_object('name',proname,'owner',proowner,'acl',proacl,'config',proconfig,'appExecution',has_function_privilege('anon',oid,'execute')or has_function_privilege('authenticated',oid,'execute')or has_function_privilege('service_role',oid,'execute'))order by proname)from pg_proc where pronamespace='private'::regnamespace and proname in('resolve_composition_assignment_hashes_v1','compact_composition_assignment_hashes_v1')),
+'stored',(select jsonb_agg(jsonb_build_object('title',a.title,'order',q.base_order_index,'reference',q.content_version_id,'entry',q.entry_row_sha256_snapshot,'eligibility',q.eligibility_input_hash_snapshot)order by a.title,q.base_order_index)from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='${admin}'),
+'difference',(select count(*)from private.assignment_question_contents_v1 a join public.assignments aa on aa.id=a.assignment_id join private.assignment_question_contents_v1 b on b.base_order_index=a.base_order_index join public.assignments bb on bb.id=b.assignment_id
+where aa.created_by='${admin}' and bb.created_by='${admin}' and aa.title='[공용 확인값 검증] 이전 배정' and bb.title='[공용 확인값 검증] 신규 배정' and (to_jsonb(a)-array['id','assignment_id','created_at'])is distinct from(to_jsonb(b)-array['id','assignment_id','created_at'])))value;`;
+const config={project:'wojxpruvbjzbhrpmsbuy',admin,students,source,device};fs.writeFileSync('.codex-tmp/app10-preview-config.json',JSON.stringify(config,null,2)+'\n');
+const attempts=`select id from public.quiz_attempts where student_id=any(array['${students.join("','")}']::uuid[])`;
+const studentClauses=[['public.quiz_attempts',`id in(${attempts})`],...['public.quiz_questions','private.vocabulary_answer_receipts','private.vocabulary_phase_results','private.local_quiz_phase_receipts','private.local_quiz_phase_plans'].map(t=>[t,`attempt_id in(${attempts})`]),...['public.student_point_events','private.student_vocabulary_meaning_states'].map(t=>[t,`student_id=any(array['${students.join("','")}']::uuid[])`])];
+const studentRecords=studentClauses.map(([table,condition])=>`select '${table}' table_name,count(*)::int rows,coalesce(md5(string_agg(md5(to_jsonb(t)::text),''order by md5(to_jsonb(t)::text))),'empty')rows_md5 from ${table} t where ${condition}`).join(' union all ')+' order by table_name;';
+for(const [name,sql]of Object.entries({seed,snapshot,meta,create,oldState,readback,studentRecords,fixture:base.fixtureSql,cleanup:base.cleanupSql}))fs.writeFileSync('.codex-tmp/app10-preview-'+name+'.sql',sql+'\n');
+const file='supabase/migrations/20261003235000_share_composition_assignment_hashes.sql';
+const hash=createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+fs.writeFileSync('docs/verification/APP-20261003-10_검토DB_실행명세.md',`# 배정의 공용 확인값 공유: 검토 DB 실행 명세\n\n승인된 유지보수·계속 진행 및 OPS02 D7 안의 같은 중복 저장 보완이다.\n\n- 대상: 검토 프로젝트 wojxpruvbjzbhrpmsbuy. 운영 프로젝트 변경0.\n- SQL: ${file}; SHA-256 ${hash}. 기존 행/열/FK/UNIQUE 수정0, 읽기 함수3개/뷰1개 교체·내부 함수2개와 INSERT트리거1개 추가.\n- 기존 가짜 자료도 포함한28표 전체행 해시·수와 읽기 함수OID/소유자/권한/설정·열/제약을 적용 전후 비교한다.\n- a91b 접두의 새 가짜 관리자1·학생2·원단어12개를 공식 가져오기/구성 경로로 생성한다. 실제 학생·기존 검증 자료를 건드리지 않는다.\n- 적용 전 원형4문항/48시간 캐시와 독립적인 원기기 준비를 만들고 정확한행/준비확인값을 보관한다. 적용 후 같은 준비로 시험을 시작한다. 새 배정4문항에서는 두NULL과 동일 원형복원·당시뜻을 확인하고 최초/재시험/재접수한다.\n- 잘못된 참조/일부값/금지수정은 로컬30검사와 검토DB의 rollback-only 검사로 확인한다. 새 함수는 공용판 조회만 추가하며 공유 등록/잠금 순서는 APP09와 같다. 새 경합 경계가 없어 APP09의 실제2연결 근거를 재사용하고 이를 신규 동시부하 검사로 세지 않는다.\n- 되돌리기는 zzzz_compact_composition_assignment_hashes 트리거만 제거한다. 이미 축약한 행을 읽는 함수/뷰는 남긴다. 운영 사본이나 물리회수 작업이 아니다.\n- 검사 뒤 새 가짜 학생/배정은 공식 종료·자료/관리자 비활성, 답과결과 보존. 임시공개함수 생성0. 보존28표와 최종가짜문항/답/접수 수를 다시 비교한다.\n\n로컬 핵심30·타입/lint/구조/설계 관문 통과. 전체검사/빌드·독립재검토 후 정확한SQL만 적용하며 결과·이력·해시는 별도 검증결과에 기록한다.\n`);
+console.log(JSON.stringify({sqlSha256:hash,config,files:8}));

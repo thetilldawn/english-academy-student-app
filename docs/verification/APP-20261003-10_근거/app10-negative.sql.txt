@@ -1,0 +1,13 @@
+begin;set local statement_timeout='30s';
+do $$declare original public.assignment_questions;other_ref uuid;patch jsonb;rejected integer:=0;begin
+select q.* into strict original from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='a91b0000-0000-4000-8000-000000000001' and a.title='[공용 확인값 검증] 신규 배정' and q.base_order_index=1;
+select content_version_id into strict other_ref from public.assignment_questions where assignment_id=original.assignment_id and base_order_index=2;
+if original.entry_row_sha256_snapshot is not null or original.eligibility_input_hash_snapshot is not null then raise exception 'app10_not_compact';end if;
+for patch in select value from jsonb_array_elements(jsonb_build_array(jsonb_build_object('entry_row_sha256_snapshot',repeat('A',64)),jsonb_build_object('eligibility_input_hash_snapshot',repeat('A',64)),jsonb_build_object('content_version_id',other_ref),jsonb_build_object('correct_choice_index',1)))loop
+begin perform private.resolve_assignment_question_content_v1(jsonb_populate_record(original,patch));raise exception 'app10_expected_rejection_missing';
+exception when others then if sqlstate='55000' and sqlerrm='question_content_binding_mismatch' then rejected:=rejected+1;else raise;end if;end;
+end loop;
+begin update public.assignment_questions set prompt='fake mutation rejected' where id=original.id;raise exception 'app10_expected_update_rejection_missing';
+exception when others then if sqlstate='55000' and sqlerrm='question_content_binding_mismatch' then rejected:=rejected+1;else raise;end if;end;
+perform set_config('app10.negative',jsonb_build_object('rejected',rejected,'expected',5,'scope','new fake compact row only','transaction','rollback')::text,true);
+end$$;select current_setting('app10.negative')::jsonb value;rollback;

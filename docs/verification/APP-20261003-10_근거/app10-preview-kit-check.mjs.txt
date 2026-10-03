@@ -1,0 +1,22 @@
+import fs from'node:fs';import assert from'node:assert/strict';import{createFinalSchemaDatabase}from'../src/test-support/final-schema-database.ts';
+const config=JSON.parse(fs.readFileSync('.codex-tmp/app10-preview-config.json','utf8'));
+const sql=n=>fs.readFileSync('.codex-tmp/app10-preview-'+n+'.sql','utf8');
+const value=rs=>rs.flatMap(r=>r.rows??[]).find(r=>r.value)?.value;
+let before,old,attributes,seed;
+const db=await createFinalSchemaDatabase({beforeMigration:async(db,name)=>{
+ if(name!=='20261003235000_share_composition_assignment_hashes.sql')return;
+ before=(await db.query(sql('snapshot'))).rows;
+ seed=value(await db.exec(sql('seed')));
+ assert.deepEqual((await db.query(sql('snapshot'))).rows,before);
+ old=value(await db.exec(sql('oldState')));attributes=value(await db.exec(sql('meta')));
+}});
+assert.deepEqual(value(await db.exec(sql('oldState'))),old);assert.deepEqual(value(await db.exec(sql('meta'))),attributes);
+const created=value(await db.exec(sql('create')));assert.ok(created.preparation.preparationId);
+assert.deepEqual((await db.query(sql('snapshot'))).rows,before);
+await db.exec("create schema supabase_migrations;create table supabase_migrations.schema_migrations(version text,name text)");
+const rb=value(await db.exec(sql('readback')));assert.equal(rb.difference,0);assert.equal(rb.stored.filter(r=>r.entry===null&&r.eligibility===null).length,4);
+const preCleanup=value(await db.exec(sql('fixture')));
+await db.exec(sql('cleanup'));assert.deepEqual((await db.query(sql('snapshot'))).rows,before);
+const final=value(await db.exec(sql('fixture')));assert.equal(final.activeStudents,0);assert.equal(final.activeAssignments,0);assert.equal(final.questions,8);
+assert.equal(final.oldQuestionsHash,preCleanup.oldQuestionsHash);assert.equal(final.questionHash,preCleanup.questionHash);assert.equal(final.meanings,preCleanup.meanings);
+console.log(JSON.stringify({success:true,beforeTables:before.length,oldQuestions:old.questions.length,newCompactRows:4,newRows:8,oldPreparation:seed.oldPreparation.preparationId,final}));await db.close();

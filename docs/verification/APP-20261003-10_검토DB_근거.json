@@ -1,0 +1,565 @@
+{
+  "schemaVersion": "app10-shared-assignment-hashes-preview-v1",
+  "checkedAt": "2026-10-03T08:49:12.040Z",
+  "implementationCommit": "be0c8777fac7bc02fc1c3afd351de72dd2373114",
+  "sql": {
+    "path": "supabase/migrations/20261003235000_share_composition_assignment_hashes.sql",
+    "sha256": "23b08ce1e2368863592666974a0e538b23b9d1f7208acc603f34742e236770e3",
+    "migration": [
+      {
+        "name": "share_composition_assignment_hashes",
+        "version": "20261003083737"
+      }
+    ]
+  },
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "productionWrites": 0,
+  "preservation": {
+    "tables": 28,
+    "rows": 14599,
+    "beforeSeedAfterSeedAfterApplyAfterExamsAfterCleanupEqual": true,
+    "readerIdentityColumnsConstraintsEqual": true,
+    "oldQuestionsAndPreparationBeforeAfterApplyEqual": true
+  },
+  "newRows": {
+    "oldHashRows": 4,
+    "newCompactHashRows": 4,
+    "restoredDifference": 0,
+    "meaningReferences": 8,
+    "applicationExecutionPrivileges": 0
+  },
+  "exams": {
+    "old": {
+      "score": 100,
+      "accepted": 4
+    },
+    "initial": {
+      "score": 50,
+      "state": "retry_waiting",
+      "accepted": 4
+    },
+    "retry": {
+      "finalScore": 75,
+      "state": "failed",
+      "accepted": 2
+    },
+    "exactReplays": 3,
+    "extraRowsOrHashChanges": 0,
+    "negativeRejections": 5
+  },
+  "fixtureFinal": {
+    "meanings": 8,
+    "questions": 8,
+    "adminActive": false,
+    "assignments": 2,
+    "questionHash": "60e862648a996d9f0d6bb74952a92879",
+    "studentCount": 2,
+    "activeStudents": 0,
+    "oldQuestionsHash": "91926f796628a6701dab3547e1e760e3",
+    "activeAssignments": 0
+  },
+  "fixtureStudentRecords": [
+    {
+      "table_name": "private.local_quiz_phase_plans",
+      "rows": 3,
+      "rows_md5": "efbb5538f08a2b72c724cb20112c2cfd"
+    },
+    {
+      "table_name": "private.local_quiz_phase_receipts",
+      "rows": 3,
+      "rows_md5": "70fa2bac946978965ec3e91ff03b86c0"
+    },
+    {
+      "table_name": "private.student_vocabulary_meaning_states",
+      "rows": 2,
+      "rows_md5": "5b6df5e5dbf2b37327108abe615b4a73"
+    },
+    {
+      "table_name": "private.vocabulary_answer_receipts",
+      "rows": 10,
+      "rows_md5": "696b63e953bba284a5afe71860fc8e00"
+    },
+    {
+      "table_name": "private.vocabulary_phase_results",
+      "rows": 3,
+      "rows_md5": "3f96c8c45103a130b5ea13eabaeeb9d5"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "rows": 2,
+      "rows_md5": "025afd4c7a865836ded8c6fd95256558"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "rows": 8,
+      "rows_md5": "504a86882c82a21b29ee3a614509ee7f"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "rows": 4,
+      "rows_md5": "f35704853e8950bca529d62aeb550729"
+    }
+  ],
+  "cleanup": {
+    "datasets": [
+      {
+        "id": "a91b0000-0000-4000-8000-000000000004",
+        "active": false
+      },
+      {
+        "id": "d93fa3e2-b066-4dea-ad10-03293b40ecc1",
+        "active": false
+      }
+    ],
+    "students": [
+      {
+        "id": "a91b0000-0000-4000-8000-000000000002",
+        "status": "blocked",
+        "deleted": true
+      },
+      {
+        "id": "a91b0000-0000-4000-8000-000000000003",
+        "status": "blocked",
+        "deleted": true
+      }
+    ],
+    "probeCount": 0,
+    "assignments": [
+      {
+        "id": "843fbb69-877e-4302-a488-5a67f08d5709",
+        "status": "closed",
+        "deleted": true
+      },
+      {
+        "id": "f58e2a9f-cb04-406a-ae08-073401ac6a1c",
+        "status": "closed",
+        "deleted": true
+      }
+    ]
+  },
+  "local": {
+    "files": 630,
+    "passed": 5112,
+    "skipped": 1,
+    "seconds": 368.63,
+    "workers": 4,
+    "focused": 30,
+    "buildPages": 53,
+    "offlineAssets": 25,
+    "checks": {
+      "at": "2026-10-03T08:45:57.367Z",
+      "results": [
+        {
+          "name": "types",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "lint",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "node_modules/eslint/bin/eslint.js",
+            "src/lib/database/composition-assignment-hash-sharing.integration.test.ts",
+            "src/lib/database/composition-question-direct-insert.integration.test.ts",
+            "src/lib/database/historical-question-migration.integration.test.ts",
+            "src/lib/database/vocabulary-question-content-sharing.integration.test.ts"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "map",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "scripts/check-feature-map.mjs",
+            "--verify"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "ui",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "scripts/verify-ui-architecture.mjs"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "format",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "scripts/check-work-records.mjs",
+            "--phase",
+            "format"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "design",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "scripts/check-work-records.mjs",
+            "--phase",
+            "design",
+            "--work",
+            "APP-20261003-10"
+          ],
+          "exitCode": 0
+        }
+      ]
+    }
+  },
+  "notes": [
+    "No new remote concurrent-load claim: immutable lookup only; APP09 shared-registration lock path unchanged.",
+    "APP10-crossing M08 archive is serialized in memory. Separate historical tests verify physical archive files.",
+    "The historical preservation helper checks its specified student-record groups, not every student table.",
+    "Only fresh a91b synthetic accounts/words/exams are written; existing28-table hashes remain identical.",
+    "Remote fixture cleanup preserves every measured answer/result/point row in8named tables. No public probe was created."
+  ],
+  "files": [
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-after-definitions.json",
+      "bytes": 23037,
+      "sha256": "47f8dd34d67becbfd72e8a0e85a6ea9b45e0fe0b97432ff58bdf99aea5a04855"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-before-definitions.json",
+      "bytes": 22861,
+      "sha256": "cd27bebd9ea2c6fe40e65261d466cfaf2687e212381096c0aba848486e8531a5"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-before-meta.json",
+      "bytes": 13505,
+      "sha256": "7db17eb90df1c64b41f7561183f73c4ffa32d90b498f67c1fd247a4c97305e0e"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-before-replay-fixture.json",
+      "bytes": 893,
+      "sha256": "f8c2cc2caa59c1ed3766205d50977f5cdf0f860c0e34788b79e8d81dfb6e4fd8"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-before-replay-readback.json",
+      "bytes": 5713,
+      "sha256": "a91b67bd8a9bad12f8ab9428d03183739889e8bd6750510bf65c23d0a9751d01"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-before-replay-snapshot.json",
+      "bytes": 4326,
+      "sha256": "abb76173cb012564e9b2098f310dfb43e9fd98ef906d8aa2d51381f285cf2653"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-before-replay-studentRecords.json",
+      "bytes": 1648,
+      "sha256": "203f8117e4cb88b13eb1990afdccfe44ee0eb710786911db8036d948314cb9fa"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-before-snapshot.json",
+      "bytes": 4326,
+      "sha256": "4fc6bb5ee3206d6a2e611ac854ef132c29fb5d7d809eb0e5c711bc227e67cd38"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-begin-new.json",
+      "bytes": 1894,
+      "sha256": "317ff6a04a0c490dfb5c55586a4ad537b7aa2d356b2269e6cd009d380a214786"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-begin-new.sql.txt",
+      "bytes": 780,
+      "sha256": "3e919022cb2dda637907b022c8396532b81970342f5417afbcb43f5bfb193f25"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-begin-old.json",
+      "bytes": 1895,
+      "sha256": "e11bb6719a0ea59ecca59e71c18081727c82c24a8cf5d2b2eb8bdbd87ee930fc"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-begin-old.sql.txt",
+      "bytes": 780,
+      "sha256": "607b431c36a6b06421a972bc237f8edbf4f112d99e023c72715af55c8cb41a40"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-begin-retry.json",
+      "bytes": 1507,
+      "sha256": "5c40b2434f08608fed085ff79858e8e8d39bc3c3d2ab8d65638311f7db09bc3c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-begin-retry.sql.txt",
+      "bytes": 329,
+      "sha256": "4eabee819da7ac5462e22c54e44c7fdee25edffa0602840377c84da553d402a8"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-build-final.log",
+      "bytes": 4650,
+      "sha256": "98aee86d3ae37346edbd96c2440c4a23347cda79e1c476d0f608ca5fb6dddc7d"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-checks-final.json",
+      "bytes": 1983,
+      "sha256": "d06a9ddd683240e05b988373905522d66c7ce92ef233571defc83d5bbfb9d09e"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-cleanup.json",
+      "bytes": 797,
+      "sha256": "e3eb934d6fb2fd9d1c1609f8fe1cafaa6edcd1a35c8e76a5e806f913bf7d5ffc"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-cleanupstatus.json",
+      "bytes": 1280,
+      "sha256": "8e45c8ba512a7e713cc9b06f1e4dba34669429977cbbbec9dd058e186cb54543"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-cleanupstatus.sql.txt",
+      "bytes": 888,
+      "sha256": "78052b5c956cee66cdd6623db7b85242ef84d37c3843b0a3ffcae27570384fa4"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-created.json",
+      "bytes": 2920,
+      "sha256": "96637b563639fd11a47cd84cc6177a6a97ffdab7b44d70d9bcc6fd16bcfdda07"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-design-final.log",
+      "bytes": 97,
+      "sha256": "b75a4e571ed5de4fd9eb6c96826d9b3915ebe800c4e834a2764a4ead5bb323f5"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-final-fixture.json",
+      "bytes": 894,
+      "sha256": "84c8dba3af0174c6d922b742ce554de3315df2bf4c13642cb0a4c048bfb01130"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-final-snapshot.json",
+      "bytes": 4326,
+      "sha256": "953a90b8f97db0350134231e247f475de7b745f18ced2306048fa25e25b8e0c6"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-final-studentRecords.json",
+      "bytes": 1648,
+      "sha256": "aa8085ae01cd6311ca29554706749cfe32d9a4b23f2e97b8819ba4df6f555127"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-focused-final.log",
+      "bytes": 284,
+      "sha256": "f7d9c681729fdd11719f73e2bb0491d5b29908cd1def343dcb17ced47213cb11"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-format-final.log",
+      "bytes": 99,
+      "sha256": "f375716a4ebafc988925df5aa126a5c32de6eda2e0b1fdd5f96bc2239352c8a0"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-full.log",
+      "bytes": 2094,
+      "sha256": "f1cc57bf4cd8fb1a3d0819a7a1211d662760e2f8bad56baf46ac6d3d7bf4d454"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-lint-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-map-final.log",
+      "bytes": 556,
+      "sha256": "cb662bbb440ffc6418588de7b754b8c566e20337a12bd64a63bc9818967e55ea"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-migration.json",
+      "bytes": 74,
+      "sha256": "48e95c61df435bf6e5b160d1ffbe2eb110d780258dcd848e5f609919a31baec0"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-negative.json",
+      "bytes": 726,
+      "sha256": "ab4c47f838e55fb4e0600e15e7ba57d2919215ff89e24fefc8cd44622bc80c78"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-negative.sql.txt",
+      "bytes": 1846,
+      "sha256": "3592ab5efca721621b19860d43280debc22adc822fdb59090f1f035a420e65c5"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-postapply-meta.json",
+      "bytes": 13505,
+      "sha256": "1b154a0214c12c979ef45054310653828235eec6ff4ebc89c73a06d4ac470162"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-postapply-oldState.json",
+      "bytes": 12940,
+      "sha256": "8e92feea40b9a78c897abdfa45ce5745288de29f5335d504ac1dacd9784f274d"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-postapply-snapshot.json",
+      "bytes": 4326,
+      "sha256": "afdcfbe4a918ee1969d051f913bd7e400ea2fbee910d1d419c3dd945bffe3162"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preapply-oldState.json",
+      "bytes": 12940,
+      "sha256": "b7a4db935995b09541bd7c6eaaa70a6116880f86b9d5bdd8d691e1b3743d76f4"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preapply-snapshot.json",
+      "bytes": 4326,
+      "sha256": "548fa4ac88d3a3f05b5ff96ada187c3a111497b8c3be3ee88ca94392937652c2"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preflight.json",
+      "bytes": 683,
+      "sha256": "067f1d433ac4050452aabba686c7505b0926ce065b9cbb7cb7f145e3866bc877"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preretire-studentRecords.json",
+      "bytes": 1648,
+      "sha256": "de1059ee84b8336b24451c179d5e833bf1b5ef8a0302a6fa42c2d44187520e2a"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-base.mjs.txt",
+      "bytes": 16759,
+      "sha256": "b3f2543d6ab2979e202caa90d59de362579b322ddbb4921b48402af138980e48"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-cleanup.sql.txt",
+      "bytes": 1577,
+      "sha256": "4b1b38e93d284737be634c99c3ee4941ba7db27bb236a7c3df51697420ce140c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-create.sql.txt",
+      "bytes": 2570,
+      "sha256": "42f5b218c1333af598c40ecf6a654adbbcc9c3905ce3adb390860cd9fb255baf"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-fixture.sql.txt",
+      "bytes": 1697,
+      "sha256": "715217519b14a61c1311d618b1e95d502ba85498a8e1b006a191e73a9fd697a1"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-kit-check-final.log",
+      "bytes": 1016,
+      "sha256": "ca59814afd06edbce5096b56b56cc88b4b81d431cb33a3036a82a4aaa996a7f0"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-kit-check.mjs.txt",
+      "bytes": 2069,
+      "sha256": "80a647bf4a817bcb61c5f5b08e4cf75e15fd8ecbeec02857657452d5e9e8f12f"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-kit.mjs.txt",
+      "bytes": 12418,
+      "sha256": "a4a3c194571df6351aad765edd643ed94c398fdb0218329c563bdd682c4096ac"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-meta.sql.txt",
+      "bytes": 1006,
+      "sha256": "e3185c3c778fea54683d7f925f1c584f64a5ef3d495712fe8e436cc22ea133eb"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-oldState.sql.txt",
+      "bytes": 682,
+      "sha256": "a6aa1b78dab1740067bde110576a55b98999036673578e82924c32098bde8c50"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-readback.sql.txt",
+      "bytes": 1931,
+      "sha256": "f4d18b0147e179d99018d4e3a3f1173e6be5f11332edd8341ebb1a9112e998fe"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-seed.sql.txt",
+      "bytes": 8950,
+      "sha256": "bb817ba7a24db0b9fbc32bbdfb0abe43a050d0d482ab186ce0e550ba25f39c19"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-snapshot.sql.txt",
+      "bytes": 9259,
+      "sha256": "ab117b3336270ebf23a3a71e7aa3c166b6d222a13cdce7dcb7e66a71fcdd0f86"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-preview-studentRecords.sql.txt",
+      "bytes": 3005,
+      "sha256": "687cc519cecb7e5fb55f46a866fbc9645adc978922c24668c8707aae61c5923e"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-replay-new.json",
+      "bytes": 3248,
+      "sha256": "3ccad9dff08729fc31921255ca46cb7d26d258a635bb7ffa6b32bcff5335b229"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-replay-old.json",
+      "bytes": 3244,
+      "sha256": "45f602306055b01501b84d0a21d4a7e2644ec6a5d52668632723cfba08da8c60"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-replay-retry.json",
+      "bytes": 3526,
+      "sha256": "6504e7118084185b6c90a1326eb59b013bc120fed124e1b9f5279d37f9a6f368"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-seed.json",
+      "bytes": 3267,
+      "sha256": "b61d66b8bc8f61f4bfc6c348eed08d74d6b3033f448814596f5abce275e75ede"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-submit-new.json",
+      "bytes": 3248,
+      "sha256": "89f0fef2fbe3b6cf5c3a128ba8ddffa24d4e22b6a22dcd433f0ba654bb964c35"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-submit-new.sql.txt",
+      "bytes": 1346,
+      "sha256": "678f6ce93b30419ae47f7a04d29237349787f974d48b50db30d2c47e95827566"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-submit-old.json",
+      "bytes": 3244,
+      "sha256": "dbf3459e68f99fe06fe7adb4a72226ed1408f7b24d258612dd9c8250265086ae"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-submit-old.sql.txt",
+      "bytes": 1346,
+      "sha256": "a989c397caf7d50c14541c1784eb9e3d45acf52589cf5c6d934f67169c1154e4"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-submit-retry.json",
+      "bytes": 3526,
+      "sha256": "7c6d584218b1a456106da3ca0ef0c5da31b5754b0b2b254ba9a903d29c2e7508"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-submit-retry.sql.txt",
+      "bytes": 727,
+      "sha256": "d1d11eee73f950f81751f1a931d9cc75fbd606c2899c0b414afd81b9f017d724"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-types-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/APP-20261003-10_근거/app10-ui-final.log",
+      "bytes": 6433,
+      "sha256": "83a6ab7167539cd0e1d4d5d1a236968300e7c878af7f0a30f26a8049f5067d40"
+    }
+  ],
+  "finalIndependentReview": {
+    "checkedAt": "2026-10-03T09:04:48.169Z",
+    "blockingFindings": 0,
+    "reviewers": [
+      "m05_db_review",
+      "m05_record_review",
+      "capacity_code_audit"
+    ],
+    "reviewed": [
+      "product SQL and mutation boundaries",
+      "Preview preservation and cleanup scope",
+      "64 packaged file hashes",
+      "separate M09 measurement reproducibility and arithmetic"
+    ],
+    "corrected": [
+      "Specified eight student record groups instead of claiming all tables",
+      "Count-only meaning references distinguished from full-row question hashes",
+      "Pre-cleanup snapshot retained before cleanup comparison",
+      "Historical in-memory manifest test distinguished from separate physical file test"
+    ]
+  }
+}

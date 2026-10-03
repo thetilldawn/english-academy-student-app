@@ -1,0 +1,9 @@
+begin;set local statement_timeout='30s';
+select set_config('request.jwt.claim.sub','a91b0000-0000-4000-8000-000000000001',true);select set_config('request.jwt.claim.role','authenticated',true);select set_config('request.jwt.claims','{"role":"authenticated","sub":"a91b0000-0000-4000-8000-000000000001","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+do $$declare r record;begin
+ if not exists(select 1 from public.admin_profiles where user_id='a91b0000-0000-4000-8000-000000000001' and display_name like '[공용 확인값 검증]%') then raise exception 'app10_fixture_owner_mismatch';end if;
+ for r in select id from public.students where id=any(array['a91b0000-0000-4000-8000-000000000002','a91b0000-0000-4000-8000-000000000003']::uuid[]) and created_by='a91b0000-0000-4000-8000-000000000001' and note='APP10-a91b 실제 학생 아님' loop perform public.delete_student_v2(r.id);end loop;
+ for r in select id from public.assignments where created_by='a91b0000-0000-4000-8000-000000000001' and title like '[공용 확인값 검증]%' loop perform public.delete_assignment_v2(r.id,'가짜 공용 확인값 검사 종료');end loop;
+ update public.vocab_datasets set is_active=false where (id='a91b0000-0000-4000-8000-000000000004' and imported_by='a91b0000-0000-4000-8000-000000000001') or id in(select dataset_id from private.vocabulary_compositions where created_by='a91b0000-0000-4000-8000-000000000001');
+ update public.admin_profiles set is_active=false,display_name='[공용 확인값 검증] 가짜 관리자' where user_id='a91b0000-0000-4000-8000-000000000001';
+end$$;commit;

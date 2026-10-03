@@ -1,0 +1,5 @@
+select jsonb_build_object(
+ 'functions',(select jsonb_agg(jsonb_build_object('name',oid::regprocedure::text,'oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'definer',prosecdef)order by oid)from pg_proc where pronamespace='private'::regnamespace and proname in('resolve_assignment_question_content_v1','resolve_quiz_question_content_v1','exam_use_question_binding_v1')),
+ 'view',(select jsonb_build_object('oid',oid,'owner',relowner,'acl',relacl,'options',reloptions)from pg_class where oid='private.assignment_question_contents_v1'::regclass),
+ 'columns',(select jsonb_agg(jsonb_build_object('name',attname,'type',atttypid,'order',attnum,'notNull',attnotnull)order by attnum)from pg_attribute where attrelid='public.assignment_questions'::regclass and attnum>0 and not attisdropped),
+ 'constraints',(select jsonb_agg(jsonb_build_object('oid',oid,'name',conname,'definition',pg_get_constraintdef(oid))order by oid)from pg_constraint where conrelid='public.assignment_questions'::regclass))value;

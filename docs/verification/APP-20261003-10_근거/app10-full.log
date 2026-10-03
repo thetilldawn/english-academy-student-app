@@ -1,0 +1,20 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+{"scenario":"50 questions x 100 separate assignments; sequential, not concurrent capacity","maxReuse":100,"minReuse":100,"bankLinks":5000,"quizLinks":5000,"assignments":100,"commonBodies":50,"sourceBodies":50,"preparedBodies":0,"inlineBankBodies":0,"inlineQuizBodies":0,"duplicatedCommonBodies":0,"writes":{"updated":0,"inserted":5000,"frozenMeanings":5000,"inlineAtInsert":0,"restoredHashes":5000,"duplicateHashes":0},"rowRepresentationBytes":{"expandedRows":17766984,"physicalRows":10532500,"commonContent":134764}}
+capacity test started
+가짜10001개 검사 단어 시드 1592ms
+{"scenario":"M04 100 synthetic students x50 questions, sequential storage example; not concurrent capacity","counts":{"policies":100,"phases":160,"inline_bodies":0,"receipts":6200},"size":{"policies":{"rows":100,"row_bytes":11317,"table_bytes_all_fixtures":57344,"index_bytes_all_fixtures":16384},"phases":{"rows":160,"row_bytes":33760,"table_bytes_all_fixtures":73728,"index_bytes_all_fixtures":16384},"questionKeysAndOldAnswerFields":{"rows":5000,"row_bytes":689200,"table_bytes_all_fixtures":1605632,"index_bytes_all_fixtures":2416640},"receipts":{"rows":6200,"row_bytes":3545440,"table_bytes_all_fixtures":3735552,"index_bytes_all_fixtures":1474560},"meaningStates":{"rows":2000,"row_bytes":432000,"table_bytes_all_fixtures":1146880,"index_bytes_all_fixtures":540672},"sharedContent":{"rows":50,"row_bytes":86400,"table_bytes_all_fixtures":139264,"index_bytes_all_fixtures":32768}}}
+가짜10001개 검사 문항 시드 10680ms
+가짜10001개 검사 오답 시드 1247ms
+가짜10001개 검사 목록501 3001ms
+가짜10001개 검사 선택1 1077ms
+가짜10001개 검사 선택500 2662ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+
+ Test Files  630 passed (630)
+      Tests  5112 passed | 1 skipped (5113)
+   Start at  17:22:48
+   Duration  368.63s (transform 21.09s, setup 0ms, import 113.65s, tests 1115.00s, environment 130.27s)
+

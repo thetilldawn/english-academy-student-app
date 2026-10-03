@@ -1,0 +1,65 @@
+{
+  "at": "2026-10-03T08:45:57.367Z",
+  "results": [
+    {
+      "name": "types",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "lint",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "node_modules/eslint/bin/eslint.js",
+        "src/lib/database/composition-assignment-hash-sharing.integration.test.ts",
+        "src/lib/database/composition-question-direct-insert.integration.test.ts",
+        "src/lib/database/historical-question-migration.integration.test.ts",
+        "src/lib/database/vocabulary-question-content-sharing.integration.test.ts"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "map",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "scripts/check-feature-map.mjs",
+        "--verify"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "ui",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "scripts/verify-ui-architecture.mjs"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "format",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "scripts/check-work-records.mjs",
+        "--phase",
+        "format"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "design",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "scripts/check-work-records.mjs",
+        "--phase",
+        "design",
+        "--work",
+        "APP-20261003-10"
+      ],
+      "exitCode": 0
+    }
+  ]
+}
