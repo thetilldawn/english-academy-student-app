@@ -1,0 +1,23 @@
+[
+  {
+    "state": "in_progress",
+    "completion_confirmed": false,
+    "returned_status": "in_progress",
+    "phase": "initial",
+    "questions": []
+  },
+  {
+    "state": "completed",
+    "completion_confirmed": true,
+    "returned_status": "completed",
+    "phase": "completed",
+    "questions": []
+  },
+  {
+    "state": "expired",
+    "completion_confirmed": true,
+    "returned_status": "expired",
+    "phase": "completed",
+    "questions": []
+  }
+]

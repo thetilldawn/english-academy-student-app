@@ -1,0 +1,4 @@
+begin read only;set local statement_timeout='12s';
+select state, response->'completionConfirmed' as completion_confirmed,response#>>'{attempt,status}' as returned_status,response#>>'{attempt,phase}' as phase,response#>'{attempt,questions}' as questions
+from (select s as state,private.word_practice_read_v1(jsonb_populate_record(null::private.student_word_practice_runs,jsonb_build_object('id','af110000-0000-4000-8000-000000000001','status',s,'deadline_at',(clock_timestamp()-interval '1 second')::text,'current_starts_at',(clock_timestamp()-interval '2 seconds')::text,'settings',jsonb_build_object('timingMode','total','timeLimitSeconds',240)))) as response from unnest(array['in_progress','completed','expired']) s) v;
+rollback;

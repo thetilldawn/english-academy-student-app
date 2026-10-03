@@ -1,0 +1,91 @@
+begin read only; set local statement_timeout='25s'; set local timezone='UTC';set local datestyle='ISO, YMD'; with snapshots as (select 'private' as schema_name,'assignment_release_links_v1' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."assignment_release_links_v1" r) s
+union all
+select 'private' as schema_name,'assignment_replacement_requests' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."assignment_replacement_requests" r) s
+union all
+select 'private' as schema_name,'assignment_study_examples_v1' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."assignment_study_examples_v1" r) s
+union all
+select 'private' as schema_name,'assignment_vocabulary_meaning_refs' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."assignment_vocabulary_meaning_refs" r) s
+union all
+select 'private' as schema_name,'assignment_vocabulary_new_questions' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."assignment_vocabulary_new_questions" r) s
+union all
+select 'private' as schema_name,'local_quiz_phase_plans' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."local_quiz_phase_plans" r) s
+union all
+select 'private' as schema_name,'local_quiz_phase_receipts' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."local_quiz_phase_receipts" r) s
+union all
+select 'private' as schema_name,'local_quiz_preparations' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."local_quiz_preparations" r) s
+union all
+select 'private' as schema_name,'local_quiz_runs' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."local_quiz_runs" r) s
+union all
+select 'private' as schema_name,'notebook_question_origins_v2' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."notebook_question_origins_v2" r) s
+union all
+select 'private' as schema_name,'quiz_attempt_preparations' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."quiz_attempt_preparations" r) s
+union all
+select 'private' as schema_name,'quiz_preparation_compaction_checks' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."quiz_preparation_compaction_checks" r) s
+union all
+select 'private' as schema_name,'quiz_preparation_expirations' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."quiz_preparation_expirations" r) s
+union all
+select 'private' as schema_name,'student_vocabulary_meaning_states' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."student_vocabulary_meaning_states" r) s
+union all
+select 'private' as schema_name,'student_vocabulary_versions' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."student_vocabulary_versions" r) s
+union all
+select 'private' as schema_name,'student_word_practice_questions' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."student_word_practice_questions" r) s
+union all
+select 'private' as schema_name,'student_word_practice_runs' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."student_word_practice_runs" r) s
+union all
+select 'private' as schema_name,'vocabulary_answer_receipts' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."vocabulary_answer_receipts" r) s
+union all
+select 'private' as schema_name,'vocabulary_expired_answer_results' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."vocabulary_expired_answer_results" r) s
+union all
+select 'private' as schema_name,'vocabulary_legacy_question_baselines' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."vocabulary_legacy_question_baselines" r) s
+union all
+select 'private' as schema_name,'vocabulary_legacy_state_baselines' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."vocabulary_legacy_state_baselines" r) s
+union all
+select 'private' as schema_name,'vocabulary_question_meaning_versions' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."vocabulary_question_meaning_versions" r) s
+union all
+select 'private' as schema_name,'worksheet_mistake_items' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "private"."worksheet_mistake_items" r) s
+union all
+select 'public' as schema_name,'admin_profiles' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."admin_profiles" r) s
+union all
+select 'public' as schema_name,'assignment_question_exam_use_snapshot' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignment_question_exam_use_snapshot" r) s
+union all
+select 'public' as schema_name,'assignment_questions' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignment_questions" r) s
+union all
+select 'public' as schema_name,'assignment_quiz_mode_snapshots' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignment_quiz_mode_snapshots" r) s
+union all
+select 'public' as schema_name,'assignment_review_targets' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignment_review_targets" r) s
+union all
+select 'public' as schema_name,'assignment_sources' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignment_sources" r) s
+union all
+select 'public' as schema_name,'assignment_students' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignment_students" r) s
+union all
+select 'public' as schema_name,'assignment_units' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignment_units" r) s
+union all
+select 'public' as schema_name,'assignments' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."assignments" r) s
+union all
+select 'public' as schema_name,'quiz_attempts' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."quiz_attempts" r) s
+union all
+select 'public' as schema_name,'quiz_questions' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."quiz_questions" r) s
+union all
+select 'public' as schema_name,'student_codes' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_codes" r) s
+union all
+select 'public' as schema_name,'student_learning_sources' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_learning_sources" r) s
+union all
+select 'public' as schema_name,'student_login_attempts' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_login_attempts" r) s
+union all
+select 'public' as schema_name,'student_point_events' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_point_events" r) s
+union all
+select 'public' as schema_name,'student_point_totals' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_point_totals" r) s
+union all
+select 'public' as schema_name,'student_sessions' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_sessions" r) s
+union all
+select 'public' as schema_name,'student_vocab_review_assignment_draft_items' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_vocab_review_assignment_draft_items" r) s
+union all
+select 'public' as schema_name,'student_vocab_review_assignment_drafts' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_vocab_review_assignment_drafts" r) s
+union all
+select 'public' as schema_name,'student_vocab_review_queue' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_vocab_review_queue" r) s
+union all
+select 'public' as schema_name,'student_vocab_state' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_vocab_state" r) s
+union all
+select 'public' as schema_name,'student_vocab_wrong_events' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."student_vocab_wrong_events" r) s
+union all
+select 'public' as schema_name,'students' as table_name,count(*) as amount,encode(extensions.digest(convert_to(coalesce(string_agg(h,chr(10) order by h),''),'UTF8'),'sha256'),'hex') as fingerprint from (select encode(extensions.digest(convert_to(to_jsonb(r)::text,'UTF8'),'sha256'),'hex') h from "public"."students" r) s) select jsonb_build_object('checkedAt',clock_timestamp(),'readOnly',current_setting('transaction_read_only'),'tables',(select jsonb_agg(to_jsonb(s) order by schema_name,table_name) from snapshots s),'reader',(select jsonb_build_object('oid',oid,'definition',pg_get_functiondef(oid),'bodyHash',encode(extensions.digest(convert_to(prosrc,'UTF8'),'sha256'),'hex'),'meta',to_jsonb(p)-'prosrc') from pg_proc p where oid='private.word_practice_read_v1(private.student_word_practice_runs)'::regprocedure),'otherFunctions',(select count(*) from pg_proc where pronamespace in ('public'::regnamespace,'private'::regnamespace) and oid<>'private.word_practice_read_v1(private.student_word_practice_runs)'::regprocedure)) as value; rollback;

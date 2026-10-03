@@ -1,0 +1,113 @@
+{
+  "work": "APP-20261001-05-SYNC",
+  "files": [
+    {
+      "name": ".gitattributes",
+      "bytes": 20,
+      "sha256": "2199d532e3836627014a38692a34c49da747cd5baeb033c2a88b90d1490f1fe0"
+    },
+    {
+      "name": "검토적용.sql.txt",
+      "bytes": 6280,
+      "sha256": "1ff1611ea359c38e5368d0ea26da2eefa927ac9ac832fbf6bc11e76bc4af177e"
+    },
+    {
+      "name": "검토전.json",
+      "bytes": 13402,
+      "sha256": "b7ff7ffbe9124ad353345df93f11d2bb0b8acb65ca1ab4cb6b91579e8d72a29c"
+    },
+    {
+      "name": "검토후.json",
+      "bytes": 13521,
+      "sha256": "38f41b1deb832ec02482fba8996f3d60b42bfcc825eaa268c554962cf2575ee2"
+    },
+    {
+      "name": "구현명세.json",
+      "bytes": 434,
+      "sha256": "298b1358b42434253dc260f48112778d8b85691053402866f0fdd44a924a0889"
+    },
+    {
+      "name": "기능지도.log",
+      "bytes": 557,
+      "sha256": "21357febf2f47cfbafa4ca3424e4a39e14010e823f6684a4f92c043d6b9c2dfb"
+    },
+    {
+      "name": "기록형식.log",
+      "bytes": 100,
+      "sha256": "015eaff4755e336e1416c46a22d026ce65dcd855c93b8432d544b2ed93d9417e"
+    },
+    {
+      "name": "변경파일검사.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "보존실행SQL_로컬.log",
+      "bytes": 49,
+      "sha256": "9ec62da52dd074705c19da76708b32f26dc222dca8006753da34da149d339326"
+    },
+    {
+      "name": "보존실행SQL_로컬.ts.txt",
+      "bytes": 427,
+      "sha256": "3f4fb7e1792911fb9fe71cd5bbf0942bb199026ee000b6d00bd5f9573a1186e2"
+    },
+    {
+      "name": "보존조회.sql.txt",
+      "bytes": 17685,
+      "sha256": "5b4300e4af5d19279113c913c82746301b7cac32724e9d950ad48ae585d232c2"
+    },
+    {
+      "name": "응답확인.json",
+      "bytes": 455,
+      "sha256": "53f519a110df3fd9e920cc55eaab87b88d16ddaae401fea34e8ab1b9f256e727"
+    },
+    {
+      "name": "응답확인.sql.txt",
+      "bytes": 733,
+      "sha256": "5ab395c86cf17a0773bcbc64df67bd28ddc9188b8072bd49b6ee0811c6674869"
+    },
+    {
+      "name": "적용응답.json",
+      "bytes": 112,
+      "sha256": "2009f43f81ed0e9275edcb44eea7c32e106a522483a98035b84c39e47b6aa694"
+    },
+    {
+      "name": "적용이력응답.json",
+      "bytes": 723,
+      "sha256": "a7affafc48a196aafb45a0ee4e46d2add86ba3a29cca9b179ea6dfd2955bf33e"
+    },
+    {
+      "name": "전후비교.json",
+      "bytes": 283,
+      "sha256": "ab5f340caa2ce409bfb3695caeebcae2b2e55914bd1bae85b404d339a57e0061"
+    },
+    {
+      "name": "최종_36검사.log",
+      "bytes": 630,
+      "sha256": "6ca8ad6c03c28b1ac4384258f6892901e31f6c5632ff776086a9c2b2e28a9f96"
+    },
+    {
+      "name": "최초수정뒤_4검사.log",
+      "bytes": 289,
+      "sha256": "26eea902c9b3cf53d9874d7597951ebfc4143d564f6c72de0980b70b4712d2e2"
+    },
+    {
+      "name": "타입검사.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "independentReview": {
+    "agent": "m05_db_review",
+    "findingCount": 0,
+    "scope": "SQL/hash/no-op/metadata, read-only",
+    "reviewedCoreSha256": "08174baf11db16cbb6574a150846c9f88d94461a1585b7c13d2536323f255d00"
+  },
+  "independentFinalReview": {
+    "agent": "m05_db_review",
+    "findings": 0,
+    "verifiedFiles": 19,
+    "scope": "record counts/hashes/definition/guard/logs",
+    "note": "raw Windows logs preserved as binary diffs after review"
+  }
+}

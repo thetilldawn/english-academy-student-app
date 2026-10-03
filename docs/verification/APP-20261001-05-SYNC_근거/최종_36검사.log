@@ -1,0 +1,17 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+···············capacity test started
+가짜10001개 검사 단어 시드 2499ms
+·······가짜10001개 검사 문항 시드 8813ms
+가짜10001개 검사 오답 시드 587ms
+가짜10001개 검사 목록501 2418ms
+가짜10001개 검사 선택1 781ms
+가짜10001개 검사 선택500 2053ms
+··············
+
+ Test Files  4 passed (4)
+      Tests  36 passed (36)
+   Start at  19:42:49
+   Duration  26.04s (transform 319ms, setup 0ms, import 702ms, tests 36.98s, environment 0ms)
+

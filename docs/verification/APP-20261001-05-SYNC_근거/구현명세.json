@@ -1,0 +1,7 @@
+{
+  "commit": "d2c2c7d6936c6c0f9c8b1c8b35cc2413c5960b35",
+  "coreSha256": "08174baf11db16cbb6574a150846c9f88d94461a1585b7c13d2536323f255d00",
+  "wrapperSha256": "1ff1611ea359c38e5368d0ea26da2eefa927ac9ac832fbf6bc11e76bc4af177e",
+  "tables": "student/assignment/quiz/local receipts/legacy meaning/worksheet/notebook/admin, maintenance excluded",
+  "operations": "temp snapshots and one existing function replacement; no student DML"
+}

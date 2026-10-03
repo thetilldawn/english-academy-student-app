@@ -1,0 +1,8 @@
+import fs from 'node:fs';
+import { createFinalSchemaDatabase } from '../src/test-support/final-schema-database';
+async function main(){
+ const db=await createFinalSchemaDatabase();
+ try {await db.exec(fs.readFileSync('.codex-tmp/m11-sync-preview-apply.sql','utf8'));console.log('same wrapper transaction passed on final schema');}
+ finally {await db.close();}
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});
