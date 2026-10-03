@@ -6,16 +6,17 @@ import { assignCanonicalRange, assignSingleRange } from "../support/vocab-journe
 for (const example of [false, true]) {
   test(`@authenticated 전환 호환 ${example ? "예문" : "뜻"} 학습·준비 읽기`, async ({ previewRun }) => {
     const student = await previewRun.createStudent(example ? "transition-example" : "transition-meaning");
+    const expectedCount = example ? 5 : 4;
     const assignment = example
-      ? await assignCanonicalRange(previewRun.adminPage, student, { datasetId: "d5b0a7e9-ea28-47de-94cf-c06b640ae995", questionMode: "canonical_example_to_headword", perQuestionSeconds: 8 })
+      ? await assignCanonicalRange(previewRun.adminPage, student, { datasetId: "d5b0a7e9-ea28-47de-94cf-c06b640ae995", questionMode: "canonical_example_to_headword", perQuestionSeconds: 8, questionCount: expectedCount })
       : ((await assignSingleRange(previewRun.adminPage, student, { datasetId: "b6100000-0000-4000-8000-000000000004", questionCount: 4, rangeMode: "all", scheduleEnabled: false, timeLimit: "none" })) as {
         assignments: Array<{ student_id: string; assignment_id: string; status: string }>;
       }).assignments.find(row => row.student_id === student.id && row.status === "assigned")!.assignment_id;
     expect(assignment).toMatch(/^[0-9a-f-]{36}$/);
     const page = await previewRun.openStudent(student);
     await page.goto(`/student/assignments/${assignment}/words`);
-    await expect(page.getByRole("main").locator("h3[lang=en]")).toHaveCount(4);
-    if (example) await expect(page.getByRole("main").locator("li p[lang=en]")).toHaveCount(4);
+    await expect(page.getByRole("main").locator("h3[lang=en]")).toHaveCount(expectedCount);
+    if (example) await expect(page.getByRole("main").locator("li p[lang=en]")).toHaveCount(expectedCount);
     const words = await page.getByRole("main").locator("h3[lang=en]").allTextContents();
     const response = await page.request.post(`/api/student/assignments/${assignment}/attempts`, { headers: { "x-quiz-preparation": "1" } });
     expect(response.status()).toBe(201);

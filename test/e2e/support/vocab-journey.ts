@@ -158,6 +158,7 @@ async function configureRangeAssignment(page: Page, plan: AssignmentPlan = {}) {
 }
 
 async function waitForAssignmentSave(page: Page, endpoint: RegExp) {
+  await expect(page.getByRole("button", { name: "배정하기", exact: true })).toBeEnabled();
   const responsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" && endpoint.test(response.url()),
@@ -203,6 +204,7 @@ export async function assignCanonicalRange(
   input: {
     datasetId: string;
     perQuestionSeconds?: number;
+    questionCount?: number;
     questionMode:
       | "canonical_definition_to_headword"
       | "canonical_example_to_headword";
@@ -212,7 +214,7 @@ export async function assignCanonicalRange(
   await configureRangeAssignment(page, {
     datasetId: input.datasetId,
     perQuestionSeconds: input.perQuestionSeconds ?? 5,
-    questionCount: 4,
+    questionCount: input.questionCount ?? 4,
     questionMode: input.questionMode,
     rangeMode: "first-unit",
     scheduleEnabled: false,
