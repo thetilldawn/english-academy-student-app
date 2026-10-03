@@ -53,7 +53,7 @@ test.describe("@authenticated 유지보수 구형 시험과 기기·계정 보�
     const quizUrl = first.url();
     const second = await previewRun.openStudentTab(first);
     await second.goto(quizUrl);
-    await expect(second.getByRole("alert")).toContainText("다른 탭에서 이 시험을 진행 중입니다.");
+    await expect(second.getByRole("main").getByRole("alert")).toContainText("다른 탭에서 이 시험을 진행 중입니다.");
     await expect(second.locator("#quiz-prompt")).toHaveCount(0);
     expect(fingerprint(await readLocalRun(second))).toBe(savedHash);
     await first.close();
@@ -63,7 +63,7 @@ test.describe("@authenticated 유지보수 구형 시험과 기기·계정 보�
 
     const differentDevice = await previewRun.openStudent(owner);
     await differentDevice.goto(`/student/attempt/${run.plan!.attemptId}`);
-    await expect(differentDevice.getByRole("alert")).toHaveText("이 시험은 처음 시작한 기기의 브라우저에서 이어서 진행해 주세요.");
+    await expect(differentDevice.getByRole("main").getByRole("alert")).toHaveText("이 시험은 처음 시작한 기기의 브라우저에서 이어서 진행해 주세요.");
     await expect(differentDevice.locator("#quiz-prompt")).toHaveCount(0);
     await differentDevice.close();
 
@@ -75,7 +75,7 @@ test.describe("@authenticated 유지보수 구형 시험과 기기·계정 보�
     await expect(second.getByText(saved.preparation.title, { exact: true })).toHaveCount(0);
     expect(fingerprint(await readLocalRun(second))).toBe(savedHash);
     await second.getByRole("button", { name: "계정 확인 후 이어가기", exact: true }).click();
-    await expect(second.getByRole("alert")).toHaveText("시험을 시작한 학생으로 다시 로그인해 주세요. 답은 기기에 보관돼 있습니다.");
+    await expect(second.getByRole("main").getByRole("alert")).toHaveText("시험을 시작한 학생으로 다시 로그인해 주세요. 답은 기기에 보관돼 있습니다.");
     expect(fingerprint(await readLocalRun(second))).toBe(savedHash);
     await changeStudent(session, owner);
     await second.getByRole("button", { name: "계정 확인 후 이어가기", exact: true }).click();
@@ -177,7 +177,7 @@ test.describe("@authenticated 유지보수 구형 시험과 기기·계정 보�
     await previewRun.adminPage.goto(`/admin/results/attempt.${attemptId}`);
     await expect(previewRun.adminPage.locator('[data-point-summary="admin-attempt"] dd')).toHaveText(["+8", "-3", "+5", "5"]);
     await page.goto("/student");
-    await expect(page.locator('[data-point-summary="current"] dd')).toHaveText("5");
+    await expect(page.getByRole("banner").getByRole("status").getByText("5", { exact: true })).toBeVisible();
     report("구형시험_보존", { studentId: student.id, assignmentId: assigned, attemptId, savedAnswerCount: 1,
       startedAt: before.attempt.startedAt, deadlineAt: before.attempt.deadlineAt, resumedDeadlineAt: after.attempt.deadlineAt,
       scores: [75, 100], points: { correct: 8, wrong: -3, net: 5, current: 5 }, localProtocol: false });
