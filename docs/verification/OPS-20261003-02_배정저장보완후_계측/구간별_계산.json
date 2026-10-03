@@ -1,0 +1,4096 @@
+{
+  "schemaVersion": "m09-final-schema-analysis-v1",
+  "sourceSha256": "25553a836c7214325adf7ec3a1c96e08006e6b6dc12694e8d7065801eb1f91ff",
+  "passed": true,
+  "startedAt": "2026-10-03T07:12:56.101Z",
+  "finishedAt": "2026-10-03T07:17:02.174Z",
+  "finalCounts": {
+    "points": 1920,
+    "attempts": 32,
+    "wrongEvents": 384,
+    "phaseReceipts": 64,
+    "quizQuestions": 1600,
+    "answerReceipts": 1920
+  },
+  "metricNotes": {
+    "row_datum_bytes": "sum(pg_column_size(row)); excludes relation pages/index overhead; not physical space projection",
+    "row_text_bytes": "sum(octet_length(to_jsonb(row)::text)); verbose row JSON, not HTTP transfer",
+    "total_bytes": "sum pg_total_relation_size once per ordinary table incl TOAST and indexes; normal vacuum cadence 6/16/32; not cloud steady state",
+    "responses": "Serialized local RPC request/response payload only; API wrapper/session/queue/CDN/audio excluded"
+  },
+  "deltas": [
+    {
+      "from": "schema",
+      "to": "100-students",
+      "runs": 1,
+      "databaseBytes": 106496,
+      "tracked": {
+        "row_count": 102,
+        "row_text_bytes": 91442,
+        "row_datum_bytes": 16114,
+        "heap_main_bytes": 40960,
+        "table_with_toast_bytes": 65536,
+        "index_bytes": 40960,
+        "total_bytes": 106496
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 102,
+        "row_text_bytes": 91442,
+        "row_datum_bytes": 16114,
+        "heap_main_bytes": 40960,
+        "table_with_toast_bytes": 65536,
+        "index_bytes": 40960,
+        "total_bytes": 106496
+      },
+      "tables": [
+        {
+          "relation_name": "public.students",
+          "row_count": 100,
+          "row_text_bytes": 91192,
+          "row_datum_bytes": 16000,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 49152,
+          "index_bytes": 24576,
+          "total_bytes": 73728
+        },
+        {
+          "relation_name": "public.admin_profiles",
+          "row_count": 1,
+          "row_text_bytes": 204,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "auth.users",
+          "row_count": 1,
+          "row_text_bytes": 46,
+          "row_datum_bytes": 37,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        }
+      ]
+    },
+    {
+      "from": "100-students",
+      "to": "book-a",
+      "runs": 1,
+      "databaseBytes": 1622016,
+      "tracked": {
+        "row_count": 517,
+        "row_text_bytes": 628058,
+        "row_datum_bytes": 507634,
+        "heap_main_bytes": 606208,
+        "table_with_toast_bytes": 1064960,
+        "index_bytes": 557056,
+        "total_bytes": 1622016
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 517,
+        "row_text_bytes": 628058,
+        "row_datum_bytes": 507634,
+        "heap_main_bytes": 606208,
+        "table_with_toast_bytes": 1064960,
+        "index_bytes": 557056,
+        "total_bytes": 1622016
+      },
+      "tables": [
+        {
+          "relation_name": "private.vocabulary_composition_entries",
+          "row_count": 50,
+          "row_text_bytes": 155229,
+          "row_datum_bytes": 148850,
+          "heap_main_bytes": 81920,
+          "table_with_toast_bytes": 221184,
+          "index_bytes": 32768,
+          "total_bytes": 253952
+        },
+        {
+          "relation_name": "private.vocabulary_learning_value_bindings",
+          "row_count": 50,
+          "row_text_bytes": 97173,
+          "row_datum_bytes": 91600,
+          "heap_main_bytes": 106496,
+          "table_with_toast_bytes": 131072,
+          "index_bytes": 16384,
+          "total_bytes": 147456
+        },
+        {
+          "relation_name": "private.vocabulary_composition_items",
+          "row_count": 50,
+          "row_text_bytes": 99992,
+          "row_datum_bytes": 83996,
+          "heap_main_bytes": 106496,
+          "table_with_toast_bytes": 131072,
+          "index_bytes": 49152,
+          "total_bytes": 180224
+        },
+        {
+          "relation_name": "private.vocabulary_library_scope_rows",
+          "row_count": 50,
+          "row_text_bytes": 66546,
+          "row_datum_bytes": 62050,
+          "heap_main_bytes": 73728,
+          "table_with_toast_bytes": 98304,
+          "index_bytes": 24576,
+          "total_bytes": 122880
+        },
+        {
+          "relation_name": "private.vocabulary_learning_value_versions",
+          "row_count": 50,
+          "row_text_bytes": 35664,
+          "row_datum_bytes": 32000,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 65536,
+          "index_bytes": 24576,
+          "total_bytes": 90112
+        },
+        {
+          "relation_name": "public.vocab_entries",
+          "row_count": 100,
+          "row_text_bytes": 60184,
+          "row_datum_bytes": 24900,
+          "heap_main_bytes": 32768,
+          "table_with_toast_bytes": 57344,
+          "index_bytes": 90112,
+          "total_bytes": 147456
+        },
+        {
+          "relation_name": "private.vocabulary_library_versions",
+          "row_count": 1,
+          "row_text_bytes": 28266,
+          "row_datum_bytes": 19248,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 65536,
+          "index_bytes": 24576,
+          "total_bytes": 90112
+        },
+        {
+          "relation_name": "private.vocabulary_composition_build_positions",
+          "row_count": 50,
+          "row_text_bytes": 16532,
+          "row_datum_bytes": 9200,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 24576,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "public.vocab_entry_quiz_eligibility",
+          "row_count": 50,
+          "row_text_bytes": 20541,
+          "row_datum_bytes": 9200,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 24576,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "private.vocabulary_library_scopes",
+          "row_count": 1,
+          "row_text_bytes": 15068,
+          "row_datum_bytes": 8947,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 57344,
+          "index_bytes": 32768,
+          "total_bytes": 90112
+        },
+        {
+          "relation_name": "private.vocabulary_library_row_fingerprints",
+          "row_count": 50,
+          "row_text_bytes": 11250,
+          "row_datum_bytes": 8500,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 8192,
+          "total_bytes": 49152
+        },
+        {
+          "relation_name": "private.vocabulary_library_requests",
+          "row_count": 2,
+          "row_text_bytes": 4885,
+          "row_datum_bytes": 4870,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 8192,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_composition_question_plans",
+          "row_count": 1,
+          "row_text_bytes": 11988,
+          "row_datum_bytes": 1820,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "public.vocab_datasets",
+          "row_count": 2,
+          "row_text_bytes": 1044,
+          "row_datum_bytes": 642,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 24576,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.vocab_dataset_catalog",
+          "row_count": 2,
+          "row_text_bytes": 1114,
+          "row_datum_bytes": 469,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 16384,
+          "total_bytes": 24576
+        },
+        {
+          "relation_name": "public.vocab_unit_catalog",
+          "row_count": 1,
+          "row_text_bytes": 594,
+          "row_datum_bytes": 368,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 16384,
+          "total_bytes": 24576
+        },
+        {
+          "relation_name": "private.vocabulary_library_templates",
+          "row_count": 1,
+          "row_text_bytes": 446,
+          "row_datum_bytes": 240,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 32768,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_compositions",
+          "row_count": 1,
+          "row_text_bytes": 431,
+          "row_datum_bytes": 216,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 24576,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.vocab_units",
+          "row_count": 2,
+          "row_text_bytes": 565,
+          "row_datum_bytes": 205,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 32768,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_library_import_approvals",
+          "row_count": 1,
+          "row_text_bytes": 262,
+          "row_datum_bytes": 191,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.vocabulary_composition_builds",
+          "row_count": 1,
+          "row_text_bytes": 198,
+          "row_datum_bytes": 66,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 16384,
+          "total_bytes": 24576
+        },
+        {
+          "relation_name": "private.vocabulary_composition_storage_formats",
+          "row_count": 1,
+          "row_text_bytes": 86,
+          "row_datum_bytes": 56,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.vocabulary_composition_write_context",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        }
+      ]
+    },
+    {
+      "from": "book-a",
+      "to": "run-1-complete",
+      "runs": 1,
+      "databaseBytes": 1327104,
+      "tracked": {
+        "row_count": 511,
+        "row_text_bytes": 468211,
+        "row_datum_bytes": 219141,
+        "heap_main_bytes": 401408,
+        "table_with_toast_bytes": 622592,
+        "index_bytes": 704512,
+        "total_bytes": 1327104
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 511,
+        "row_text_bytes": 468211,
+        "row_datum_bytes": 219141,
+        "heap_main_bytes": 401408,
+        "table_with_toast_bytes": 622592,
+        "index_bytes": 704512,
+        "total_bytes": 1327104
+      },
+      "tables": [
+        {
+          "relation_name": "private.vocabulary_question_content_versions",
+          "row_count": 50,
+          "row_text_bytes": 132220,
+          "row_datum_bytes": 80208,
+          "heap_main_bytes": 81920,
+          "table_with_toast_bytes": 106496,
+          "index_bytes": 16384,
+          "total_bytes": 122880
+        },
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 50,
+          "row_text_bytes": 110237,
+          "row_datum_bytes": 35841,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 65536,
+          "index_bytes": 65536,
+          "total_bytes": 131072
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 60,
+          "row_text_bytes": 39363,
+          "row_datum_bytes": 21672,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 49152,
+          "index_bytes": 24576,
+          "total_bytes": 73728
+        },
+        {
+          "relation_name": "private.vocabulary_question_meaning_versions",
+          "row_count": 50,
+          "row_text_bytes": 24036,
+          "row_datum_bytes": 20000,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 49152,
+          "index_bytes": 8192,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 60,
+          "row_text_bytes": 45887,
+          "row_datum_bytes": 18096,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 49152,
+          "index_bytes": 49152,
+          "total_bytes": 98304
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 50,
+          "row_text_bytes": 31894,
+          "row_datum_bytes": 6860,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 65536,
+          "total_bytes": 106496
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 1,
+          "row_text_bytes": 14427,
+          "row_datum_bytes": 6808,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 16384,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 50,
+          "row_text_bytes": 10600,
+          "row_datum_bytes": 6047,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 2,
+          "row_text_bytes": 7404,
+          "row_datum_bytes": 5746,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 8192,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 50,
+          "row_text_bytes": 19117,
+          "row_datum_bytes": 5261,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 32768,
+          "total_bytes": 73728
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 2,
+          "row_text_bytes": 4915,
+          "row_datum_bytes": 4056,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 16384,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_legacy_state_baselines",
+          "row_count": 50,
+          "row_text_bytes": 9951,
+          "row_datum_bytes": 2447,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 10,
+          "row_text_bytes": 5785,
+          "row_datum_bytes": 2160,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 16384,
+          "total_bytes": 24576
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 12,
+          "row_text_bytes": 6311,
+          "row_datum_bytes": 1632,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 49152,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 1,
+          "row_text_bytes": 1778,
+          "row_datum_bytes": 514,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 57344,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 2,
+          "row_text_bytes": 1056,
+          "row_datum_bytes": 424,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 1,
+          "row_text_bytes": 367,
+          "row_datum_bytes": 280,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 24576,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 1,
+          "row_text_bytes": 940,
+          "row_datum_bytes": 196,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 49152,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 1,
+          "row_text_bytes": 255,
+          "row_datum_bytes": 185,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 1,
+          "row_text_bytes": 222,
+          "row_datum_bytes": 170,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 1,
+          "row_text_bytes": 265,
+          "row_datum_bytes": 111,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 1,
+          "row_text_bytes": 309,
+          "row_datum_bytes": 109,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 24576,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 1,
+          "row_text_bytes": 306,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 40960,
+          "total_bytes": 49152
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 1,
+          "row_text_bytes": 197,
+          "row_datum_bytes": 74,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 57344,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 1,
+          "row_text_bytes": 189,
+          "row_datum_bytes": 69,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 1,
+          "row_text_bytes": 111,
+          "row_datum_bytes": 53,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.student_vocabulary_versions",
+          "row_count": 1,
+          "row_text_bytes": 69,
+          "row_datum_bytes": 45,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        }
+      ]
+    },
+    {
+      "from": "run-1-complete",
+      "to": "run-2-complete",
+      "runs": 1,
+      "databaseBytes": 262144,
+      "tracked": {
+        "row_count": 299,
+        "row_text_bytes": 276804,
+        "row_datum_bytes": 108945,
+        "heap_main_bytes": 106496,
+        "table_with_toast_bytes": 196608,
+        "index_bytes": 65536,
+        "total_bytes": 262144
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 299,
+        "row_text_bytes": 276804,
+        "row_datum_bytes": 108945,
+        "heap_main_bytes": 106496,
+        "table_with_toast_bytes": 196608,
+        "index_bytes": 65536,
+        "total_bytes": 262144
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 50,
+          "row_text_bytes": 110237,
+          "row_datum_bytes": 35841,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 24576,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 60,
+          "row_text_bytes": 39396,
+          "row_datum_bytes": 21672,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 24576,
+          "total_bytes": 49152
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 60,
+          "row_text_bytes": 45867,
+          "row_datum_bytes": 18096,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 16384,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 50,
+          "row_text_bytes": 31844,
+          "row_datum_bytes": 6860,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 0,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 1,
+          "row_text_bytes": 14427,
+          "row_datum_bytes": 6816,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 50,
+          "row_text_bytes": 10600,
+          "row_datum_bytes": 6050,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 2,
+          "row_text_bytes": 7403,
+          "row_datum_bytes": 5722,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 2,
+          "row_text_bytes": 4907,
+          "row_datum_bytes": 4048,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 12,
+          "row_text_bytes": 6310,
+          "row_datum_bytes": 1632,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 1,
+          "row_text_bytes": 1778,
+          "row_datum_bytes": 514,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 2,
+          "row_text_bytes": 1053,
+          "row_datum_bytes": 424,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 1,
+          "row_text_bytes": 367,
+          "row_datum_bytes": 280,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 1,
+          "row_text_bytes": 938,
+          "row_datum_bytes": 196,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 1,
+          "row_text_bytes": 255,
+          "row_datum_bytes": 185,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 1,
+          "row_text_bytes": 222,
+          "row_datum_bytes": 170,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 1,
+          "row_text_bytes": 265,
+          "row_datum_bytes": 114,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 1,
+          "row_text_bytes": 308,
+          "row_datum_bytes": 112,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 1,
+          "row_text_bytes": 306,
+          "row_datum_bytes": 80,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 1,
+          "row_text_bytes": 197,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 1,
+          "row_text_bytes": 111,
+          "row_datum_bytes": 56,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 0,
+          "row_text_bytes": 9,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_versions",
+          "row_count": 0,
+          "row_text_bytes": 1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": 3,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        }
+      ]
+    },
+    {
+      "from": "run-2-complete",
+      "to": "run-3-complete",
+      "runs": 1,
+      "databaseBytes": 221184,
+      "tracked": {
+        "row_count": 411,
+        "row_text_bytes": 311984,
+        "row_datum_bytes": 118939,
+        "heap_main_bytes": 114688,
+        "table_with_toast_bytes": 147456,
+        "index_bytes": 73728,
+        "total_bytes": 221184
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 411,
+        "row_text_bytes": 311984,
+        "row_datum_bytes": 118939,
+        "heap_main_bytes": 114688,
+        "table_with_toast_bytes": 147456,
+        "index_bytes": 73728,
+        "total_bytes": 221184
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 50,
+          "row_text_bytes": 110237,
+          "row_datum_bytes": 35841,
+          "heap_main_bytes": 32768,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 60,
+          "row_text_bytes": 39362,
+          "row_datum_bytes": 21672,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 16384,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 60,
+          "row_text_bytes": 45960,
+          "row_datum_bytes": 18096,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 8192,
+          "total_bytes": 24576
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 50,
+          "row_text_bytes": 31894,
+          "row_datum_bytes": 6860,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 49152,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 1,
+          "row_text_bytes": 14427,
+          "row_datum_bytes": 6816,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 50,
+          "row_text_bytes": 10600,
+          "row_datum_bytes": 6050,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 2,
+          "row_text_bytes": 7404,
+          "row_datum_bytes": 5722,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 50,
+          "row_text_bytes": 19067,
+          "row_datum_bytes": 5264,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 2,
+          "row_text_bytes": 4915,
+          "row_datum_bytes": 4048,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_legacy_state_baselines",
+          "row_count": 50,
+          "row_text_bytes": 9951,
+          "row_datum_bytes": 2450,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 10,
+          "row_text_bytes": 5784,
+          "row_datum_bytes": 2160,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 12,
+          "row_text_bytes": 6318,
+          "row_datum_bytes": 1632,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 1,
+          "row_text_bytes": 1778,
+          "row_datum_bytes": 514,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 2,
+          "row_text_bytes": 1056,
+          "row_datum_bytes": 424,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 1,
+          "row_text_bytes": 367,
+          "row_datum_bytes": 280,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 1,
+          "row_text_bytes": 940,
+          "row_datum_bytes": 196,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 1,
+          "row_text_bytes": 255,
+          "row_datum_bytes": 185,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 1,
+          "row_text_bytes": 222,
+          "row_datum_bytes": 170,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 1,
+          "row_text_bytes": 265,
+          "row_datum_bytes": 114,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 1,
+          "row_text_bytes": 309,
+          "row_datum_bytes": 112,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 1,
+          "row_text_bytes": 306,
+          "row_datum_bytes": 80,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 1,
+          "row_text_bytes": 197,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 1,
+          "row_text_bytes": 190,
+          "row_datum_bytes": 72,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 1,
+          "row_text_bytes": 111,
+          "row_datum_bytes": 56,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_versions",
+          "row_count": 1,
+          "row_text_bytes": 69,
+          "row_datum_bytes": 48,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        }
+      ]
+    },
+    {
+      "from": "run-3-complete",
+      "to": "run-4-complete",
+      "runs": 1,
+      "databaseBytes": 352256,
+      "tracked": {
+        "row_count": 309,
+        "row_text_bytes": 283442,
+        "row_datum_bytes": 111513,
+        "heap_main_bytes": 106496,
+        "table_with_toast_bytes": 180224,
+        "index_bytes": 172032,
+        "total_bytes": 352256
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 309,
+        "row_text_bytes": 283442,
+        "row_datum_bytes": 111513,
+        "heap_main_bytes": 106496,
+        "table_with_toast_bytes": 180224,
+        "index_bytes": 172032,
+        "total_bytes": 352256
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 50,
+          "row_text_bytes": 110237,
+          "row_datum_bytes": 35841,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 16384,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 60,
+          "row_text_bytes": 39781,
+          "row_datum_bytes": 21840,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 40960,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 60,
+          "row_text_bytes": 45955,
+          "row_datum_bytes": 18224,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 65536,
+          "total_bytes": 90112
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 50,
+          "row_text_bytes": 31884,
+          "row_datum_bytes": 6860,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 49152,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 1,
+          "row_text_bytes": 14427,
+          "row_datum_bytes": 6840,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 50,
+          "row_text_bytes": 10600,
+          "row_datum_bytes": 6050,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 2,
+          "row_text_bytes": 7403,
+          "row_datum_bytes": 5730,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 2,
+          "row_text_bytes": 4910,
+          "row_datum_bytes": 4048,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 10,
+          "row_text_bytes": 5858,
+          "row_datum_bytes": 2160,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 12,
+          "row_text_bytes": 6318,
+          "row_datum_bytes": 1632,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 1,
+          "row_text_bytes": 1778,
+          "row_datum_bytes": 514,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 2,
+          "row_text_bytes": 1054,
+          "row_datum_bytes": 424,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 1,
+          "row_text_bytes": 367,
+          "row_datum_bytes": 280,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 1,
+          "row_text_bytes": 937,
+          "row_datum_bytes": 196,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 1,
+          "row_text_bytes": 255,
+          "row_datum_bytes": 185,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 1,
+          "row_text_bytes": 222,
+          "row_datum_bytes": 170,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 1,
+          "row_text_bytes": 264,
+          "row_datum_bytes": 114,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 1,
+          "row_text_bytes": 309,
+          "row_datum_bytes": 112,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 1,
+          "row_text_bytes": 306,
+          "row_datum_bytes": 80,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 0,
+          "row_text_bytes": 270,
+          "row_datum_bytes": 80,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 1,
+          "row_text_bytes": 197,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 1,
+          "row_text_bytes": 111,
+          "row_datum_bytes": 56,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": -1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        }
+      ]
+    },
+    {
+      "from": "run-4-complete",
+      "to": "book-b",
+      "runs": 1,
+      "databaseBytes": 786432,
+      "tracked": {
+        "row_count": 517,
+        "row_text_bytes": 629238,
+        "row_datum_bytes": 508190,
+        "heap_main_bytes": 425984,
+        "table_with_toast_bytes": 565248,
+        "index_bytes": 221184,
+        "total_bytes": 786432
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 517,
+        "row_text_bytes": 629238,
+        "row_datum_bytes": 508190,
+        "heap_main_bytes": 425984,
+        "table_with_toast_bytes": 565248,
+        "index_bytes": 221184,
+        "total_bytes": 786432
+      },
+      "tables": [
+        {
+          "relation_name": "private.vocabulary_composition_entries",
+          "row_count": 50,
+          "row_text_bytes": 155514,
+          "row_datum_bytes": 148850,
+          "heap_main_bytes": 81920,
+          "table_with_toast_bytes": 163840,
+          "index_bytes": 24576,
+          "total_bytes": 188416
+        },
+        {
+          "relation_name": "private.vocabulary_learning_value_bindings",
+          "row_count": 50,
+          "row_text_bytes": 97282,
+          "row_datum_bytes": 92000,
+          "heap_main_bytes": 98304,
+          "table_with_toast_bytes": 98304,
+          "index_bytes": 16384,
+          "total_bytes": 114688
+        },
+        {
+          "relation_name": "private.vocabulary_composition_items",
+          "row_count": 50,
+          "row_text_bytes": 100237,
+          "row_datum_bytes": 83996,
+          "heap_main_bytes": 98304,
+          "table_with_toast_bytes": 98304,
+          "index_bytes": 49152,
+          "total_bytes": 147456
+        },
+        {
+          "relation_name": "private.vocabulary_library_scope_rows",
+          "row_count": 50,
+          "row_text_bytes": 66664,
+          "row_datum_bytes": 62050,
+          "heap_main_bytes": 65536,
+          "table_with_toast_bytes": 65536,
+          "index_bytes": 24576,
+          "total_bytes": 90112
+        },
+        {
+          "relation_name": "private.vocabulary_learning_value_versions",
+          "row_count": 50,
+          "row_text_bytes": 35714,
+          "row_datum_bytes": 32000,
+          "heap_main_bytes": 32768,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 40960,
+          "total_bytes": 73728
+        },
+        {
+          "relation_name": "public.vocab_entries",
+          "row_count": 100,
+          "row_text_bytes": 60192,
+          "row_datum_bytes": 24900,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 16384,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_library_versions",
+          "row_count": 1,
+          "row_text_bytes": 28266,
+          "row_datum_bytes": 19360,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 0,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.vocabulary_composition_build_positions",
+          "row_count": 50,
+          "row_text_bytes": 16532,
+          "row_datum_bytes": 9200,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 24576,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.vocab_entry_quiz_eligibility",
+          "row_count": 50,
+          "row_text_bytes": 20600,
+          "row_datum_bytes": 9200,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_library_scopes",
+          "row_count": 1,
+          "row_text_bytes": 15127,
+          "row_datum_bytes": 8979,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_library_row_fingerprints",
+          "row_count": 50,
+          "row_text_bytes": 11250,
+          "row_datum_bytes": 8500,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 24576,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_library_requests",
+          "row_count": 2,
+          "row_text_bytes": 4885,
+          "row_datum_bytes": 4870,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_composition_question_plans",
+          "row_count": 1,
+          "row_text_bytes": 12233,
+          "row_datum_bytes": 1820,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.vocab_datasets",
+          "row_count": 2,
+          "row_text_bytes": 1044,
+          "row_datum_bytes": 642,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.vocab_dataset_catalog",
+          "row_count": 2,
+          "row_text_bytes": 1116,
+          "row_datum_bytes": 472,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.vocab_unit_catalog",
+          "row_count": 1,
+          "row_text_bytes": 594,
+          "row_datum_bytes": 368,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_library_templates",
+          "row_count": 1,
+          "row_text_bytes": 446,
+          "row_datum_bytes": 240,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_compositions",
+          "row_count": 1,
+          "row_text_bytes": 431,
+          "row_datum_bytes": 216,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.vocab_units",
+          "row_count": 2,
+          "row_text_bytes": 565,
+          "row_datum_bytes": 208,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_library_import_approvals",
+          "row_count": 1,
+          "row_text_bytes": 262,
+          "row_datum_bytes": 191,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_composition_builds",
+          "row_count": 1,
+          "row_text_bytes": 198,
+          "row_datum_bytes": 69,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_composition_storage_formats",
+          "row_count": 1,
+          "row_text_bytes": 86,
+          "row_datum_bytes": 59,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        }
+      ]
+    },
+    {
+      "from": "book-b",
+      "to": "run-5-complete",
+      "runs": 1,
+      "databaseBytes": 516096,
+      "tracked": {
+        "row_count": 509,
+        "row_text_bytes": 468865,
+        "row_datum_bytes": 219131,
+        "heap_main_bytes": 229376,
+        "table_with_toast_bytes": 319488,
+        "index_bytes": 196608,
+        "total_bytes": 516096
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 509,
+        "row_text_bytes": 468865,
+        "row_datum_bytes": 219131,
+        "heap_main_bytes": 229376,
+        "table_with_toast_bytes": 319488,
+        "index_bytes": 196608,
+        "total_bytes": 516096
+      },
+      "tables": [
+        {
+          "relation_name": "private.vocabulary_question_content_versions",
+          "row_count": 50,
+          "row_text_bytes": 132514,
+          "row_datum_bytes": 80272,
+          "heap_main_bytes": 81920,
+          "table_with_toast_bytes": 81920,
+          "index_bytes": 24576,
+          "total_bytes": 106496
+        },
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 50,
+          "row_text_bytes": 110432,
+          "row_datum_bytes": 35841,
+          "heap_main_bytes": 32768,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 49152,
+          "total_bytes": 81920
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 60,
+          "row_text_bytes": 39429,
+          "row_datum_bytes": 21672,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 16384,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_question_meaning_versions",
+          "row_count": 50,
+          "row_text_bytes": 24036,
+          "row_datum_bytes": 20000,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 24576,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 60,
+          "row_text_bytes": 46022,
+          "row_datum_bytes": 18096,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 32768,
+          "total_bytes": 49152
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 50,
+          "row_text_bytes": 31943,
+          "row_datum_bytes": 6860,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 49152,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 1,
+          "row_text_bytes": 14476,
+          "row_datum_bytes": 6848,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 50,
+          "row_text_bytes": 10600,
+          "row_datum_bytes": 6050,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 2,
+          "row_text_bytes": 7404,
+          "row_datum_bytes": 5738,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 50,
+          "row_text_bytes": 19166,
+          "row_datum_bytes": 5264,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 2,
+          "row_text_bytes": 4915,
+          "row_datum_bytes": 4040,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_legacy_state_baselines",
+          "row_count": 50,
+          "row_text_bytes": 10000,
+          "row_datum_bytes": 2450,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 10,
+          "row_text_bytes": 5792,
+          "row_datum_bytes": 2160,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 12,
+          "row_text_bytes": 6334,
+          "row_datum_bytes": 1632,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 1,
+          "row_text_bytes": 1776,
+          "row_datum_bytes": 514,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 2,
+          "row_text_bytes": 1056,
+          "row_datum_bytes": 424,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 1,
+          "row_text_bytes": 366,
+          "row_datum_bytes": 280,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 1,
+          "row_text_bytes": 940,
+          "row_datum_bytes": 196,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 1,
+          "row_text_bytes": 255,
+          "row_datum_bytes": 185,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 1,
+          "row_text_bytes": 222,
+          "row_datum_bytes": 170,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 1,
+          "row_text_bytes": 265,
+          "row_datum_bytes": 114,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 1,
+          "row_text_bytes": 309,
+          "row_datum_bytes": 112,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 1,
+          "row_text_bytes": 305,
+          "row_datum_bytes": 80,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 1,
+          "row_text_bytes": 197,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 1,
+          "row_text_bytes": 111,
+          "row_datum_bytes": 56,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        }
+      ]
+    },
+    {
+      "from": "run-5-complete",
+      "to": "run-6-complete",
+      "runs": 1,
+      "databaseBytes": 360448,
+      "tracked": {
+        "row_count": 409,
+        "row_text_bytes": 312338,
+        "row_datum_bytes": 118883,
+        "heap_main_bytes": 131072,
+        "table_with_toast_bytes": 163840,
+        "index_bytes": 196608,
+        "total_bytes": 360448
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 409,
+        "row_text_bytes": 312338,
+        "row_datum_bytes": 118883,
+        "heap_main_bytes": 131072,
+        "table_with_toast_bytes": 163840,
+        "index_bytes": 196608,
+        "total_bytes": 360448
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 50,
+          "row_text_bytes": 110482,
+          "row_datum_bytes": 35841,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 49152,
+          "total_bytes": 90112
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 60,
+          "row_text_bytes": 39393,
+          "row_datum_bytes": 21672,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 24576,
+          "total_bytes": 49152
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 60,
+          "row_text_bytes": 46014,
+          "row_datum_bytes": 18096,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 0,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 50,
+          "row_text_bytes": 31943,
+          "row_datum_bytes": 6860,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 65536,
+          "total_bytes": 81920
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 1,
+          "row_text_bytes": 14474,
+          "row_datum_bytes": 6840,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 50,
+          "row_text_bytes": 10600,
+          "row_datum_bytes": 6050,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 16384,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 2,
+          "row_text_bytes": 7404,
+          "row_datum_bytes": 5762,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 50,
+          "row_text_bytes": 19166,
+          "row_datum_bytes": 5264,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 24576,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 2,
+          "row_text_bytes": 4915,
+          "row_datum_bytes": 4048,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_legacy_state_baselines",
+          "row_count": 50,
+          "row_text_bytes": 10000,
+          "row_datum_bytes": 2450,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 10,
+          "row_text_bytes": 5794,
+          "row_datum_bytes": 2160,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 12,
+          "row_text_bytes": 6344,
+          "row_datum_bytes": 1632,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 1,
+          "row_text_bytes": 1778,
+          "row_datum_bytes": 514,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 2,
+          "row_text_bytes": 1056,
+          "row_datum_bytes": 424,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 1,
+          "row_text_bytes": 367,
+          "row_datum_bytes": 280,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 1,
+          "row_text_bytes": 940,
+          "row_datum_bytes": 196,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 1,
+          "row_text_bytes": 255,
+          "row_datum_bytes": 185,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 1,
+          "row_text_bytes": 222,
+          "row_datum_bytes": 170,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 1,
+          "row_text_bytes": 265,
+          "row_datum_bytes": 114,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 1,
+          "row_text_bytes": 309,
+          "row_datum_bytes": 112,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 1,
+          "row_text_bytes": 306,
+          "row_datum_bytes": 80,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 1,
+          "row_text_bytes": 197,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 1,
+          "row_text_bytes": 111,
+          "row_datum_bytes": 56,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 16384,
+          "total_bytes": 24576
+        },
+        {
+          "relation_name": "private.student_vocabulary_versions",
+          "row_count": 0,
+          "row_text_bytes": 1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": 2,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        }
+      ]
+    },
+    {
+      "from": "run-6-complete",
+      "to": "run-6-vacuum",
+      "runs": 1,
+      "databaseBytes": 2212244,
+      "tracked": {
+        "row_count": 0,
+        "row_text_bytes": 0,
+        "row_datum_bytes": 0,
+        "heap_main_bytes": -32768,
+        "table_with_toast_bytes": 1368064,
+        "index_bytes": 0,
+        "total_bytes": 1368064
+      },
+      "unexplainedDatabaseBytes": 844180,
+      "perRun": {
+        "row_count": 0,
+        "row_text_bytes": 0,
+        "row_datum_bytes": 0,
+        "heap_main_bytes": -32768,
+        "table_with_toast_bytes": 1368064,
+        "index_bytes": 0,
+        "total_bytes": 1368064
+      },
+      "tables": [
+        {
+          "relation_name": "auth.users",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "cron.job",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.app_migration_snapshots",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": -24576,
+          "table_with_toast_bytes": -32768,
+          "index_bytes": 0,
+          "total_bytes": -32768
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 0,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 0,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.operational_retention_jobs",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.operational_retention_policy",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 0,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.simseok_production_approvals_v1",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.student_vocabulary_versions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_composition_build_positions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_composition_builds",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_composition_entries",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 0,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.vocabulary_composition_items",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_composition_question_plans",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_composition_storage_formats",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_composition_write_context",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": -8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_compositions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_learning_value_bindings",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_learning_value_versions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_legacy_state_baselines",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_library_import_approvals",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_library_requests",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 0,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_library_row_fingerprints",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_library_scope_rows",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_library_scopes",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 0,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_library_templates",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_library_versions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 0,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "private.vocabulary_question_content_versions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_question_meaning_versions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.admin_profiles",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.students",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.vocab_approved_korean_pronunciations",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.vocab_dataset_catalog",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.vocab_datasets",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.vocab_entries",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.vocab_entry_quiz_eligibility",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.vocab_unit_catalog",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        },
+        {
+          "relation_name": "public.vocab_units",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 32768,
+          "index_bytes": 0,
+          "total_bytes": 32768
+        }
+      ]
+    },
+    {
+      "from": "run-6-vacuum",
+      "to": "run-16-vacuum",
+      "runs": 10,
+      "databaseBytes": 2580480,
+      "tracked": {
+        "row_count": 2990,
+        "row_text_bytes": 2773411,
+        "row_datum_bytes": 1090154,
+        "heap_main_bytes": 1015808,
+        "table_with_toast_bytes": 1187840,
+        "index_bytes": 802816,
+        "total_bytes": 1990656
+      },
+      "unexplainedDatabaseBytes": 589824,
+      "perRun": {
+        "row_count": 299,
+        "row_text_bytes": 277341.1,
+        "row_datum_bytes": 109015.4,
+        "heap_main_bytes": 101580.8,
+        "table_with_toast_bytes": 118784,
+        "index_bytes": 80281.6,
+        "total_bytes": 199065.6
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 500,
+          "row_text_bytes": 1102320,
+          "row_datum_bytes": 358410,
+          "heap_main_bytes": 368640,
+          "table_with_toast_bytes": 368640,
+          "index_bytes": 180224,
+          "total_bytes": 548864
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 600,
+          "row_text_bytes": 397708,
+          "row_datum_bytes": 217520,
+          "heap_main_bytes": 221184,
+          "table_with_toast_bytes": 221184,
+          "index_bytes": 139264,
+          "total_bytes": 360448
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 600,
+          "row_text_bytes": 459584,
+          "row_datum_bytes": 180960,
+          "heap_main_bytes": 188416,
+          "table_with_toast_bytes": 188416,
+          "index_bytes": 212992,
+          "total_bytes": 401408
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 500,
+          "row_text_bytes": 318960,
+          "row_datum_bytes": 68600,
+          "heap_main_bytes": 98304,
+          "table_with_toast_bytes": 98304,
+          "index_bytes": 163840,
+          "total_bytes": 262144
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 10,
+          "row_text_bytes": 144270,
+          "row_datum_bytes": 68072,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 81920,
+          "index_bytes": 0,
+          "total_bytes": 81920
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 500,
+          "row_text_bytes": 106000,
+          "row_datum_bytes": 60500,
+          "heap_main_bytes": 73728,
+          "table_with_toast_bytes": 73728,
+          "index_bytes": 24576,
+          "total_bytes": 98304
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 20,
+          "row_text_bytes": 74040,
+          "row_datum_bytes": 57236,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 73728,
+          "index_bytes": 0,
+          "total_bytes": 73728
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 20,
+          "row_text_bytes": 49148,
+          "row_datum_bytes": 40456,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 49152,
+          "index_bytes": 0,
+          "total_bytes": 49152
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 120,
+          "row_text_bytes": 63308,
+          "row_datum_bytes": 16320,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 40960,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 10,
+          "row_text_bytes": 17778,
+          "row_datum_bytes": 5140,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 20,
+          "row_text_bytes": 10560,
+          "row_datum_bytes": 4240,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 10,
+          "row_text_bytes": 3676,
+          "row_datum_bytes": 2800,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 10,
+          "row_text_bytes": 9400,
+          "row_datum_bytes": 1960,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 10,
+          "row_text_bytes": 2550,
+          "row_datum_bytes": 1850,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 10,
+          "row_text_bytes": 2220,
+          "row_datum_bytes": 1700,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 10,
+          "row_text_bytes": 2649,
+          "row_datum_bytes": 1140,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 10,
+          "row_text_bytes": 3088,
+          "row_datum_bytes": 1120,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 10,
+          "row_text_bytes": 3059,
+          "row_datum_bytes": 800,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 10,
+          "row_text_bytes": 1970,
+          "row_datum_bytes": 770,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 10,
+          "row_text_bytes": 1110,
+          "row_datum_bytes": 560,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 40960,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 0,
+          "row_text_bytes": 10,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": 1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 0,
+          "row_text_bytes": 2,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        }
+      ]
+    },
+    {
+      "from": "run-16-vacuum",
+      "to": "run-32-vacuum",
+      "runs": 16,
+      "databaseBytes": 3424256,
+      "tracked": {
+        "row_count": 4784,
+        "row_text_bytes": 4439081,
+        "row_datum_bytes": 1744488,
+        "heap_main_bytes": 1638400,
+        "table_with_toast_bytes": 1900544,
+        "index_bytes": 1425408,
+        "total_bytes": 3325952
+      },
+      "unexplainedDatabaseBytes": 98304,
+      "perRun": {
+        "row_count": 299,
+        "row_text_bytes": 277442.5625,
+        "row_datum_bytes": 109030.5,
+        "heap_main_bytes": 102400,
+        "table_with_toast_bytes": 118784,
+        "index_bytes": 89088,
+        "total_bytes": 207872
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 800,
+          "row_text_bytes": 1763792,
+          "row_datum_bytes": 573456,
+          "heap_main_bytes": 598016,
+          "table_with_toast_bytes": 598016,
+          "index_bytes": 335872,
+          "total_bytes": 933888
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 960,
+          "row_text_bytes": 637137,
+          "row_datum_bytes": 348032,
+          "heap_main_bytes": 360448,
+          "table_with_toast_bytes": 360448,
+          "index_bytes": 237568,
+          "total_bytes": 598016
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 960,
+          "row_text_bytes": 736178,
+          "row_datum_bytes": 289536,
+          "heap_main_bytes": 303104,
+          "table_with_toast_bytes": 303104,
+          "index_bytes": 335872,
+          "total_bytes": 638976
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 800,
+          "row_text_bytes": 510372,
+          "row_datum_bytes": 109760,
+          "heap_main_bytes": 155648,
+          "table_with_toast_bytes": 155648,
+          "index_bytes": 344064,
+          "total_bytes": 499712
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 16,
+          "row_text_bytes": 230830,
+          "row_datum_bytes": 109120,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 131072,
+          "index_bytes": 0,
+          "total_bytes": 131072
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 800,
+          "row_text_bytes": 169600,
+          "row_datum_bytes": 96800,
+          "heap_main_bytes": 106496,
+          "table_with_toast_bytes": 106496,
+          "index_bytes": 32768,
+          "total_bytes": 139264
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 32,
+          "row_text_bytes": 118459,
+          "row_datum_bytes": 91608,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 114688,
+          "index_bytes": 0,
+          "total_bytes": 114688
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 32,
+          "row_text_bytes": 78599,
+          "row_datum_bytes": 64736,
+          "heap_main_bytes": 32768,
+          "table_with_toast_bytes": 73728,
+          "index_bytes": 0,
+          "total_bytes": 73728
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 192,
+          "row_text_bytes": 101272,
+          "row_datum_bytes": 26112,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 65536,
+          "total_bytes": 90112
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 16,
+          "row_text_bytes": 28448,
+          "row_datum_bytes": 8224,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 32,
+          "row_text_bytes": 16882,
+          "row_datum_bytes": 6784,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 16,
+          "row_text_bytes": 5888,
+          "row_datum_bytes": 4480,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 16,
+          "row_text_bytes": 15024,
+          "row_datum_bytes": 3136,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 16,
+          "row_text_bytes": 4080,
+          "row_datum_bytes": 2960,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 16,
+          "row_text_bytes": 3552,
+          "row_datum_bytes": 2720,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 16,
+          "row_text_bytes": 4232,
+          "row_datum_bytes": 1824,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 16,
+          "row_text_bytes": 4941,
+          "row_datum_bytes": 1792,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 16,
+          "row_text_bytes": 4896,
+          "row_datum_bytes": 1280,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 16,
+          "row_text_bytes": 3152,
+          "row_datum_bytes": 1232,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 16,
+          "row_text_bytes": 1776,
+          "row_datum_bytes": 896,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 24576,
+          "total_bytes": 24576
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 0,
+          "row_text_bytes": 19,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_versions",
+          "row_count": 0,
+          "row_text_bytes": 1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": 1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 0,
+          "row_text_bytes": -50,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 49152,
+          "total_bytes": 57344
+        }
+      ]
+    },
+    {
+      "from": "run-6-vacuum",
+      "to": "run-32-vacuum",
+      "runs": 26,
+      "databaseBytes": 6004736,
+      "tracked": {
+        "row_count": 7774,
+        "row_text_bytes": 7212492,
+        "row_datum_bytes": 2834642,
+        "heap_main_bytes": 2654208,
+        "table_with_toast_bytes": 3088384,
+        "index_bytes": 2228224,
+        "total_bytes": 5316608
+      },
+      "unexplainedDatabaseBytes": 688128,
+      "perRun": {
+        "row_count": 299,
+        "row_text_bytes": 277403.53846153844,
+        "row_datum_bytes": 109024.69230769231,
+        "heap_main_bytes": 102084.92307692308,
+        "table_with_toast_bytes": 118784,
+        "index_bytes": 85700.92307692308,
+        "total_bytes": 204484.92307692306
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 1300,
+          "row_text_bytes": 2866112,
+          "row_datum_bytes": 931866,
+          "heap_main_bytes": 966656,
+          "table_with_toast_bytes": 966656,
+          "index_bytes": 516096,
+          "total_bytes": 1482752
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 1560,
+          "row_text_bytes": 1034845,
+          "row_datum_bytes": 565552,
+          "heap_main_bytes": 581632,
+          "table_with_toast_bytes": 581632,
+          "index_bytes": 376832,
+          "total_bytes": 958464
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 1560,
+          "row_text_bytes": 1195762,
+          "row_datum_bytes": 470496,
+          "heap_main_bytes": 491520,
+          "table_with_toast_bytes": 491520,
+          "index_bytes": 548864,
+          "total_bytes": 1040384
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 1300,
+          "row_text_bytes": 829332,
+          "row_datum_bytes": 178360,
+          "heap_main_bytes": 253952,
+          "table_with_toast_bytes": 253952,
+          "index_bytes": 507904,
+          "total_bytes": 761856
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 26,
+          "row_text_bytes": 375100,
+          "row_datum_bytes": 177192,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 212992,
+          "index_bytes": 0,
+          "total_bytes": 212992
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 1300,
+          "row_text_bytes": 275600,
+          "row_datum_bytes": 157300,
+          "heap_main_bytes": 180224,
+          "table_with_toast_bytes": 180224,
+          "index_bytes": 57344,
+          "total_bytes": 237568
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 52,
+          "row_text_bytes": 192499,
+          "row_datum_bytes": 148844,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 188416,
+          "index_bytes": 0,
+          "total_bytes": 188416
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 52,
+          "row_text_bytes": 127747,
+          "row_datum_bytes": 105192,
+          "heap_main_bytes": 49152,
+          "table_with_toast_bytes": 122880,
+          "index_bytes": 0,
+          "total_bytes": 122880
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 312,
+          "row_text_bytes": 164580,
+          "row_datum_bytes": 42432,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 106496,
+          "total_bytes": 147456
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 26,
+          "row_text_bytes": 46226,
+          "row_datum_bytes": 13364,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 0,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 52,
+          "row_text_bytes": 27442,
+          "row_datum_bytes": 11024,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 26,
+          "row_text_bytes": 9564,
+          "row_datum_bytes": 7280,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 26,
+          "row_text_bytes": 24424,
+          "row_datum_bytes": 5096,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 26,
+          "row_text_bytes": 6630,
+          "row_datum_bytes": 4810,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 26,
+          "row_text_bytes": 5772,
+          "row_datum_bytes": 4420,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 26,
+          "row_text_bytes": 6881,
+          "row_datum_bytes": 2964,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 26,
+          "row_text_bytes": 8029,
+          "row_datum_bytes": 2912,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 26,
+          "row_text_bytes": 7955,
+          "row_datum_bytes": 2080,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 26,
+          "row_text_bytes": 5122,
+          "row_datum_bytes": 2002,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 26,
+          "row_text_bytes": 2886,
+          "row_datum_bytes": 1456,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 65536,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 0,
+          "row_text_bytes": 29,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_versions",
+          "row_count": 0,
+          "row_text_bytes": 1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": 2,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 0,
+          "row_text_bytes": -48,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 49152,
+          "total_bytes": 65536
+        }
+      ]
+    },
+    {
+      "from": "run-31-complete",
+      "to": "run-32-complete",
+      "runs": 1,
+      "databaseBytes": 245760,
+      "tracked": {
+        "row_count": 299,
+        "row_text_bytes": 277422,
+        "row_datum_bytes": 109041,
+        "heap_main_bytes": 106496,
+        "table_with_toast_bytes": 122880,
+        "index_bytes": 122880,
+        "total_bytes": 245760
+      },
+      "unexplainedDatabaseBytes": 0,
+      "perRun": {
+        "row_count": 299,
+        "row_text_bytes": 277422,
+        "row_datum_bytes": 109041,
+        "heap_main_bytes": 106496,
+        "table_with_toast_bytes": 122880,
+        "index_bytes": 122880,
+        "total_bytes": 245760
+      },
+      "tables": [
+        {
+          "relation_name": "public.assignment_questions",
+          "row_count": 50,
+          "row_text_bytes": 110237,
+          "row_datum_bytes": 35841,
+          "heap_main_bytes": 40960,
+          "table_with_toast_bytes": 40960,
+          "index_bytes": 16384,
+          "total_bytes": 57344
+        },
+        {
+          "relation_name": "private.vocabulary_answer_receipts",
+          "row_count": 60,
+          "row_text_bytes": 39830,
+          "row_datum_bytes": 21752,
+          "heap_main_bytes": 24576,
+          "table_with_toast_bytes": 24576,
+          "index_bytes": 24576,
+          "total_bytes": 49152
+        },
+        {
+          "relation_name": "public.student_point_events",
+          "row_count": 60,
+          "row_text_bytes": 46022,
+          "row_datum_bytes": 18096,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 49152,
+          "total_bytes": 65536
+        },
+        {
+          "relation_name": "public.quiz_questions",
+          "row_count": 50,
+          "row_text_bytes": 31904,
+          "row_datum_bytes": 6860,
+          "heap_main_bytes": 16384,
+          "table_with_toast_bytes": 16384,
+          "index_bytes": 24576,
+          "total_bytes": 40960
+        },
+        {
+          "relation_name": "private.quiz_attempt_preparations",
+          "row_count": 1,
+          "row_text_bytes": 14427,
+          "row_datum_bytes": 6848,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.assignment_vocabulary_meaning_refs",
+          "row_count": 50,
+          "row_text_bytes": 10600,
+          "row_datum_bytes": 6050,
+          "heap_main_bytes": 8192,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 8192,
+          "total_bytes": 16384
+        },
+        {
+          "relation_name": "private.local_quiz_phase_plans",
+          "row_count": 2,
+          "row_text_bytes": 7404,
+          "row_datum_bytes": 5714,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 8192,
+          "index_bytes": 0,
+          "total_bytes": 8192
+        },
+        {
+          "relation_name": "private.local_quiz_phase_receipts",
+          "row_count": 2,
+          "row_text_bytes": 4915,
+          "row_datum_bytes": 4040,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_wrong_events",
+          "row_count": 12,
+          "row_text_bytes": 6330,
+          "row_datum_bytes": 1632,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignments",
+          "row_count": 1,
+          "row_text_bytes": 1778,
+          "row_datum_bytes": 514,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_phase_results",
+          "row_count": 2,
+          "row_text_bytes": 1055,
+          "row_datum_bytes": 424,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.audit_events",
+          "row_count": 1,
+          "row_text_bytes": 368,
+          "row_datum_bytes": 280,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.quiz_attempts",
+          "row_count": 1,
+          "row_text_bytes": 940,
+          "row_datum_bytes": 196,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_runs",
+          "row_count": 1,
+          "row_text_bytes": 255,
+          "row_datum_bytes": 185,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.local_quiz_preparations",
+          "row_count": 1,
+          "row_text_bytes": 222,
+          "row_datum_bytes": 170,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.vocabulary_result_policies",
+          "row_count": 1,
+          "row_text_bytes": 265,
+          "row_datum_bytes": 114,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.notification_receipts",
+          "row_count": 1,
+          "row_text_bytes": 309,
+          "row_datum_bytes": 112,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_students",
+          "row_count": 1,
+          "row_text_bytes": 306,
+          "row_datum_bytes": 80,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_units",
+          "row_count": 1,
+          "row_text_bytes": 197,
+          "row_datum_bytes": 77,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.assignment_sources",
+          "row_count": 1,
+          "row_text_bytes": 111,
+          "row_datum_bytes": 56,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "private.student_vocabulary_meaning_states",
+          "row_count": 0,
+          "row_text_bytes": -2,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_point_totals",
+          "row_count": 0,
+          "row_text_bytes": -1,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        },
+        {
+          "relation_name": "public.student_vocab_state",
+          "row_count": 0,
+          "row_text_bytes": -50,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": 0,
+          "table_with_toast_bytes": 0,
+          "index_bytes": 0,
+          "total_bytes": 0
+        }
+      ]
+    },
+    {
+      "from": "run-32-complete",
+      "to": "run-32-vacuum",
+      "runs": 1,
+      "databaseBytes": 49152,
+      "tracked": {
+        "row_count": 0,
+        "row_text_bytes": 0,
+        "row_datum_bytes": 0,
+        "heap_main_bytes": -40960,
+        "table_with_toast_bytes": -49152,
+        "index_bytes": 0,
+        "total_bytes": -49152
+      },
+      "unexplainedDatabaseBytes": 98304,
+      "perRun": {
+        "row_count": 0,
+        "row_text_bytes": 0,
+        "row_datum_bytes": 0,
+        "heap_main_bytes": -40960,
+        "table_with_toast_bytes": -49152,
+        "index_bytes": 0,
+        "total_bytes": -49152
+      },
+      "tables": [
+        {
+          "relation_name": "private.assignment_vocabulary_new_questions",
+          "row_count": 0,
+          "row_text_bytes": 0,
+          "row_datum_bytes": 0,
+          "heap_main_bytes": -40960,
+          "table_with_toast_bytes": -49152,
+          "index_bytes": 0,
+          "total_bytes": -49152
+        }
+      ]
+    }
+  ],
+  "stableRuns7to32": {
+    "row_count": {
+      "min": 299,
+      "max": 299,
+      "mean": 299
+    },
+    "row_text_bytes": {
+      "min": 277280,
+      "max": 277586,
+      "mean": 277403.53846153844
+    },
+    "row_datum_bytes": {
+      "min": 108961,
+      "max": 109089,
+      "mean": 109024.69230769231
+    },
+    "heap_main_bytes": {
+      "min": 81920,
+      "max": 122880,
+      "mean": 104920.61538461539
+    },
+    "table_with_toast_bytes": {
+      "min": 90112,
+      "max": 147456,
+      "mean": 122249.84615384616
+    },
+    "index_bytes": {
+      "min": 24576,
+      "max": 147456,
+      "mean": 84755.69230769231
+    },
+    "total_bytes": {
+      "min": 122880,
+      "max": 278528,
+      "mean": 207005.53846153847
+    }
+  },
+  "responseStats": {
+    "preparedJsonBytes": {
+      "min": 18672,
+      "max": 18721
+    },
+    "initialPlanJsonBytes": {
+      "min": 7933,
+      "max": 7944
+    },
+    "retryPlanJsonBytes": {
+      "min": 1889,
+      "max": 1900
+    },
+    "initial.requestJsonBytes": {
+      "min": 6120,
+      "max": 6120,
+      "median": 6120,
+      "p95": 6120,
+      "p99": 6120
+    },
+    "initial.responseJsonBytes": {
+      "min": 8827,
+      "max": 8936,
+      "median": 8886,
+      "p95": 8936,
+      "p99": 8936
+    },
+    "initial.localSqlElapsedMs": {
+      "min": 162.20739999999932,
+      "max": 507.76739999998244,
+      "median": 323.438849999995,
+      "p95": 462.3940999999759,
+      "p99": 507.76739999998244
+    },
+    "retry.requestJsonBytes": {
+      "min": 1437,
+      "max": 1437,
+      "median": 1437,
+      "p95": 1437,
+      "p99": 1437
+    },
+    "retry.responseJsonBytes": {
+      "min": 3376,
+      "max": 3396,
+      "median": 3386,
+      "p95": 3396,
+      "p99": 3396
+    },
+    "retry.localSqlElapsedMs": {
+      "min": 120.82509999999456,
+      "max": 350.9210000000021,
+      "median": 198.9944999999998,
+      "p95": 330.59010000000126,
+      "p99": 350.9210000000021
+    },
+    "fiveRpcResponseBytes": {
+      "min": 40698,
+      "max": 40848,
+      "mean": 40798.6875
+    }
+  }
+}

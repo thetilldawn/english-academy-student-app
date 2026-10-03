@@ -1,0 +1,18 @@
+{
+  "work": "OPS-20261003-02",
+  "sourceCommit": "e6b98ab2e72565d8a5feb7e950a0eb535a8587b7",
+  "reviewers": [
+    {
+      "role": "database measurement review",
+      "agent": "/root/m05_db_review",
+      "findings": 0,
+      "confirmed": "Raw and analysis match; 299 rows; datum109030.5; tracked physical207872; index89088; DB214016 per exam over last16. Assignment datum35841 unchanged; physical97792 to58368. Unchanged-table index drift2048 per exam prevents attributing the entire observed reduction to this patch."
+    },
+    {
+      "role": "evidence and report review",
+      "agent": "/root/m05_record_review",
+      "findings": 0,
+      "confirmed": "1913 source inputs,238 SQL files,11 evidence hashes and decompressed SHA match; previous two baselines unchanged; forecasts and response bytes match raw; limitations and unverified cloud load/ownership/production are explicit."
+    }
+  ]
+}
