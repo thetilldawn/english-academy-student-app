@@ -97,7 +97,7 @@ export class PreviewRun {
           this.expectedNetworkFailures.push({ pathname, code });
           return;
         }
-        this.browserMessages.push(`console.${message.type()}: ${message.text()}`);
+        this.browserMessages.push(`console.${message.type()} ${pathname}: ${message.text()}`);
       }
     });
     page.on("pageerror", (error) => {
@@ -304,6 +304,7 @@ export class PreviewRun {
       {
         checkRunnerSha: this.checkRunnerSha,
         browserAdvisories: this.browserAdvisories,
+        browserErrors: this.browserMessages,
         deploymentChecks: this.deploymentChecks,
         expectedNetworkFailures: this.expectedNetworkFailures,
         origin: this.origin,
