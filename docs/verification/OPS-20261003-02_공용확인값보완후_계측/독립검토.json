@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-10-03T09:04:48.167Z",
+  "reviewers": [
+    "m05_db_review",
+    "capacity_code_audit"
+  ],
+  "blockingFindings": 0,
+  "rawSha256": "5933fec3891f7391df056bcd45392d8668f8809bbad1303428db843584fa8574",
+  "inputs": 1915,
+  "sqlFiles": 239,
+  "evidenceHashes": 11,
+  "metricsCompared": 105,
+  "scenarioRows": 15,
+  "olderBaselinesUnchanged": 3,
+  "corrections": [
+    "Narrowed no protection bypass to unchanged body/time/immutability checks; documented fixture service_role BYPASSRLS",
+    "Distinguished test-runner 254.32 seconds from raw measurement interval 251.108 seconds"
+  ],
+  "limitations": [
+    "Local observation only, no cloud capacity guarantee",
+    "Immediate replay aggregate counts/sizes are not a full cell-wise cryptographic comparison"
+  ]
+}

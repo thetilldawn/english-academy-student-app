@@ -1,0 +1,6 @@
+{
+  "sourceCommit": "be0c8777fac7bc02fc1c3afd351de72dd2373114",
+  "startedAt": "2026-10-03T08:44:49.743Z",
+  "method": "Same32 committed synthetic exams; new assignment hash representation only; no cloud calls",
+  "baseline": "docs/verification/OPS-20261003-02_배정저장보완후_계측"
+}
