@@ -2066,8 +2066,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 125,
-      "pathSetSha256": "a04cbb6077ab42a618b249d8c56e8c0ad051c1023b54259d052e89e4b7d23f7c"
+      "fileCount": 126,
+      "pathSetSha256": "acdfccd02d98855c77e0ed2fb5ae81a48922fc03a9906931108612d52cbf2aa3"
     },
     {
       "path": "src/lib/deploy",
@@ -2455,6 +2455,10 @@
     {
       "path": "src/features/assignments/server/planning/notebook-assignment.ts",
       "owner": "assignments"
+    },
+    {
+      "path": "src/features/quiz-player/server/queries/transition-question-content-query.ts",
+      "owner": "quiz-player"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2874,6 +2878,11 @@
     {
       "path": "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
       "owner": "learning-points",
+      "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261004001500_add_transition_question_reader.sql",
+      "owner": "quiz-player",
       "flow": "student-quiz-attempt"
     }
   ],
@@ -3558,6 +3567,12 @@
       "to": "src/features/students/public-contracts.ts",
       "reason": "기존 공개 계약/출제/발음과 계정 변경 신호 재사용",
       "removeIn": "공개 경계를 사용하는 동안 유지"
+    },
+    {
+      "from": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
+      "to": "src/features/quiz-player/public-server-queries.ts",
+      "reason": "운영 구조 전환 중 명시 NULL 예문만 현재 학생 문맥으로 복원",
+      "removeIn": "운영 전환 호환 앱 수명 동안 유지"
     }
   ],
   "currentLibToFeatureImports": [
@@ -3640,14 +3655,20 @@
     {
       "from": "src/features/quiz-player/server/attempt-preparation.ts",
       "to": "src/features/wordbook-compositions/public-contracts.ts",
-      "via": ["src/lib/services/quiz/attempt-query.ts", "src/lib/services/quiz/question-snapshot.ts"],
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/question-snapshot.ts"
+      ],
       "reason": "준비·진행 화면이 같은 문항 발음 복원을 재사용",
       "removeIn": "기존 시험 조회의 기능 server 이동"
     },
     {
       "from": "src/features/quiz-player/server/attempt-preparation.ts",
       "to": "src/features/wordbook-compositions/public-server.ts",
-      "via": ["src/lib/services/quiz/attempt-query.ts", "src/lib/services/quiz/pronunciation-registry.ts"],
+      "via": [
+        "src/lib/services/quiz/attempt-query.ts",
+        "src/lib/services/quiz/pronunciation-registry.ts"
+      ],
       "reason": "준비와 진행의 동일 발음 복원을 재사용",
       "removeIn": "기존 시험 명령의 기능 server 이동"
     },
@@ -6716,7 +6737,9 @@
           "src/lib/services/vocab-assignment-queue-support.ts",
           "src/features/quiz-player/public-server.ts",
           "src/features/quiz-player/server/attempt-preparation.ts",
-          "src/app/api/student/attempts/[id]/ready/route.ts"
+          "src/app/api/student/attempts/[id]/ready/route.ts",
+          "src/features/quiz-player/server/queries/transition-question-content-query.ts",
+          "src/features/quiz-player/public-server-queries.ts"
         ],
         "database": [
           "supabase/migrations/20260728162905_initial_student_app_mvp.sql",
@@ -6746,7 +6769,8 @@
           "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
           "supabase/migrations/20260927080438_declare_quiz_feedback_protocol.sql",
           "supabase/migrations/20260930152638_require_passed_vocab_points.sql",
-          "supabase/migrations/20261001014318_prepare_quiz_before_start.sql"
+          "supabase/migrations/20261001014318_prepare_quiz_before_start.sql",
+          "supabase/migrations/20261004001500_add_transition_question_reader.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -6796,7 +6820,10 @@
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/features/quiz-player/ui/prepared-quiz-player.test.tsx",
           "src/features/quiz-player/controller/resolve-quiz-feedback-transition.test.ts",
-          "src/features/quiz-player/server/attempt-preparation.integration.test.ts"
+          "src/features/quiz-player/server/attempt-preparation.integration.test.ts",
+          "src/features/quiz-player/server/queries/transition-question-content-query.test.ts",
+          "src/lib/database/transition-question-reader.integration.test.ts",
+          "src/features/quiz-player/server/transition-preparation.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -6839,6 +6866,16 @@
           "from": "src/lib/services/vocab-assignment-queue-command.ts",
           "to": "src/lib/services/vocab-assignment-queue-support.ts",
           "reason": "queue RPC 호환 오류 구분"
+        },
+        {
+          "from": "src/features/quiz-player/server/attempt-preparation.ts",
+          "to": "src/features/quiz-player/server/queries/transition-question-content-query.ts",
+          "reason": "NULL 본문만 동결 자료로 복원"
+        },
+        {
+          "from": "src/features/quiz-player/public-server-queries.ts",
+          "to": "src/features/quiz-player/server/queries/transition-question-content-query.ts",
+          "reason": "전환용 예문 조회 공개 경계"
         }
       ],
       "notApplicable": {
@@ -7046,7 +7083,9 @@
           "src/features/student-dashboard/server/components/assignment-study-content.tsx",
           "src/features/student-dashboard/server/queries/assignment-study-query.ts",
           "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
-          "src/lib/services/quiz/pronunciation-registry.ts"
+          "src/lib/services/quiz/pronunciation-registry.ts",
+          "src/features/quiz-player/server/queries/transition-question-content-query.ts",
+          "src/features/quiz-player/public-server-queries.ts"
         ],
         "database": [
           "supabase/migrations/20260905051013_add_student_assignment_study.sql",
@@ -7063,7 +7102,8 @@
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
           "supabase/migrations/20260914125508_add_reviewed_entry_resource_links.sql",
           "supabase/migrations/20260914213654_add_reviewed_pronunciation_assets.sql",
-          "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql"
+          "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
+          "supabase/migrations/20261004001500_add_transition_question_reader.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -7093,7 +7133,9 @@
           "src/lib/database/pronunciation-audio-corrections.integration.test.ts",
           "src/design-system/primitives/fit-text/fit-text.test.tsx",
           "src/lib/quiz/pronunciation-snapshot.test.ts",
-          "src/lib/quiz/pronunciation-storage.test.ts"
+          "src/lib/quiz/pronunciation-storage.test.ts",
+          "src/features/quiz-player/server/queries/transition-question-content-query.test.ts",
+          "src/lib/database/transition-question-reader.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7121,6 +7163,16 @@
           "from": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
           "to": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
           "reason": "현재 학생 권한 확인 후 같은 배정의 예문 위치 자료 읽기"
+        },
+        {
+          "from": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
+          "to": "src/features/quiz-player/public-server-queries.ts",
+          "reason": "학생 학습 자료의 공개 서버 경계"
+        },
+        {
+          "from": "src/features/quiz-player/public-server-queries.ts",
+          "to": "src/features/quiz-player/server/queries/transition-question-content-query.ts",
+          "reason": "전환용 예문 조회 공개 경계"
         }
       ],
       "notApplicable": {

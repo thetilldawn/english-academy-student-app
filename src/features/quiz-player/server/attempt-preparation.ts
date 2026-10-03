@@ -1,4 +1,5 @@
 import "server-only";
+import { getTransitionPreparationContents, TransitionPreparationChangedError } from "./queries/transition-question-content-query";
 import { z } from "zod";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { getStudentAttempt, hydrateQuizQuestions, type QuestionRow } from "@/lib/services/quiz/attempt-query";
@@ -68,10 +69,30 @@ export async function getQuizPreparation(studentId: string, id: string): Promise
   const banks = new Map<string, QuestionRow["assignment_question"]>();
   const supabase = getServiceSupabaseClient();
   for (let offset=0; offset<bankIds.length; offset+=200) {
-    const { data, error } = await supabase.from("assignment_questions").select("id, vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, composition_pronunciation_snapshot, notebook_pronunciation_snapshot, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(release_id, occurrence_id, dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)")
+    const { data, error } = await supabase.from("assignment_questions").select("id, prompt, vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, composition_pronunciation_snapshot, notebook_pronunciation_snapshot, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(release_id, occurrence_id, dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)")
       .eq("assignment_id", a.id).in("id", bankIds.slice(offset,offset+200));
     if (error) throw error;
-    for (const item of data ?? []) banks.set(item.id, item as QuestionRow["assignment_question"]);
+    const stored = z.array(z.object({ id: z.uuid(), prompt: z.string().min(1).nullable(), vocab_entry_id: z.number().int().positive() }).passthrough()).max(200).parse(data);
+    const allowed = new Set(bankIds.slice(offset, offset + 200));
+    if (stored.length !== allowed.size || stored.some(item => !allowed.has(item.id)) || new Set(stored.map(item => item.id)).size !== stored.length) throw new Error("preparation_changed");
+    const compact = stored.filter(item => item.prompt === null);
+    let restored: Awaited<ReturnType<typeof getTransitionPreparationContents>>;
+    try { restored = compact.length ? await getTransitionPreparationContents(studentId, id, compact.map(item => item.id)) : new Map(); }
+    catch (error) {
+      if (!(error instanceof TransitionPreparationChangedError)) throw error;
+      const refreshedRaw = await rpc("get_quiz_preparation_v1", { p_student_id: studentId, p_preparation_id: id });
+      if (refreshedRaw) {
+        const refreshed = z.object({ kind: z.enum(["initial", "practice"]), begunId: z.uuid().nullable().optional() }).parse(refreshedRaw);
+        if (refreshed.begunId) return { resumeId: refreshed.begunId, kind: refreshed.kind };
+      }
+      throw new QuizPreparationChangedError("시험 준비가 만료되었거나 자료가 바뀌었습니다. 목록에서 다시 시작해 주세요.");
+    }
+    for (const item of stored) {
+      const { prompt, ...original } = item;
+      const snapshot = prompt === null ? restored.get(item.id)!.assignment_question : original;
+      if (snapshot.vocab_entry_id !== item.vocab_entry_id || banks.has(item.id)) throw new Error("preparation_changed");
+      banks.set(item.id, snapshot as QuestionRow["assignment_question"]);
+    }
   }
   if (banks.size !== bankIds.length) throw new Error("preparation_changed");
   const rows: QuestionRow[] = plan.map(q => ({ ...q, initial_choice_index: null, initial_is_correct: null,

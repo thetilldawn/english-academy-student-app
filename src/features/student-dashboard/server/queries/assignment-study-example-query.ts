@@ -1,4 +1,5 @@
 import "server-only";
+import { getTransitionStudyContents } from "@/features/quiz-player/public-server-queries";
 
 import { z } from "zod";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
@@ -6,17 +7,24 @@ import { getServiceSupabaseClient } from "@/lib/supabase/service";
 const rowSchema = z.object({ vocab_entry_id: z.number().int().positive(), prompt: z.string().min(1).max(10_000) });
 
 /** Only call after get_student_assignment_study_v1 permitted this session's assignment. */
-export async function getStudyExamplePrompts(assignmentId: string, permittedEntryIds: readonly number[]): Promise<Map<number, string[]>> {
+export async function getStudyExamplePrompts(studentId: string, assignmentId: string, permittedEntryIds: readonly number[]): Promise<Map<number, string[]>> {
   if (!permittedEntryIds.length) return new Map();
   const allowed = new Set(permittedEntryIds);
   const { data, error } = await getServiceSupabaseClient().from("assignment_questions")
-    .select("vocab_entry_id, prompt")
+    .select("id, vocab_entry_id, prompt")
     .eq("assignment_id", assignmentId)
     .eq("eligibility_quiz_mode", "canonical_example_to_headword")
     .in("vocab_entry_id", [...allowed])
     .limit(1001);
   if (error) throw new Error("assignment_study_example_read_failed", { cause: error.code });
-  const parsed = z.array(rowSchema).max(1000).safeParse(data);
+  const stored = z.array(rowSchema.extend({ id: z.uuid(), prompt: z.string().min(1).max(10_000).nullable() })).max(1000).safeParse(data);
+  if (!stored.success || stored.data.some(row => !allowed.has(row.vocab_entry_id)) || new Set(stored.data.map(row => row.id)).size !== stored.data.length) {
+    throw new Error("assignment_study_example_data_invalid");
+  }
+  const compact = stored.data.filter(row => row.prompt === null);
+  const contents = compact.length ? await getTransitionStudyContents(studentId, assignmentId, compact.map(row => row.id)) : new Map();
+  if (compact.some(row => contents.get(row.id)?.vocab_entry_id !== row.vocab_entry_id)) throw new Error("assignment_study_example_data_invalid");
+  const parsed = z.array(rowSchema).max(1000).safeParse(stored.data.map(row => row.prompt === null ? { ...row, prompt: contents.get(row.id)!.prompt } : row));
   if (!parsed.success || parsed.data.some((row) => !allowed.has(row.vocab_entry_id))) {
     throw new Error("assignment_study_example_data_invalid");
   }

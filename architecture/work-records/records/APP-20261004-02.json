@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261004-02",
+  "title": "운영 DB 전환 중 구형 화면의 단어 내용 읽기 호환",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261004-02.md",
+  "baseline": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+  "owners": [
+    "quiz-player",
+    "student-dashboard",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "docs/work-orders/APP-20261004-02.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/quiz-player/server/queries/transition-question-content-query.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/queries/transition-question-content-query.test.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/public-server-queries.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/attempt-preparation.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/transition-preparation.test.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/attempt-preparation.integration.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20261004001500_add_transition_question_reader.sql",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/transition-question-reader.integration.test.ts",
+      "state": "planned",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/quiz-player/AGENTS.md",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/student-dashboard/AGENTS.md",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261004-02_검증결과.md",
+      "state": "planned",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "engineering",
+      "text": "운영 원래 DB에서는 기존 단어 내용으로 그대로 동작한다",
+      "acceptance": "기존 본문이 있는 두 조회는 새 함수 호출0, 기존 표시/준비 응답 동일",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "새 참조형 배정은 당시 고정 내용으로 읽는다",
+      "acceptance": "본문 NULL 문항만 복원·키/순서/개수·원뜻/출처/발음 동일, 최신 사전으로 대체하지 않음",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "기존 시험과 답은 전환 중 유지한다",
+      "acceptance": "새 응시 중지 조건에서 기존 답·재시험·중복 요청/재접속 유지, 종료의 자동 후속 배정 단어보기/준비 성공",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "engineering",
+      "text": "학생 소유권과 최소 공개를 보존한다",
+      "acceptance": "서비스 전용 두 문맥만 기존 검증에 위임하고 다른 학생·잘못된/누락 내용 거절",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "작업 승인",
+      "answer": "유지보수 완료·계속 진행 승인 안에서 운영 전환 시 확인된 읽기 오류를 좁게 보완",
+      "source": "사용자 ㄱ·승인·계속 진행"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "기존 DB 지원",
+      "answer": "fa4357 기반 별도 임시 앱. 본문이 있으면 원래 값 사용, 명시적 NULL만 별도 이름 읽기 함수에 요청",
+      "source": "원형 직접본문 소비자 두 곳과 필수 인자/공개 진입점 연결 조사"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "본문/권한 계약",
+      "answer": "두 문맥만 서비스 전용 SECURITY INVOKER 함수가 고정 동적 SQL로 read_question_contents_v1에 위임. 200키씩 문맥/순서/개수/중복·엄격한 내용검사",
+      "source": "현재 최종 공용본문 읽기 계약 재사용"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "운영 전환 조건",
+      "answer": "#23 제어와 읽기 함수 선행→짧은 거래 새 시작 중지→검증한 호환 앱→나머지 보존 거래→최종 앱→재개. 기존 본문 이전은 하지 않는다",
+      "source": "새 배정은 기존 시험 종료 때 자동으로 생길 수 있어 기존 제출을 막지 않는 해결"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "진행 경합과 실패",
+      "answer": "준비 내용 조회 중 이미 시작한 경우만 기존 영수증을 다시 읽어 같은 응시로 이동. 만료·권한·손상을 기본값으로 숨기지 않음",
+      "source": "기존 get_quiz_preparation_v1/begunId 계약"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "state": {
+      "status": "not_applicable",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "구형 읽기 두 곳과 엄격한 공용본문 검증/서비스 위임을 보완한다."
+    },
+    "api": {
+      "status": "checked",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "새 서비스 전용 위임 함수는 두 문맥만 허용하며 실제 M02 학생 소유권 검사를 우회하지 않는다."
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "구형 화면·준비/답 전송 계약은 유지하고 읽기 호환만 보완한다."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "구형 읽기 두 곳과 엄격한 공용본문 검증/서비스 위임을 보완한다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "학생 세션의 기존 권한 확인 뒤 서비스 전용 읽기, 두 문맥과 고정 스냅샷만 반환한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "학생 세션의 기존 권한 확인 뒤 서비스 전용 읽기, 두 문맥과 고정 스냅샷만 반환한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "학생 세션의 기존 권한 확인 뒤 서비스 전용 읽기, 두 문맥과 고정 스냅샷만 반환한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "캐시 코드와 저장 규격을 변경하지 않는다.",
+      "checkIds": []
+    }
+  },
+  "design": {
+    "dataFlow": "기존 학생 권한 확인→원 배정/준비 행 조회→본문 존재면 기존 반환, NULL이면 별도 서비스 함수→기존 내용 조회의 소유권 검증→엄격한 응답 확인→기존 화면",
+    "reuse": "현재 최종 공용본문의 준비/단어보기 스키마·기존 계획/시간·같은 시작 영수증 재사용",
+    "cache": "새 캐시/단어 복사/문항 생성 없음. 임시 앱의 기존 읽기 동작 유지",
+    "compatibility": "새 열을 기존 DB에서 SELECT하지 않음. 본문 NULL만 참조형 판별. 새 정규 시작중지·과거본문 이전 미실행 조건. 자율연습 구형 응답도 독립 확인",
+    "rollback": "SQL 전에는 원형 fa4357 복귀 가능. SQL 뒤에는 원형 단독 복귀 금지, 호환 앱 또는 최종 앱을 유지하고 학생 행은 되돌리지 않는다."
+  },
+  "uiStates": [],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "기존 fa4357와 M02 승인 계약 대조 2026-10-04",
+      "reference": "supabase/migrations/20261004001500_add_transition_question_reader.sql",
+      "reason": "고정된 함수에 원 인수를 위임하고 서비스 실행 권한과 기존 소유권 판정을 유지한다."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/features/quiz-player/server/queries/transition-question-content-query.test.ts",
+      "scenario": "빈 목록 무호출/200키/문맥·순서·중복·손상·역할 오류·준비 경합",
+      "expected": "정확한 동결 내용만 반환, 잘못된 응답/권한 거절은 실패",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "unit",
+      "target": "src/features/quiz-player/server/transition-preparation.test.ts",
+      "scenario": "원형 DB 무호출·혼합 본문·당시 뜻/발음·준비 경합 및 예문 호출부 회귀",
+      "expected": "기존 표시/시간/문항순서 동일, 명시 NULL만 복원, 다른학생/손상 방지",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/transition-question-reader.integration.test.ts",
+      "scenario": "원형 DB에서 설치 가능/위임 함수 없을 때 안전한 실패·서비스 권한·두 문맥 및 기존 준비 회귀",
+      "expected": "새 표/권한 확대 없음·브라우저 역할 거절·본문 있는 앱 경로 새 함수 무호출",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "review",
+      "target": "supabase/migrations/20261004001500_add_transition_question_reader.sql",
+      "scenario": "독립 검토·타입/lint/지도/설계/빌드·최종 SQL과 전환 순서·실제 검토 화면; 기존 자율연습·사전 준비·조건/선택 시작·만료 후 복구",
+      "expected": "진행 중 정규 답·자동 배정·학습·준비 보존; 신규 정규 응시0; 자율연습 계속 허용; 새 NULL 응시는 호환 앱 범위 밖; 운영 반영은 M10 별도 기록",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "structure"
+      ]
+    }
+  ],
+  "verification": null
+}

@@ -96,7 +96,7 @@ export async function getAssignmentStudy(
     loadActiveVocabPronunciationReleaseRegistry(ids),
     loadSyntheticPronunciationRegistry(bindings),
     loadApprovedKoreanPronunciationRegistry(dictionaryIds),
-    mode === "canonical_example_to_headword" ? getStudyExamplePrompts(assignmentId, ids) : Promise.resolve(new Map<number, string[]>()),
+    mode === "canonical_example_to_headword" ? getStudyExamplePrompts(student.studentId, assignmentId, ids) : Promise.resolve(new Map<number, string[]>()),
     loadEntryApprovedKoreanPronunciationRegistry(ids),
     loadEntrySourcePronunciationRegistry(ids),
     loadPronunciationAudioCorrections(),
