@@ -1,0 +1,114 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+·····stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 1문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":1,"stored_bytes":1337,"original_bytes":1912,"answers":1,"compacted":false,"storedPair":[{"compacted":false,"result_bytes":1337,"row_bytes":1480},{"compacted":false,"result_bytes":1337,"row_bytes":1480}]}
+
+·····stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 4문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":4,"stored_bytes":1346,"original_bytes":2392,"answers":4,"compacted":true,"storedPair":[{"compacted":false,"result_bytes":1707,"row_bytes":1848},{"compacted":true,"result_bytes":1346,"row_bytes":1488}]}
+
+···stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 50문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":50,"stored_bytes":1354,"original_bytes":9748,"answers":50,"compacted":true,"storedPair":[{"compacted":false,"result_bytes":6875,"row_bytes":7024},{"compacted":true,"result_bytes":1354,"row_bytes":1496}]}
+
+······················stdout | src/lib/database/local-quiz-receipt-storage.integration.test.ts > 회차 접수의 작은 저장과 원응답 복원 > 500문항에서 실제 작은 표현만 저장하고 개별 접수는 모두 남긴다
+{"receiptCount":500,"stored_bytes":1357,"original_bytes":81752,"answers":500,"compacted":true,"storedPair":[{"compacted":false,"result_bytes":56946,"row_bytes":57096},{"compacted":true,"result_bytes":1357,"row_bytes":1504}]}
+
+··························{"scenario":"50 questions x 100 separate assignments; sequential, not concurrent capacity","maxReuse":100,"minReuse":100,"bankLinks":5000,"quizLinks":5000,"assignments":100,"commonBodies":50,"sourceBodies":50,"preparedBodies":0,"inlineBankBodies":0,"inlineQuizBodies":0,"duplicatedCommonBodies":0,"writes":{"updated":0,"inserted":5000,"frozenMeanings":5000,"inlineAtInsert":0,"restoredHashes":5000,"duplicateHashes":0},"rowRepresentationBytes":{"expandedRows":17767136,"physicalRows":10531900,"commonContent":134764}}
+···························································capacity test started
+··가짜10001개 검사 단어 시드 1470ms
+·················{"scenario":"M04 100 synthetic students x50 questions, sequential storage example; not concurrent capacity","counts":{"policies":100,"phases":160,"inline_bodies":0,"receipts":6200},"size":{"policies":{"rows":100,"row_bytes":11317,"table_bytes_all_fixtures":57344,"index_bytes_all_fixtures":16384},"phases":{"rows":160,"row_bytes":33760,"table_bytes_all_fixtures":73728,"index_bytes_all_fixtures":16384},"questionKeysAndOldAnswerFields":{"rows":5000,"row_bytes":689200,"table_bytes_all_fixtures":1605632,"index_bytes_all_fixtures":2416640},"receipts":{"rows":6200,"row_bytes":3545440,"table_bytes_all_fixtures":3735552,"index_bytes_all_fixtures":1474560},"meaningStates":{"rows":2000,"row_bytes":432000,"table_bytes_all_fixtures":1146880,"index_bytes_all_fixtures":540672},"sharedContent":{"rows":50,"row_bytes":86400,"table_bytes_all_fixtures":139264,"index_bytes_all_fixtures":32768}}}
+···························가짜10001개 검사 문항 시드 10544ms
+가짜10001개 검사 오답 시드 782ms
+·······가짜10001개 검사 목록501 2726ms
+··가짜10001개 검사 선택1 1000ms
+··················가짜10001개 검사 선택500 2896ms
+····················································································································································································································································································································-············································································stdout | src/lib/database/local-quiz-phase-plan-storage.integration.test.ts > 시험 회차 목록의 작은 저장과 원형 복원 > 1문항의 저장 선택·내용키·순서·서명을 원래 배열과 일치시킨다
+{"phaseQuestionCount":1,"stored":136,"original":136}
+
+stdout | src/lib/database/local-quiz-phase-plan-storage.integration.test.ts > 시험 회차 목록의 작은 저장과 원형 복원 > 4문항의 저장 선택·내용키·순서·서명을 원래 배열과 일치시킨다
+{"phaseQuestionCount":4,"stored":284,"original":520}
+
+stdout | src/lib/database/local-quiz-phase-plan-storage.integration.test.ts > 시험 회차 목록의 작은 저장과 원형 복원 > 50문항의 저장 선택·내용키·순서·서명을 원래 배열과 일치시킨다
+{"phaseQuestionCount":50,"stored":2124,"original":6408}
+
+··········stdout | src/lib/database/local-quiz-phase-plan-storage.integration.test.ts > 시험 회차 목록의 작은 저장과 원형 복원 > 500문항의 저장 선택·내용키·순서·서명을 원래 배열과 일치시킨다
+{"phaseQuestionCount":500,"stored":20124,"original":64008}
+
+·····················x·············································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································stdout | src/lib/vocab/school-pronunciation-release-contract.test.ts > approved school pronunciation scopes > reads later Storage pages and preserves immutable bytes (changed=false)
+{"status":"storage_verified","checked":1,"total":1}
+
+stderr | src/features/students/ui/student-detail-page.test.tsx > StudentDetailPage > 다른 탭의 로그아웃 신호에서 헤더와 상세 폼을 함께 숨긴다
+Received `false` for a non-boolean attribute `replace`.
+
+If you want to write it to the DOM, pass a string instead: replace="false" or replace={value.toString()}.
+
+If you used to conditionally omit it with replace={condition && value}, pass replace={condition ? value : undefined} instead.
+
+stderr | src/components/admin-login-form.test.tsx > AdminLoginForm > hydrates the disabled server form without a mismatch, then enables it
+The current testing environment is not configured to support act(...)
+
+Not implemented: navigation to another Document
+stderr | src/lib/supabase/session-refresh.test.ts > 만료토큰 갱신5초초과 뒤 쿠키를 보존하고 추가 실제전송을 막는다
+AuthRetryableFetchError: This operation was aborted
+    at _handleRequest (C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\lib\fetch.js:126:15)
+    at _request (C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\lib\fetch.js:109:18)
+    at C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\GoTrueClient.js:3950:24
+    at C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\lib\helpers.js:213:36 {
+  __isAuthError: true,
+  status: 0,
+  code: undefined
+}
+AuthRetryableFetchError: This operation was aborted
+    at _handleRequest (C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\lib\fetch.js:126:15)
+    at _request (C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\lib\fetch.js:109:18)
+    at C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\GoTrueClient.js:3950:24
+    at C:\Users\임성열\Desktop\영어 프로젝트\.worktrees\student-app-production-vocab-20260905\node_modules\@supabase\auth-js\dist\main\lib\helpers.js:213:36 {
+  __isAuthError: true,
+  status: 0,
+  code: undefined
+}
+
+Not implemented: navigation to another Document
+stderr | src/lib/services/direct-review-assignment-service.test.ts > createDirectReviewAssignment > create 충돌 원인을 구조화해 구분한다
+[direct-review-assignment] database operation failed { code: '40001', message: undefined, hint: null }
+
+stderr | src/lib/services/direct-review-assignment-service.test.ts > createDirectReviewAssignment > create 충돌 원인을 구조화해 구분한다
+[direct-review-assignment] database operation failed { code: 'PT409', message: undefined, hint: null }
+
+stderr | src/lib/services/direct-review-assignment-service.test.ts > createDirectReviewAssignment > DB 마감 오류 assignment_deadline_must_be_future를 deadline 입력 오류로 보존한다
+[direct-review-assignment] database operation failed {
+  code: '22023',
+  message: 'assignment_deadline_must_be_future',
+  hint: null
+}
+
+stderr | src/lib/services/direct-review-assignment-service.test.ts > createDirectReviewAssignment > DB 마감 오류 assignment_deadline_elapsed_during_review_creation를 deadline 입력 오류로 보존한다
+[direct-review-assignment] database operation failed {
+  code: '22023',
+  message: 'assignment_deadline_elapsed_during_review_creation',
+  hint: null
+}
+
+···················································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/database/vocabulary-composition-questions.integration.test.ts > vocabulary compositions: source resources, questions, and real delivery > preserves reviewed source questions and outside choice resources after partial selection and source retirement
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/lib/database/vocabulary-composition-questions.integration.test.ts:257:3
+    255|     } finally { await db.exec("rollback"); await admin(); }
+    256|   });
+    257|   it("preserves reviewed source questions and outside choice resources…
+       |   ^
+    258|     await db.exec("reset role");
+    259|     const fixture = reviewedExamFixture(), voice = fixture.voice;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 630 passed (631)
+      Tests  1 failed | 5120 passed | 1 skipped (5122)
+   Start at  18:38:55
+   Duration  367.32s (transform 20.92s, setup 0ms, import 110.39s, tests 1118.31s, environment 126.76s)
+

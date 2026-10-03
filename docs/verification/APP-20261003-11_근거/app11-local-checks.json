@@ -1,0 +1,82 @@
+{
+  "capturedAt": "2026-10-03T10:09:20.910Z",
+  "results": [
+    {
+      "name": "ui",
+      "command": "node scripts/verify-ui-architecture.mjs",
+      "exitCode": 0,
+      "log": ".codex-tmp/app11-ui-final.log"
+    },
+    {
+      "name": "build",
+      "command": "node .codex-tmp/app10-build-only.mjs --webpack",
+      "exitCode": 0,
+      "log": ".codex-tmp/app11-build.log"
+    },
+    {
+      "name": "preview-kit",
+      "command": "node .codex-tmp/app11-preview-kit-check.mjs",
+      "exitCode": 0,
+      "log": ".codex-tmp/app11-preview-kit-check-final.log"
+    },
+    {
+      "name": "types",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "lint",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "node_modules/eslint/bin/eslint.js",
+        "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "map",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "scripts/check-feature-map.mjs",
+        "--verify"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "format",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "scripts/check-work-records.mjs",
+        "--phase",
+        "format"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "design",
+      "command": [
+        "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "scripts/check-work-records.mjs",
+        "--phase",
+        "design",
+        "--work",
+        "APP-20261003-11"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "files": [
+    {
+      "path": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+      "sha256": "01c6d084bd629ddd721c7c79eb8c817937067db3af3bf056d3600ee8d9eed476"
+    },
+    {
+      "path": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "sha256": "c2160753cbde1d2304418f86cc389f3df3bf2e23e6f9cfc0327ba912a15f111d"
+    }
+  ]
+}

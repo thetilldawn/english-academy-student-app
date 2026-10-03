@@ -1,0 +1,3 @@
+select jsonb_build_object('plans',(select jsonb_agg(to_jsonb(p)order by p.attempt_id,p.phase)from private.local_quiz_phase_plans p join public.quiz_attempts a on a.id=p.attempt_id where a.student_id='a91c0000-0000-4000-8000-000000000002'),
+'preparation',(select jsonb_agg(to_jsonb(p)order by id)from private.quiz_attempt_preparations p where student_id='a91c0000-0000-4000-8000-000000000002'),
+'binding',(select jsonb_agg(to_jsonb(p)order by preparation_id)from private.local_quiz_preparations p join private.quiz_attempt_preparations x on x.id=p.preparation_id where x.student_id='a91c0000-0000-4000-8000-000000000002'))value;

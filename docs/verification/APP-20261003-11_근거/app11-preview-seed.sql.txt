@@ -1,0 +1,52 @@
+begin;set local statement_timeout='120s';set local time zone 'UTC';
+do $$begin if exists(select 1 from auth.users where id='a91c0000-0000-4000-8000-000000000001') or exists(select 1 from public.vocab_datasets where dataset_key='app11-preview-source') then raise exception 'app11_fixture_collision';end if;end$$;
+insert into auth.users(id)values('a91c0000-0000-4000-8000-000000000001');
+insert into public.admin_profiles(user_id,display_name)values('a91c0000-0000-4000-8000-000000000001','[회차 목록 검증] 가짜 관리자');
+insert into public.students(id,display_name,status,created_by,note,school_name,grade_label)
+ select s::uuid,'[회차 목록 검증] 가짜 학생','active','a91c0000-0000-4000-8000-000000000001','APP11-a91c 실제 학생 아님','가상고','고2' from unnest(array['a91c0000-0000-4000-8000-000000000002','a91c0000-0000-4000-8000-000000000003'])s;
+insert into public.vocab_datasets(id,dataset_key,title,source_label,source_sha256,row_count,status,is_active,imported_by)
+ values('a91c0000-0000-4000-8000-000000000004','app11-preview-source','[회차 목록 검증] 가짜 자료','fake',repeat('A',64),12,'ready',true,'a91c0000-0000-4000-8000-000000000001');
+insert into public.vocab_units(id,dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count)
+ values('a91c0000-0000-4000-8000-000000000005','a91c0000-0000-4000-8000-000000000004','DAY 1','day1','day',1,1,12);
+insert into public.vocab_dataset_catalog(dataset_id,display_name,catalog_group,material_kind)values('a91c0000-0000-4000-8000-000000000004','[회차 목록 검증] 가짜 자료','high','wordbook');
+insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
+ select 'a91c0000-0000-4000-8000-000000000004',n,'directpreview'||n,'directpreview'||n,array['가짜 뜻 '||n],'가짜 뜻 '||n,upper(encode(extensions.digest('app11-preview:'||n,'sha256'),'hex')),'a91c0000-0000-4000-8000-000000000005',n,'word' from generate_series(1,12)n;
+insert into public.vocab_entry_quiz_eligibility(vocab_entry_id,dataset_id,quiz_mode,status,input_content_hash,rule_version,evaluated_at_utc)
+ select id,dataset_id,'book_meaning_en_to_ko','eligible',row_sha256,'fake',now() from public.vocab_entries where dataset_id='a91c0000-0000-4000-8000-000000000004';
+do $$declare selected jsonb;rows_value jsonb;bundle jsonb;input text;catalog jsonb;template jsonb;cmd jsonb;step jsonb;prep jsonb;questions jsonb;plan jsonb;units uuid[];a uuid;begin
+ selected:='{"schemaVersion":"vocabulary-resource-snapshot-v1","sourceFields":{},"proofs":{},"pronunciation":{"displayKo":null,"variantId":null,"audioUrl":null,"available":false},"lexicalPos":null,"dictionary":null,"senseId":null,"definitionEn":null,"exampleEn":null,"exampleKo":null}';
+ select jsonb_agg(jsonb_build_object('sourceRow',source_row,'rowHash',lower(row_sha256),'resources',jsonb_build_object('entryHash',lower(row_sha256),'linkRecordHash',lower(row_sha256),'selected',selected)) order by source_row)into rows_value from public.vocab_entries where dataset_id='a91c0000-0000-4000-8000-000000000004';
+ bundle:=jsonb_build_object('schemaVersion','vocabulary-library-import-v1','sourceCatalogHash',repeat('b',64),'linksHash',repeat('c',64),'referenceCatalogHash',repeat('d',64),'scopes',jsonb_build_array(jsonb_build_object(
+ 'key','app11-preview-scope','name','[회차 목록 검증] 가짜 범위','sourceTitle','[회차 목록 검증] 가짜 자료',
+ 'source',jsonb_build_object('datasetId','a91c0000-0000-4000-8000-000000000004','unitId','a91c0000-0000-4000-8000-000000000005','kind','legacy_vocab','releaseId',null,'releaseVersion',repeat('a',64),'fileHash',repeat('e',64),'locator','fake-app11.json'),
+ 'classification','{"kind":"wordbook","sourceGrade":"g11","exam":null,"lesson":null,"day":1,"publisher":null,"school":null,"targetGrade":null,"schoolYear":null,"semester":null,"assessment":null,"purpose":null}'::jsonb,'rows',rows_value)));
+ input:=bundle::text;insert into private.vocabulary_library_import_approvals values('wojxpruvbjzbhrpmsbuy',encode(extensions.digest(input,'sha256'),'hex'),private.reviewed_exam_sha256_v1(bundle),1,'APP11-a91c');
+ perform set_config('request.jwt.claim.role','service_role',true);perform set_config('request.jwt.claims','{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+ perform public.import_vocabulary_library_v1(input);
+ perform set_config('request.jwt.claim.sub','a91c0000-0000-4000-8000-000000000001',true);perform set_config('request.jwt.claim.role','authenticated',true);perform set_config('request.jwt.claims','{"role":"authenticated","sub":"a91c0000-0000-4000-8000-000000000001","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+ catalog:=public.list_vocabulary_library_v1();
+ template:=public.save_vocabulary_library_template_v1(jsonb_build_object('action','create','requestId','a91c0000-0000-4000-8000-000000000010',
+ 'metadata','{"title":"[회차 목록 검증] 가짜 단어장","tags":[],"school":null,"targetGrade":null,"schoolYear":null,"semester":null,"assessment":null,"purpose":null}'::jsonb,
+ 'recipe',jsonb_build_object('filters','{"search":"","kinds":[],"years":[],"yearFrom":null,"yearTo":null,"months":[],"types":[],"questions":[],"sourceGrades":[],"dayFrom":null,"dayTo":null,"lessons":[],"schools":[],"targetGrades":[],"semesters":[],"assessments":[],"purposes":[]}'::jsonb,
+ 'scopes',(select jsonb_agg(jsonb_build_object('id',s->>'id','version',s->>'version'))from jsonb_array_elements(catalog->'scopes')s where s->>'name'='[회차 목록 검증] 가짜 범위'),'excludedOccurrenceKeys','[]'::jsonb,'scopeStatus','confirmed')))->'template';
+ cmd:=jsonb_build_object('action','materialize','requestId','a91c0000-0000-4000-8000-000000000011','templateId',template->>'id','versionId',template#>>'{versions,0,id}','contentHash',template#>>'{versions,0,contentHash}');
+ for n in 1..6 loop step:=public.advance_vocabulary_template_book_v1(cmd);exit when step->>'stage'='prepared';end loop;
+ if step->>'stage' is distinct from 'prepared' then raise exception 'app11_prepare_failed';end if;
+ prep:=public.prepare_vocabulary_template_question_input_v1(cmd);
+ select jsonb_agg(jsonb_build_object('vocabEntryId',e->'id','direction','english_to_korean','prompt',e->>'headword',
+ 'choices',(select jsonb_agg(prep->'entries'->((n::int-1+j)%12)->'primaryMeaning' order by j)from generate_series(0,3)j),
+ 'choiceVocabEntryIds',(select jsonb_agg(prep->'entries'->((n::int-1+j)%12)->'id' order by j)from generate_series(0,3)j),'correctChoiceIndex',0)order by n)
+ into questions from jsonb_array_elements(prep->'entries')with ordinality x(e,n);
+ perform set_config('request.jwt.claim.role','service_role',true);perform set_config('request.jwt.claims','{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+ for n in 1..6 loop step:=public.advance_vocabulary_composition_questions_v1((cmd->>'versionId')::uuid,cmd->>'contentHash',case when n=1 then questions else null end);exit when step->>'state'='ready';end loop;
+ if step->>'state' is distinct from 'ready' then raise exception 'app11_questions_failed';end if;
+ select array_agg(distinct(e->>'unitId')::uuid)into units from jsonb_array_elements(prep->'entries')e;
+ select jsonb_agg(jsonb_build_object('vocab_entry_id',i.vocab_entry_id,'base_order_index',e.source_row,'direction','english_to_korean','composition_bank',jsonb_build_object('mode','book_meaning_choice','version_id',i.version_id,'content_sha256',cmd->>'contentHash','question_item_id',i.item_id,'question_item_sha256',i.item_sha256))order by e.source_row)
+ into plan from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id where i.version_id=(cmd->>'versionId')::uuid and e.source_row<=4;
+ a:=private.create_composition_bank_for_delivery_v1('a91c0000-0000-4000-8000-000000000001','[회차 목록 검증] 이전 배정',(prep->>'datasetId')::uuid,units,4,100::smallint,300,80::smallint,'fixed',null,array['a91c0000-0000-4000-8000-000000000002']::uuid[],'none',null,plan);
+ perform private.configure_assignment_retry_v1(a,true,80::smallint);
+ perform set_config('request.jwt.claim.role','service_role',true);
+ perform set_config('app11.old_preparation',public.prepare_local_quiz_v1('a91c0000-0000-4000-8000-000000000002',a,'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',null)::text,true);
+ perform set_config('app11.old_plan',public.begin_local_quiz_v1('a91c0000-0000-4000-8000-000000000002',(current_setting('app11.old_preparation')::jsonb->>'preparationId')::uuid,'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',current_setting('app11.old_preparation')::jsonb->>'planHash')::text,true);
+ perform set_config('app11.seed_result',jsonb_build_object('project','wojxpruvbjzbhrpmsbuy','admin','a91c0000-0000-4000-8000-000000000001','students',to_jsonb(array['a91c0000-0000-4000-8000-000000000002','a91c0000-0000-4000-8000-000000000003']),'sourceDataset','a91c0000-0000-4000-8000-000000000004','dataset',prep->>'datasetId','version',cmd->>'versionId','oldAssignment',a)::text,true);
+end$$;select current_setting('app11.seed_result')::jsonb||jsonb_build_object('oldPreparation',current_setting('app11.old_preparation')::jsonb,'oldPlan',current_setting('app11.old_plan')::jsonb) value;commit;

@@ -1,0 +1,13 @@
+begin;set local statement_timeout='30s';set local time zone 'Asia/Seoul';
+select set_config('request.jwt.claim.sub','a91c0000-0000-4000-8000-000000000001',true);select set_config('request.jwt.claim.role','authenticated',true);select set_config('request.jwt.claims','{"role":"authenticated","sub":"a91c0000-0000-4000-8000-000000000001","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+do $$declare c private.vocabulary_compositions;units uuid[];plan jsonb;a uuid;begin
+ if not exists(select 1 from public.admin_profiles where user_id='a91c0000-0000-4000-8000-000000000001' and is_active and display_name='[회차 목록 검증] 가짜 관리자') or exists(select 1 from public.assignments where created_by='a91c0000-0000-4000-8000-000000000001' and title='[회차 목록 검증] 신규 배정')then raise exception 'app11_fake_guard';end if;
+ select * into strict c from private.vocabulary_compositions v where created_by='a91c0000-0000-4000-8000-000000000001' and exists(select 1 from private.vocabulary_composition_entries l join public.vocab_entries e on e.id=l.source_entry_id where l.version_id=v.version_id and e.dataset_id='a91c0000-0000-4000-8000-000000000004');
+ select array_agg(distinct unit_id)into units from public.vocab_entries where dataset_id=c.dataset_id;
+ select jsonb_agg(jsonb_build_object('vocab_entry_id',i.vocab_entry_id,'base_order_index',e.source_row,'direction','english_to_korean','composition_bank',jsonb_build_object('mode','book_meaning_choice','version_id',i.version_id,'content_sha256',c.content_sha256,'question_item_id',i.item_id,'question_item_sha256',i.item_sha256))order by e.source_row)
+ into plan from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id where i.version_id=c.version_id and e.source_row<=4;
+ a:=public.create_assignment_with_delivery_v7('[회차 목록 검증] 신규 배정',c.dataset_id,units,4,100::smallint,300,80::smallint,true,80::smallint,'fixed',null,array['a91c0000-0000-4000-8000-000000000003']::uuid[],'none',null,plan);
+ perform set_config('request.jwt.claim.role','service_role',true);
+ perform set_config('app11.new_preparation',public.prepare_local_quiz_v1('a91c0000-0000-4000-8000-000000000003',a,'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',null)::text,true);
+ perform set_config('app11.created',jsonb_build_object('assignment',a,'student','a91c0000-0000-4000-8000-000000000003')::text,true);
+end$$; select current_setting('app11.created')::jsonb||jsonb_build_object('preparation',current_setting('app11.new_preparation')::jsonb) value;commit;

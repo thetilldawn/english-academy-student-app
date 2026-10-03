@@ -1,0 +1,124 @@
+▲ Next.js 16.2.12 (webpack)
+- Experiments (use with caution):
+  ✓ typedEnv
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 27.4s
+  Running TypeScript ...
+  Finished TypeScript in 29.2s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/53) ...
+  Generating static pages using 15 workers (13/53) 
+  Generating static pages using 15 workers (26/53) 
+  Generating static pages using 15 workers (39/53) 
+✓ Generating static pages using 15 workers (53/53) in 1440ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/(.)results/[entryKey]
+├ ƒ /admin/(.)school-schedules/edit
+├ ƒ /admin/(.)students/[studentId]
+├ ƒ /admin/[...catchAll]
+├ ƒ /admin/assignments
+├ ○ /admin/login
+├ ƒ /admin/results
+├ ƒ /admin/results/[id]
+├ ƒ /admin/school-schedules/edit
+├ ƒ /admin/students
+├ ƒ /admin/students/[studentId]
+├ ƒ /api/admin/assignment-capacity
+├ ƒ /api/admin/assignment-workspace/datasets
+├ ƒ /api/admin/assignment-workspace/datasets/[datasetId]/units
+├ ƒ /api/admin/assignment-workspace/preparation
+├ ƒ /api/admin/assignment-workspace/previous-exam
+├ ƒ /api/admin/assignment-workspace/selection
+├ ƒ /api/admin/assignments
+├ ƒ /api/admin/assignments/[assignmentId]
+├ ƒ /api/admin/assignments/[assignmentId]/students/[studentId]
+├ ƒ /api/admin/assignments/[assignmentId]/students/[studentId]/edit-context
+├ ƒ /api/admin/attempts/[id]
+├ ƒ /api/admin/bulk-assignments
+├ ƒ /api/admin/bulk-assignments/preview
+├ ƒ /api/admin/exact-review-assignments
+├ ƒ /api/admin/exact-review-assignments/preview
+├ ƒ /api/admin/history
+├ ƒ /api/admin/mixed-assignments
+├ ƒ /api/admin/mixed-assignments/preview
+├ ƒ /api/admin/notebook-assignments
+├ ƒ /api/admin/notebook-assignments/preview
+├ ƒ /api/admin/notifications
+├ ƒ /api/admin/review-assignments
+├ ƒ /api/admin/schools/search
+├ ƒ /api/admin/session
+├ ƒ /api/admin/students
+├ ƒ /api/admin/students/[id]
+├ ƒ /api/admin/students/[id]/code
+├ ƒ /api/admin/students/[id]/code/rotate
+├ ƒ /api/admin/students/[id]/direct-review-summaries
+├ ƒ /api/admin/students/[id]/history
+├ ƒ /api/admin/students/[id]/review-assignment-drafts
+├ ƒ /api/admin/students/[id]/review-assignment-drafts/[draftId]
+├ ƒ /api/admin/students/[id]/status
+├ ƒ /api/admin/students/[id]/vocab
+├ ƒ /api/admin/students/[id]/vocab-assignment-queues
+├ ƒ /api/admin/students/[id]/worksheet-requests
+├ ƒ /api/admin/students/[id]/wrong-words
+├ ƒ /api/admin/students/[id]/wrong-words/episodes
+├ ƒ /api/admin/students/directory
+├ ƒ /api/admin/vocab-assignment-queues/[seriesId]
+├ ƒ /api/admin/vocab-time-templates
+├ ƒ /api/admin/wordbook-compositions
+├ ƒ /api/admin/wordbook-library
+├ ƒ /api/admin/wordbook-library/commands
+├ ƒ /api/admin/wordbook-library/query
+├ ƒ /api/admin/worksheet-requests/[id]/export
+├ ƒ /api/preview-identity
+├ ƒ /api/student/assignments/[id]/attempts
+├ ƒ /api/student/attempts/[id]
+├ ƒ /api/student/attempts/[id]/answers
+├ ƒ /api/student/attempts/[id]/expire
+├ ƒ /api/student/attempts/[id]/feedback
+├ ƒ /api/student/attempts/[id]/ready
+├ ƒ /api/student/attempts/[id]/retry
+├ ƒ /api/student/attempts/[id]/timeouts
+├ ƒ /api/student/dashboard/completed
+├ ƒ /api/student/dashboard/sections
+├ ƒ /api/student/local-quiz
+├ ƒ /api/student/local-quiz-protocol/[id]
+├ ƒ /api/student/notebook
+├ ƒ /api/student/notebook/[id]
+├ ƒ /api/student/notebook/episodes
+├ ƒ /api/student/notifications
+├ ƒ /api/student/practice
+├ ƒ /api/student/practice/[id]
+├ ƒ /api/student/practice/[id]/[command]
+├ ƒ /api/student/practice/preview
+├ ƒ /api/student/session
+├ ƒ /api/student/wrong-words
+├ ○ /code
+├ ○ /icon.svg
+├ ○ /quiz-offline
+├ ƒ /student
+├ ƒ /student/(.)assignments/[id]/words
+├ ƒ /student/[...catchAll]
+├ ƒ /student/assignments/[id]/words
+├ ƒ /student/attempt/[id]
+├ ƒ /student/practice
+├ ƒ /student/practice/[id]
+├ ƒ /student/practice/[id]/result
+├ ƒ /student/result/[id]
+├ ƒ /student/wordbook
+├ ƒ /student/wordbook/(.)[id]
+├ ƒ /student/wordbook/[...catchAll]
+└ ƒ /student/wordbook/[id]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+Offline quiz: 25 verified public assets, c0371c37a031
+Local isolated build completed and prior build restored.

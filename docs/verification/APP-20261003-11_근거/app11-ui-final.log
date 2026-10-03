@@ -1,0 +1,253 @@
+{
+  "status": "ok",
+  "css": {
+    "lines": 58,
+    "styleRules": 8,
+    "selectorContextKeys": 8,
+    "duplicateContextKeys": 0,
+    "duplicateExcess": 0,
+    "styleDeclarations": 33,
+    "mediaBlocks": 1,
+    "mediaConditions": 1,
+    "importantDeclarations": 0,
+    "trackedSectionMarkers": 0,
+    "untrackedTopLevelComments": 0
+  },
+  "legacyComponents": [],
+  "assignmentFeatures": [
+    {
+      "path": "src/features/assignments/controller/use-assignment-workspace.ts",
+      "lines": 294,
+      "fetchCalls": 0,
+      "useStateCalls": 4
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-controller.ts",
+      "lines": 595,
+      "fetchCalls": 0,
+      "useStateCalls": 5
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-preview.ts",
+      "lines": 138,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+      "lines": 638,
+      "fetchCalls": 0,
+      "useStateCalls": 4
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+      "lines": 397,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+      "lines": 178,
+      "fetchCalls": 0,
+      "useStateCalls": 2
+    },
+    {
+      "path": "src/features/assignments/controller/use-legacy-review-recovery.ts",
+      "lines": 75,
+      "fetchCalls": 0,
+      "useStateCalls": 2
+    },
+    {
+      "path": "src/features/assignments/ui/single-assignment-editor.tsx",
+      "lines": 266,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/history/controller/use-editable-history-assignment.ts",
+      "lines": 183,
+      "fetchCalls": 0,
+      "useStateCalls": 3
+    }
+  ],
+  "studentFeatures": [
+    {
+      "path": "src/components/guarded-link.tsx",
+      "lines": 40,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/components/navigation-exit-guard.tsx",
+      "lines": 85,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/students/controller/use-student-access-controller.ts",
+      "lines": 198,
+      "fetchCalls": 0,
+      "useStateCalls": 2
+    },
+    {
+      "path": "src/features/students/controller/use-student-creation-controller.ts",
+      "lines": 100,
+      "fetchCalls": 0,
+      "useStateCalls": 3
+    },
+    {
+      "path": "src/features/students/controller/use-student-detail-view.ts",
+      "lines": 21,
+      "fetchCalls": 0,
+      "useStateCalls": 2
+    },
+    {
+      "path": "src/components/use-route-exit-guard.ts",
+      "lines": 404,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/students/controller/use-student-directory-page.ts",
+      "lines": 277,
+      "fetchCalls": 0,
+      "useStateCalls": 5
+    },
+    {
+      "path": "src/features/students/controller/use-student-history-page.ts",
+      "lines": 166,
+      "fetchCalls": 0,
+      "useStateCalls": 5
+    },
+    {
+      "path": "src/features/students/controller/use-student-profile-controller.ts",
+      "lines": 130,
+      "fetchCalls": 0,
+      "useStateCalls": 2
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-actions.ts",
+      "lines": 64,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-cache.ts",
+      "lines": 27,
+      "fetchCalls": 0,
+      "useStateCalls": 1
+    },
+    {
+      "path": "src/features/students/controller/use-student-wrong-word-history.ts",
+      "lines": 93,
+      "fetchCalls": 0,
+      "useStateCalls": 1
+    },
+    {
+      "path": "src/features/students/ui/student-directory.tsx",
+      "lines": 70,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/students/ui/student-detail-content.tsx",
+      "lines": 170,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/students/ui/student-detail-dialog.tsx",
+      "lines": 69,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/students/ui/student-detail-page.tsx",
+      "lines": 72,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/students/ui/panels/student-learning-history.tsx",
+      "lines": 114,
+      "fetchCalls": 0,
+      "useStateCalls": 1
+    },
+    {
+      "path": "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+      "lines": 349,
+      "fetchCalls": 0,
+      "useStateCalls": 2
+    }
+  ],
+  "studentDashboardFeatures": [
+    {
+      "path": "src/features/student-dashboard/domain/student-assignment-sections.ts",
+      "lines": 194,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+      "lines": 167,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/student-dashboard/ui/student-dashboard.tsx",
+      "lines": 86,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    }
+  ],
+  "quizPlayerFeatures": [
+    {
+      "path": "src/features/quiz-player/controller/quiz-audio-player.ts",
+      "lines": 113,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-initial-quiz-synchronization.ts",
+      "lines": 29,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-audio.ts",
+      "lines": 3,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+      "lines": 236,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-clock.ts",
+      "lines": 69,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-recovery.ts",
+      "lines": 130,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.tsx",
+      "lines": 143,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-frame.tsx",
+      "lines": 299,
+      "fetchCalls": 0,
+      "useStateCalls": 0
+    }
+  ]
+}

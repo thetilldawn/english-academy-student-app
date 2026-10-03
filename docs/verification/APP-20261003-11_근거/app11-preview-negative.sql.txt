@@ -1,0 +1,31 @@
+begin read only;
+set local statement_timeout='15s';
+set local time zone 'UTC';
+do $$
+declare p private.local_quiz_phase_plans; changed jsonb; n integer:=0; other_id uuid;
+begin
+  select p0.* into strict p from private.local_quiz_phase_plans p0 join public.quiz_attempts a on a.id=p0.attempt_id
+    where a.student_id='a91c0000-0000-4000-8000-000000000003' and p0.phase='initial';
+  select q.id into strict other_id from public.quiz_questions q join public.quiz_attempts a on a.id=q.attempt_id
+    where a.student_id='a91c0000-0000-4000-8000-000000000002' order by q.order_index limit 1;
+  if p.plan->>'storageVersion' is distinct from 'local-quiz-phase-refs-v1' then raise exception 'app11_expected_compact_plan'; end if;
+  for changed in select value from jsonb_array_elements(jsonb_build_array(
+    jsonb_build_object('plan',p.plan||jsonb_build_object('storageVersion','unknown')),
+    jsonb_build_object('plan',p.plan-'startedAt'),
+    jsonb_build_object('plan',p.plan||jsonb_build_object('startedAt',null)),
+    jsonb_build_object('plan',p.plan||jsonb_build_object('questionIds',jsonb_build_array(p.plan#>'{questionIds,0}',p.plan#>'{questionIds,0}'))),
+    jsonb_build_object('plan',p.plan||jsonb_build_object('questionIds',jsonb_build_array(other_id))),
+    jsonb_build_object('plan',p.plan||jsonb_build_object('questionIds',(select jsonb_agg(value order by ordinality desc)from jsonb_array_elements(p.plan->'questionIds')with ordinality))),
+    jsonb_build_object('plan_hash',repeat('0',64)),
+    jsonb_build_object('limit_ms',17)
+  )) loop
+    begin
+      perform private.resolve_local_quiz_phase_plan_v1(jsonb_populate_record(p,changed));
+      raise exception 'app11_expected_rejection';
+    exception when sqlstate 'XX001' then n:=n+1;
+    end;
+  end loop;
+  perform set_config('app11.negative_result',jsonb_build_object('rejected',n,'rowWrites',0)::text,true);
+end $$;
+select current_setting('app11.negative_result')::jsonb value;
+rollback;

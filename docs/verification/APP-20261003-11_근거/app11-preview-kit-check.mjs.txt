@@ -1,0 +1,32 @@
+import fs from'node:fs';import assert from'node:assert/strict';import{randomUUID}from'node:crypto';import{createFinalSchemaDatabase}from'../src/test-support/final-schema-database.ts';
+const c=JSON.parse(fs.readFileSync('.codex-tmp/app11-preview-config.json','utf8')),sql=n=>fs.readFileSync('.codex-tmp/app11-preview-'+n+'.sql','utf8'),value=r=>r.flatMap(x=>x.rows??[]).find(x=>x.value)?.value;
+let before,old,meta,seed;
+const db=await createFinalSchemaDatabase({beforeMigration:async(db,name)=>{if(name!=='20261003235500_compact_local_quiz_phase_plans.sql')return;
+before=(await db.query(sql('snapshot'))).rows;seed=value(await db.exec(sql('seed')));assert(seed.oldPlan.items.length===4);old=value(await db.exec(sql('oldState')));meta=value(await db.exec(sql('meta')));assert.deepEqual((await db.query(sql('snapshot'))).rows,before);}});
+assert.deepEqual(value(await db.exec(sql('oldState'))),old);assert.deepEqual(value(await db.exec(sql('meta'))),meta);
+await db.exec('create schema supabase_migrations;create table supabase_migrations.schema_migrations(version text,name text)');
+async function rpc(name,args,tz='UTC'){await db.exec(`begin;set local time zone '${tz}';select set_config('request.jwt.claim.role','service_role',true)`);const r=(await db.query(`select public.${name}(${args.map((_,i)=>'$'+(i+1)).join(',')})value`,args)).rows[0].value;await db.exec('commit');return r;}
+async function finish(student,plan,wrong=0,tz='UTC'){const answers=plan.items.map((q,i)=>({id:q.id,order:i+1,kind:'answer',choice:i<wrong?(q.correctChoiceIndex+1)%4:q.correctChoiceIndex,openedMs:i*100,elapsedMs:i*100})),completion={elapsedMs:answers.at(-1).elapsedMs,reason:'answered'};
+const passed=Number((await db.query('select extract(epoch from(clock_timestamp()-$1::timestamptz))*1000 ms',[plan.startedAt])).rows[0].ms);await new Promise(r=>setTimeout(r,Math.max(0,completion.elapsedMs-passed+30)));
+const args=[student,plan.attemptId,plan.phase,c.device,plan.planHash,randomUUID(),answers,completion],response=await rpc('submit_local_quiz_phase_v1',args,tz);return{args,response};}
+const oldResult=await finish(c.students[0],seed.oldPlan,0,'America/New_York');
+const created=value(await db.exec(sql('create'))),p=created.preparation;
+const plan=await rpc('begin_local_quiz_v1',[c.students[1],p.preparationId,c.device,p.planHash],'Asia/Seoul');
+const initial=await finish(c.students[1],plan,2),retryPlan=await rpc('begin_local_quiz_retry_v1',[c.students[1],plan.attemptId,c.device],'Asia/Kathmandu');
+const retry=await finish(c.students[1],retryPlan,1,'America/New_York');
+assert.equal(oldResult.response.result.attempt.finalScore,100);assert.equal(oldResult.response.result.attempt.passed,true);
+assert.equal(initial.response.result.attempt.initialScore,50);assert.equal(initial.response.result.state,'retry_waiting');
+assert.equal(retry.response.result.attempt.finalScore,75);assert.equal(retry.response.result.attempt.passed,false);assert.equal(retry.response.result.state,'failed');
+assert.deepEqual(retryPlan.items.map(q=>q.id),plan.items.slice(0,2).map(q=>q.id));
+const records=(await db.query(sql('studentRecords'))).rows;
+for(const r of[oldResult,initial,retry])assert.deepEqual(await rpc('submit_local_quiz_phase_v1',r.args),r.response);
+assert.deepEqual((await db.query(sql('studentRecords'))).rows,records);
+assert.deepEqual((await db.query(sql('snapshot'))).rows,before);
+const readback=value(await db.exec(sql('readback')));assert.equal(readback.stored.filter(x=>x.format==='array').length,1);assert.equal(readback.stored.filter(x=>x.format==='object').length,2);assert.equal(readback.newFunction.appExecution,false);
+assert(readback.stored.filter(x=>x.format==='object').every(x=>x.storedBytes<x.restoredBytes));
+const negative=value(await db.exec(fs.readFileSync('.codex-tmp/app11-preview-negative.sql','utf8')));assert.equal(negative.rejected,8);
+const fixture=value(await db.exec(sql('fixture')));await db.exec(sql('cleanup'));
+assert.deepEqual((await db.query(sql('studentRecords'))).rows,records);assert.deepEqual((await db.query(sql('snapshot'))).rows,before);
+const after=value(await db.exec(sql('fixture')));for(const key of['questions','questionHash','meanings','oldQuestionsHash'])assert.deepEqual(after[key],fixture[key]);assert.equal(after.activeStudents,0);assert.equal(after.activeAssignments,0);
+assert.equal(after.adminActive,false);assert.equal(records.length,11);
+console.log(JSON.stringify({success:true,baselineTables:before.length,oldPlanPreserved:true,stored:readback.stored.map(({plan,...r})=>r),scores:[oldResult.response.result.attempt.finalScore,initial.response.result.attempt.initialScore,retry.response.result.attempt.finalScore],exactReplays:3,negative,recordsPreserved:records.length,after}));await db.close();

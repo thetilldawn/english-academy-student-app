@@ -1,0 +1,652 @@
+{
+  "schemaVersion": "app11-compact-phase-plan-preview-v1",
+  "checkedAt": "2026-10-03T10:16:25.199Z",
+  "implementationCommit": "79cb19526f3bbec2ac23b5b72183958206c8f860",
+  "sql": {
+    "path": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+    "sha256": "01c6d084bd629ddd721c7c79eb8c817937067db3af3bf056d3600ee8d9eed476",
+    "migration": [
+      {
+        "name": "compact_local_quiz_phase_plans",
+        "version": "20261003100356"
+      }
+    ]
+  },
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "productionWrites": 0,
+  "preservation": {
+    "tables": 28,
+    "rows": 14704,
+    "beforeSeedAfterSeedAfterApplyAfterExamsAfterCleanupEqual": true,
+    "existingFourFunctionIdentityOwnerAclConfigEqual": true,
+    "columnsOtherConstraintsImmutableTriggersEqual": true,
+    "oldPlanPreparationBindingEqual": true
+  },
+  "newRows": {
+    "stored": [
+      {
+        "phase": "initial",
+        "format": "array",
+        "attempt": "e1d6f7b9-baf1-4e95-b9ee-9645ef118f11",
+        "student": "a91c0000-0000-4000-8000-000000000002",
+        "storedBytes": 520,
+        "questionCount": 4,
+        "restoredBytes": 520
+      },
+      {
+        "phase": "initial",
+        "format": "object",
+        "attempt": "b8232b50-9a80-4b82-ada3-6b36f46fabcb",
+        "student": "a91c0000-0000-4000-8000-000000000003",
+        "storedBytes": 288,
+        "questionCount": 4,
+        "restoredBytes": 520
+      },
+      {
+        "phase": "retry",
+        "format": "object",
+        "attempt": "b8232b50-9a80-4b82-ada3-6b36f46fabcb",
+        "student": "a91c0000-0000-4000-8000-000000000003",
+        "storedBytes": 208,
+        "questionCount": 2,
+        "restoredBytes": 264
+      }
+    ],
+    "applicationExecutionPrivileges": 0
+  },
+  "exams": {
+    "old": {
+      "score": 100,
+      "accepted": 4
+    },
+    "initial": {
+      "score": 50,
+      "state": "retry_waiting",
+      "accepted": 4
+    },
+    "retry": {
+      "finalScore": 75,
+      "state": "failed",
+      "passed": false,
+      "accepted": 2
+    },
+    "exactReplays": 3,
+    "extraRowsOrHashChanges": 0,
+    "negativeRejections": 8
+  },
+  "fixtureFinal": {
+    "meanings": 8,
+    "questions": 8,
+    "adminActive": false,
+    "assignments": 2,
+    "questionHash": "e6cc06764158745ed284265888e5de92",
+    "studentCount": 2,
+    "activeStudents": 0,
+    "oldQuestionsHash": "37687b9586799dae024b19e134b06284",
+    "activeAssignments": 0
+  },
+  "fixtureStudentRecords": [
+    {
+      "table_name": "private.local_quiz_phase_plans",
+      "rows": 3,
+      "rows_md5": "fcb2e8f732e32474123b8ade19152aab"
+    },
+    {
+      "table_name": "private.local_quiz_phase_receipts",
+      "rows": 3,
+      "rows_md5": "9eb5070520c8ed740ccd6ad9aa05d1e4"
+    },
+    {
+      "table_name": "private.student_vocabulary_meaning_states",
+      "rows": 2,
+      "rows_md5": "8a37b0046047b86244ce2d7f44052f9b"
+    },
+    {
+      "table_name": "private.vocabulary_answer_receipts",
+      "rows": 10,
+      "rows_md5": "7d1cce9d0ba6943bd082abccf8d8df62"
+    },
+    {
+      "table_name": "private.vocabulary_phase_results",
+      "rows": 3,
+      "rows_md5": "785f072a640f56045944b0407576fcb1"
+    },
+    {
+      "table_name": "public.quiz_attempts",
+      "rows": 2,
+      "rows_md5": "29004ba375a9ec07ffbf36a0aa32f255"
+    },
+    {
+      "table_name": "public.quiz_questions",
+      "rows": 8,
+      "rows_md5": "f306fd395b8f82395e35e5f6050dbac8"
+    },
+    {
+      "table_name": "public.student_point_events",
+      "rows": 4,
+      "rows_md5": "d393f7e0e7af37d0a091f4ec1291b4f6"
+    },
+    {
+      "table_name": "public.student_point_totals",
+      "rows": 1,
+      "rows_md5": "9fef4204cd6c3b7dcd31a6ae4ef93f93"
+    },
+    {
+      "table_name": "public.student_vocab_state",
+      "rows": 8,
+      "rows_md5": "aad4365e3a105fb9b391ca04f29d3635"
+    },
+    {
+      "table_name": "public.student_vocab_wrong_events",
+      "rows": 3,
+      "rows_md5": "64bd0dd4b4d1839c6c819ce5dbe8c9f0"
+    }
+  ],
+  "cleanup": {
+    "datasets": [
+      {
+        "id": "a91c0000-0000-4000-8000-000000000004",
+        "active": false
+      },
+      {
+        "id": "bf15ca24-073d-418b-a5ea-91d5e1888f71",
+        "active": false
+      }
+    ],
+    "students": [
+      {
+        "id": "a91c0000-0000-4000-8000-000000000002",
+        "status": "blocked",
+        "deleted": true
+      },
+      {
+        "id": "a91c0000-0000-4000-8000-000000000003",
+        "status": "blocked",
+        "deleted": true
+      }
+    ],
+    "probeCount": 0,
+    "assignments": [
+      {
+        "id": "45ac89da-f244-4e4a-b13d-b2da7c2bae21",
+        "status": "closed",
+        "deleted": true
+      },
+      {
+        "id": "c85e5174-1736-4d2a-8ca2-29fe263938df",
+        "status": "closed",
+        "deleted": true
+      }
+    ]
+  },
+  "local": {
+    "files": 631,
+    "passed": 5121,
+    "skipped": 1,
+    "seconds": 652.98,
+    "workers": 2,
+    "newFocused": 9,
+    "unchangedTimeoutFileRecheck": 24,
+    "fourWorkerFullRuns": [
+      {
+        "passedFiles": 630,
+        "failedFiles": 1,
+        "passed": 5120,
+        "failed": 1,
+        "skipped": 1
+      },
+      {
+        "passedFiles": 630,
+        "failedFiles": 1,
+        "passed": 5120,
+        "failed": 1,
+        "skipped": 1
+      }
+    ],
+    "buildPages": 53,
+    "offlineAssets": 25,
+    "checks": {
+      "capturedAt": "2026-10-03T10:09:20.910Z",
+      "results": [
+        {
+          "name": "ui",
+          "command": "node scripts/verify-ui-architecture.mjs",
+          "exitCode": 0,
+          "log": ".codex-tmp/app11-ui-final.log"
+        },
+        {
+          "name": "build",
+          "command": "node .codex-tmp/app10-build-only.mjs --webpack",
+          "exitCode": 0,
+          "log": ".codex-tmp/app11-build.log"
+        },
+        {
+          "name": "preview-kit",
+          "command": "node .codex-tmp/app11-preview-kit-check.mjs",
+          "exitCode": 0,
+          "log": ".codex-tmp/app11-preview-kit-check-final.log"
+        },
+        {
+          "name": "types",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "lint",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "node_modules/eslint/bin/eslint.js",
+            "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "map",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "scripts/check-feature-map.mjs",
+            "--verify"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "format",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "scripts/check-work-records.mjs",
+            "--phase",
+            "format"
+          ],
+          "exitCode": 0
+        },
+        {
+          "name": "design",
+          "command": [
+            "C:\\Users\\임성열\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+            "scripts/check-work-records.mjs",
+            "--phase",
+            "design",
+            "--work",
+            "APP-20261003-11"
+          ],
+          "exitCode": 0
+        }
+      ],
+      "files": [
+        {
+          "path": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+          "sha256": "01c6d084bd629ddd721c7c79eb8c817937067db3af3bf056d3600ee8d9eed476"
+        },
+        {
+          "path": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+          "sha256": "c2160753cbde1d2304418f86cc389f3df3bf2e23e6f9cfc0327ba912a15f111d"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Both four-worker full runs hit the same existing 5s test; two-worker full run used identical631files and unchanged timeouts. No test was omitted.",
+    "No new remote concurrency claim: bounded immutable lookup and unchanged student-attempt lock order.",
+    "Local storage sizes are reinserted JSON datum sizes, not a disk/TOAST/index saving guarantee.",
+    "Only fresh a91c synthetic accounts/words/exams were written. Existing28-table hashes remain identical.",
+    "Eleven named fake-student tables, eight assignment questions and eight meaning-reference counts were preserved after soft retirement; no public probe created."
+  ],
+  "files": [
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-before-meta.json",
+      "bytes": 8541,
+      "sha256": "00f0fbb3334d3f75cd834d69f81ffec1d25899554d2e18b178de789b5ebbf442"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-before-replay-fixture.json",
+      "bytes": 932,
+      "sha256": "4d24a01978ad49070c4cabfd08efe52564aa632a70ad39e0dd1c914f60cd33ad"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-before-replay-readback.json",
+      "bytes": 2850,
+      "sha256": "beaba350371ddde1bb95ff67db15f993a0de6cdc1534aff7f0ed38b4780b3d10"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-before-replay-snapshot.json",
+      "bytes": 4365,
+      "sha256": "0afbbbbbfab13b682069462f7a0541e81bb85e36818ce9e80cc37e3fd527c1a1"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-before-replay-studentRecords.json",
+      "bytes": 2082,
+      "sha256": "4b4daf3890829fc2e85bf81974e74a87e92fb40350cf91d4161b93f80493eb3b"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-before-snapshot.json",
+      "bytes": 8262,
+      "sha256": "f084e11d2359f4fe74fbb7b4905d5c4a6f46de7d6fb4525fdd3a65a0466fc306"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-begin-new.json",
+      "bytes": 1933,
+      "sha256": "893a5005aed03519a354c584e4a17f5d2008cfdf3cffe45bbf600d44bbf8a118"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-begin-new.sql.txt",
+      "bytes": 397,
+      "sha256": "d02e830276e9a38a0097673067b8cc53bdf050d98f52c82ced652757fc7f162b"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-begin-retry.json",
+      "bytes": 1546,
+      "sha256": "953d58a8195a58f34871102dd94e7c44c223abab712e0bc1756a7a9f409cc306"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-begin-retry.sql.txt",
+      "bytes": 341,
+      "sha256": "d5a1865dbd1b37f945b840d4594ce75c476fec4c71c7c8292c93db89db8f7f04"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-build.log",
+      "bytes": 4651,
+      "sha256": "64d9565176d88873d591121b03c6ce9035007dcbfa62b836779d98d173718db2"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-capture-local-checks.mjs.txt",
+      "bytes": 1632,
+      "sha256": "63097a3a6bd25bd05464f8fc475f429d59f89f428e9ead505b8ef012ca910e4b"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-cleanup.json",
+      "bytes": 836,
+      "sha256": "f2cc87afedd12940223813551ee5c2483abc874da85bede7435a0aada0d903bd"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-cleanupstatus.json",
+      "bytes": 1319,
+      "sha256": "2ae090dac603c55d0b6e642f40ffb1f75b3b1456e677eee79ab7d1927e92bff2"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-cleanupstatus.sql.txt",
+      "bytes": 890,
+      "sha256": "4d9db64473ade941a3e8f4a63433fd4c4f6bb283ad3b56e3faafe87bc4514ae9"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-created.json",
+      "bytes": 2959,
+      "sha256": "8d47f32b8f40cd125c32c063d0129b59b7c3f9a87dffceeb40f118f08a4be6f0"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-design-final.log",
+      "bytes": 97,
+      "sha256": "b75a4e571ed5de4fd9eb6c96826d9b3915ebe800c4e834a2764a4ead5bb323f5"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-final-fixture.json",
+      "bytes": 933,
+      "sha256": "7fdb540b7390a9e75a508d226509931718ffa934e496b951174ce77813316c4b"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-final-snapshot.json",
+      "bytes": 4365,
+      "sha256": "86eed7481b08d2b8da154fe30e56cc1c486a86474407e7ed5863ae9494e8966a"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-final-studentRecords.json",
+      "bytes": 2082,
+      "sha256": "60d210d6465933155a276e9b8578d5cf944e0ced0f971d52a17538f1c28babfb"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-format-final.log",
+      "bytes": 99,
+      "sha256": "439ad69c29adfa0ac4dbc95d7c8c6add639443f63bec6a8c3f946926712dbe4d"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-full-final.log",
+      "bytes": 20099,
+      "sha256": "b2d174bd9b2c71777c757b85061346af42820e7ddcd64fca8f2e0085b8a26b95"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-full-two-workers.log",
+      "bytes": 19120,
+      "sha256": "d673fd42bd71eb84ddc9b00f2502125e1afbe0992e581b3000ea5765fd022cc1"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-full.log",
+      "bytes": 20097,
+      "sha256": "671a7090f391c2de5748854ef5d21b45c0dee8447ba28228265fd3fa0cb1637c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-lint-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-local-checks.json",
+      "bytes": 2392,
+      "sha256": "2f7a46de67d242cc77c11cca64f5b9f8146adcca12e586dac7c064a9dbd605e7"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-local-invocations.json",
+      "bytes": 1205,
+      "sha256": "d5df4c719211e32dc940efd28f5cf0b33301e7231899c45165a21561c350104d"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-map-final.log",
+      "bytes": 556,
+      "sha256": "f3b279d214409776984f7fe9914d02278cdde07b0cbe61327ed0dab026a7012f"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-migration.json",
+      "bytes": 113,
+      "sha256": "8e9392c611ff9cfd74c641a94304063568081e3e8e902b3bdb1a6393c213e821"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-negative.json",
+      "bytes": 681,
+      "sha256": "46ede667a610b37c34a6d18e132dfab921a3372048cc70bd7f216a2f2f384868"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-postapply-meta.json",
+      "bytes": 4068,
+      "sha256": "cbcbc6d6605aeb6da7bb3edd5f39a0e2005033787c37591c860f8dea459fed87"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-postapply-oldState.json",
+      "bytes": 3843,
+      "sha256": "5e1aa1350684e0108c18a8e8782c3ad69947157eb8d0880944a3095cb83e3237"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-postapply-snapshot.json",
+      "bytes": 4365,
+      "sha256": "11ddc6470e55af786d2f762cbf51408edb4c5306136e0bbd35731a89088f1d7b"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preapply-oldState.json",
+      "bytes": 3843,
+      "sha256": "1dfa1b76d95ebd9d3c1ee9bdf4f5d5efa7f77431df05286a670c283e1d474462"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preapply-snapshot.json",
+      "bytes": 4365,
+      "sha256": "82224f890d04256b08526422930df7237613482710e58c9223f9cf95196278be"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preflight-final.json",
+      "bytes": 720,
+      "sha256": "b67b387f061e956e1ecad21e4c4ada1368a7a1d9299b88e57c4ca886aa551037"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preflight.json",
+      "bytes": 950,
+      "sha256": "956c563a4c5ba4b0e197aef4f50a8c7378779de2130895d8b0618c6ce2c41c35"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preretire-studentRecords.json",
+      "bytes": 2082,
+      "sha256": "6bf657cc5b1aa26fa514c282c78e43529f546998262365f07c301a8076ed2704"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-cleanup.sql.txt",
+      "bytes": 1565,
+      "sha256": "3915092924a20b17dc28b7708b53ae5faddaca79dc8b42351ba95d9892538e5c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-config.json",
+      "bytes": 331,
+      "sha256": "9feb38e274730a4b40ab48cbddbaa95d1f6331e65da4c069ce56af1763e3c561"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-create.sql.txt",
+      "bytes": 2568,
+      "sha256": "19d10d51edb01df36dbd6f1add31beb85afdfaa70e12523339e0d5afc797e7dd"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-fixture.sql.txt",
+      "bytes": 1694,
+      "sha256": "49ff43b27de19263df7f9928e97b99f927c5cf98576ad92c0a26e5e4b847e5d9"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-kit-check-final.log",
+      "bytes": 1621,
+      "sha256": "b37363eb0d8f7032b16d90325c64a77289392bb8e8fa4e248f37dbb6f569578c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-kit-check.mjs.txt",
+      "bytes": 4749,
+      "sha256": "5f98327d558d19d4220811e1ebc32222343a6ebfc171e202a83d872c0a256cab"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-kit.mjs.txt",
+      "bytes": 7258,
+      "sha256": "8bf1b31b949d7ae410470ee1e6e93b83924920a6d8862a3d2fa645f2421c5d53"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-meta.sql.txt",
+      "bytes": 1087,
+      "sha256": "4c306765d2b9017c704f08afd6ad0a41bcf2140b7bfe3ed2a5d11dbb5d12f8e2"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-negative.sql.txt",
+      "bytes": 1952,
+      "sha256": "e678874207f2cb5bfd09b894d60d073844a17946635ef0247ace117701c28f57"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-oldState.sql.txt",
+      "bytes": 628,
+      "sha256": "53db6e2a63a109a05d81acd01e2e52280156c146d8e4fadc8ecd09657e134b9f"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-readback.sql.txt",
+      "bytes": 1171,
+      "sha256": "fe5a4b6fbc5345e7422d37d23b3a8c292ca12edca857906c241bbceda3a718c4"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-seed.sql.txt",
+      "bytes": 9293,
+      "sha256": "c9601633f3879a9f268e850003cc0c056bfac1aeb981ff84ad11e132572b651a"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-snapshot.sql.txt",
+      "bytes": 9259,
+      "sha256": "b8f04c6e5b74c7632e7d87956c2db37ba6890facd477f48bd7f87fd20c6fb62f"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-preview-studentRecords.sql.txt",
+      "bytes": 3996,
+      "sha256": "43c6c8a853b9c756a46cb75cd8dbb2569158cd3391c133acc88e5d5251baa615"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-replay-new.json",
+      "bytes": 3287,
+      "sha256": "6a3a429f606a0ac85e8c41b3769e5774690c0ab37b321acea30d0aa4ca604d8f"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-replay-new.sql.txt",
+      "bytes": 942,
+      "sha256": "c3aaa2a6b882058792d896cc293110a445b05118c3432f9104bb9c1c9c68b691"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-replay-old.json",
+      "bytes": 3283,
+      "sha256": "a8063bbd194915bc567edcde0bc6dabb5420d70c2b79ca72f3292c211bd3ac41"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-replay-old.sql.txt",
+      "bytes": 942,
+      "sha256": "9f3b9feee2b7ab358a0a6243f66a4ab68199b510ac170a58c7dba1d9a5e6587a"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-replay-retry.json",
+      "bytes": 3565,
+      "sha256": "b323b868746da49c92959761ec822170ecd834f7f9e5066edc61bcbc5debe835"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-replay-retry.sql.txt",
+      "bytes": 712,
+      "sha256": "72edd973eea2f3b460d8d260911289b9a50b8e1c7282c7c841c1df389f339b1b"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-seed.json",
+      "bytes": 4616,
+      "sha256": "d90d36e76fd184b7cd650389a65fcd691f80cea7bf0c3978d67c541461e3e05d"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-submit-new.json",
+      "bytes": 3287,
+      "sha256": "b8c23bd297a838236b977a6bb0ea8827bab2c63aaf2ac741c14379d3de032fdd"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-submit-new.sql.txt",
+      "bytes": 942,
+      "sha256": "c3aaa2a6b882058792d896cc293110a445b05118c3432f9104bb9c1c9c68b691"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-submit-old.json",
+      "bytes": 3283,
+      "sha256": "be52e77a0e7df6640a9d4d84f949f91ce7f7bd99b87e6db18e32182f00c55731"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-submit-old.sql.txt",
+      "bytes": 955,
+      "sha256": "d82983070511d43f985f1e6f61f27e9dacce005134b29e766ddefcc35d353158"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-submit-retry.json",
+      "bytes": 3565,
+      "sha256": "bf6581c6057c4f4747bf73c27f0467e3e98f717388a10402ea202ad178c67c1c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-submit-retry.sql.txt",
+      "bytes": 726,
+      "sha256": "7e519716ce12511a9205a51849dfec3e301151b4ada7deb2e87c503d7f7d747a"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-timeout-recheck.log",
+      "bytes": 333,
+      "sha256": "aae5da230a29ec0b638a81d58fab33bc245e124b1acfea4e01baf0ebd872129c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-types-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_근거/app11-ui-final.log",
+      "bytes": 6686,
+      "sha256": "d6e3285cf695f51139f64f53e29a1e6db80f435e25eae178432eb13a21b6ec6c"
+    }
+  ],
+  "finalIndependentReview": {
+    "reviewer": "/root/m05_db_review",
+    "checkedAt": "2026-10-03T10:20:43.448Z",
+    "blockingFindings": 0,
+    "evidenceFilesVerified": 68,
+    "existingTables": 28,
+    "existingRows": 14704,
+    "syntheticRecordTables": 11,
+    "syntheticRecordRows": 47,
+    "exactReplays": 3,
+    "notes": "Two initial documentation gaps fixed: exact UTC replay SQL and two-worker invocation record preserved. No test re-execution or remote writes by reviewer."
+  }
+}

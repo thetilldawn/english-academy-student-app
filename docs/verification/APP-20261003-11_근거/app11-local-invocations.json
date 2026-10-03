@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "app11-local-execution-evidence-v1",
+  "finalFullSuite": {
+    "cwd": "C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920",
+    "executable": "C:/Users/임성열/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+    "args": [
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=2",
+      "--silent=false",
+      "--reporter=dot"
+    ],
+    "output": ".codex-tmp/app11-full-two-workers.log",
+    "startedLocal": "2026-10-03 18:51:29 Asia/Seoul",
+    "seconds": 652.98,
+    "exitCode": 0,
+    "launchToolChunk": "782500",
+    "sessionId": 69934,
+    "completionToolChunk": "7bde1b"
+  },
+  "remoteReplays": {
+    "project": "wojxpruvbjzbhrpmsbuy",
+    "tool": "supabase_execute_sql",
+    "execution": "sequential",
+    "timeZone": "UTC",
+    "scripts": [
+      "app11-replay-old.sql",
+      "app11-replay-new.sql",
+      "app11-replay-retry.sql"
+    ],
+    "notes": "Exact original submitted parameters and submission IDs; original America/New_York setting replaced with UTC before each replay. Source statements are retained as separate files. No re-execution done just to create this record."
+  }
+}
+

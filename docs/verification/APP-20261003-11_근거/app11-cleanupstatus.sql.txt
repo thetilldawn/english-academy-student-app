@@ -1,0 +1,6 @@
+select jsonb_build_object('students',(select jsonb_agg(jsonb_build_object('id',id,'status',status,'deleted',deleted_at is not null)order by id)from public.students where id=any(array['a91c0000-0000-4000-8000-000000000002','a91c0000-0000-4000-8000-000000000003']::uuid[])),
+'assignments',(select jsonb_agg(jsonb_build_object('id',id,'status',status,'deleted',deleted_at is not null)order by id)from public.assignments where created_by='a91c0000-0000-4000-8000-000000000001'),
+'datasets',(select jsonb_agg(jsonb_build_object('id',id,'active',is_active)order by id)from public.vocab_datasets where id='a91c0000-0000-4000-8000-000000000004' or id in(select dataset_id from private.vocabulary_compositions where created_by='a91c0000-0000-4000-8000-000000000001')),
+'probeCount',(select count(*) from pg_proc where pronamespace='public'::regnamespace and proname like 'app11_preview_%'))value;
+
+
