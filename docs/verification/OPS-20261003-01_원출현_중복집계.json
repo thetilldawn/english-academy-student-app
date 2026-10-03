@@ -1,0 +1,88 @@
+{
+  "project": "xdxhswjgksukjmpbzqgz",
+  "readOnly": true,
+  "statementTimeoutSeconds": 20,
+  "parts": [
+    {
+      "rows": 4217,
+      "entry_bytes": 8178040,
+      "audio_bytes": 1809801,
+      "entry_residual_bytes": 387537,
+      "largest_entry_residual": 110,
+      "audio_residual_bytes": 1265498,
+      "largest_audio_residual": 425
+    },
+    {
+      "rows": 4232,
+      "entry_bytes": 8219769,
+      "audio_bytes": 1823136,
+      "entry_residual_bytes": 388845,
+      "largest_entry_residual": 110,
+      "audio_residual_bytes": 1273482,
+      "largest_audio_residual": 431
+    },
+    {
+      "rows": 4226,
+      "entry_bytes": 8196563,
+      "audio_bytes": 1816912,
+      "entry_residual_bytes": 388301,
+      "largest_entry_residual": 110,
+      "audio_residual_bytes": 1269912,
+      "largest_audio_residual": 431
+    },
+    {
+      "rows": 4219,
+      "entry_bytes": 8191401,
+      "audio_bytes": 1820717,
+      "entry_residual_bytes": 387582,
+      "largest_entry_residual": 110,
+      "audio_residual_bytes": 1271080,
+      "largest_audio_residual": 423
+    }
+  ],
+  "total": {
+    "rows": 16894,
+    "entry_bytes": 32785773,
+    "audio_bytes": 7270566,
+    "entry_residual_bytes": 1552265,
+    "largest_entry_residual": 110,
+    "audio_residual_bytes": 5079972,
+    "largest_audio_residual": 431
+  },
+  "entryFieldMap": {
+    "source_row": "source_row",
+    "position_in_unit": "position_in_unit",
+    "dictionary_id": "dictionary_id",
+    "legacy_ids": "legacy_ids",
+    "sense_id": "sense_id",
+    "pronunciation_variant_id": "pronunciation_variant_id",
+    "display_headword": "display_headword",
+    "display_gloss_ko": "display_gloss_ko",
+    "display_pronunciation_ko": "display_pronunciation_ko",
+    "display_pronunciation_review_status": "display_pronunciation_review_status",
+    "audio": "audio_json",
+    "occurrence_id": "occurrence_id",
+    "occurrence_content_hash": "occurrence_content_hash",
+    "content_hash": "package_entry_content_hash",
+    "exam_review_id": "exam_review_id",
+    "exam_input_hash": "exam_input_hash",
+    "exam_use_status": "exam_use_status",
+    "context_evidence_status": "context_evidence_status",
+    "context_evidence": "context_evidence",
+    "entry_row_sha256": "source_projection_row_sha256",
+    "source_entry_id": "source_entry_id",
+    "source_entry_sha256": "source_entry_sha256",
+    "include_in_exam": "include_in_exam",
+    "manual_review_flags": "manual_review_flags"
+  },
+  "audioFieldMap": {
+    "status": "audio_status",
+    "audio_url": "audio_url",
+    "sound_audio": "sound_audio",
+    "raw_response_sha256": "raw_response_sha256"
+  },
+  "method": "Compare each original JSON field with the actual typed source-row value; remove only equal values. Remaining body sizes exclude reference keys, hashes, manifest/file receipts and indexes. No changes applied; not reclaimed physical bytes.",
+  "comparison": "postgres-jsonb-text-exact",
+  "confirmedAt": "2026-10-03T00:56:53.227Z",
+  "confirmation": "네 분할을 JSON text 완전일치로 다시 조회, 기존 모든 수치 동일. JSON 숫자 1/1.0도 다르게 취급."
+}

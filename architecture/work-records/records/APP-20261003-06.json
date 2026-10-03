@@ -1,0 +1,506 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261003-06",
+  "title": "원출현의 중복 단어 본문 공유와 선택 복구",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261003-06.md",
+  "baseline": "9c3bb058c68d2327e12d280c4be20058af0e26ef",
+  "owners": [
+    "architecture-meta",
+    "wordbook-compositions",
+    "database-contract"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "docs/work-orders/APP-20261003-06.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "00_앱_인계서.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+      "state": "planned",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose",
+        "assignment-direct-review-create",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "state": "planned",
+      "owner": "database-contract",
+      "flowIds": [
+        "mock-wordbook-compose",
+        "assignment-direct-review-create",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "scripts/exam-use-occurrence-archive.ts",
+      "state": "planned",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-06_검증결과.md",
+      "state": "planned",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-06_검토DB_실행명세.md",
+      "state": "planned",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-06_검토DB_근거.json",
+      "state": "planned",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/OPS-20261003-01_원출현_중복집계.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "원형 보존",
+      "acceptance": "기존 고정열과 같은값만 공유·누락/null/공백/배열/추가필드와 전체원행 확인값 보존",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "assignment-direct-review-create",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "소비자 보존",
+      "acceptance": "APP05/범위판/M01출처/범위등록/구형구성/오답준비 전체확인값 유지",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "assignment-direct-review-create",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "진행작업 보존",
+      "acceptance": "기존 시험/오답준비의 첫 처리·재시험·재접수 보존",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "assignment-direct-review-create",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "제한 이전/복구",
+      "acceptance": "명시100행·파일 재읽기·전부취소·등록/구성잠금·새후보",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "assignment-direct-review-create",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "운영 경계",
+      "acceptance": "불변보호/앱권한0·새답뒤 부분복구·전체회귀/실제검증/독립검토",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "assignment-direct-review-create",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T6",
+        "T7"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "D1 처리 범위와 보존 조건",
+      "answer": "승인된 공용 사전/키/태그 사용과 중복 본문 축소를 따른다. 배정·완료·점수·오답·미접수 답은 보존한다. 계속 진행 승인 범위다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "D2 처리 범위와 보존 조건",
+      "answer": "운영은 읽기만 수행한다. 이 보완의 구현과 가짜 검토 DB 연습 뒤 M09/M10/M08-B의 승인된 순서를 따른다. 실제 운영 사본·적용·물리 회수는 별도로 검증한다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D3 처리 범위와 보존 조건",
+      "answer": "기존 검토 승인 release에 연결되어 원출현 변경이 차단된 행만 대상으로 한다. 직접 수정 가능한 옛 자료·파생 구성은 제외한다. package_entry_json 한 열만 바꾸며 기존 audio_json은 재조립의 고정 입력으로 사용한다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D4 처리 범위와 보존 조건",
+      "answer": "정해진 24개 필드의 원래 값과 기존 열 값이 PostgreSQL JSON text가 완전히 같을 때만 짧은 필드 번호 표시로 공유한다. 원래 unit/sequence_no/day, trim/nullif 전 표기, 누락/null, 추가 필드 등 나머지는 참조 옆 잔여로 둔다. 잔여4KiB 초과·참조가 더 커지는 행은 제외한다. 큰 본문을 다른 DB 표로 옮기지 않는다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D5 처리 범위와 보존 조건",
+      "answer": "원출현 고정 열→단어 본문→전체 원행→APP05 패키지 순서로 복원한다. 하위 함수가 APP05 패키지나 최신 사전값을 역참조하지 않는다. 원행과 참조 확인값을 매 읽기에서 검사하며 누락/깨진 참조는 명시적으로 실패한다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D6",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D6 처리 범위와 보존 조건",
+      "answer": "현재 소비자 7개 본체의 해당 원행 읽기만 정확한 치환으로 연결한다. OID/권한/설정과 M01/M02/APP03/APP05의 보완은 유지한다. 구형 구성의 original record도 복원해 새 release에 이전 표시를 복사하지 않는다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D7",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D7 처리 범위와 보존 조건",
+      "answer": "명시된1~100행의 release/source_row 키를 중복 없이 정규화한다. 검토 등록기와 같은 dataset_key/9129, 자료/자료판/원출현 순서로 잠그며 충돌은 짧게 포기한다. READ COMMITTED·거래30초/잠금1초·원행1MiB/요청16MiB/파일32MiB를 요구한다. 후보는 매번 새 조회하며 마지막 키만 기준으로 건너뛰지 않는다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D8",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D8 처리 범위와 보존 조건",
+      "answer": "모든 Git 밖 접근 제한 파일에 PostgreSQL 원행 문자열을 그대로 저장/fsync/재읽기한다. 준비 응답 유실은 원문이 남아 있을 때 같은 응답으로 재발급한다. 축약 상태에서는 원래 사본을 요구한다. 현재 원행과 외부 사본을 확인한 뒤 package_entry_json 한 열만 전환/복구한다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    },
+    {
+      "id": "D9",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D9 처리 범위와 보존 조건",
+      "answer": "같은 요청은 최초 응답을 반환하고 다른 용도 재사용은 거절한다. UPDATE 허용은 현재 연결/거래/키/전후 확인값에 묶인 한 번만 소비하며 기존 원출현 보호의 다른 동작은 유지한다. 원행을 삭제하거나 학생 기록을 과거로 복원하지 않는다.",
+      "source": "docs/work-orders/APP-20261003-06.md 및 승인된 M08"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "공개 화면/경로/상태 변경없는 운영자 전용 SQL 도구"
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "공개 화면/경로/상태 변경없는 운영자 전용 SQL 도구"
+    },
+    "state": {
+      "status": "not_applicable",
+      "reason": "공개 화면/경로/상태 변경없는 운영자 전용 SQL 도구"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "검토 원출현 고정열로 원형 본문/전체행 복원, 기존 소비자 7곳과 구형 전체확인값 보존"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "검토 원출현 고정열로 원형 본문/전체행 복원, 기존 소비자 7곳과 구형 전체확인값 보존"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "검토 원출현 고정열로 원형 본문/전체행 복원, 기존 소비자 7곳과 구형 전체확인값 보존"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "검토 원출현 고정열로 원형 본문/전체행 복원, 기존 소비자 7곳과 구형 전체확인값 보존"
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "공개 화면/경로/상태 변경없는 운영자 전용 SQL 도구"
+    },
+    "security": {
+      "status": "changed",
+      "reason": "검토 원출현 고정열로 원형 본문/전체행 복원, 기존 소비자 7곳과 구형 전체확인값 보존"
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "공개 화면/경로/상태 변경없는 운영자 전용 SQL 도구"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "검토 원출현 고정열로 원형 본문/전체행 복원, 기존 소비자 7곳과 구형 전체확인값 보존"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "비공개 운영자 참조/사본·원형복원·현재 학생 기록과 정답/캐시 경계 유지",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "비공개 운영자 참조/사본·원형복원·현재 학생 기록과 정답/캐시 경계 유지",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "비공개 운영자 참조/사본·원형복원·현재 학생 기록과 정답/캐시 경계 유지",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "비공개 운영자 참조/사본·원형복원·현재 학생 기록과 정답/캐시 경계 유지",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "고정 원출현열→중복본문 참조/작은잔여→원형전체행→기존7소비자; 외부 사본 재읽기→명시100행 거래→지정 본문만 복구",
+    "reuse": "기존 승인 importer·원출현·M02 현행 fingerprint·APP04 사본/허용 패턴",
+    "cache": "공용48시간·미사용준비24시간·미접수 답 유지",
+    "compatibility": "전체 패키지와 상위 오답 fingerprint/범위판/문항/학생 상태 유지",
+    "rollback": "파일에서 지정 원출현의 package_entry_json만 복구하고 다른 고정열/학생 답/자료 상태 보존"
+  },
+  "uiStates": [],
+  "standards": [
+    {
+      "id": "RDT-v1",
+      "state": "adopted",
+      "version": "1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "화면 없는 운영 도구·기존 호환·독립 리뷰"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "scenario": "SQL전 실제 자료/범위/구성/시험 준비와 적용 후 보존",
+      "expected": "SQL전 실제 자료/범위/구성/시험 준비와 적용 후 보존 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "scenario": "원형·확인값·누락/null/공백/추가필드/큰정수·파일/환경/한도",
+      "expected": "원형·확인값·누락/null/공백/추가필드/큰정수·파일/환경/한도 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "scenario": "APP05/범위판/출처상태/새범위/구형구성/오답 전체확인값",
+      "expected": "APP05/범위판/출처상태/새범위/구형구성/오답 전체확인값 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "integration",
+      "target": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "scenario": "기존시험/오답준비 첫 처리·재시험·재접수",
+      "expected": "기존시험/오답준비 첫 처리·재시험·재접수 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "integration",
+      "target": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "scenario": "중간실패 전부취소·응답유실/같은요청·실제두연결·새후보",
+      "expected": "중간실패 전부취소·응답유실/같은요청·실제두연결·새후보 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "integration",
+      "target": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "scenario": "새답 뒤 선택복구·비대상 보존·보호/권한",
+      "expected": "새답 뒤 선택복구·비대상 보존·보호/권한 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "integration",
+      "target": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "scenario": "전체회귀/정적검사/빌드·검토DB보존/종료·독립검토",
+      "expected": "전체회귀/정적검사/빌드·검토DB보존/종료·독립검토 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}
