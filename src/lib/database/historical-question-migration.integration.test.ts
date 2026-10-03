@@ -89,8 +89,16 @@ async function compactEnded() {
 }
 
 describe.sequential("operator migration of actual historical question bodies", () => {
+  let preApp10PacketJson: string;
   beforeAll(async () => {
     db = await createFinalSchemaDatabase({ beforeMigration: async (database, migration) => {
+      if (migration === "20261003235000_share_composition_assignment_hashes.sql") {
+        // An archive prepared before APP10 must keep its exact old identity and
+        // body checks after APP10 changes the assignment reader.
+        db = database; await db.exec("reset role");
+        preApp10PacketJson = JSON.stringify(await prepare(id(10), "assignment", await getIds(id(10))));
+        return;
+      }
       if (migration !== "20261001145444_share_vocabulary_question_content.sql") return;
       db = database;
       expect(await scalar("select to_regclass('private.vocabulary_question_content_versions')::text value")).toBeNull();
@@ -141,12 +149,25 @@ describe.sequential("operator migration of actual historical question bodies", (
 
   it("keeps actual pre-M02 bodies, completed/active/retry states, preparations and original IDs", async () => {
     expect(await ordinaryRows(true)).toEqual(oldRows);
-    expect(await scalar("select count(*)::int value from private.historical_question_migrations")).toBe(0);
-    expect(await scalar("select count(*)::int value from private.vocabulary_question_content_versions")).toBe(0);
+    // Preparing the four archives before APP10 registers their migration IDs,
+    // while all actual historical bodies and student rows remain unchanged.
+    expect(await scalar("select count(*)::int value from private.historical_question_migrations")).toBe(4);
+    expect(await scalar("select count(*)::int value from private.vocabulary_question_content_versions")).toBe(4);
     expect(await scalar("select status::text value from public.quiz_attempts where id=$1", [endedAttempt])).toBe("completed");
     expect(await scalar("select phase::text value from public.quiz_attempts where id=$1", [retryAttempt])).toBe("review");
     expect(await scalar("select jsonb_typeof(plan) value from private.quiz_attempt_preparations where id=$1", [pendingPreparation])).toBe("array");
     expect(oldQuestionReceipt).toBeDefined();
+  });
+
+  it("accepts the exact pre-APP10 archive for partial migration and partial body restoration", async () => {
+    const archived: Packet[] = JSON.parse(preApp10PacketJson);
+    expect(JSON.stringify(await prepare(id(10), "assignment", oldBankIds))).toBe(preApp10PacketJson);
+    const original = await ordinaryRows(true), studentState = await preserved();
+    expect((await apply(archived.slice(0, 2))).changed).toBe(2);
+    expect((await apply(archived.slice(0, 1), "restore")).changed).toBe(1);
+    expect((await apply(archived.slice(1, 2), "restore")).changed).toBe(1);
+    expect(await ordinaryRows(true)).toEqual(original);
+    expect(await preserved()).toEqual(studentState);
   });
 
   it("prepares content references without clearing a body, then processes two rows and reuses exact references", async () => {

@@ -171,7 +171,10 @@ describe.sequential("새 구성 배정은 처음 저장할 때부터 공용 문�
     expect(await snapshot()).toEqual(before);
     const created = await create(fresh); await owner();
     await expectFailure(() => db.query("update public.assignment_questions set content_version_id=null where assignment_id=$1", [created]), "question_content_reference_immutable");
-    await expectFailure(() => db.query("update public.assignment_questions set prompt='changed' where assignment_id=$1", [created]), "question_content_reference_immutable");
+    await expectFailure(() => db.query("update public.assignment_questions set prompt='changed' where assignment_id=$1", [oldAssignment]), "question_content_reference_immutable");
+    // Compact APP10 rows reject inline bodies in the preceding reviewed-choice
+    // reader. Keep both exact failures rather than accepting any rejection.
+    await expectFailure(() => db.query("update public.assignment_questions set prompt='changed' where assignment_id=$1", [created]), "question_content_binding_mismatch");
   });
 
   it("keeps original guards before registration and blocks direct app execution", async () => {

@@ -66,10 +66,11 @@ describe.sequential("50 frozen questions shared by 100 separate real assignments
     await owner();
     const students=(await db.query<{id:string}>(`insert into public.students(display_name,created_by,school_name,grade_label)
       select 'Fake sharing '||n,$1,'Fake school','고2' from generate_series(1,100)n returning id`,[adminId])).rows;
-    await db.exec(`create temp table observed_assignment_writes(operation text, reference_only boolean);
+    await db.exec(`create temp table observed_assignment_writes(operation text, reference_only boolean, hashes_shared boolean);
       create function pg_temp.observe_assignment_write() returns trigger language plpgsql as $$begin
         insert into pg_temp.observed_assignment_writes values(tg_op,
-          new.content_version_id is not null and new.prompt is null and new.choices is null);
+          new.content_version_id is not null and new.prompt is null and new.choices is null,
+          new.entry_row_sha256_snapshot is null and new.eligibility_input_hash_snapshot is null);
         return new;
       end$$;
       create trigger observe_assignment_write after insert or update on public.assignment_questions
@@ -97,8 +98,10 @@ describe.sequential("50 frozen questions shared by 100 separate real assignments
       'inserted',(select count(*) from pg_temp.observed_assignment_writes where operation='INSERT'),
       'updated',(select count(*) from pg_temp.observed_assignment_writes where operation='UPDATE'),
       'inlineAtInsert',(select count(*) from pg_temp.observed_assignment_writes where not reference_only),
+      'duplicateHashes',(select count(*) from pg_temp.observed_assignment_writes where not hashes_shared),
+      'restoredHashes',(select count(*) from private.assignment_question_contents_v1 where entry_row_sha256_snapshot is not null and eligibility_input_hash_snapshot is not null),
       'frozenMeanings',(select count(*) from private.assignment_vocabulary_meaning_refs)) value`);
-    expect(writes).toEqual({inserted:5000,updated:0,inlineAtInsert:0,frozenMeanings:5000});
+    expect(writes).toEqual({inserted:5000,updated:0,inlineAtInsert:0,duplicateHashes:0,restoredHashes:5000,frozenMeanings:5000});
     const mismatch=await scalar<number>(`select count(*)::int value from private.quiz_question_contents_v1 q
       join private.assignment_question_contents_v1 b on b.id=q.assignment_question_id
       where (q.prompt,q.choices,q.direction,q.correct_choice_index) is distinct from (b.prompt,b.choices,b.direction,b.correct_choice_index)`);
