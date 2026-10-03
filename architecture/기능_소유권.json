@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 146,
-      "pathSetSha256": "b9a522a1844039dc0a3f4e0bd90f729893e11e3c8f5b34c2d9d6b8dbc7dc62a6"
+      "fileCount": 147,
+      "pathSetSha256": "07d15b88453bc051082b69b860c532b4b4c965ad3e5a544ffb5ecd1b256f3f40"
     },
     {
       "path": "src/lib/deploy",
@@ -3095,6 +3095,11 @@
       "path": "supabase/migrations/20261003235000_share_composition_assignment_hashes.sql",
       "owner": "assignments",
       "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
     }
   ],
   "features": [
@@ -7450,7 +7455,8 @@
           "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
           "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
           "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
-          "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql"
+          "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
+          "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7535,7 +7541,8 @@
           "src/lib/database/exam-use-package-archive.integration.test.ts",
           "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
           "src/lib/database/reviewed-resource-archive.integration.test.ts",
-          "src/lib/database/local-quiz-receipt-storage.integration.test.ts"
+          "src/lib/database/local-quiz-receipt-storage.integration.test.ts",
+          "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

@@ -1,0 +1,577 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261003-11",
+  "title": "시험 회차 목록의 중복 저장 축소",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261003-11.md",
+  "baseline": "008dad5643a17c76f5a202ded0aa3d13baa6cc59",
+  "owners": [
+    "architecture-meta",
+    "quiz-player",
+    "database-contract"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "docs/work-orders/APP-20261003-11.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "00_앱_인계서.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_검증결과.md",
+      "state": "planned",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20261003-11_검토DB_실행명세.md",
+      "state": "planned",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "중복 목록 축소",
+      "acceptance": "신규 작은표현의 ID순서→동일 내용판/서명 복원",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "기존 시험 보존",
+      "acceptance": "과거행·준비·접수·학생기록·권한 동일",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "동일 응답과 원기기 재개",
+      "acceptance": "시간대/재시험/재접수·정책 동일",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "손상 거절",
+      "acceptance": "잘못된 객체·키/순서/내용/시각/해시 거절",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "실제 효과와 운영 구분",
+      "acceptance": "로컬/검토 근거 및 무료운영 한계 구분",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T6"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "D1 회차 목록 저장과 보존",
+      "answer": "공용 키를 공유하고 배정·최초/재시험·오답·점수·포인트와 과거 기록을 보존한다. 유지보수 완료·계속 진행 승인과 OPS02 D7을 적용한다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "D2 회차 목록 저장과 보존",
+      "answer": "풀이 중 서버 호출0, 종료 제출, 기한 안 기록한 답의 늦은 접수, 원래 기기 재개, 미확인 기기 답 자동 삭제 금지, 공용48시간/미사용 준비24시간을 유지한다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D3 회차 목록 저장과 보존",
+      "answer": "신규 `plan`은 `storageVersion`, 순서대로 저장한 `questionIds`, 원래 서명에 들어간 `startedAt` JSON 문자열을 갖는다. 실제 `pg_column_size`가 원형 배열보다 작을 때만 이 형식을 쓴다. 기존 행은 변경하지 않는다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D4 회차 목록 저장과 보존",
+      "answer": "새 내부 판독기는 기존 배열을 그대로 반환하고 새 객체만 엄격히 검사한다. 최대500개·정규 UUID·중복0·같은 응시·공용 내용판 존재를 확인하고 배열 순서로 원래 `id/order/contentId`를 재구성한다. 현재 오답 상태나 준비 행에서 재계산하지 않는다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D5 회차 목록 저장과 보존",
+      "answer": "새 객체는 원래 `startedAt` 문자열의 절대시각이 `started_at`과 같고, 원래 규격/응시/회차/문항/시각/제한으로 계산한 전체 해시가 같아야 한다. 시간대별 문자열을 새로 만들지 않는다. 원래 문자열을 갖지 않은 구형 배열에는 이 새 해시 재계산을 소급하지 않는다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    },
+    {
+      "id": "D6",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D6 회차 목록 저장과 보존",
+      "answer": "기존 생성/읽기/신규 제출 검사/APP08 접수 복원 네 곳에 연결한다. 제출의 기존 원형 영수증 반환 순서는 유지하고 새 답 검사 직전에 계획을 복원한다. 저장 직전 원래 배열과 재복원 배열의 전체 JSON이 같아야 한다. 인증·학생→응시 잠금·시간/답 검사를 완화하지 않는다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    },
+    {
+      "id": "D7",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D7 회차 목록 저장과 보존",
+      "answer": "열·표·FK/UNIQUE·불변 트리거는 유지하고 plan 형식 CHECK만 두 저장판을 허용하도록 바꾼다. CASE와 최종 false 처리로 잘못된 타입이나 SQL NULL 우회가 없게 한다. 새 함수는 PUBLIC/anon/authenticated/service_role 직접 실행권한0이다. 쓰기를 되돌릴 때 생성기만 이전 원형 쓰기로 복구하고 두 형식의 판독기·CHECK를 유지한다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    },
+    {
+      "id": "D8",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "D8 회차 목록 저장과 보존",
+      "answer": "PGlite 최종 스키마·관련/전체 검사·기록 관문·작은 가짜 검토 DB를 검증한다. Windows initdb, 실제 학생 시험, 운영 DB 쓰기/배포/물리 재작성은 하지 않는다. 답 접수나 포인트를 삭제·합산하거나 보관기간을 바꾸지 않는다.",
+      "source": "docs/work-orders/APP-20261003-11.md / OPS02 D7 및 계속 진행 승인"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "화면·경로·스타일 변경 없음. 기존 안내와 복구 유지"
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "화면·경로·스타일 변경 없음. 기존 안내와 복구 유지"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    },
+    "security": {
+      "status": "changed",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "화면·경로·스타일 변경 없음. 기존 안내와 복구 유지"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "신규 회차 목록의 중복 참조 축소; 공개 응답/인증/기기답/시간/옛접수 그대로"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 학생/기기 인증 뒤 원응답만 반환, 내부 함수 직접접근0·미접수 답 자동삭제0",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4",
+        "T5",
+        "T6"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 학생/기기 인증 뒤 원응답만 반환, 내부 함수 직접접근0·미접수 답 자동삭제0",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4",
+        "T5",
+        "T6"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 학생/기기 인증 뒤 원응답만 반환, 내부 함수 직접접근0·미접수 답 자동삭제0",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4",
+        "T5",
+        "T6"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "기존 학생/기기 인증 뒤 원응답만 반환, 내부 함수 직접접근0·미접수 답 자동삭제0",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4",
+        "T5",
+        "T6"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "원래 회차배열/서명→작은 ID목록→불변 응시문항/원시각으로 복원검산→저장→동일 응답/제출/재접수",
+    "reuse": "기존 quiz_questions.content_version_id·고정 plan_hash·APP08 접수 복원",
+    "cache": "공용48시간·미사용준비24시간·미확인 기기답 무삭제 그대로",
+    "compatibility": "기존 배열 그대로 반환, 신규객체만 저장된 원시각 JSON으로 해시검증; 준비행 삭제에 독립",
+    "rollback": "생성기만 이전 원형쓰기 복구. 두 저장판의 판독기/CHECK는 유지하고 학생행삭제0"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "기존 화면 유지: 처음 시험 화면을 열어 기기 기록·공용 자료·화면 준비를 확인",
+      "message": "시험 자료를 기기에 준비하고 있습니다.",
+      "behavior": "문항과 화면 준비 뒤 시작 요청. 준비 실패 때 새 시험 시각을 만들지 않음",
+      "recovery": "같은 준비 ID로 다시 확인",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "기존 화면 유지: 기존 응시 주소에서 원래 기기 기록으로 이동",
+      "message": "기기에 보관한 시험을 열고 있습니다.",
+      "behavior": "서버의 구형 문항 조회 전에 같은 기기 기록을 찾음",
+      "recovery": "기록이 있으면 원래 응시로 이동, 없으면 원래 기기 안내",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "기존 화면 유지: 공용 시험 화면 주소에 유효한 시험 식별자가 없음",
+      "message": "시험 목록에서 시험을 선택해 주세요.",
+      "behavior": "개인 문제를 표시하거나 시작하지 않음",
+      "recovery": "시험 목록 링크로 이동",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "기존 화면 유지: 정상 빈 시험은 없음. 준비/계획 규격은 문항 1개 이상을 요구하며 회차 종료는 결과 상태로 전환",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "0개 계획은 준비 실패로 거절. 모든 답을 기록하면 빈 문제 대신 제출/공식 결과 안내",
+      "recovery": "원인 확인 후 같은 준비 재조회. 빈 결과를 완료로 간주하지 않음",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "기존 화면 유지: 계획·표시 내용·접수 목록의 규격 또는 확인값이 맞지 않음",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "시작 전 원문 전체 확인, 접수 불일치 때 완료 표시 금지",
+      "recovery": "원래 자료/같은 제출을 재확인하며 미확정 답 유지",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "기존 화면 유지: 기기 저장소 읽기 또는 공용 화면/자료 준비 실패",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "새로운 시간으로 재생성하지 않고 실패 화면 유지",
+      "recovery": "다시 확인 버튼. 공용 화면만 복구하며 개인 답은 삭제하지 않음",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "기존 화면 유지: 선택 답과 다음 위치의 기기 저장 거래가 실패",
+      "message": "답을 기기에 보관하지 못했습니다. 선택은 그대로 두고 다시 저장해 주세요.",
+      "behavior": "선택을 표시한 현재 문항 유지. 채점/다음 이동/서버 제출 금지",
+      "recovery": "같은 선택을 다시 저장하고 거래 성공 후 다음 진행",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "기존 화면 유지: 계정 세대 변경 또는 서버 인증 거절",
+      "message": "계정 확인이 필요합니다. 다시 로그인한 뒤 이어가기를 눌러 주세요. 답안은 기기에 보관돼 있습니다.",
+      "behavior": "이전 학생 문제를 가리고 늦은 응답 폐기, 기기 답 보존",
+      "recovery": "같은 학생으로 다시 로그인 후 계정 확인 후 이어가기",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "기존 화면 유지: 신규 응시의 시작 기기 기록을 찾을 수 없음",
+      "message": "이 시험은 처음 시작한 기기의 브라우저에서 이어서 진행해 주세요.",
+      "behavior": "새 기기에서 응시를 재생성하지 않음",
+      "recovery": "원래 기기로 이동. 저장소 자체가 삭제되면 서버 미접수 답 복원은 불가능",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "기존 화면 유지: 종료 제출·접수 확인에 실패하고 명시적인 서버 안내가 없음",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "고정 제출 묶음과 ID 보존. 공식 결과로 표시하지 않음",
+      "recovery": "연결 복구 또는 다시 확인으로 같은 묶음 재전송; 전체 접수 뒤 확정",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T4",
+        "T6"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "RDT-v1",
+      "state": "adopted",
+      "version": "1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "원래 회차/서명·학생기록 보존과 작은 표현의 독립검토"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "scenario": "적용전 계획/준비/진행·종료·접수 및 함수속성 보존",
+      "expected": "적용전 계획/준비/진행·종료·접수 및 함수속성 보존 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "scenario": "최초1/4/50/500과 별도재시험2문항 목록·해시·작은 표현 선택",
+      "expected": "최초1/4/50/500과 별도재시험2문항 목록·해시·작은 표현 선택 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "scenario": "JSON·중복/다른응시/누락키·순서·내용판·시간·해시 손상거절",
+      "expected": "JSON·중복/다른응시/누락키·순서·내용판·시간·해시 손상거절 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "scenario": "시간대 교차·준비정리 뒤 재접수/최신기록 보존·실패 전체취소",
+      "expected": "시간대 교차·준비정리 뒤 재접수/최신기록 보존·실패 전체취소 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "scenario": "권한0·불변/FK/UNIQUE·이전쓰기와 새형식읽기 호환",
+      "expected": "권한0·불변/FK/UNIQUE·이전쓰기와 새형식읽기 호환 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+      "scenario": "전체검사4작업자 결과와 같은대상/제한2작업자 결과 구분·타입/lint/지도/기록/빌드·독립검토·검토DB보존",
+      "expected": "전체대상 검사 통과 및4작업자 기존5초초과 근거 구분·타입/lint/지도/기록/빌드·독립검토·검토DB보존 통과",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}
