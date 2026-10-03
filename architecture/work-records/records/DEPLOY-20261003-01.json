@@ -1,0 +1,378 @@
+{
+  "schemaVersion": 1,
+  "id": "DEPLOY-20261003-01",
+  "title": "유지보수 검토 배포와 운영 반영",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/DEPLOY-20261003-01.md",
+  "baseline": "39584224e9d3fc49237a85024d8ad1e9b1ca2721",
+  "owners": [
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "docs/work-orders/DEPLOY-20261003-01.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_반영준비.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "같은 검토 코드/DB/권한",
+      "acceptance": "환경·SQL·실제 빌드 일치",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "실제 검토 앱 흐름",
+      "acceptance": "구형/신규·최초/재시험·오답/결과 보존",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "배포 복구와 기기 답 보존",
+      "acceptance": "새 시작만 제한하고 기존 답과 재접수 유지",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "같은 코드의 운영 반영",
+      "acceptance": "정확 SQL/코드와 기존 학생행 보존",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T6",
+        "T7"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "실제 완료 근거 구분",
+      "acceptance": "배포/인증/실사용/공간/후속 구분",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T8"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "기존 승인과 보존",
+      "answer": "유지보수 완료·계속 진행. 실제학생쓰기0, 미확인 기기답 삭제 금지",
+      "source": "사용자 유지보수 실행/계속 진행 및 D21"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "코드/SQL 고정",
+      "answer": "후보3958422와22SQL부터 조사하며 선행 보완 뒤 최종 후보와 실행명세 갱신",
+      "source": "M10 선행 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "선행 조건",
+      "answer": "신규 시작 제어/같은주소 복귀/인증 검토흐름이 남아 지금은 새배포/운영쓰기0",
+      "source": "독립 코드/환경 조사와 M10-T8"
+    },
+    {
+      "id": "D4",
+      "owner": "user",
+      "state": "resolved",
+      "question": "후속 경계",
+      "answer": "토스트/관리자완전분리/개인초안·선택공유·발음업무 별도",
+      "source": "사용자 F01/F02/WORD 확정 답변"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "state": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "domain": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "data": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "api": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "security": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    },
+    "tests": {
+      "status": "not_applicable",
+      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "개인자료/정답/기기캐시의 환경 전환·복구 보존 확인",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "개인자료/정답/기기캐시의 환경 전환·복구 보존 확인",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "개인자료/정답/기기캐시의 환경 전환·복구 보존 확인",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "개인자료/정답/기기캐시의 환경 전환·복구 보존 확인",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "검토DB/빌드→실제 가짜 앱 흐름→같은주소 호환복구→동일 SQL/코드 운영→읽기검증",
+    "reuse": "각 APP 로컬/DB 검증과 기존 운영 도구의 안전한 부분만 재사용",
+    "cache": "공용48시간/미사용준비24시간/미확인답무삭제·CDN일반캐시 유지",
+    "compatibility": "구형 진행과 새 규격 접수를 함께 보존, 참조/새API 미지원 버전 복귀 금지",
+    "rollback": "신규 시작만 제한하고 기존 제출/재시험 허용하는 호환 후보를 지정·연습한 뒤 운영"
+  },
+  "uiStates": [],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "M10 2026-10-03 현행",
+      "reference": "docs/work-orders/20261001_공용사전과학생기록_유지보수/10_검토환경과_운영반영.md",
+      "reason": "배포·DB·인증·실사용 구분과 기기답 보존"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "review",
+      "target": null,
+      "scenario": "DB 이력·함수·권한·SQL 순서",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "review",
+      "target": null,
+      "scenario": "로컬 빌드·자산·기록",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "browser",
+      "target": null,
+      "scenario": "실제 검토 앱 전체 흐름",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "browser",
+      "target": null,
+      "scenario": "구형/신규 시험·종료 제출",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "browser",
+      "target": null,
+      "scenario": "동일 주소 배포/복구·새 시작 제한",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "review",
+      "target": null,
+      "scenario": "운영 보존 적용",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "browser",
+      "target": null,
+      "scenario": "운영 대표주소·권한·오류",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T8",
+      "kind": "review",
+      "target": null,
+      "scenario": "완료/미검증 경계",
+      "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}

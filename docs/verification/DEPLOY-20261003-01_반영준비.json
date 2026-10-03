@@ -1,0 +1,579 @@
+{
+  "work": "DEPLOY-20261003-01",
+  "status": "preparation-not-deployed",
+  "baseline": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+  "candidate": "39584224e9d3fc49237a85024d8ad1e9b1ca2721",
+  "recordedAt": "2026-10-03T11:02:36.075Z",
+  "migrations": [
+    {
+      "order": 1,
+      "file": "supabase/migrations/20261001113432_confirm_practice_completion.sql",
+      "name": "confirm_practice_completion",
+      "sha256": "fc38921ed8f2429e9c9262539d1066f3213a5b305b84e45add793c390dc343a8",
+      "preview": [],
+      "production": [],
+      "note": "Preview skipped original; reconciled by sync_practice_completion_confirmation, do not replay original"
+    },
+    {
+      "order": 2,
+      "file": "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
+      "name": "compact_vocabulary_learning_values",
+      "sha256": "d680b3577d9baf9176d28d3ff61d3207769c5d266d0b49ca0691d4b2ac326f27",
+      "preview": [
+        {
+          "name": "compact_vocabulary_learning_values",
+          "version": "20261001141842"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 3,
+      "file": "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+      "name": "share_vocabulary_question_content",
+      "sha256": "3e195f7ea237a4ef42d2cdab144573f444b51296817074c8f5f8ef5b171b6b79",
+      "preview": [
+        {
+          "name": "share_vocabulary_question_content",
+          "version": "20261001164430"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 4,
+      "file": "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+      "name": "track_vocabulary_mistake_episodes",
+      "sha256": "0bcb3ad7fd42ee1c9ec820a1313e3b9ddc209b9e13a7bfa78294b02aa439b6cc",
+      "preview": [
+        {
+          "name": "track_vocabulary_mistake_episodes",
+          "version": "20261002013952"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 5,
+      "file": "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+      "name": "preserve_mistake_assignment_soft_deletion",
+      "sha256": "d81ef5ed1ce051deba049141a1fa24bc58c2081aca61d0d3ff14d17589d3a8c5",
+      "preview": [
+        {
+          "name": "preserve_mistake_assignment_soft_deletion",
+          "version": "20261002020012"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 6,
+      "file": "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+      "name": "return_vocab_state_conflicts_without_retries",
+      "sha256": "6d36b38cff2e5e3dc5c0dcbffca58ec3ac6ff8f5e810bed08d55fda10b083e59",
+      "preview": [
+        {
+          "name": "return_vocab_state_conflicts_without_retries",
+          "version": "20261002030342"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 7,
+      "file": "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql",
+      "name": "preserve_compact_vocabulary_results",
+      "sha256": "78ebd8f0222ef900e36a12aadd388b63a45c1a62072419210dcb1b1607e9aff4",
+      "preview": [
+        {
+          "name": "preserve_compact_vocabulary_results",
+          "version": "20261002045831"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 8,
+      "file": "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql",
+      "name": "submit_local_quiz_phase_batches",
+      "sha256": "65bb3a3ec1c527e8f9175a9c0fd90a2de472d126479ffe58785fca1f1cc49011",
+      "preview": [
+        {
+          "name": "submit_local_quiz_phase_batches",
+          "version": "20261002085219"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 9,
+      "file": "supabase/migrations/20261002140634_retain_operational_logs_and_preparations.sql",
+      "name": "retain_operational_logs_and_preparations",
+      "sha256": "af3db832a99b36327586ef11ca66a0675045613dc285de477bbe6de4c94e5453",
+      "preview": [
+        {
+          "name": "retain_operational_logs_and_preparations",
+          "version": "20261002145332"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 10,
+      "file": "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql",
+      "name": "validate_cron_retention_with_read_permissions",
+      "sha256": "6f37cf30c870bcb820df4c65cd6629a9c9bfbe1b39cac37a5dea7f3e0b938461",
+      "preview": [
+        {
+          "name": "validate_cron_retention_with_read_permissions",
+          "version": "20261002152819"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 11,
+      "file": "supabase/migrations/20261002155950_classify_wordbook_templates.sql",
+      "name": "classify_wordbook_templates",
+      "sha256": "4bf364e8abc80c3a7504266feebc686cf7d89bd53d6bfe338c3551c3bddd81f7",
+      "preview": [
+        {
+          "name": "classify_wordbook_templates",
+          "version": "20261002173220"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 12,
+      "file": "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql",
+      "name": "migrate_historical_question_bodies",
+      "sha256": "64d6b57b9f001b53e549ababce192a9198992e51e0faa41ebaae953a8a04fd05",
+      "preview": [
+        {
+          "name": "migrate_historical_question_bodies",
+          "version": "20261002184942"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 13,
+      "file": "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
+      "name": "migrate_historical_learning_sources",
+      "sha256": "1782965a78c2a933c73722d823c230188724ff115a0c95c5304ff5a6dd5207ba",
+      "preview": [
+        {
+          "name": "migrate_historical_learning_sources",
+          "version": "20261002203618"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 14,
+      "file": "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
+      "name": "archive_reviewed_source_bundles",
+      "sha256": "d41ce8ff3e6c9a9c07ab575b9d90ed1ebf16cd0d2880f10be2805067a69bbc97",
+      "preview": [
+        {
+          "name": "archive_reviewed_source_bundles",
+          "version": "20261002220826"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 15,
+      "file": "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
+      "name": "share_reviewed_package_entries",
+      "sha256": "4c83da3a6ece9a1a9fc6e0e0f0a149431569c552f571ac630bd995e3cbd3e985",
+      "preview": [
+        {
+          "name": "share_reviewed_package_entries",
+          "version": "20261002234601"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 16,
+      "file": "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+      "name": "share_reviewed_occurrence_entries",
+      "sha256": "157b932d60b7a7c217a3677f7759817b2b797ad100550fd03b811a8dad56fb6b",
+      "preview": [
+        {
+          "name": "share_reviewed_occurrence_entries",
+          "version": "20261003011141"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 17,
+      "file": "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
+      "name": "share_reviewed_resource_evidence",
+      "sha256": "04fb85d6769d87ee6d826cc15831cac530d39b55710eceebc9107fd9f43e3fc2",
+      "preview": [
+        {
+          "name": "share_reviewed_resource_evidence",
+          "version": "20261003022128"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 18,
+      "file": "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
+      "name": "compact_local_quiz_receipt_responses",
+      "sha256": "4fe0715962439c03956aed5f939a3745283aeab77c34871bce57ba0271b4fc3e",
+      "preview": [
+        {
+          "name": "compact_local_quiz_receipt_responses",
+          "version": "20261003055205"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 19,
+      "file": "supabase/migrations/20261003234500_insert_composition_question_refs_directly.sql",
+      "name": "insert_composition_question_refs_directly",
+      "sha256": "b0f49a50a1109c0413e7cc845a185178cd156c05bb46f8001bdde1377feb1030",
+      "preview": [
+        {
+          "name": "insert_composition_question_refs_directly",
+          "version": "20261003072444"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 20,
+      "file": "supabase/migrations/20261003235000_share_composition_assignment_hashes.sql",
+      "name": "share_composition_assignment_hashes",
+      "sha256": "23b08ce1e2368863592666974a0e538b23b9d1f7208acc603f34742e236770e3",
+      "preview": [
+        {
+          "name": "share_composition_assignment_hashes",
+          "version": "20261003083737"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 21,
+      "file": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+      "name": "compact_local_quiz_phase_plans",
+      "sha256": "01c6d084bd629ddd721c7c79eb8c817937067db3af3bf056d3600ee8d9eed476",
+      "preview": [
+        {
+          "name": "compact_local_quiz_phase_plans",
+          "version": "20261003100356"
+        }
+      ],
+      "production": [],
+      "note": null
+    },
+    {
+      "order": 22,
+      "file": "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql",
+      "name": "sync_practice_completion_confirmation",
+      "sha256": "08174baf11db16cbb6574a150846c9f88d94461a1585b7c13d2536323f255d00",
+      "preview": [
+        {
+          "name": "sync_practice_completion_confirmation",
+          "version": "20261003104755"
+        }
+      ],
+      "production": [],
+      "note": null
+    }
+  ],
+  "preview": {
+    "reader": {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "394269",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "definitionSha256": "3560cbffe0055493d00e1621e9765524fc53a21d622c1f34d1c96f1562768e1c"
+    },
+    "readOnly": "on",
+    "checkedAt": "2026-10-03T10:58:47.159165+00:00",
+    "migrations": [
+      {
+        "name": "prepare_quiz_before_start",
+        "version": "20261001040337"
+      },
+      {
+        "name": "compact_vocabulary_learning_values",
+        "version": "20261001141842"
+      },
+      {
+        "name": "share_vocabulary_question_content",
+        "version": "20261001164430"
+      },
+      {
+        "name": "track_vocabulary_mistake_episodes",
+        "version": "20261002013952"
+      },
+      {
+        "name": "preserve_mistake_assignment_soft_deletion",
+        "version": "20261002020012"
+      },
+      {
+        "name": "return_vocab_state_conflicts_without_retries",
+        "version": "20261002030342"
+      },
+      {
+        "name": "preserve_compact_vocabulary_results",
+        "version": "20261002045831"
+      },
+      {
+        "name": "submit_local_quiz_phase_batches",
+        "version": "20261002085219"
+      },
+      {
+        "name": "retain_operational_logs_and_preparations",
+        "version": "20261002145332"
+      },
+      {
+        "name": "m06_preview_only_retention_probe",
+        "version": "20261002150424"
+      },
+      {
+        "name": "validate_cron_retention_with_read_permissions",
+        "version": "20261002152819"
+      },
+      {
+        "name": "m06_remove_preview_retention_probe",
+        "version": "20261002153712"
+      },
+      {
+        "name": "classify_wordbook_templates",
+        "version": "20261002173220"
+      },
+      {
+        "name": "m07_preview_metadata_probe",
+        "version": "20261002173640"
+      },
+      {
+        "name": "remove_m07_preview_metadata_probe",
+        "version": "20261002174615"
+      },
+      {
+        "name": "migrate_historical_question_bodies",
+        "version": "20261002184942"
+      },
+      {
+        "name": "normalize_historical_question_candidate_ids",
+        "version": "20261002185224"
+      },
+      {
+        "name": "install_m08_synthetic_question_probe",
+        "version": "20261002190022"
+      },
+      {
+        "name": "remove_m08_synthetic_question_probe",
+        "version": "20261002190658"
+      },
+      {
+        "name": "migrate_historical_learning_sources",
+        "version": "20261002203618"
+      },
+      {
+        "name": "m08_synthetic_learning_fixture",
+        "version": "20261002203945"
+      },
+      {
+        "name": "m08_synthetic_late_learning_fixture",
+        "version": "20261002204541"
+      },
+      {
+        "name": "install_m08_synthetic_learning_probe",
+        "version": "20261002204951"
+      },
+      {
+        "name": "fix_m08_synthetic_learning_probe",
+        "version": "20261002205159"
+      },
+      {
+        "name": "m08_second_synthetic_late_learning_fixture",
+        "version": "20261002205206"
+      },
+      {
+        "name": "remove_m08_synthetic_learning_probe",
+        "version": "20261002211220"
+      },
+      {
+        "name": "archive_reviewed_source_bundles",
+        "version": "20261002220826"
+      },
+      {
+        "name": "add_m08_synthetic_bundle_probe",
+        "version": "20261002221220"
+      },
+      {
+        "name": "remove_m08_synthetic_bundle_probe",
+        "version": "20261002222619"
+      },
+      {
+        "name": "share_reviewed_package_entries",
+        "version": "20261002234601"
+      },
+      {
+        "name": "m08_package_preview_probe",
+        "version": "20261002235300"
+      },
+      {
+        "name": "m08_package_preview_probe_candidate_join",
+        "version": "20261002235358"
+      },
+      {
+        "name": "remove_m08_package_preview_probe",
+        "version": "20261003000649"
+      },
+      {
+        "name": "share_reviewed_occurrence_entries",
+        "version": "20261003011141"
+      },
+      {
+        "name": "m08_occurrence_preview_probe",
+        "version": "20261003011432"
+      },
+      {
+        "name": "remove_m08_occurrence_preview_probe",
+        "version": "20261003012648"
+      },
+      {
+        "name": "share_reviewed_resource_evidence",
+        "version": "20261003022128"
+      },
+      {
+        "name": "m08_resource_preview_probe",
+        "version": "20261003022340"
+      },
+      {
+        "name": "remove_m08_resource_preview_probe",
+        "version": "20261003023439"
+      },
+      {
+        "name": "m08_combined_synthetic_probe",
+        "version": "20261003033907"
+      },
+      {
+        "name": "m08_combined_probe_request_ids",
+        "version": "20261003034216"
+      },
+      {
+        "name": "remove_m08_combined_synthetic_probe",
+        "version": "20261003034907"
+      },
+      {
+        "name": "m08_fresh_expiry_synthetic_probe",
+        "version": "20261003041115"
+      },
+      {
+        "name": "remove_m08_fresh_expiry_synthetic_probe",
+        "version": "20261003041727"
+      },
+      {
+        "name": "compact_local_quiz_receipt_responses",
+        "version": "20261003055205"
+      },
+      {
+        "name": "insert_composition_question_refs_directly",
+        "version": "20261003072444"
+      },
+      {
+        "name": "app09_preview_concurrent_assignment_probe",
+        "version": "20261003072619"
+      },
+      {
+        "name": "app09_preview_probe_connection_identity",
+        "version": "20261003073132"
+      },
+      {
+        "name": "remove_app09_preview_assignment_probe",
+        "version": "20261003073638"
+      },
+      {
+        "name": "share_composition_assignment_hashes",
+        "version": "20261003083737"
+      },
+      {
+        "name": "compact_local_quiz_phase_plans",
+        "version": "20261003100356"
+      },
+      {
+        "name": "sync_practice_completion_confirmation",
+        "version": "20261003104755"
+      }
+    ],
+    "databaseBytes": 821292179
+  },
+  "production": {
+    "reader": {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "150162",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "definitionSha256": "e3c79fbf6711c75a0a3024148fac185fa42d1bf9978d0fa88d2908d50559cddf"
+    },
+    "readOnly": "on",
+    "checkedAt": "2026-10-03T10:58:48.687536+00:00",
+    "migrations": [
+      {
+        "name": "prepare_quiz_before_start",
+        "version": "20261001040745"
+      }
+    ],
+    "databaseBytes": 780274835
+  },
+  "vercel": {
+    "projectId": "prj_7xrnd3opFQ8Pz7wsQMkCHF0qzD21",
+    "teamId": "team_XZeAoV0MqheWJHPvZNOSflMw",
+    "name": "english-academy-student-app",
+    "currentProduction": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+    "currentPreview": "dpl_HAcG5dXR1oKEK4KrPbECCYGv8E1v",
+    "observedCode": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
+    "buildOverride": false,
+    "node": "24.x",
+    "source": "logged-in browser project overview and build settings; git ls-remote exact repository URL"
+  },
+  "openGates": [
+    "new assigned-attempt pause without blocking existing answers/replay/retry",
+    "same-origin update/compatible rollback with device answers",
+    "authenticated Preview complete fake flow",
+    "frozen per-operation production preservation manifest"
+  ],
+  "productionWrites": 0,
+  "appDeployments": 0
+}
