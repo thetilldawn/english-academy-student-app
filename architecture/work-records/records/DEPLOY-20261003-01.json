@@ -111,6 +111,12 @@
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "test/e2e/authenticated/maintenance-start-pause.spec.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
     }
   ],
   "requirements": [
@@ -203,7 +209,7 @@
       "owner": "engineering",
       "state": "resolved",
       "question": "코드/SQL 고정",
-      "answer": "호환 빌드 A 2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b와 23SQL. 검사 도구 보완 뒤 B 고정. 두 배포의 실제 HTML/SW 해시 차이와 같은 시험 규격 확인",
+      "answer": "호환 빌드 A 2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b와 학생 알림 수리를 포함한 24SQL. 검사 도구 보완 뒤 B 고정. 두 배포의 실제 HTML/SW 해시 차이와 같은 시험 규격 확인",
       "source": "M10 선행 검토"
     },
     {

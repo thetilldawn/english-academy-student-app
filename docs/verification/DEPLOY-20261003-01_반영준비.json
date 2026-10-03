@@ -1,9 +1,9 @@
 {
   "work": "DEPLOY-20261003-01",
-  "status": "preparation-not-deployed",
+  "status": "preview-validation-in-progress",
   "baseline": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
   "candidate": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
-  "recordedAt": "2026-10-03T12:45:39.743Z",
+  "recordedAt": "2026-10-03T15:26:01.769Z",
   "migrations": [
     {
       "order": 1,
@@ -321,6 +321,20 @@
       ],
       "production": [],
       "note": "depends only on existing 20260906 start guard; preserved Preview fixture migrations excluded"
+    },
+    {
+      "order": 24,
+      "file": "supabase/migrations/20261003235930_order_student_notification_locks.sql",
+      "name": "order_student_notification_locks",
+      "sha256": "8a1a1aad356b3e4ec4feb49112a545b25ed39faa50ce47bc46700017263c3629",
+      "preview": [
+        {
+          "name": "order_student_notification_locks",
+          "version": "20261003144923"
+        }
+      ],
+      "production": [],
+      "note": "APP-20261003-12: student notification lock order; preserve original body metadata and no existing row changes"
     }
   ],
   "preview": {

@@ -48,7 +48,9 @@ export class PreviewRun {
   private runtimeExpected: Parameters<typeof assertPreviewRuntimeIdentity>[1];
   private readonly deploymentChecks: Array<{ deploymentHost: string; gitCommitSha: string }> = [];
   readonly expectedNetworkFailures: Array<{ pathname: string; code: string }> = [];
+  readonly expectedPausedStarts: Array<{ pathname: string; status: number }> = [];
   private readonly networkFaultWindows = new Set<string>();
+  private readonly pausedStartPages = new Set<Page>();
 
   private constructor(input: {
     adminContext: BrowserContext;
@@ -93,6 +95,12 @@ export class PreviewRun {
         let pathname = "";
         try { pathname = new URL(location).pathname; } catch { /* Non-URL console locations remain visible errors. */ }
         const code = /net::(ERR_FAILED|ERR_INTERNET_DISCONNECTED|ERR_ABORTED)/.exec(message.text())?.[1];
+        if (message.type() === "error" && this.pausedStartPages.has(page) &&
+          pathname === "/api/student/local-quiz" &&
+          message.text() === "Failed to load resource: the server responded with a status of 503 ()") {
+          this.expectedPausedStarts.push({ pathname, status: 503 });
+          return;
+        }
         if (code && this.networkFaultWindows.has(pathname)) {
           this.expectedNetworkFailures.push({ pathname, code });
           return;
@@ -109,6 +117,12 @@ export class PreviewRun {
     const pathname = "/api/student/local-quiz";
     this.networkFaultWindows.add(pathname);
     return () => { this.networkFaultWindows.delete(pathname); };
+  }
+
+  allowPausedQuizStarts(page: Page) {
+    expect(this.studentContexts).toContain(page.context());
+    this.pausedStartPages.add(page);
+    return () => { this.pausedStartPages.delete(page); };
   }
 
   static async start(browser: Browser, workerIndex: number) {
@@ -307,6 +321,7 @@ export class PreviewRun {
         browserErrors: this.browserMessages,
         deploymentChecks: this.deploymentChecks,
         expectedNetworkFailures: this.expectedNetworkFailures,
+        expectedPausedStarts: this.expectedPausedStarts,
         origin: this.origin,
         runId: this.runId,
         students: this.students,
