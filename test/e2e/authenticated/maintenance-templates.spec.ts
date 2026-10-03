@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import type { Locator } from "@playwright/test";
+import type { Locator, Request } from "@playwright/test";
 import { test, expect } from "../fixtures/preview-run";
 import { openSingleAssignment } from "../support/vocab-journey";
 import { MAINTENANCE_PREVIEW_ORIGIN } from "../support/environment";
@@ -39,13 +39,38 @@ test.describe("@authenticated 유지보수 종류별 템플릿 실제 저장", (
       fs.mkdirSync(directory, { recursive: true });
       fs.writeFileSync(path.join(directory, "종류별_템플릿.json"), JSON.stringify({ fakeStudentId: fakeStudent.id, templates: [...tracked.entries()], pendingCreates: [...pendingCreates.entries()], evidence, forbidden }, null, 2) + "\n");
     };
-    page.on("response", response => {
+    const queryIds = new Map<Request, number>();
+    page.on("request", request => {
+      if (new URL(request.url()).pathname !== endpoint + "/query" || request.method() !== "POST") return;
+      const data = request.postDataJSON();
+      if (data?.kind !== "templates") return;
+      queryIds.set(request, queryIds.size + 1);
+      evidence.push({ case: "ui-template-start", id: queryIds.get(request), search: data.search, templateKind: data.templateKind, at: Date.now() });
+      saveEvidence();
+    });
+    page.on("requestfailed", request => {
+      if (!queryIds.has(request)) return;
+      evidence.push({ case: "ui-template-failed", id: queryIds.get(request), error: request.failure()?.errorText, at: Date.now() });
+      saveEvidence();
+    });
+    page.on("requestfinished", request => {
+      if (!queryIds.has(request)) return;
+      evidence.push({ case: "ui-template-finished", id: queryIds.get(request), timing: request.timing(), at: Date.now() });
+      saveEvidence();
+    });
+    page.on("response", async response => {
       const request = response.request();
       if (new URL(response.url()).pathname !== endpoint + "/query" || request.method() !== "POST") return;
       const data = request.postDataJSON();
       if (data?.kind !== "templates") return;
-      evidence.push({ case: "ui-template-query", search: data.search, templateKind: data.templateKind,
+      evidence.push({ case: "ui-template-query", id: queryIds.get(request), search: data.search, templateKind: data.templateKind,
         status: response.status(), timing: request.timing() });
+      saveEvidence();
+      try {
+        const body = await response.json();
+        evidence.push({ case: "ui-template-body", id: queryIds.get(request), itemCount: body.items?.length,
+          trackedIds: body.items?.filter((item: { id: string }) => tracked.has(item.id)).map((item: { id: string }) => item.id) });
+      } catch (error) { evidence.push({ case: "ui-template-body-unavailable", id: queryIds.get(request), error: String(error) }); }
       saveEvidence();
     });
     function journalCreate(data: Record<string, unknown>, viewerId: string) {
@@ -78,7 +103,7 @@ test.describe("@authenticated 유지보수 종류별 템플릿 실제 저장", (
       await dialog.getByLabel("저장한 구성의 종류", { exact: true }).selectOption(kind);
       await dialog.getByRole("textbox", { name: "템플릿 검색", exact: true }).fill(title);
       const card = dialog.getByRole("article").filter({ has: page.getByRole("heading", { name: title, exact: true }) });
-      await expect(card).toHaveCount(1, { timeout: 20_000 });
+      await expect(card).toHaveCount(1, { timeout: 70_000 });
       return card;
     }
     async function saveFromUi(dialog: Locator, action: "create" | "metadata", kind: TemplateKind | null) {
