@@ -59,6 +59,7 @@ export const studentAppText = {
       noDeadline: "없음",
     },
     release: {
+      newAttemptsPaused: "점검 중이라 새 시험을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요. 진행 중인 시험은 계속할 수 있습니다.",
       waitingInitial: "앞 회차의 첫 시험을 마치면 열립니다. 예약 시간이 있으면 그 시각도 되어야 합니다.",
       waitingInitialWithDeadline: "앞 회차의 첫 시험을 마치면 열립니다. 예약 시간이 있으면 그 시각도 되어야 합니다.",
       reservedOpening: "예약 공개",

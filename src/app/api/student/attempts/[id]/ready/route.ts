@@ -13,7 +13,7 @@ export const POST = withAuthenticationFailureResponse(async (request: Request, c
   if (!z.uuid().safeParse(id).success || !body) return json({error:"시험 요청을 확인해 주세요."},400);
   try { return json(await beginQuizPreparation(session.studentId,id,body.kind)); }
   catch (error) {
-    if (error instanceof QuizPreparationChangedError) return json({error:error.message,code:"preparation_changed"},409);
+    if (error instanceof QuizPreparationChangedError) return json({error:error.message,code:error.code},error.code==="quiz_new_attempts_paused"?503:409);
     return json({error:"시험을 준비하지 못했습니다. 다시 확인해 주세요."},503);
   }
 });

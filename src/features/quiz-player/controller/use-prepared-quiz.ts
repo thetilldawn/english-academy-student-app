@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { beginPreparedAttempt, PreparationChanged } from "../api/prepare-attempt";
+import { beginPreparedAttempt, PreparationChanged, QuizStartsPaused } from "../api/prepare-attempt";
 import { type PreparedQuiz } from "../contracts/preparation";
 import type { QuizAttempt, QuizAttemptResponse } from "../model";
 import { quizResultIsConfirmed } from "../domain/quiz-session";
@@ -57,6 +57,7 @@ export function usePreparedQuiz(preparation:PreparedQuiz) {
           if (active) {
             inFlight.current=null;
             if(cause instanceof PreparationChanged){completed.current=true;setNeedsRestart(true);setError("시험 준비가 만료되었거나 자료가 바뀌었습니다. 목록에서 다시 시작해 주세요.");}
+            else if(cause instanceof QuizStartsPaused) setError(cause.message);
             else setError("시험을 준비하지 못했습니다. 다시 확인해 주세요.");
           }
         });

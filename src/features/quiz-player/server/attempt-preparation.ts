@@ -1,4 +1,5 @@
 import "server-only";
+import { studentAppText } from "@/content/ko/student-app";
 import { getPreparationQuestionContents, QuestionContentPreparationChangedError } from "./queries/question-content-query";
 import { z } from "zod";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
@@ -15,11 +16,14 @@ const rawQuestion = z.object({
   order_index: z.number().int().positive(), direction: z.enum(["english_to_korean", "korean_to_english"]),
   prompt: z.string(), choices: z.array(z.string()).length(4), correct_choice_index: z.number().int().min(0).max(3),
 });
-export class QuizPreparationChangedError extends Error {}
+export class QuizPreparationChangedError extends Error {
+  constructor(message: string, readonly code = "preparation_changed") { super(message); }
+}
 async function rpc(name: string, parameters: Record<string, unknown>) {
   const { data, error } = await getServiceSupabaseClient().rpc(name, parameters);
   if (error) {
     const code = error.message?.split(/[\s:]/)[0];
+    if (code === "quiz_new_attempts_paused") throw new QuizPreparationChangedError(studentAppText.dashboard.release.newAttemptsPaused, code);
     if (["practice_source_changed", "wrong_history_changed", "preparation_expired", "preparation_changed", "preparation_not_found",
       "assignment_unavailable", "assignment_not_owned", "retake_not_allowed"].includes(code) || code?.startsWith("assignment_release_")) {
       throw new QuizPreparationChangedError("시험 준비가 만료되었거나 자료가 바뀌었습니다. 목록에서 다시 시작해 주세요.");

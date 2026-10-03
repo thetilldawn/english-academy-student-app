@@ -7,6 +7,8 @@ import { useLocalQuizPlayerController } from "./use-local-quiz-player-controller
 import type { LocalQuizRun } from "../../contracts/local-quiz";
 import { localFixture, localId, receiptFor } from "../../test-support/local-quiz-fixtures";
 import { recordLocalAnswer } from "../../domain/local-quiz";
+import { LocalQuizClientError } from "../../api/local-quiz";
+import { studentAppText } from "@/content/ko/student-app";
 
 const m = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), lock: vi.fn(), contents: vi.fn(), screen: vi.fn(), request: vi.fn(), announce: vi.fn(),
   identity: "original", changed: null as ((kind: "identity") => void) | null }));
@@ -39,6 +41,16 @@ beforeEach(async () => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("기기에서 진행하는 시험", () => {
+  it("새 시작 중지는 원래 준비를 보관하고 점검 후 같은 시작을 재시도한다",async()=>{
+    durable.plan=null;const before=structuredClone(durable);
+    m.request.mockRejectedValueOnce(new LocalQuizClientError(studentAppText.dashboard.release.newAttemptsPaused,503,'quiz_new_attempts_paused'));
+    const h=await mount();expect(h.result.current.view).toBe('failed');expect(h.result.current.error).toContain('점검 중');
+    expect(durable.preparation).toEqual(before.preparation);expect(durable.answers).toEqual(before.answers);expect(durable.plan).toBeNull();
+    m.request.mockResolvedValue((await localFixture()).plan);
+    await act(async()=>{await h.result.current.recover();});await settle();
+    expect(h.result.current.view).toBe('playing');expect(m.request).toHaveBeenCalledTimes(2);
+    expect(m.request.mock.calls[1][0]).toEqual(m.request.mock.calls[0][0]);
+  });
   it("답 저장 거래가 끝나기 전에는 채점·다음 문제·HTTP가 없다", async () => {
     const pending = deferred(); m.save.mockImplementationOnce(async (next: LocalQuizRun) => { await pending.promise; durable = structuredClone(next); });
     const h = await mount(); expect(h.result.current.view).toBe("playing");

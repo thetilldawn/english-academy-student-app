@@ -1,4 +1,5 @@
 import "server-only";
+import { studentAppText } from "@/content/ko/student-app";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
@@ -19,6 +20,7 @@ async function rpc(name: string, parameters: Record<string, unknown>) {
   const { data, error } = await getServiceSupabaseClient().rpc(name, parameters);
   if (!error) return data;
   const code = error.message?.split(/[\s:]/)[0] ?? "local_quiz_unavailable";
+  if (code === "quiz_new_attempts_paused") throw new LocalQuizError(code, 503, studentAppText.dashboard.release.newAttemptsPaused);
   if (code === "local_quiz_device_required") throw new LocalQuizError(code, 409, "이 시험은 시작한 기기에서 이어서 진행해 주세요.");
   if (error.code === "42501") throw new LocalQuizError("local_quiz_unauthorized", 403, "이 시험을 진행할 권한이 없습니다. 저장한 답은 기기에 보관됩니다.");
   if (error.code === "PT409" || error.code === "P0002") throw new LocalQuizError(code, 409, "시험 정보가 맞지 않습니다. 저장한 답을 보관한 채 다시 확인해 주세요.");

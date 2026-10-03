@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ rpc: vi.fn(), contents: vi.fn() }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("./queries/question-content-query", async importOriginal => ({ ...await importOriginal<typeof import("./queries/question-content-query")>(), getPreparationQuestionContents: mocks.contents }));
 import { QuestionContentPreparationChangedError } from "./queries/question-content-query";
-import { getQuizPreparation, QuizPreparationChangedError } from "./attempt-preparation";
+import { beginQuizPreparation, getQuizPreparation, QuizPreparationChangedError } from "./attempt-preparation";
 const id = (n: number) => `a2040000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 beforeEach(() => {
   vi.clearAllMocks();
@@ -11,6 +11,11 @@ beforeEach(() => {
     assignment: { id: id(2), title: "가짜 시험", quiz_content_mode: "book_meaning_choice", timing_mode: "none", question_time_limit_seconds: null },
     plan: [{ id: id(3), assignment_question_id: id(4), vocab_entry_id: 1, order_index: 1, direction: "english_to_korean",
       prompt: "word", choices: ["뜻", "둘", "셋", "넷"], correct_choice_index: 0 }] } });
+});
+it("구형 준비 시작의 점검 거절은 준비 만료로 바꾸지 않는다",async()=>{
+  mocks.rpc.mockReset().mockResolvedValue({data:null,error:{code:"55000",message:"quiz_new_attempts_paused"}});
+  await expect(beginQuizPreparation(id(6),id(1),'initial')).rejects.toMatchObject({code:'quiz_new_attempts_paused',message:expect.stringContaining('점검 중')});
+  expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('begin_prepared_quiz_v1',{p_student_id:id(6),p_preparation_id:id(1)});
 });
 it("본문을 읽기 전에 다른 탭이 시작하면 기존 응시 영수증으로 복구한다", async () => {
   mocks.contents.mockRejectedValue(new QuestionContentPreparationChangedError("preparation_changed"));

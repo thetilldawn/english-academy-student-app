@@ -1,7 +1,11 @@
 import { awaitWithAbortSignal, createRequestDeadline } from "@/lib/network/request-policy";
+import { studentAppText } from "@/content/ko/student-app";
 import { readyQuizSchema, type PreparedQuiz } from "../contracts/preparation";
 
 export class PreparationChanged extends Error {}
+export class QuizStartsPaused extends Error {
+  constructor() { super(studentAppText.dashboard.release.newAttemptsPaused); }
+}
 
 export async function beginPreparedAttempt(preparation: Pick<PreparedQuiz, "id" | "kind">) {
   const deadline = createRequestDeadline(20_000);
@@ -13,6 +17,8 @@ export async function beginPreparedAttempt(preparation: Pick<PreparedQuiz, "id" 
     }), deadline.signal);
     const value: unknown = await awaitWithAbortSignal(response.json(), deadline.signal);
     if (!response.ok) {
+      if (response.status === 503 && value && typeof value === "object" &&
+          "code" in value && value.code === "quiz_new_attempts_paused") throw new QuizStartsPaused();
       if (response.status === 409 && value && typeof value === "object" &&
           "code" in value && value.code === "preparation_changed") throw new PreparationChanged();
       throw new Error("시험을 준비하지 못했습니다. 다시 확인해 주세요.");

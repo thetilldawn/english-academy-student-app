@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261002-03-START",
+  "title": "배포 중 새 시험 시작만 잠시 중지",
+  "size": "small",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261002-03-START.md",
+  "baseline": "27283f526c09209b6dd0aa2858623e675abf18f9",
+  "owners": [
+    "quiz-player",
+    "shared-contract",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "docs/work-orders/APP-20261002-03-START.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/database/local-quiz-batches.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-service.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-service.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/attempt-preparation.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/attempt-preparation.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/lib/assignment/assignment-release.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": [
+        "student-dashboard-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/lib/assignment/assignment-release.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": [
+        "student-dashboard-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/content/ko/student-app.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/ready/route.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/api/prepare-attempt.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-prepared-quiz.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/prepared-quiz-player.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/quiz-ready-http.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/database/vocabulary-result-records.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/AGENTS.md",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "engineering",
+      "text": "새 배정 시험의 시작만 일시 중지",
+      "acceptance": "정상 기본값·중지 확정 뒤 네 생성 경로 거절·준비/시계/문항 잔여 없음",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "이미 시작한 시험의 진행과 접수 보존",
+      "acceptance": "시작 재전송·구형/신규 재시험·늦은 답·동일 제출 재접수 보존",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "권한과 안내 보존",
+      "acceptance": "앱의 설정 조회/변경 권한0·쉬운 안내·기존 답/학생행 보존",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "작업 범위",
+      "answer": "기존 M05/M10의 누락 보완을 계속 진행. 기록/캐시/음원/관리자 정책은 합의 그대로",
+      "source": "사용자 ㄱ 및 유지보수 진행 승인"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "제어 위치",
+      "answer": "private 단일 설정행·기본 false. 기존 신규 응시 INSERT guard의 학생 잠금 다음에 FOR SHARE. 설정 변경은 해당 행 UPDATE만 별도 짧은 거래로 확정",
+      "source": "M10-T8과 독립 DB 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "호환과 경계",
+      "answer": "준비는 가능, 새 INSERT만 거절. 기존 시작 재접수/재시험 UPDATE/회차 제출은 유지. 자율연습 제외",
+      "source": "M10 실행 명세"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "운영 방법",
+      "answer": "운영자 SQL로만 변경. 설정행 누락은 새 시작 거절. 잠금을 잡은 채 보존 검사/배포/학생 변경을 실행하지 않음",
+      "source": "공식 PostgreSQL FOR SHARE 문서와 잠금 순서 검토"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "기존 화면 배치·재시험·기기 저장과 종료 접수 규칙은 유지한다."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "새 시작의 운영 제어와 알려진 거절 안내, 계약 검사를 추가한다."
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 화면 배치·재시험·기기 저장과 종료 접수 규칙은 유지한다."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 화면 배치·재시험·기기 저장과 종료 접수 규칙은 유지한다."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "새 시작의 운영 제어와 알려진 거절 안내, 계약 검사를 추가한다."
+    },
+    "api": {
+      "status": "changed",
+      "reason": "새 시작의 운영 제어와 알려진 거절 안내, 계약 검사를 추가한다."
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "기존 화면 배치·재시험·기기 저장과 종료 접수 규칙은 유지한다."
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존 화면 배치·재시험·기기 저장과 종료 접수 규칙은 유지한다."
+    },
+    "security": {
+      "status": "changed",
+      "reason": "새 시작의 운영 제어와 알려진 거절 안내, 계약 검사를 추가한다."
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "기존 화면 배치·재시험·기기 저장과 종료 접수 규칙은 유지한다."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "새 시작의 운영 제어와 알려진 거절 안내, 계약 검사를 추가한다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 학생 소유권·답 비공개·기록 보존과 설정 접근 차단을 확인한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 소유권·답 비공개·기록 보존과 설정 접근 차단을 확인한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 소유권·답 비공개·기록 보존과 설정 접근 차단을 확인한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "캐시/기기 답 보관을 변경하지 않는다.",
+      "checkIds": []
+    }
+  },
+  "design": {
+    "dataFlow": "운영자 짧은 설정 거래→신규 INSERT 공통 guard→기존 시작 오류 표시. 기존 진행·재접수 경로는 그대로",
+    "reuse": "기존 신규 응시 guard·공개 검사·시작 오류 표시와 DB 검사 fixture 재사용",
+    "cache": "48시간 공용 캐시·준비24시간·미확인 기기 답 보관 변경0",
+    "compatibility": "구형 시작도 동일 INSERT에서 거절. 기존 신규/구형 재시험·늦은 제출은 보존",
+    "rollback": "설정 false로 새 시작 재개. 앱은 새 규격 제출을 수신하는 호환 코드 유지, DB/학생 기록을 과거 사본으로 덮지 않음"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "처음 시험 화면을 열어 기기 기록·공용 자료·화면 준비를 확인",
+      "message": "시험 자료를 기기에 준비하고 있습니다.",
+      "behavior": "문항과 화면 준비 뒤 시작 요청. 준비 실패 때 새 시험 시각을 만들지 않음",
+      "recovery": "같은 준비 ID로 다시 확인",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "기존 응시 주소에서 원래 기기 기록으로 이동",
+      "message": "기기에 보관한 시험을 열고 있습니다.",
+      "behavior": "서버의 구형 문항 조회 전에 같은 기기 기록을 찾음",
+      "recovery": "기록이 있으면 원래 응시로 이동, 없으면 원래 기기 안내",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "공용 시험 화면 주소에 유효한 시험 식별자가 없음",
+      "message": "시험 목록에서 시험을 선택해 주세요.",
+      "behavior": "개인 문제를 표시하거나 시작하지 않음",
+      "recovery": "시험 목록 링크로 이동",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "정상 빈 시험은 없음. 준비/계획 규격은 문항 1개 이상을 요구하며 회차 종료는 결과 상태로 전환",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "0개 계획은 준비 실패로 거절. 모든 답을 기록하면 빈 문제 대신 제출/공식 결과 안내",
+      "recovery": "원인 확인 후 같은 준비 재조회. 빈 결과를 완료로 간주하지 않음",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "계획·표시 내용·접수 목록의 규격 또는 확인값이 맞지 않음",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "시작 전 원문 전체 확인, 접수 불일치 때 완료 표시 금지",
+      "recovery": "원래 자료/같은 제출을 재확인하며 미확정 답 유지",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "기기 저장소 읽기 또는 공용 화면/자료 준비 실패",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "새로운 시간으로 재생성하지 않고 실패 화면 유지",
+      "recovery": "다시 확인 버튼. 공용 화면만 복구하며 개인 답은 삭제하지 않음",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "점검 중 새 시험 시작 거절 또는 기존 기기 답 저장 실패",
+      "message": "점검 중이라 새 시험을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요. 진행 중인 시험은 계속할 수 있습니다. / 기기 저장 실패 문구: 답을 기기에 보관하지 못했습니다. 선택은 그대로 두고 다시 저장해 주세요.",
+      "behavior": "시계를 시작하지 않고 기기 답 보존; 기기 저장 실패 시 기존 선택 유지",
+      "recovery": "점검 종료 뒤 같은 시작 버튼 재시도; 기기 저장 실패 시 같은 답 다시 저장",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "계정 세대 변경 또는 서버 인증 거절",
+      "message": "계정 확인이 필요합니다. 다시 로그인한 뒤 이어가기를 눌러 주세요. 답안은 기기에 보관돼 있습니다.",
+      "behavior": "이전 학생 문제를 가리고 늦은 응답 폐기, 기기 답 보존",
+      "recovery": "같은 학생으로 다시 로그인 후 계정 확인 후 이어가기",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "신규 응시의 시작 기기 기록을 찾을 수 없음",
+      "message": "이 시험은 처음 시작한 기기의 브라우저에서 이어서 진행해 주세요.",
+      "behavior": "새 기기에서 응시를 재생성하지 않음",
+      "recovery": "원래 기기로 이동. 저장소 자체가 삭제되면 서버 미접수 답 복원은 불가능",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "종료 제출·접수 확인에 실패하고 명시적인 서버 안내가 없음",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.",
+      "behavior": "고정 제출 묶음과 ID 보존. 공식 결과로 표시하지 않음",
+      "recovery": "연결 복구 또는 다시 확인으로 같은 묶음 재전송; 전체 접수 뒤 확정",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발 기준 v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "R/D/T·설계→로컬/검토→보존 근거"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-batches.integration.test.ts",
+      "scenario": "네 신규 시작·기존 재접수/재시험/늦은 답·설정 권한·공개 검사",
+      "expected": "중지 중 신규만 거절하며 기존 기록과 결과 유지",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "component",
+      "target": "src/features/quiz-player/ui/prepared-quiz-player.test.tsx",
+      "scenario": "신규/구형 시작 거절 안내와 구조·타입·lint",
+      "expected": "알려진 중지 오류만 쉬운 안내, 기존 복구/답 보존",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "review",
+      "target": "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
+      "scenario": "독립 검토·검토 DB 보존·두 실제 연결의 중지/시작 순서",
+      "expected": "학생행/다른 함수/권한 보존, 중지 확정 뒤 신규0·기존답 접수 가능",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    }
+  ],
+  "verification": null
+}

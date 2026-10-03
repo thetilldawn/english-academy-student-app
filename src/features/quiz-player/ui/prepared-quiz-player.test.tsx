@@ -28,6 +28,18 @@ beforeEach(()=>{
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.useRealTimers();});
 async function advance(ms:number){await act(async()=>{await vi.advanceTimersByTimeAsync(ms);});}
 describe("first prepared exam display",()=>{
+  it("점검 중에는 시작 안내와 같은 준비의 재시도를 보존한다",async()=>{
+    mocks.fetch.mockResolvedValue({ok:false,status:503,json:async()=>({code:'quiz_new_attempts_paused',error:'private internal detail'})});
+    render(<PreparedQuizPlayer preparation={preparation}/>);await advance(32);
+    expect(screen.getByRole('alert')).toHaveTextContent('점검 중');
+    expect(document.body).not.toHaveTextContent('private internal');
+    expect(mocks.answer).not.toHaveBeenCalled();expect(mocks.expire).not.toHaveBeenCalled();
+    mocks.fetch.mockResolvedValue({ok:true,json:async()=>clock});
+    fireEvent.click(screen.getByRole('button',{name:'다시 확인'}));await advance(32);
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    expect(mocks.fetch.mock.calls[0][0]).toBe(mocks.fetch.mock.calls[1][0]);
+    expect(screen.queryByRole('alert')).toBeNull();expect(screen.getByRole('button',{name:/1.*사과/})).toBeEnabled();
+  });
   it.each([false,undefined])("keeps an unconfirmed terminal preparation recoverable (%s)",async completionConfirmed=>{
     mocks.fetch.mockResolvedValue({ok:true,json:async()=>({...clock,status:"expired",phase:"completed",currentQuestionId:null,completionConfirmed})});
     render(<PreparedQuizPlayer preparation={{...preparation,kind:"practice"}}/>);await advance(32);

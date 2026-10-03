@@ -42,6 +42,7 @@ export function assignmentReleaseNotice(release: AssignmentRelease | undefined):
 }
 
 export function assignmentReleaseStartError(message: string | undefined): string | null {
+  if (message === "quiz_new_attempts_paused") return studentAppText.dashboard.release.newAttemptsPaused;
   const match = /^assignment_release_(waiting_initial|waiting_time|schedule_conflict|held|cancelled|unavailable)$/u.exec(message ?? "");
   if (!match) return null;
   const copy = studentAppText.dashboard.release;

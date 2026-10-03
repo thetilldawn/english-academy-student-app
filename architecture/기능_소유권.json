@@ -3105,6 +3105,11 @@
       "path": "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql",
       "owner": "quiz-player",
       "flow": "student-word-practice"
+    },
+    {
+      "path": "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
     }
   ],
   "features": [
@@ -7461,7 +7466,8 @@
           "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
           "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
           "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
-          "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql"
+          "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+          "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7547,7 +7553,8 @@
           "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
           "src/lib/database/reviewed-resource-archive.integration.test.ts",
           "src/lib/database/local-quiz-receipt-storage.integration.test.ts",
-          "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts"
+          "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
+          "src/features/quiz-player/server/quiz-ready-http.test.ts"
         ]
       },
       "requiredImportEdges": [

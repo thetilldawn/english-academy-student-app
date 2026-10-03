@@ -12,6 +12,13 @@ import { localFixture, localId, receiptFor } from "../test-support/local-quiz-fi
 import { recordLocalAnswer } from "../domain/local-quiz";
 beforeEach(()=>{vi.resetAllMocks();m.queue.mockResolvedValue([]);});
 describe("기기 시험 서버 연결",()=>{
+  it("새 시작 중지는 준비 만료나 접수 실패와 구별해 안내한다",async()=>{
+    const {run}=await localFixture();
+    m.rpc.mockResolvedValue({data:null,error:{code:"55000",message:"quiz_new_attempts_paused"}});
+    await expect(handleLocalQuizCommand(run.studentId,{action:"begin",device:run.device,preparationId:localId(4),planHash:"a".repeat(64)}))
+      .rejects.toMatchObject({code:"quiz_new_attempts_paused",status:503,message:expect.stringContaining("점검 중")});
+    expect(m.queue).not.toHaveBeenCalled();
+  });
   it.each([true,false])("공식 접수 후 다음 예약 시험 준비를 이어간다: 완료=%s",async finalized=>{
     let {run}=await localFixture();for(let i=0;i<3;i++)run=recordLocalAnswer(run,i,i*150+50,Date.now(),localId(90));
     const receipt=await receiptFor(run.batch!,finalized);m.rpc.mockResolvedValue({data:receipt,error:null});

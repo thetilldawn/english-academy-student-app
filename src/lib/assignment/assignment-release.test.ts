@@ -18,6 +18,8 @@ describe("서버 공개 상태 계약", () => {
   it("알려진 DB 거절만 쉬운 안내로 바꾸며 임의 내부 오류는 전달하지 않는다", () => {
     expect(assignmentReleaseStartError("assignment_release_held")).toContain("보류");
     expect(assignmentReleaseStartError("assignment_release_cancelled")).toContain("취소");
+    expect(assignmentReleaseStartError("quiz_new_attempts_paused")).toContain("점검 중");
+    expect(assignmentReleaseStartError("quiz_start_control_unavailable")).toBeNull();
     expect(assignmentReleaseStartError("password SQL internal")).toBeNull();
   });
 });

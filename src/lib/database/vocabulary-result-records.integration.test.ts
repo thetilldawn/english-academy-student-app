@@ -147,8 +147,9 @@ describe.sequential("종료 시험의 작은 단계별 결과", () => {
     await fail(() => submit(e, 3, 1), "question_already_answered");
     expect(await read(e)).toEqual(before);
   });
-  it("재시험 대기와 종료를 구별하고 최초 요약을 바꾸지 않는다", async () => {
+  it.each([false,true])("재시험 대기와 종료를 구별하고 최초 요약 보존: 새 시작 중지=%s", async paused => {
     const e = await exam(12);
+    if(paused) await db.exec('reset role;update private.quiz_start_control set paused=true where singleton');
     for (let i = 0; i < 4; i++) await answer(e, i, i < 2 ? 0 : 1);
     const waiting = await read(e);
     expect(waiting).toMatchObject({ state: "retry_waiting", finalized: false, retryStarted: false,

@@ -62,6 +62,13 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
   type Batch={protocol:string;submissionId:string;accepted:Array<{id:string;answerHash:string;sequence:number}>;result:{state:string;finalized:boolean;attempt:{finalScore:number;passed:boolean};phases:unknown[]};retryTargets:string[]};
   async function localPrepare(){return rpc<Prep>('prepare_local_quiz_v1',[student,assignment,device,await questions()]);}
   async function localStart(){const p=await localPrepare();return rpc<Plan>('begin_local_quiz_v1',[student,p.preparationId,device,p.planHash]);}
+  async function pause(paused=true){await owner('update private.quiz_start_control set paused=$1,changed_at=clock_timestamp() where singleton',[paused]);}
+  async function startSnapshot(){
+    const rows=await snapshot();
+    for(const name of ['quiz_attempt_preparations','local_quiz_preparations','local_quiz_runs','local_quiz_phase_plans'])
+      rows.push((await owner(`select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]') rows from private.${name} t`)).rows);
+    return rows;
+  }
   async function seedRelease(source: string, release: string, approved = true) {
     await owner(`insert into word_index.app_exam_use_release(release_id,release_key,dataset_id,dataset_key,schema_version,
       package_version,source_sha256,candidate_dictionary_version,manifest_content_hash,exam_review_ledger_sha256,wordbook_id,title,target_environment,
@@ -150,11 +157,12 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
     await owner("select private.create_local_quiz_phase_plan_v1($1,'initial')",[p.attemptId]);
     return rpc<Plan>('read_local_quiz_plan_v1',[student,p.attemptId,device,'initial']);
   }
-  it('시작은 준비된 원래 시각과 문항을 한번만 고정하고 다른 기기/구형 시작은 거절한다',async()=>{
+  it.each([false,true])('시작은 한번만 고정하고 중지 뒤에도 기존 시작 재전송을 보존한다: 중지=%s',async paused=>{
     const p=await localPrepare();
     await fails(()=>begin(p.preparationId),'local_quiz_batch_required');
     await fails(()=>rpc('begin_local_quiz_v1',[student,p.preparationId,'b'.repeat(64),p.planHash]),'local_quiz_preparation_conflict');
     const a=await rpc<Plan>('begin_local_quiz_v1',[student,p.preparationId,device,p.planHash]);
+    if(paused) await pause();
     const same=await rpc<Plan>('begin_local_quiz_v1',[student,p.preparationId,device,p.planHash]);
     expect(same.startedAt).toBe(a.startedAt);expect(same.planHash).toBe(a.planHash);expect(same.items).toEqual(a.items);
     expect(a.items).toHaveLength(4);expect(a.items.every(x=>x.contentId)).toBe(true);expect(a.attemptId).toBe(p.preparationId);
@@ -191,8 +199,9 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
     expect(await rpc('finalize_quiz_attempt_if_stale',[p.attemptId])).toBe(false);
     expect((await batch(p)).result.attempt).toMatchObject({finalScore:100,passed:true});
   });
-  it('최초 오답→공식 재시험 대상→재시험은 같은 공용판과 불변 최초 결과를 쓴다',async()=>{
+  it.each([false,true])('최초 오답과 재시험은 같은 공용판과 최초 결과를 쓴다: 새 시작 중지=%s',async paused=>{
     const p=await localStart();let n=0;
+    if(paused) await pause();
     const first=await batch(p,answers(p,()=>n++<2));
     expect(first.result.state).toBe('retry_waiting');expect(first.retryTargets).toHaveLength(2);
     const retry=await rpc<Plan>('begin_local_quiz_retry_v1',[student,p.attemptId,device]);
@@ -234,9 +243,10 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
     await owner('update assignments set question_time_limit_seconds=$2 where id=$1',[assignment,seconds]);
     expect((await localStart()).questionLimitMs).toBe(seconds*1000);
   });
-  it('기한이 실제로 지난 새 시험을 자동 정리하지 않고 이틀 뒤 같은 답을 한번만 접수한다',async()=>{
+  it.each([false,true])('기한 지난 시험의 이틀 뒤 답을 한번만 접수한다: 새 시작 중지=%s',async paused=>{
     const prepared=await localPrepare(); const original=await rpc<Plan>('begin_local_quiz_v1',[student,prepared.preparationId,device,prepared.planHash]);
     const p=await aged(original,2*24*3600);
+    if(paused) await pause();
     expect((await owner('select deadline_at<transaction_timestamp() past from quiz_attempts where id=$1',[p.attemptId])).rows[0].past).toBe(true);
     const before=await snapshot();
     await owner("select set_config('request.jwt.claims','{\"role\":\"service_role\"}',true)");
@@ -270,6 +280,35 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
     expect((await owner('select plan from private.quiz_attempt_preparations where id=$1',[prepared])).rows).toEqual(before);
     expect((await owner('select count(*)::int n from private.local_quiz_preparations')).rows[0].n).toBe(0);
     expect(await begin(prepared)).toBe(prepared);
+    await pause();
+    expect(await begin(prepared)).toBe(prepared);
+  });
+  it.each(['direct','bank','prepared','local'] as const)('중지 중 새 %s 시작만 거절하고 준비/시계/문항을 남기지 않는다',async kind=>{
+    const q=await questions();let run:()=>Promise<unknown>;
+    if(kind==='bank'){
+      await seedRelease(id(4),id(51));const bank=await approvedBank(52,id(4),id(100),id(51));
+      run=()=>rpc('create_quiz_attempt_from_bank',[student,bank]);
+    } else if(kind==='direct') run=()=>rpc('create_quiz_attempt',[student,assignment,q]);
+    else if(kind==='prepared'){const p=await prepare();run=()=>begin(p);}
+    else {const p=await localPrepare();run=()=>rpc('begin_local_quiz_v1',[student,p.preparationId,device,p.planHash]);}
+    await pause();const before=await startSnapshot();
+    await fails(run,'quiz_new_attempts_paused');expect(await startSnapshot()).toEqual(before);
+    await pause(false);await run();
+    expect((await owner('select count(*)::int n from quiz_attempts')).rows[0].n).toBe(1);
+    expect((await owner('select count(*)::int n from quiz_questions')).rows[0].n).toBe(4);
+  });
+  it('설정 누락은 새 시작을 거절하고 앱 역할에는 읽기/변경 권한이 없다',async()=>{
+    for(const role of ['anon','authenticated','service_role']){
+      for(const command of ['select * from private.quiz_start_control','update private.quiz_start_control set paused=false']){
+        await owner('savepoint control_access');await db.exec('set local role '+role);
+        try{await expect(db.exec(command)).rejects.toThrow('permission denied');}
+        finally{await db.exec('rollback to control_access;release control_access;reset role');}
+      }
+    }
+    const p=await localPrepare();await owner('delete from private.quiz_start_control');
+    const before=await startSnapshot();
+    await fails(()=>rpc('begin_local_quiz_v1',[student,p.preparationId,device,p.planHash]),'quiz_start_control_unavailable');
+    expect(await startSnapshot()).toEqual(before);
   });
   it('전체 답 순서가 정상이어도 문항별 제한보다 늦은 선택은 거절한다',async()=>{
     const p=await aged(await localStart(),30),list=answers(p);
