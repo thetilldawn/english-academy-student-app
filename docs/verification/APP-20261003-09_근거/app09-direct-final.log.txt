@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  16:10:16
+   Duration  4.16s (transform 81ms, setup 0ms, import 188ms, tests 3.81s, environment 0ms)
+

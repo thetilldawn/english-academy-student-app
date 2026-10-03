@@ -1,0 +1,112 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+export const prefix='a90b0000-0000-4000-8000-',id=n=>prefix+String(n).padStart(12,'0');
+export const admin=id(1),students=[id(2),id(3)],source=id(4),unit=id(5),nonce=id(99);
+export const seedSql=`begin;set local statement_timeout='120s';set local time zone 'UTC';
+do $$begin if exists(select 1 from auth.users where id='${admin}') or exists(select 1 from public.vocab_datasets where dataset_key='app09-preview-source') then raise exception 'app09_fixture_collision';end if;end$$;
+insert into auth.users(id)values('${admin}');
+insert into public.admin_profiles(user_id,display_name)values('${admin}','[배정 저장 검증] 가짜 관리자');
+insert into public.students(id,display_name,status,created_by,note,school_name,grade_label)
+ select s::uuid,'[배정 저장 검증] 가짜 학생','active','${admin}','APP09-a90b 실제 학생 아님','가상고','고2' from unnest(array['${students.join("','")}'])s;
+insert into public.vocab_datasets(id,dataset_key,title,source_label,source_sha256,row_count,status,is_active,imported_by)
+ values('${source}','app09-preview-source','[배정 저장 검증] 가짜 자료','fake',repeat('A',64),12,'ready',true,'${admin}');
+insert into public.vocab_units(id,dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count)
+ values('${unit}','${source}','DAY 1','day1','day',1,1,12);
+insert into public.vocab_dataset_catalog(dataset_id,display_name,catalog_group,material_kind)values('${source}','[배정 저장 검증] 가짜 자료','high','wordbook');
+insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
+ select '${source}',n,'directpreview'||n,'directpreview'||n,array['가짜 뜻 '||n],'가짜 뜻 '||n,upper(encode(extensions.digest('app09-preview:'||n,'sha256'),'hex')),'${unit}',n,'word' from generate_series(1,12)n;
+insert into public.vocab_entry_quiz_eligibility(vocab_entry_id,dataset_id,quiz_mode,status,input_content_hash,rule_version,evaluated_at_utc)
+ select id,dataset_id,'book_meaning_en_to_ko','eligible',row_sha256,'fake',now() from public.vocab_entries where dataset_id='${source}';
+do $$declare selected jsonb;rows_value jsonb;bundle jsonb;input text;catalog jsonb;template jsonb;cmd jsonb;step jsonb;prep jsonb;questions jsonb;plan jsonb;units uuid[];a uuid;begin
+ selected:='{"schemaVersion":"vocabulary-resource-snapshot-v1","sourceFields":{},"proofs":{},"pronunciation":{"displayKo":null,"variantId":null,"audioUrl":null,"available":false},"lexicalPos":null,"dictionary":null,"senseId":null,"definitionEn":null,"exampleEn":null,"exampleKo":null}';
+ select jsonb_agg(jsonb_build_object('sourceRow',source_row,'rowHash',lower(row_sha256),'resources',jsonb_build_object('entryHash',lower(row_sha256),'linkRecordHash',lower(row_sha256),'selected',selected)) order by source_row)into rows_value from public.vocab_entries where dataset_id='${source}';
+ bundle:=jsonb_build_object('schemaVersion','vocabulary-library-import-v1','sourceCatalogHash',repeat('b',64),'linksHash',repeat('c',64),'referenceCatalogHash',repeat('d',64),'scopes',jsonb_build_array(jsonb_build_object(
+ 'key','app09-preview-scope','name','[배정 저장 검증] 가짜 범위','sourceTitle','[배정 저장 검증] 가짜 자료',
+ 'source',jsonb_build_object('datasetId','${source}','unitId','${unit}','kind','legacy_vocab','releaseId',null,'releaseVersion',repeat('a',64),'fileHash',repeat('e',64),'locator','fake-app09.json'),
+ 'classification','{"kind":"wordbook","sourceGrade":"g11","exam":null,"lesson":null,"day":1,"publisher":null,"school":null,"targetGrade":null,"schoolYear":null,"semester":null,"assessment":null,"purpose":null}'::jsonb,'rows',rows_value)));
+ input:=bundle::text;insert into private.vocabulary_library_import_approvals values('wojxpruvbjzbhrpmsbuy',encode(extensions.digest(input,'sha256'),'hex'),private.reviewed_exam_sha256_v1(bundle),1,'APP09-a90b');
+ perform set_config('request.jwt.claim.role','service_role',true);perform set_config('request.jwt.claims','{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+ perform public.import_vocabulary_library_v1(input);
+ perform set_config('request.jwt.claim.sub','${admin}',true);perform set_config('request.jwt.claim.role','authenticated',true);perform set_config('request.jwt.claims','{"role":"authenticated","sub":"${admin}","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+ catalog:=public.list_vocabulary_library_v1();
+ template:=public.save_vocabulary_library_template_v1(jsonb_build_object('action','create','requestId','${id(10)}',
+ 'metadata','{"title":"[배정 저장 검증] 가짜 단어장","tags":[],"school":null,"targetGrade":null,"schoolYear":null,"semester":null,"assessment":null,"purpose":null}'::jsonb,
+ 'recipe',jsonb_build_object('filters','{"search":"","kinds":[],"years":[],"yearFrom":null,"yearTo":null,"months":[],"types":[],"questions":[],"sourceGrades":[],"dayFrom":null,"dayTo":null,"lessons":[],"schools":[],"targetGrades":[],"semesters":[],"assessments":[],"purposes":[]}'::jsonb,
+ 'scopes',(select jsonb_agg(jsonb_build_object('id',s->>'id','version',s->>'version'))from jsonb_array_elements(catalog->'scopes')s where s->>'name'='[배정 저장 검증] 가짜 범위'),'excludedOccurrenceKeys','[]'::jsonb,'scopeStatus','confirmed')))->'template';
+ cmd:=jsonb_build_object('action','materialize','requestId','${id(11)}','templateId',template->>'id','versionId',template#>>'{versions,0,id}','contentHash',template#>>'{versions,0,contentHash}');
+ for n in 1..6 loop step:=public.advance_vocabulary_template_book_v1(cmd);exit when step->>'stage'='prepared';end loop;
+ if step->>'stage' is distinct from 'prepared' then raise exception 'app09_prepare_failed';end if;
+ prep:=public.prepare_vocabulary_template_question_input_v1(cmd);
+ select jsonb_agg(jsonb_build_object('vocabEntryId',e->'id','direction','english_to_korean','prompt',e->>'headword',
+ 'choices',(select jsonb_agg(prep->'entries'->((n::int-1+j)%12)->'primaryMeaning' order by j)from generate_series(0,3)j),
+ 'choiceVocabEntryIds',(select jsonb_agg(prep->'entries'->((n::int-1+j)%12)->'id' order by j)from generate_series(0,3)j),'correctChoiceIndex',0)order by n)
+ into questions from jsonb_array_elements(prep->'entries')with ordinality x(e,n);
+ perform set_config('request.jwt.claim.role','service_role',true);perform set_config('request.jwt.claims','{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+ for n in 1..6 loop step:=public.advance_vocabulary_composition_questions_v1((cmd->>'versionId')::uuid,cmd->>'contentHash',case when n=1 then questions else null end);exit when step->>'state'='ready';end loop;
+ if step->>'state' is distinct from 'ready' then raise exception 'app09_questions_failed';end if;
+ select array_agg(distinct(e->>'unitId')::uuid)into units from jsonb_array_elements(prep->'entries')e;
+ select jsonb_agg(jsonb_build_object('vocab_entry_id',i.vocab_entry_id,'base_order_index',e.source_row,'direction','english_to_korean','composition_bank',jsonb_build_object('mode','book_meaning_choice','version_id',i.version_id,'content_sha256',cmd->>'contentHash','question_item_id',i.item_id,'question_item_sha256',i.item_sha256))order by e.source_row)
+ into plan from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id where i.version_id=(cmd->>'versionId')::uuid and e.source_row<=4;
+ a:=private.create_composition_bank_for_delivery_v1('${admin}','[배정 저장 검증] 이전 배정',(prep->>'datasetId')::uuid,units,4,100::smallint,300,80::smallint,'fixed',null,array['${students[0]}']::uuid[],'none',null,plan);
+ perform set_config('app09.seed_result',jsonb_build_object('project','wojxpruvbjzbhrpmsbuy','admin','${admin}','students',to_jsonb(array['${students.join("','")}']),'sourceDataset','${source}','dataset',prep->>'datasetId','version',cmd->>'versionId','oldAssignment',a)::text,true);
+end$$;select current_setting('app09.seed_result')::jsonb value;commit;`;
+
+export const probeSql=`create function public.app09_preview_create_fixture_v1(p_nonce uuid,p_case text,p_side text)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare c private.vocabulary_compositions;s uuid;offset_value integer;units uuid[];plan jsonb;a uuid;begin
+ if auth.role() is distinct from 'service_role' or auth.jwt()->>'ref' is distinct from 'wojxpruvbjzbhrpmsbuy' or p_nonce is distinct from '${nonce}'::uuid or p_case is null or p_case not in('commit','rollback') or p_side is null or p_side not in('a','b') then raise exception 'app09_probe_denied' using errcode='42501';end if;
+ if not exists(select 1 from public.admin_profiles where user_id='${admin}' and is_active and display_name like '[배정 저장 검증]%') then raise exception 'app09_fixture_inactive';end if;
+ s:=case p_side when 'a' then '${students[0]}'::uuid else '${students[1]}'::uuid end;
+ if not exists(select 1 from public.students where id=s and created_by='${admin}' and note='APP09-a90b 실제 학생 아님' and deleted_at is null) then raise exception 'app09_student_mismatch';end if;
+ if exists(select 1 from public.assignments where created_by='${admin}' and title='[배정 저장 검증] '||p_case||':'||p_side) then raise exception 'app09_probe_already_created';end if;
+ select * into strict c from private.vocabulary_compositions v where created_by='${admin}' and exists(select 1 from private.vocabulary_composition_entries l join public.vocab_entries e on e.id=l.source_entry_id where l.version_id=v.version_id and e.dataset_id='${source}');
+ offset_value:=case p_case when 'commit' then 4 else 8 end;
+ select array_agg(distinct unit_id)into units from public.vocab_entries where dataset_id=c.dataset_id;
+ select jsonb_agg(jsonb_build_object('vocab_entry_id',i.vocab_entry_id,'base_order_index',e.source_row-offset_value,'direction','english_to_korean','composition_bank',jsonb_build_object('mode','book_meaning_choice','version_id',i.version_id,'content_sha256',c.content_sha256,'question_item_id',i.item_id,'question_item_sha256',i.item_sha256))order by e.source_row)
+ into plan from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id where i.version_id=c.version_id and e.source_row>offset_value and e.source_row<=offset_value+4;
+ a:=private.create_composition_bank_for_delivery_v1('${admin}','[배정 저장 검증] '||p_case||':'||p_side,c.dataset_id,units,4,100::smallint,300,80::smallint,'fixed',null,array[s],'none',null,plan);
+ return jsonb_build_object('backendPid',pg_backend_pid(),'assignment',a,'student',s,'case',p_case,'side',p_side,'references',(select jsonb_agg(content_version_id order by base_order_index)from public.assignment_questions where assignment_id=a),'inline',(select count(*)from public.assignment_questions where assignment_id=a and(prompt is not null or choices is not null)),'meanings',(select count(*)from private.assignment_vocabulary_meaning_refs r join public.assignment_questions q on q.id=r.assignment_question_id where q.assignment_id=a));
+end$$;
+revoke all on function public.app09_preview_create_fixture_v1(uuid,text,text) from public,anon,authenticated;
+grant execute on function public.app09_preview_create_fixture_v1(uuid,text,text) to service_role;`;
+export const metaSql=`select jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'definer',prosecdef,'definition',pg_get_functiondef(oid)) value from pg_proc where oid='private.create_composition_bank_for_delivery_v1(uuid,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamptz,uuid[],text,integer,jsonb,boolean)'::regprocedure;`;
+const clauses=[
+ ['public.students',`id<>all(array['${students.join("','")}']::uuid[])`],
+ ['public.admin_profiles',`user_id<>'${admin}'::uuid`],
+ ['auth.users',`id<>'${admin}'::uuid`],
+ ['public.assignments',`created_by is distinct from '${admin}'::uuid`],
+ ['public.assignment_students',`assigned_by is distinct from '${admin}'::uuid`],
+ ['public.assignment_units','assignment_id not in(select id from fake_assignments)'],
+ ['public.assignment_questions','assignment_id not in(select id from fake_assignments)'],
+ ['private.vocabulary_question_content_versions','not(dataset_ids && array(select id from fake_datasets))'],
+ ['private.assignment_vocabulary_meaning_refs','assignment_question_id not in(select id from fake_questions)'],
+ ['private.vocabulary_question_meaning_versions','content_version_id not in(select content_version_id from fake_meanings)'],
+ ['public.audit_events',`actor_admin_id is distinct from '${admin}'::uuid`],
+ ...['public.quiz_attempts','public.quiz_questions','public.student_vocab_wrong_events','public.student_vocab_state','public.student_point_events','public.student_point_totals','private.vocabulary_answer_receipts','private.student_vocabulary_meaning_states','private.student_vocabulary_versions','private.vocabulary_legacy_state_baselines','private.vocabulary_result_policies','private.vocabulary_phase_results','private.local_quiz_phase_receipts','private.local_quiz_phase_plans'].map(t=>[t,'true']),
+];
+export const snapshotSql=`with fake_assignments as(select id from public.assignments where created_by='${admin}'),
+fake_questions as(select id from public.assignment_questions where assignment_id in(select id from fake_assignments)),
+fake_datasets as(select '${source}'::uuid id union select dataset_id from private.vocabulary_compositions where created_by='${admin}'),
+fake_meanings as(select content_version_id from private.assignment_vocabulary_meaning_refs where assignment_question_id in(select id from fake_questions))
+${clauses.map(([t,where])=>`select '${t}' table_name,count(*)::int rows,coalesce(md5(string_agg(md5(to_jsonb(t)::text),''order by md5(to_jsonb(t)::text))),'empty')rows_md5 from ${t} t where ${where}`).join(' union all ')} order by table_name;`;
+export const fixtureSql=`select jsonb_build_object('adminActive',(select is_active from public.admin_profiles where user_id='${admin}'),
+'studentCount',(select count(*)from public.students where id=any(array['${students.join("','")}']::uuid[])),
+'activeStudents',(select count(*)from public.students where id=any(array['${students.join("','")}']::uuid[])and status='active' and deleted_at is null),
+'assignments',(select count(*)from public.assignments where created_by='${admin}'),
+'activeAssignments',(select count(*)from public.assignments where created_by='${admin}' and deleted_at is null),
+'questions',(select count(*)from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='${admin}'),
+'questionHash',(select md5(string_agg(md5(to_jsonb(q)::text),''order by q.id))from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='${admin}'),
+'meanings',(select count(*)from private.assignment_vocabulary_meaning_refs r join public.assignment_questions q on q.id=r.assignment_question_id join public.assignments a on a.id=q.assignment_id where a.created_by='${admin}'),
+'oldQuestionsHash',(select md5(string_agg(md5(to_jsonb(q)::text),''order by q.id))from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='${admin}' and a.title='[배정 저장 검증] 이전 배정'))value;`;
+export const cleanupSql=`begin;set local statement_timeout='30s';
+select set_config('request.jwt.claim.sub','${admin}',true);select set_config('request.jwt.claim.role','authenticated',true);select set_config('request.jwt.claims','{"role":"authenticated","sub":"${admin}","ref":"wojxpruvbjzbhrpmsbuy"}',true);
+do $$declare r record;begin
+ if not exists(select 1 from public.admin_profiles where user_id='${admin}' and display_name like '[배정 저장 검증]%') then raise exception 'app09_fixture_owner_mismatch';end if;
+ for r in select id from public.students where id=any(array['${students.join("','")}']::uuid[]) and created_by='${admin}' and note='APP09-a90b 실제 학생 아님' loop perform public.delete_student_v2(r.id);end loop;
+ for r in select id from public.assignments where created_by='${admin}' and title like '[배정 저장 검증]%' loop perform public.delete_assignment_v2(r.id,'가짜 배정 저장 검사 종료');end loop;
+ update public.vocab_datasets set is_active=false where (id='${source}' and imported_by='${admin}') or id in(select dataset_id from private.vocabulary_compositions where created_by='${admin}');
+ update public.admin_profiles set is_active=false,display_name='[배정 저장 검증] 가짜 관리자' where user_id='${admin}';
+end$$;commit;`;
+export const dropProbeSql='drop function public.app09_preview_create_fixture_v1(uuid,text,text);';
+for(const [name,sql]of Object.entries({seed:seedSql,probe:probeSql,meta:metaSql,snapshot:snapshotSql,fixture:fixtureSql,cleanup:cleanupSql,drop:dropProbeSql}))fs.writeFileSync('.codex-tmp/app09-preview-'+name+'.sql',sql+'\n');
+console.log(JSON.stringify({seedSha256:createHash('sha256').update(seedSql).digest('hex'),probeSha256:createHash('sha256').update(probeSql).digest('hex')}));

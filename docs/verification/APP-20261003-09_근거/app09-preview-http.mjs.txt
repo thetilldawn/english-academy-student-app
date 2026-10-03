@@ -1,0 +1,18 @@
+import fs from 'node:fs/promises';import assert from 'node:assert/strict';import{parseEnv}from'node:util';
+const caseName=process.argv[2];assert.ok(['commit','rollback'].includes(caseName));
+const admin='a90b0000-0000-4000-8000-000000000001';
+const env=parseEnv(await fs.readFile('../student-app-redesign/.env.local','utf8'));const origin='https://wojxpruvbjzbhrpmsbuy.supabase.co';
+assert.equal(env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/,''),origin);assert.ok(env.SUPABASE_SECRET_KEY);
+const headers={apikey:env.SUPABASE_SECRET_KEY,Authorization:'Bearer '+env.SUPABASE_SECRET_KEY,'Content-Type':'application/json'};
+let ready=false;const deadline=Date.now()+150000;
+while(Date.now()<deadline){
+ const r=await fetch(origin+'/rest/v1/admin_profiles?select=display_name&user_id=eq.'+admin,{headers,signal:AbortSignal.timeout(10000)});
+ assert.equal(r.status,200);const rows=await r.json();assert.equal(rows.length,1);
+ if(rows[0].display_name==='[배정 저장 검증] '+caseName+' 연결 대기'){ready=true;break;}
+ await new Promise(resolve=>setTimeout(resolve,1000));
+}
+assert.ok(ready,'ready marker not observed');await new Promise(resolve=>setTimeout(resolve,8000));
+const start=Date.now();const response=await fetch(origin+'/rest/v1/rpc/app09_preview_create_fixture_v1',{method:'POST',headers,body:JSON.stringify({p_nonce:'a90b0000-0000-4000-8000-000000000099',p_case:caseName,p_side:'b'}),signal:AbortSignal.timeout(45000)});const data=await response.json();
+const result={case:caseName,project:'wojxpruvbjzbhrpmsbuy',sentAt:new Date(start).toISOString(),finishedAt:new Date().toISOString(),durationMs:Date.now()-start,status:response.status,data};
+await fs.writeFile(`.codex-tmp/app09-preview-http-${caseName}.json`,JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify({case:caseName,status:response.status,durationMs:result.durationMs,error:response.status>=400?data.message:null}));

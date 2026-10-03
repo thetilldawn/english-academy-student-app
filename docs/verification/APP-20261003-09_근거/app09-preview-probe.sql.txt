@@ -1,0 +1,18 @@
+create function public.app09_preview_create_fixture_v1(p_nonce uuid,p_case text,p_side text)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare c private.vocabulary_compositions;s uuid;offset_value integer;units uuid[];plan jsonb;a uuid;begin
+ if auth.role() is distinct from 'service_role' or auth.jwt()->>'ref' is distinct from 'wojxpruvbjzbhrpmsbuy' or p_nonce is distinct from 'a90b0000-0000-4000-8000-000000000099'::uuid or p_case is null or p_case not in('commit','rollback') or p_side is null or p_side not in('a','b') then raise exception 'app09_probe_denied' using errcode='42501';end if;
+ if not exists(select 1 from public.admin_profiles where user_id='a90b0000-0000-4000-8000-000000000001' and is_active and display_name like '[배정 저장 검증]%') then raise exception 'app09_fixture_inactive';end if;
+ s:=case p_side when 'a' then 'a90b0000-0000-4000-8000-000000000002'::uuid else 'a90b0000-0000-4000-8000-000000000003'::uuid end;
+ if not exists(select 1 from public.students where id=s and created_by='a90b0000-0000-4000-8000-000000000001' and note='APP09-a90b 실제 학생 아님' and deleted_at is null) then raise exception 'app09_student_mismatch';end if;
+ if exists(select 1 from public.assignments where created_by='a90b0000-0000-4000-8000-000000000001' and title='[배정 저장 검증] '||p_case||':'||p_side) then raise exception 'app09_probe_already_created';end if;
+ select * into strict c from private.vocabulary_compositions v where created_by='a90b0000-0000-4000-8000-000000000001' and exists(select 1 from private.vocabulary_composition_entries l join public.vocab_entries e on e.id=l.source_entry_id where l.version_id=v.version_id and e.dataset_id='a90b0000-0000-4000-8000-000000000004');
+ offset_value:=case p_case when 'commit' then 4 else 8 end;
+ select array_agg(distinct unit_id)into units from public.vocab_entries where dataset_id=c.dataset_id;
+ select jsonb_agg(jsonb_build_object('vocab_entry_id',i.vocab_entry_id,'base_order_index',e.source_row-offset_value,'direction','english_to_korean','composition_bank',jsonb_build_object('mode','book_meaning_choice','version_id',i.version_id,'content_sha256',c.content_sha256,'question_item_id',i.item_id,'question_item_sha256',i.item_sha256))order by e.source_row)
+ into plan from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id where i.version_id=c.version_id and e.source_row>offset_value and e.source_row<=offset_value+4;
+ a:=private.create_composition_bank_for_delivery_v1('a90b0000-0000-4000-8000-000000000001','[배정 저장 검증] '||p_case||':'||p_side,c.dataset_id,units,4,100::smallint,300,80::smallint,'fixed',null,array[s],'none',null,plan);
+ return jsonb_build_object('backendPid',pg_backend_pid(),'assignment',a,'student',s,'case',p_case,'side',p_side,'references',(select jsonb_agg(content_version_id order by base_order_index)from public.assignment_questions where assignment_id=a),'inline',(select count(*)from public.assignment_questions where assignment_id=a and(prompt is not null or choices is not null)),'meanings',(select count(*)from private.assignment_vocabulary_meaning_refs r join public.assignment_questions q on q.id=r.assignment_question_id where q.assignment_id=a));
+end$$;
+revoke all on function public.app09_preview_create_fixture_v1(uuid,text,text) from public,anon,authenticated;
+grant execute on function public.app09_preview_create_fixture_v1(uuid,text,text) to service_role;

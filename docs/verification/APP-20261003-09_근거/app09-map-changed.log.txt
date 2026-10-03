@@ -1,0 +1,25 @@
+기능 지도 정상: 기능 12, page 33, Route Handler 69, Next.js 특수 진입점 41, Next.js 루트 설정 1, App Router 보조 파일 48, server service 45, 공유 시험 계산 18, 공유 배정 계산 4, lib 루트 파일 11, lib 기반 디렉터리 9, src 공용 디렉터리 3, 관리자 계약 35, 기존 component 26, 공용 UI 44, 구조 보호선 44, 공통 server 0, 기능 server 103, 관리 migration 102, 상세 흐름 19, 기능 간 직접 import 113, lib→기능 import 14, 기능→lib 중계 8, 기능→lib→기능 간접 import 15
+
+변경 파일 영향 지도 (4a6a3db6d8bbab0f1e713e5c486ab56470f48fd6...HEAD + 작업 트리)
+- 00_앱_인계서.md: architecture-meta
+- architecture/work-records/records/APP-20261003-09.json: architecture-meta
+- architecture/기능_소유권.json: architecture-meta
+- docs/verification/20260930_앱개편_현황과확장검토.md: architecture-meta
+- docs/verification/20260930_운영규모와권한_조회근거.json: architecture-meta
+- docs/verification/20261001_무료운영과DB용량_조회근거.json: architecture-meta
+- docs/verification/20261001_무료운영인원과_DB용량분석.md: architecture-meta
+- docs/verification/20261001_사전공유와학생기록_구조재분석.md: architecture-meta
+- docs/verification/20261001_사전공유와학생기록_조회근거.json: architecture-meta
+- docs/verification/20261001_시험멈춤과자료재사용_점검.md: architecture-meta
+- docs/verification/20261001_시험초기로딩과자료연결_점검.md: architecture-meta
+- docs/verification/20261001_앱개편_권장설계와운영계획.md: architecture-meta
+- docs/verification/20261001_운영비용과성능_추가근거.json: architecture-meta
+- docs/verification/20261001_첫답멈춤_가짜시험재현.png: architecture-meta
+- docs/verification/20261001_첫답멈춤_재현근거.json: architecture-meta
+- docs/verification/APP-20261003-09_검증결과.md: architecture-meta
+- docs/verification/APP-20261003-09_검토DB_실행명세.md: architecture-meta
+- docs/work-orders/APP-20261003-09.md: architecture-meta
+- src/lib/database/composition-question-direct-insert.integration.test.ts: database-contract, flow:assignment-range-create, flow:assignment-series
+- src/lib/database/vocabulary-question-content-sharing.integration.test.ts: database-contract, flow:assignment-range-create, flow:assignment-series, flow:student-quiz-attempt
+- supabase/AGENTS.md: architecture-meta
+- supabase/migrations/20261003234500_insert_composition_question_refs_directly.sql: assignments, flow:assignment-range-create, flow:assignment-series

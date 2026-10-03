@@ -1,0 +1,1043 @@
+{
+  "work": "APP-20261003-09",
+  "capturedAt": "2026-10-03T07:41:07.377Z",
+  "implementationCommit": "e6b98ab2e72565d8a5feb7e950a0eb535a8587b7",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "productionWrites": 0,
+  "deployment": 0,
+  "migration": {
+    "path": "supabase/migrations/20261003234500_insert_composition_question_refs_directly.sql",
+    "sha256": "b0f49a50a1109c0413e7cc845a185178cd156c05bb46f8001bdde1377feb1030",
+    "history": [
+      {
+        "name": "insert_composition_question_refs_directly",
+        "version": "20261003072444"
+      },
+      {
+        "name": "app09_preview_concurrent_assignment_probe",
+        "version": "20261003072619"
+      },
+      {
+        "name": "app09_preview_probe_connection_identity",
+        "version": "20261003073132"
+      }
+    ]
+  },
+  "preserved": {
+    "before": [
+      {
+        "table_name": "auth.users",
+        "rows": 17,
+        "rows_md5": "bf712d8ac527af64c9c91c4a20ef8e9b"
+      },
+      {
+        "table_name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 174,
+        "rows_md5": "5136d9f5554882f37eff9b8096945985"
+      },
+      {
+        "table_name": "private.local_quiz_phase_plans",
+        "rows": 22,
+        "rows_md5": "ee921e544606a4ad91a070add8f324e1"
+      },
+      {
+        "table_name": "private.local_quiz_phase_receipts",
+        "rows": 22,
+        "rows_md5": "e1c3bc1efff01d94b18203609a7f8db0"
+      },
+      {
+        "table_name": "private.student_vocabulary_meaning_states",
+        "rows": 68,
+        "rows_md5": "1a574d185bc880966d569d64be65c352"
+      },
+      {
+        "table_name": "private.student_vocabulary_versions",
+        "rows": 37,
+        "rows_md5": "3badf68bf16e37c21c7d300b1e4ccbd0"
+      },
+      {
+        "table_name": "private.vocabulary_answer_receipts",
+        "rows": 165,
+        "rows_md5": "15d3453bf5d12d24988c6c49b3e6a9a7"
+      },
+      {
+        "table_name": "private.vocabulary_legacy_state_baselines",
+        "rows": 132,
+        "rows_md5": "f6fd677b8a7acc41ca4fe587994fa05f"
+      },
+      {
+        "table_name": "private.vocabulary_phase_results",
+        "rows": 35,
+        "rows_md5": "6c0d72fdbc408bbcc38bfc0a7799a62a"
+      },
+      {
+        "table_name": "private.vocabulary_question_content_versions",
+        "rows": 73,
+        "rows_md5": "3aa48a19257bf795ac2f7d99730aa48a"
+      },
+      {
+        "table_name": "private.vocabulary_question_meaning_versions",
+        "rows": 42,
+        "rows_md5": "5e379d5dfbd784e9877f5a3018aed282"
+      },
+      {
+        "table_name": "private.vocabulary_result_policies",
+        "rows": 28,
+        "rows_md5": "216123473bf7249191619f124074fe8d"
+      },
+      {
+        "table_name": "public.admin_profiles",
+        "rows": 17,
+        "rows_md5": "4e6b5690d9defd60ce580fcb8f157df6"
+      },
+      {
+        "table_name": "public.assignment_questions",
+        "rows": 5613,
+        "rows_md5": "dced961aa0bf6021de36d8f0102bb532"
+      },
+      {
+        "table_name": "public.assignment_students",
+        "rows": 254,
+        "rows_md5": "71f466fc1859d82b44d3c9cb5d30f6a7"
+      },
+      {
+        "table_name": "public.assignment_units",
+        "rows": 1572,
+        "rows_md5": "8c3af0a15d5edfae650f1fb00e80d34d"
+      },
+      {
+        "table_name": "public.assignments",
+        "rows": 248,
+        "rows_md5": "3066f78a5743611fa2572b3a8fbf7ce9"
+      },
+      {
+        "table_name": "public.audit_events",
+        "rows": 1168,
+        "rows_md5": "c474d702d5ac34807053306fd124f9d1"
+      },
+      {
+        "table_name": "public.quiz_attempts",
+        "rows": 148,
+        "rows_md5": "b3711b01d98cfa8d4177faa28e9b01ee"
+      },
+      {
+        "table_name": "public.quiz_questions",
+        "rows": 1656,
+        "rows_md5": "e56d495b673a6fdb3cd1e139468c632c"
+      },
+      {
+        "table_name": "public.student_point_events",
+        "rows": 1107,
+        "rows_md5": "61026540d6a37af6e1fb75ea0f0c02ec"
+      },
+      {
+        "table_name": "public.student_point_totals",
+        "rows": 38,
+        "rows_md5": "4124f2f4ca4c1118557abee2a776d30a"
+      },
+      {
+        "table_name": "public.student_vocab_state",
+        "rows": 798,
+        "rows_md5": "b7e79afa02072d12a449682dec74d0ac"
+      },
+      {
+        "table_name": "public.student_vocab_wrong_events",
+        "rows": 867,
+        "rows_md5": "162bd117272ab3cb8e00f058bc297683"
+      },
+      {
+        "table_name": "public.students",
+        "rows": 132,
+        "rows_md5": "4cce58d1de3320c00afeb29cfb8af58f"
+      }
+    ],
+    "preapply": [
+      {
+        "table_name": "auth.users",
+        "rows": 17,
+        "rows_md5": "bf712d8ac527af64c9c91c4a20ef8e9b"
+      },
+      {
+        "table_name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 174,
+        "rows_md5": "5136d9f5554882f37eff9b8096945985"
+      },
+      {
+        "table_name": "private.local_quiz_phase_plans",
+        "rows": 22,
+        "rows_md5": "ee921e544606a4ad91a070add8f324e1"
+      },
+      {
+        "table_name": "private.local_quiz_phase_receipts",
+        "rows": 22,
+        "rows_md5": "e1c3bc1efff01d94b18203609a7f8db0"
+      },
+      {
+        "table_name": "private.student_vocabulary_meaning_states",
+        "rows": 68,
+        "rows_md5": "1a574d185bc880966d569d64be65c352"
+      },
+      {
+        "table_name": "private.student_vocabulary_versions",
+        "rows": 37,
+        "rows_md5": "3badf68bf16e37c21c7d300b1e4ccbd0"
+      },
+      {
+        "table_name": "private.vocabulary_answer_receipts",
+        "rows": 165,
+        "rows_md5": "15d3453bf5d12d24988c6c49b3e6a9a7"
+      },
+      {
+        "table_name": "private.vocabulary_legacy_state_baselines",
+        "rows": 132,
+        "rows_md5": "f6fd677b8a7acc41ca4fe587994fa05f"
+      },
+      {
+        "table_name": "private.vocabulary_phase_results",
+        "rows": 35,
+        "rows_md5": "6c0d72fdbc408bbcc38bfc0a7799a62a"
+      },
+      {
+        "table_name": "private.vocabulary_question_content_versions",
+        "rows": 73,
+        "rows_md5": "3aa48a19257bf795ac2f7d99730aa48a"
+      },
+      {
+        "table_name": "private.vocabulary_question_meaning_versions",
+        "rows": 42,
+        "rows_md5": "5e379d5dfbd784e9877f5a3018aed282"
+      },
+      {
+        "table_name": "private.vocabulary_result_policies",
+        "rows": 28,
+        "rows_md5": "216123473bf7249191619f124074fe8d"
+      },
+      {
+        "table_name": "public.admin_profiles",
+        "rows": 17,
+        "rows_md5": "4e6b5690d9defd60ce580fcb8f157df6"
+      },
+      {
+        "table_name": "public.assignment_questions",
+        "rows": 5613,
+        "rows_md5": "dced961aa0bf6021de36d8f0102bb532"
+      },
+      {
+        "table_name": "public.assignment_students",
+        "rows": 254,
+        "rows_md5": "71f466fc1859d82b44d3c9cb5d30f6a7"
+      },
+      {
+        "table_name": "public.assignment_units",
+        "rows": 1572,
+        "rows_md5": "8c3af0a15d5edfae650f1fb00e80d34d"
+      },
+      {
+        "table_name": "public.assignments",
+        "rows": 248,
+        "rows_md5": "3066f78a5743611fa2572b3a8fbf7ce9"
+      },
+      {
+        "table_name": "public.audit_events",
+        "rows": 1168,
+        "rows_md5": "c474d702d5ac34807053306fd124f9d1"
+      },
+      {
+        "table_name": "public.quiz_attempts",
+        "rows": 148,
+        "rows_md5": "b3711b01d98cfa8d4177faa28e9b01ee"
+      },
+      {
+        "table_name": "public.quiz_questions",
+        "rows": 1656,
+        "rows_md5": "e56d495b673a6fdb3cd1e139468c632c"
+      },
+      {
+        "table_name": "public.student_point_events",
+        "rows": 1107,
+        "rows_md5": "61026540d6a37af6e1fb75ea0f0c02ec"
+      },
+      {
+        "table_name": "public.student_point_totals",
+        "rows": 38,
+        "rows_md5": "4124f2f4ca4c1118557abee2a776d30a"
+      },
+      {
+        "table_name": "public.student_vocab_state",
+        "rows": 798,
+        "rows_md5": "b7e79afa02072d12a449682dec74d0ac"
+      },
+      {
+        "table_name": "public.student_vocab_wrong_events",
+        "rows": 867,
+        "rows_md5": "162bd117272ab3cb8e00f058bc297683"
+      },
+      {
+        "table_name": "public.students",
+        "rows": 132,
+        "rows_md5": "4cce58d1de3320c00afeb29cfb8af58f"
+      }
+    ],
+    "postapply": [
+      {
+        "table_name": "auth.users",
+        "rows": 17,
+        "rows_md5": "bf712d8ac527af64c9c91c4a20ef8e9b"
+      },
+      {
+        "table_name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 174,
+        "rows_md5": "5136d9f5554882f37eff9b8096945985"
+      },
+      {
+        "table_name": "private.local_quiz_phase_plans",
+        "rows": 22,
+        "rows_md5": "ee921e544606a4ad91a070add8f324e1"
+      },
+      {
+        "table_name": "private.local_quiz_phase_receipts",
+        "rows": 22,
+        "rows_md5": "e1c3bc1efff01d94b18203609a7f8db0"
+      },
+      {
+        "table_name": "private.student_vocabulary_meaning_states",
+        "rows": 68,
+        "rows_md5": "1a574d185bc880966d569d64be65c352"
+      },
+      {
+        "table_name": "private.student_vocabulary_versions",
+        "rows": 37,
+        "rows_md5": "3badf68bf16e37c21c7d300b1e4ccbd0"
+      },
+      {
+        "table_name": "private.vocabulary_answer_receipts",
+        "rows": 165,
+        "rows_md5": "15d3453bf5d12d24988c6c49b3e6a9a7"
+      },
+      {
+        "table_name": "private.vocabulary_legacy_state_baselines",
+        "rows": 132,
+        "rows_md5": "f6fd677b8a7acc41ca4fe587994fa05f"
+      },
+      {
+        "table_name": "private.vocabulary_phase_results",
+        "rows": 35,
+        "rows_md5": "6c0d72fdbc408bbcc38bfc0a7799a62a"
+      },
+      {
+        "table_name": "private.vocabulary_question_content_versions",
+        "rows": 73,
+        "rows_md5": "3aa48a19257bf795ac2f7d99730aa48a"
+      },
+      {
+        "table_name": "private.vocabulary_question_meaning_versions",
+        "rows": 42,
+        "rows_md5": "5e379d5dfbd784e9877f5a3018aed282"
+      },
+      {
+        "table_name": "private.vocabulary_result_policies",
+        "rows": 28,
+        "rows_md5": "216123473bf7249191619f124074fe8d"
+      },
+      {
+        "table_name": "public.admin_profiles",
+        "rows": 17,
+        "rows_md5": "4e6b5690d9defd60ce580fcb8f157df6"
+      },
+      {
+        "table_name": "public.assignment_questions",
+        "rows": 5613,
+        "rows_md5": "dced961aa0bf6021de36d8f0102bb532"
+      },
+      {
+        "table_name": "public.assignment_students",
+        "rows": 254,
+        "rows_md5": "71f466fc1859d82b44d3c9cb5d30f6a7"
+      },
+      {
+        "table_name": "public.assignment_units",
+        "rows": 1572,
+        "rows_md5": "8c3af0a15d5edfae650f1fb00e80d34d"
+      },
+      {
+        "table_name": "public.assignments",
+        "rows": 248,
+        "rows_md5": "3066f78a5743611fa2572b3a8fbf7ce9"
+      },
+      {
+        "table_name": "public.audit_events",
+        "rows": 1168,
+        "rows_md5": "c474d702d5ac34807053306fd124f9d1"
+      },
+      {
+        "table_name": "public.quiz_attempts",
+        "rows": 148,
+        "rows_md5": "b3711b01d98cfa8d4177faa28e9b01ee"
+      },
+      {
+        "table_name": "public.quiz_questions",
+        "rows": 1656,
+        "rows_md5": "e56d495b673a6fdb3cd1e139468c632c"
+      },
+      {
+        "table_name": "public.student_point_events",
+        "rows": 1107,
+        "rows_md5": "61026540d6a37af6e1fb75ea0f0c02ec"
+      },
+      {
+        "table_name": "public.student_point_totals",
+        "rows": 38,
+        "rows_md5": "4124f2f4ca4c1118557abee2a776d30a"
+      },
+      {
+        "table_name": "public.student_vocab_state",
+        "rows": 798,
+        "rows_md5": "b7e79afa02072d12a449682dec74d0ac"
+      },
+      {
+        "table_name": "public.student_vocab_wrong_events",
+        "rows": 867,
+        "rows_md5": "162bd117272ab3cb8e00f058bc297683"
+      },
+      {
+        "table_name": "public.students",
+        "rows": 132,
+        "rows_md5": "4cce58d1de3320c00afeb29cfb8af58f"
+      }
+    ],
+    "attributesBefore": [
+      {
+        "value": {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "oid": "60806",
+          "owner": "16388",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "definition": "CREATE OR REPLACE FUNCTION private.create_composition_bank_for_delivery_v1(p_actor_admin_id uuid, p_title text, p_dataset_id uuid, p_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode question_order_mode, p_available_until timestamp with time zone, p_student_ids uuid[], p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb, p_exact_review boolean DEFAULT false)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare first_descriptor jsonb; descriptor jsonb; target jsonb; version_value uuid; mode_value text;\n  composition_row private.vocabulary_compositions; source_item private.vocabulary_composition_items;\n  source_entry private.vocabulary_composition_entries; entry_row public.vocab_entries; dataset_row public.vocab_datasets;\n  assignment_value uuid; min_row integer; max_row integer; hashes text[]:='{}'; question_hash text;\nbegin\n  if p_actor_admin_id is null or not exists(select 1 from public.admin_profiles where user_id=p_actor_admin_id and is_active) then raise exception 'queue_actor_admin_inactive' using errcode='42501'; end if;\n  if p_question_count is null or jsonb_typeof(p_questions) is distinct from 'array' or jsonb_array_length(p_questions)<>p_question_count\n    or p_question_count not between (case when p_exact_review then 1 else 4 end) and (case when p_exact_review then 400 else 500 end)\n    or p_english_to_korean_ratio is null or p_english_to_korean_ratio not in(0,50,100)\n    or p_timing_mode is null or p_timing_mode not in('none','total','per_question')\n    or (p_timing_mode in('none','total') and p_question_time_limit_seconds is not null)\n    or (p_timing_mode='per_question' and (p_question_time_limit_seconds is null or p_question_time_limit_seconds not between 5 and 600))\n    or p_student_ids is null or cardinality(p_student_ids)<>1 or array_position(p_student_ids,null) is not null\n    or p_unit_ids is null or cardinality(p_unit_ids)<1 or array_position(p_unit_ids,null) is not null\n    or (select count(distinct x) from unnest(p_unit_ids)x)<>cardinality(p_unit_ids)\n    then raise exception 'composition_assignment_settings_invalid' using errcode='22023'; end if;\n  perform 1 from public.students where id=p_student_ids[1] and status='active' and deleted_at is null for update;\n  if not found then raise exception 'student_not_active'; end if;\n  for target in select value from jsonb_array_elements(p_questions) loop\n    if jsonb_typeof(target) is distinct from 'object' or not(target ?& array['vocab_entry_id','base_order_index','direction','composition_bank'])\n      or (select count(*) from jsonb_object_keys(target))<>4 or jsonb_typeof(target->'vocab_entry_id') is distinct from 'number' or target->>'vocab_entry_id' !~ '^[1-9][0-9]*$'\n      or jsonb_typeof(target->'base_order_index') is distinct from 'number' or target->>'base_order_index' !~ '^[1-9][0-9]*$'\n      or target->>'direction' is null or target->>'direction' not in('english_to_korean','korean_to_english')\n      or jsonb_typeof(target->'composition_bank') is distinct from 'object'\n      then raise exception 'composition_assignment_payload_not_id_only' using errcode='22023'; end if;\n    descriptor:=target->'composition_bank';\n    if not(descriptor ?& array['mode','version_id','content_sha256','question_item_id','question_item_sha256']) or (select count(*) from jsonb_object_keys(descriptor))<>5\n      or descriptor->>'content_sha256' !~ '^[a-f0-9]{64}$' or descriptor->>'question_item_sha256' !~ '^[a-f0-9]{64}$'\n      or descriptor->>'question_item_id' is null or descriptor->>'question_item_sha256' is null\n      then raise exception 'composition_assignment_descriptor_invalid' using errcode='22023'; end if;\n  end loop;\n  if (select count(distinct(q->>'vocab_entry_id')::bigint)<>p_question_count or count(distinct(q->>'base_order_index')::int)<>p_question_count\n      or min((q->>'base_order_index')::int)<>1 or max((q->>'base_order_index')::int)<>p_question_count from jsonb_array_elements(p_questions)q)\n    then raise exception 'composition_assignment_plan_invalid' using errcode='22023'; end if;\n  first_descriptor:=p_questions->0->'composition_bank'; version_value:=(first_descriptor->>'version_id')::uuid; mode_value:=first_descriptor->>'mode';\n  if version_value is null or mode_value is null or mode_value not in('book_meaning_choice','canonical_definition_to_headword','canonical_headword_to_definition')\n    or (mode_value='canonical_definition_to_headword' and p_english_to_korean_ratio<>0) or (mode_value='canonical_headword_to_definition' and p_english_to_korean_ratio<>100)\n    or (p_exact_review and mode_value<>'book_meaning_choice')\n    or exists(select 1 from jsonb_array_elements(p_questions)q where ((q->'composition_bank')-'question_item_id'-'question_item_sha256') is distinct from (first_descriptor-'question_item_id'-'question_item_sha256'))\n    then raise exception 'composition_assignment_mixed_version' using errcode='22023'; end if;\n  if (select count(*) from jsonb_array_elements(p_questions)q where q->>'direction'='english_to_korean')<>round(p_question_count*p_english_to_korean_ratio/100.0)::int\n    then raise exception 'composition_assignment_direction_mismatch' using errcode='22023'; end if;\n  select * into composition_row from private.vocabulary_compositions where version_id=version_value and dataset_id=p_dataset_id and state='ready' and content_sha256=first_descriptor->>'content_sha256' for share;\n  if not found then raise exception 'composition_unavailable' using errcode='55000'; end if;\n  select d.* into dataset_row from public.vocab_datasets d join public.vocab_dataset_catalog cat on cat.dataset_id=d.id and cat.is_assignable where d.id=p_dataset_id and d.status='ready' and d.is_active for share of d,cat;\n  if not found then raise exception 'dataset_not_ready' using errcode='55000'; end if;\n  if (select count(*) from public.vocab_units where dataset_id=p_dataset_id and id=any(p_unit_ids))<>cardinality(p_unit_ids) then raise exception 'unit_dataset_mismatch' using errcode='22023'; end if;\n  perform private.resolve_contiguous_unit_direction_v1(p_dataset_id,p_unit_ids);\n  select min(e.source_row),max(e.source_row) into min_row,max_row from public.vocab_entries e join jsonb_array_elements(p_questions)q on e.id=(q->>'vocab_entry_id')::bigint where e.dataset_id=p_dataset_id;\n  insert into public.assignments(title,dataset_id,range_start,range_end,question_count,english_to_korean_ratio,time_limit_seconds,passing_score,passing_basis,retake_allowed,status,created_by,range_basis,question_order_mode,question_bank_version,available_until,timing_mode,question_time_limit_seconds)\n    values(p_title,p_dataset_id,min_row,max_row,p_question_count,p_english_to_korean_ratio,p_time_limit_seconds,p_passing_score,'initial',false,'draft',p_actor_admin_id,'units',p_question_order_mode,5,p_available_until,p_timing_mode,p_question_time_limit_seconds) returning id into assignment_value;\n  insert into public.assignment_units(assignment_id,dataset_id,unit_id,position) select assignment_value,p_dataset_id,u.id,u.n::int from unnest(p_unit_ids) with ordinality u(id,n);\n  insert into public.assignment_students(assignment_id,student_id,assigned_by) values(assignment_value,p_student_ids[1],p_actor_admin_id);\n  for target in select value from jsonb_array_elements(p_questions) order by (value->>'base_order_index')::int loop\n    descriptor:=target->'composition_bank';\n    select i.* into source_item from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id\n      where i.version_id=version_value and i.dataset_id=p_dataset_id and i.vocab_entry_id=(target->>'vocab_entry_id')::bigint and i.item_id=descriptor->>'question_item_id'\n        and i.item_sha256=descriptor->>'question_item_sha256' and i.quiz_mode=mode_value and i.direction::text=target->>'direction' and e.unit_id=any(p_unit_ids);\n    if not found then raise exception 'composition_assignment_snapshot_mismatch' using errcode='55000'; end if;\n    if not private.vocabulary_composition_question_in_scope_v1(version_value,source_item.item_id,p_unit_ids) then raise exception 'composition_target_outside_eligible_scope' using errcode='22023'; end if;\n    select * into source_entry from private.vocabulary_composition_entries where vocab_entry_id=source_item.vocab_entry_id;\n    select * into entry_row from public.vocab_entries where id=source_entry.vocab_entry_id and lower(row_sha256)=source_entry.entry_sha256;\n    if not found then raise exception 'composition_entry_changed' using errcode='55000'; end if;\n    question_hash:=upper(private.reviewed_exam_sha256_v1(jsonb_build_object('itemSha256',source_item.item_sha256,'order',target->'base_order_index'))); hashes:=array_append(hashes,question_hash);\n    insert into public.assignment_questions(assignment_id,vocab_entry_id,base_order_index,direction,prompt,choices,correct_choice_index,dataset_id,entry_row_sha256_snapshot,\n      eligibility_quiz_mode,eligibility_input_hash_snapshot,headword_snapshot,headword_normalized_snapshot,primary_meaning_snapshot,choice_vocab_entry_ids,correct_answer_snapshot,\n      content_origin,eligibility_rule_version_snapshot,generator_version_snapshot,question_content_sha256,provenance,provenance_status,\n      composition_version_id_snapshot,composition_item_id_snapshot,composition_item_sha256_snapshot,composition_pronunciation_snapshot)\n      values(assignment_value,source_item.vocab_entry_id,(target->>'base_order_index')::int,source_item.direction,source_item.prompt,to_jsonb(source_item.choice_texts),source_item.correct_choice_index,p_dataset_id,upper(source_entry.entry_sha256),\n        case when mode_value='book_meaning_choice' then case when source_item.direction='english_to_korean' then 'book_meaning_en_to_ko' else 'book_meaning_ko_to_en' end else mode_value end,\n        upper(source_item.item_sha256),entry_row.headword,entry_row.headword_normalized,entry_row.primary_meaning,source_item.choice_vocab_entry_ids,source_item.choice_texts[source_item.correct_choice_index+1],\n        'book_occurrence','vocabulary-composition-v1','vocabulary-composition-bank-v1',question_hash,source_item.source_proof||jsonb_build_object('promptRole',source_item.prompt_role,'choiceRole',source_item.choice_role),\n        'composition_verified_v1',version_value,source_item.item_id,source_item.item_sha256,source_item.pronunciation_snapshot);\n  end loop;\n  if exists(select 1 from public.assignment_questions q where q.assignment_id=assignment_value and\n    (select count(distinct lower(regexp_replace(normalize(trim(x),NFKC),'\\s+',' ','g'))) from jsonb_array_elements_text(q.choices)x)<>4)\n    then raise exception 'assignment_target_choices_duplicate' using errcode='22023'; end if;\n  -- Preserve the entire original reviewed release as the ambiguity reference,\n  -- even when only one partial passage was included in this composition.\n  if exists(select 1 from private.vocabulary_composition_items i join public.assignment_questions q on q.composition_item_id_snapshot=i.item_id and q.composition_version_id_snapshot=i.version_id\n    join private.reviewed_exam_items other on other.release_id=i.source_release_id and other.quiz_mode=i.quiz_mode and other.direction=i.direction\n    where q.assignment_id=assignment_value and i.source_kind='reviewed_item'\n      and lower(regexp_replace(normalize(trim(other.prompt),NFKC),'\\s+',' ','g'))=lower(regexp_replace(normalize(trim(i.prompt),NFKC),'\\s+',' ','g'))\n      and lower(normalize(trim(other.choice_texts[other.correct_choice_index+1]),NFKC))<>lower(normalize(trim(i.choice_texts[i.correct_choice_index+1]),NFKC))\n      and lower(normalize(trim(other.choice_texts[other.correct_choice_index+1]),NFKC))=any(array(select lower(normalize(trim(x),NFKC)) from unnest(i.choice_texts)x)))\n    then raise exception 'assignment_target_prompt_ambiguous' using errcode='22023'; end if;\n  if exists(select 1 from public.assignment_questions a join public.assignment_questions b on b.assignment_id=a.assignment_id and b.direction=a.direction\n    where a.assignment_id=assignment_value and a.id<>b.id and lower(replace(normalize(trim(a.prompt),NFKC),'*',''))=lower(replace(normalize(trim(b.prompt),NFKC),'*',''))\n      and lower(normalize(trim(a.correct_answer_snapshot),NFKC))<>lower(normalize(trim(b.correct_answer_snapshot),NFKC))\n      and (exists(select 1 from private.vocabulary_composition_items i where i.version_id=version_value and i.item_id=a.composition_item_id_snapshot and i.source_kind='generated_meaning')\n        or lower(normalize(trim(b.correct_answer_snapshot),NFKC))=any(array(select lower(normalize(trim(x),NFKC)) from jsonb_array_elements_text(a.choices)x))))\n    then raise exception 'assignment_target_prompt_ambiguous' using errcode='22023'; end if;\n  update public.assignments set quiz_content_mode=mode_value,dataset_source_sha256_snapshot=upper(dataset_row.source_sha256),generator_version='vocabulary-composition-bank-v1',\n    question_bank_sha256=upper(encode(extensions.digest(convert_to(array_to_string(hashes,'|'),'UTF8'),'sha256'),'hex')),\n    provenance_status='composition_verified_v1',composition_version_id_snapshot=version_value,composition_content_sha256_snapshot=composition_row.content_sha256,status='active' where id=assignment_value;\n  insert into public.audit_events(event_type,actor_admin_id,details) values('assignment.vocabulary_composition_created',p_actor_admin_id,jsonb_build_object('assignmentId',assignment_value,'versionId',version_value,'questionCount',p_question_count,'mode',mode_value));\n  return private.finalize_assignment_question_body_refs_v1(assignment_value);\nend;\n$function$\n"
+        }
+      }
+    ],
+    "attributesAfter": [
+      {
+        "value": {
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "oid": "60806",
+          "owner": "16388",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "definition": "CREATE OR REPLACE FUNCTION private.create_composition_bank_for_delivery_v1(p_actor_admin_id uuid, p_title text, p_dataset_id uuid, p_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode question_order_mode, p_available_until timestamp with time zone, p_student_ids uuid[], p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb, p_exact_review boolean DEFAULT false)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare first_descriptor jsonb; descriptor jsonb; target jsonb; version_value uuid; mode_value text;\n  composition_row private.vocabulary_compositions; source_item private.vocabulary_composition_items;\n  source_entry private.vocabulary_composition_entries; entry_row public.vocab_entries; dataset_row public.vocab_datasets;\n  assignment_value uuid; min_row integer; max_row integer; hashes text[]:='{}'; question_hash text;\nbegin\n  if p_actor_admin_id is null or not exists(select 1 from public.admin_profiles where user_id=p_actor_admin_id and is_active) then raise exception 'queue_actor_admin_inactive' using errcode='42501'; end if;\n  if p_question_count is null or jsonb_typeof(p_questions) is distinct from 'array' or jsonb_array_length(p_questions)<>p_question_count\n    or p_question_count not between (case when p_exact_review then 1 else 4 end) and (case when p_exact_review then 400 else 500 end)\n    or p_english_to_korean_ratio is null or p_english_to_korean_ratio not in(0,50,100)\n    or p_timing_mode is null or p_timing_mode not in('none','total','per_question')\n    or (p_timing_mode in('none','total') and p_question_time_limit_seconds is not null)\n    or (p_timing_mode='per_question' and (p_question_time_limit_seconds is null or p_question_time_limit_seconds not between 5 and 600))\n    or p_student_ids is null or cardinality(p_student_ids)<>1 or array_position(p_student_ids,null) is not null\n    or p_unit_ids is null or cardinality(p_unit_ids)<1 or array_position(p_unit_ids,null) is not null\n    or (select count(distinct x) from unnest(p_unit_ids)x)<>cardinality(p_unit_ids)\n    then raise exception 'composition_assignment_settings_invalid' using errcode='22023'; end if;\n  perform 1 from public.students where id=p_student_ids[1] and status='active' and deleted_at is null for update;\n  if not found then raise exception 'student_not_active'; end if;\n  for target in select value from jsonb_array_elements(p_questions) loop\n    if jsonb_typeof(target) is distinct from 'object' or not(target ?& array['vocab_entry_id','base_order_index','direction','composition_bank'])\n      or (select count(*) from jsonb_object_keys(target))<>4 or jsonb_typeof(target->'vocab_entry_id') is distinct from 'number' or target->>'vocab_entry_id' !~ '^[1-9][0-9]*$'\n      or jsonb_typeof(target->'base_order_index') is distinct from 'number' or target->>'base_order_index' !~ '^[1-9][0-9]*$'\n      or target->>'direction' is null or target->>'direction' not in('english_to_korean','korean_to_english')\n      or jsonb_typeof(target->'composition_bank') is distinct from 'object'\n      then raise exception 'composition_assignment_payload_not_id_only' using errcode='22023'; end if;\n    descriptor:=target->'composition_bank';\n    if not(descriptor ?& array['mode','version_id','content_sha256','question_item_id','question_item_sha256']) or (select count(*) from jsonb_object_keys(descriptor))<>5\n      or descriptor->>'content_sha256' !~ '^[a-f0-9]{64}$' or descriptor->>'question_item_sha256' !~ '^[a-f0-9]{64}$'\n      or descriptor->>'question_item_id' is null or descriptor->>'question_item_sha256' is null\n      then raise exception 'composition_assignment_descriptor_invalid' using errcode='22023'; end if;\n  end loop;\n  if (select count(distinct(q->>'vocab_entry_id')::bigint)<>p_question_count or count(distinct(q->>'base_order_index')::int)<>p_question_count\n      or min((q->>'base_order_index')::int)<>1 or max((q->>'base_order_index')::int)<>p_question_count from jsonb_array_elements(p_questions)q)\n    then raise exception 'composition_assignment_plan_invalid' using errcode='22023'; end if;\n  first_descriptor:=p_questions->0->'composition_bank'; version_value:=(first_descriptor->>'version_id')::uuid; mode_value:=first_descriptor->>'mode';\n  if version_value is null or mode_value is null or mode_value not in('book_meaning_choice','canonical_definition_to_headword','canonical_headword_to_definition')\n    or (mode_value='canonical_definition_to_headword' and p_english_to_korean_ratio<>0) or (mode_value='canonical_headword_to_definition' and p_english_to_korean_ratio<>100)\n    or (p_exact_review and mode_value<>'book_meaning_choice')\n    or exists(select 1 from jsonb_array_elements(p_questions)q where ((q->'composition_bank')-'question_item_id'-'question_item_sha256') is distinct from (first_descriptor-'question_item_id'-'question_item_sha256'))\n    then raise exception 'composition_assignment_mixed_version' using errcode='22023'; end if;\n  if (select count(*) from jsonb_array_elements(p_questions)q where q->>'direction'='english_to_korean')<>round(p_question_count*p_english_to_korean_ratio/100.0)::int\n    then raise exception 'composition_assignment_direction_mismatch' using errcode='22023'; end if;\n  select * into composition_row from private.vocabulary_compositions where version_id=version_value and dataset_id=p_dataset_id and state='ready' and content_sha256=first_descriptor->>'content_sha256' for share;\n  if not found then raise exception 'composition_unavailable' using errcode='55000'; end if;\n  select d.* into dataset_row from public.vocab_datasets d join public.vocab_dataset_catalog cat on cat.dataset_id=d.id and cat.is_assignable where d.id=p_dataset_id and d.status='ready' and d.is_active for share of d,cat;\n  if not found then raise exception 'dataset_not_ready' using errcode='55000'; end if;\n  if (select count(*) from public.vocab_units where dataset_id=p_dataset_id and id=any(p_unit_ids))<>cardinality(p_unit_ids) then raise exception 'unit_dataset_mismatch' using errcode='22023'; end if;\n  perform private.resolve_contiguous_unit_direction_v1(p_dataset_id,p_unit_ids);\n  select min(e.source_row),max(e.source_row) into min_row,max_row from public.vocab_entries e join jsonb_array_elements(p_questions)q on e.id=(q->>'vocab_entry_id')::bigint where e.dataset_id=p_dataset_id;\n  insert into public.assignments(title,dataset_id,range_start,range_end,question_count,english_to_korean_ratio,time_limit_seconds,passing_score,passing_basis,retake_allowed,status,created_by,range_basis,question_order_mode,question_bank_version,available_until,timing_mode,question_time_limit_seconds)\n    values(p_title,p_dataset_id,min_row,max_row,p_question_count,p_english_to_korean_ratio,p_time_limit_seconds,p_passing_score,'initial',false,'draft',p_actor_admin_id,'units',p_question_order_mode,5,p_available_until,p_timing_mode,p_question_time_limit_seconds) returning id into assignment_value;\n  insert into public.assignment_units(assignment_id,dataset_id,unit_id,position) select assignment_value,p_dataset_id,u.id,u.n::int from unnest(p_unit_ids) with ordinality u(id,n);\n  insert into public.assignment_students(assignment_id,student_id,assigned_by) values(assignment_value,p_student_ids[1],p_actor_admin_id);\n  for target in select value from jsonb_array_elements(p_questions) order by (value->>'base_order_index')::int loop\n    descriptor:=target->'composition_bank';\n    select i.* into source_item from private.vocabulary_composition_items i join public.vocab_entries e on e.id=i.vocab_entry_id\n      where i.version_id=version_value and i.dataset_id=p_dataset_id and i.vocab_entry_id=(target->>'vocab_entry_id')::bigint and i.item_id=descriptor->>'question_item_id'\n        and i.item_sha256=descriptor->>'question_item_sha256' and i.quiz_mode=mode_value and i.direction::text=target->>'direction' and e.unit_id=any(p_unit_ids);\n    if not found then raise exception 'composition_assignment_snapshot_mismatch' using errcode='55000'; end if;\n    if not private.vocabulary_composition_question_in_scope_v1(version_value,source_item.item_id,p_unit_ids) then raise exception 'composition_target_outside_eligible_scope' using errcode='22023'; end if;\n    select * into source_entry from private.vocabulary_composition_entries where vocab_entry_id=source_item.vocab_entry_id;\n    select * into entry_row from public.vocab_entries where id=source_entry.vocab_entry_id and lower(row_sha256)=source_entry.entry_sha256;\n    if not found then raise exception 'composition_entry_changed' using errcode='55000'; end if;\n    question_hash:=upper(private.reviewed_exam_sha256_v1(jsonb_build_object('itemSha256',source_item.item_sha256,'order',target->'base_order_index'))); hashes:=array_append(hashes,question_hash);\n    insert into public.assignment_questions(assignment_id,vocab_entry_id,base_order_index,direction,prompt,choices,correct_choice_index,dataset_id,entry_row_sha256_snapshot,\n      eligibility_quiz_mode,eligibility_input_hash_snapshot,headword_snapshot,headword_normalized_snapshot,primary_meaning_snapshot,choice_vocab_entry_ids,correct_answer_snapshot,\n      content_origin,eligibility_rule_version_snapshot,generator_version_snapshot,question_content_sha256,provenance,provenance_status,\n      composition_version_id_snapshot,composition_item_id_snapshot,composition_item_sha256_snapshot,composition_pronunciation_snapshot)\n      values(assignment_value,source_item.vocab_entry_id,(target->>'base_order_index')::int,source_item.direction,source_item.prompt,to_jsonb(source_item.choice_texts),source_item.correct_choice_index,p_dataset_id,upper(source_entry.entry_sha256),\n        case when mode_value='book_meaning_choice' then case when source_item.direction='english_to_korean' then 'book_meaning_en_to_ko' else 'book_meaning_ko_to_en' end else mode_value end,\n        upper(source_item.item_sha256),entry_row.headword,entry_row.headword_normalized,entry_row.primary_meaning,source_item.choice_vocab_entry_ids,source_item.choice_texts[source_item.correct_choice_index+1],\n        'book_occurrence','vocabulary-composition-v1','vocabulary-composition-bank-v1',question_hash,source_item.source_proof||jsonb_build_object('promptRole',source_item.prompt_role,'choiceRole',source_item.choice_role),\n        'composition_verified_v1',version_value,source_item.item_id,source_item.item_sha256,source_item.pronunciation_snapshot);\n  end loop;\n  if exists(select 1 from private.assignment_question_contents_v1 q where q.assignment_id=assignment_value and\n    (select count(distinct lower(regexp_replace(normalize(trim(x),NFKC),'\\s+',' ','g'))) from jsonb_array_elements_text(q.choices)x)<>4)\n    then raise exception 'assignment_target_choices_duplicate' using errcode='22023'; end if;\n  -- Preserve the entire original reviewed release as the ambiguity reference,\n  -- even when only one partial passage was included in this composition.\n  if exists(select 1 from private.vocabulary_composition_items i join public.assignment_questions q on q.composition_item_id_snapshot=i.item_id and q.composition_version_id_snapshot=i.version_id\n    join private.reviewed_exam_items other on other.release_id=i.source_release_id and other.quiz_mode=i.quiz_mode and other.direction=i.direction\n    where q.assignment_id=assignment_value and i.source_kind='reviewed_item'\n      and lower(regexp_replace(normalize(trim(other.prompt),NFKC),'\\s+',' ','g'))=lower(regexp_replace(normalize(trim(i.prompt),NFKC),'\\s+',' ','g'))\n      and lower(normalize(trim(other.choice_texts[other.correct_choice_index+1]),NFKC))<>lower(normalize(trim(i.choice_texts[i.correct_choice_index+1]),NFKC))\n      and lower(normalize(trim(other.choice_texts[other.correct_choice_index+1]),NFKC))=any(array(select lower(normalize(trim(x),NFKC)) from unnest(i.choice_texts)x)))\n    then raise exception 'assignment_target_prompt_ambiguous' using errcode='22023'; end if;\n  if exists(with resolved_questions as materialized (\n      select * from private.assignment_question_contents_v1 where assignment_id=assignment_value\n    ) select 1 from resolved_questions a join resolved_questions b on b.assignment_id=a.assignment_id and b.direction=a.direction\n    where a.assignment_id=assignment_value and a.id<>b.id and lower(replace(normalize(trim(a.prompt),NFKC),'*',''))=lower(replace(normalize(trim(b.prompt),NFKC),'*',''))\n      and lower(normalize(trim(a.correct_answer_snapshot),NFKC))<>lower(normalize(trim(b.correct_answer_snapshot),NFKC))\n      and (exists(select 1 from private.vocabulary_composition_items i where i.version_id=version_value and i.item_id=a.composition_item_id_snapshot and i.source_kind='generated_meaning')\n        or lower(normalize(trim(b.correct_answer_snapshot),NFKC))=any(array(select lower(normalize(trim(x),NFKC)) from jsonb_array_elements_text(a.choices)x))))\n    then raise exception 'assignment_target_prompt_ambiguous' using errcode='22023'; end if;\n  update public.assignments set quiz_content_mode=mode_value,dataset_source_sha256_snapshot=upper(dataset_row.source_sha256),generator_version='vocabulary-composition-bank-v1',\n    question_bank_sha256=upper(encode(extensions.digest(convert_to(array_to_string(hashes,'|'),'UTF8'),'sha256'),'hex')),\n    provenance_status='composition_verified_v1',composition_version_id_snapshot=version_value,composition_content_sha256_snapshot=composition_row.content_sha256,status='active' where id=assignment_value;\n  insert into public.audit_events(event_type,actor_admin_id,details) values('assignment.vocabulary_composition_created',p_actor_admin_id,jsonb_build_object('assignmentId',assignment_value,'versionId',version_value,'questionCount',p_question_count,'mode',mode_value));\n  return private.finalize_assignment_question_body_refs_v1(assignment_value);\nend;\n$function$\n"
+        }
+      }
+    ],
+    "after": [
+      {
+        "table_name": "auth.users",
+        "rows": 17,
+        "rows_md5": "bf712d8ac527af64c9c91c4a20ef8e9b"
+      },
+      {
+        "table_name": "private.assignment_vocabulary_meaning_refs",
+        "rows": 174,
+        "rows_md5": "5136d9f5554882f37eff9b8096945985"
+      },
+      {
+        "table_name": "private.local_quiz_phase_plans",
+        "rows": 22,
+        "rows_md5": "ee921e544606a4ad91a070add8f324e1"
+      },
+      {
+        "table_name": "private.local_quiz_phase_receipts",
+        "rows": 22,
+        "rows_md5": "e1c3bc1efff01d94b18203609a7f8db0"
+      },
+      {
+        "table_name": "private.student_vocabulary_meaning_states",
+        "rows": 68,
+        "rows_md5": "1a574d185bc880966d569d64be65c352"
+      },
+      {
+        "table_name": "private.student_vocabulary_versions",
+        "rows": 37,
+        "rows_md5": "3badf68bf16e37c21c7d300b1e4ccbd0"
+      },
+      {
+        "table_name": "private.vocabulary_answer_receipts",
+        "rows": 165,
+        "rows_md5": "15d3453bf5d12d24988c6c49b3e6a9a7"
+      },
+      {
+        "table_name": "private.vocabulary_legacy_state_baselines",
+        "rows": 132,
+        "rows_md5": "f6fd677b8a7acc41ca4fe587994fa05f"
+      },
+      {
+        "table_name": "private.vocabulary_phase_results",
+        "rows": 35,
+        "rows_md5": "6c0d72fdbc408bbcc38bfc0a7799a62a"
+      },
+      {
+        "table_name": "private.vocabulary_question_content_versions",
+        "rows": 73,
+        "rows_md5": "3aa48a19257bf795ac2f7d99730aa48a"
+      },
+      {
+        "table_name": "private.vocabulary_question_meaning_versions",
+        "rows": 42,
+        "rows_md5": "5e379d5dfbd784e9877f5a3018aed282"
+      },
+      {
+        "table_name": "private.vocabulary_result_policies",
+        "rows": 28,
+        "rows_md5": "216123473bf7249191619f124074fe8d"
+      },
+      {
+        "table_name": "public.admin_profiles",
+        "rows": 17,
+        "rows_md5": "4e6b5690d9defd60ce580fcb8f157df6"
+      },
+      {
+        "table_name": "public.assignment_questions",
+        "rows": 5613,
+        "rows_md5": "dced961aa0bf6021de36d8f0102bb532"
+      },
+      {
+        "table_name": "public.assignment_students",
+        "rows": 254,
+        "rows_md5": "71f466fc1859d82b44d3c9cb5d30f6a7"
+      },
+      {
+        "table_name": "public.assignment_units",
+        "rows": 1572,
+        "rows_md5": "8c3af0a15d5edfae650f1fb00e80d34d"
+      },
+      {
+        "table_name": "public.assignments",
+        "rows": 248,
+        "rows_md5": "3066f78a5743611fa2572b3a8fbf7ce9"
+      },
+      {
+        "table_name": "public.audit_events",
+        "rows": 1168,
+        "rows_md5": "c474d702d5ac34807053306fd124f9d1"
+      },
+      {
+        "table_name": "public.quiz_attempts",
+        "rows": 148,
+        "rows_md5": "b3711b01d98cfa8d4177faa28e9b01ee"
+      },
+      {
+        "table_name": "public.quiz_questions",
+        "rows": 1656,
+        "rows_md5": "e56d495b673a6fdb3cd1e139468c632c"
+      },
+      {
+        "table_name": "public.student_point_events",
+        "rows": 1107,
+        "rows_md5": "61026540d6a37af6e1fb75ea0f0c02ec"
+      },
+      {
+        "table_name": "public.student_point_totals",
+        "rows": 38,
+        "rows_md5": "4124f2f4ca4c1118557abee2a776d30a"
+      },
+      {
+        "table_name": "public.student_vocab_state",
+        "rows": 798,
+        "rows_md5": "b7e79afa02072d12a449682dec74d0ac"
+      },
+      {
+        "table_name": "public.student_vocab_wrong_events",
+        "rows": 867,
+        "rows_md5": "162bd117272ab3cb8e00f058bc297683"
+      },
+      {
+        "table_name": "public.students",
+        "rows": 132,
+        "rows_md5": "4cce58d1de3320c00afeb29cfb8af58f"
+      }
+    ],
+    "tableCount": 25,
+    "rows": 14433
+  },
+  "readback": {
+    "history": [
+      {
+        "name": "insert_composition_question_refs_directly",
+        "version": "20261003072444"
+      },
+      {
+        "name": "app09_preview_concurrent_assignment_probe",
+        "version": "20261003072619"
+      },
+      {
+        "name": "app09_preview_probe_connection_identity",
+        "version": "20261003073132"
+      }
+    ],
+    "triggers": [
+      "assignment_composition_identity",
+      "assignment_question_sources_consistency",
+      "assignment_reviewed_choices",
+      "mark_new_vocabulary_question",
+      "notebook_question_source_guard",
+      "zz_register_composition_question_content",
+      "zzz_freeze_assignment_question_content"
+    ],
+    "assignments": [
+      {
+        "id": "7e9d17bf-7688-4c88-8dc0-e1568a415a98",
+        "refs": [
+          "7af663dd-3650-4454-9e6c-29940d66f91a",
+          "a37a6649-db6b-4fd7-a3bb-dea51b7592a9",
+          "1ae3503e-ef17-4d0f-af9c-9b8489bba4bf",
+          "b696e767-6828-4e06-bb34-a789426be868"
+        ],
+        "title": "[배정 저장 검증] 이전 배정",
+        "inline": 0,
+        "questions": 4
+      },
+      {
+        "id": "dda11127-a185-4236-98a4-c8ec1edf4590",
+        "refs": [
+          "41f7528a-98e1-470a-85e3-8e53961f37dc",
+          "b62b5a32-c9a3-4501-8559-d36d228c23f6",
+          "49225c7e-a64b-49fa-b8d4-3ef2f6b9f06c",
+          "0811f4d1-d169-4636-869b-50f0830ed1c7"
+        ],
+        "title": "[배정 저장 검증] commit:a",
+        "inline": 0,
+        "questions": 4
+      },
+      {
+        "id": "ff857532-c709-4221-8e12-48858b539cd8",
+        "refs": [
+          "41f7528a-98e1-470a-85e3-8e53961f37dc",
+          "b62b5a32-c9a3-4501-8559-d36d228c23f6",
+          "49225c7e-a64b-49fa-b8d4-3ef2f6b9f06c",
+          "0811f4d1-d169-4636-869b-50f0830ed1c7"
+        ],
+        "title": "[배정 저장 검증] commit:b",
+        "inline": 0,
+        "questions": 4
+      },
+      {
+        "id": "55167402-65ed-4750-8107-a190d06e25b9",
+        "refs": [
+          "8bd4458d-c348-432d-ac9d-b53db0e185ce",
+          "d2a4b254-119a-45f8-970b-5211aa28ef03",
+          "da9f9eb0-9d62-4f0d-b6c5-c6af6d5ca438",
+          "5a265bce-2e82-4d10-8145-2543a58dc737"
+        ],
+        "title": "[배정 저장 검증] rollback:b",
+        "inline": 0,
+        "questions": 4
+      }
+    ],
+    "probeRights": {
+      "anon": false,
+      "service_role": true,
+      "authenticated": false
+    },
+    "commonContent": 12,
+    "internalRights": {
+      "anon": false,
+      "service_role": false,
+      "authenticated": false
+    },
+    "rolledBackAssignment": 0
+  },
+  "concurrency": [
+    {
+      "case": "commit",
+      "a": {
+        "case": "commit",
+        "side": "a",
+        "inline": 0,
+        "student": "a90b0000-0000-4000-8000-000000000002",
+        "meanings": 4,
+        "assignment": "dda11127-a185-4236-98a4-c8ec1edf4590",
+        "backendPid": 66670,
+        "references": [
+          "41f7528a-98e1-470a-85e3-8e53961f37dc",
+          "b62b5a32-c9a3-4501-8559-d36d228c23f6",
+          "49225c7e-a64b-49fa-b8d4-3ef2f6b9f06c",
+          "0811f4d1-d169-4636-869b-50f0830ed1c7"
+        ]
+      },
+      "overlap": {
+        "aPid": 66670,
+        "bPid": 66664,
+        "event": "transactionid",
+        "blockers": [
+          66670
+        ],
+        "eventType": "Lock"
+      },
+      "aOutcome": "commit",
+      "http": {
+        "case": "commit",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "sentAt": "2026-10-03T07:34:20.490Z",
+        "finishedAt": "2026-10-03T07:34:20.714Z",
+        "durationMs": 224,
+        "status": 200,
+        "data": {
+          "case": "commit",
+          "side": "b",
+          "inline": 0,
+          "student": "a90b0000-0000-4000-8000-000000000003",
+          "meanings": 4,
+          "assignment": "ff857532-c709-4221-8e12-48858b539cd8",
+          "backendPid": 66664,
+          "references": [
+            "41f7528a-98e1-470a-85e3-8e53961f37dc",
+            "b62b5a32-c9a3-4501-8559-d36d228c23f6",
+            "49225c7e-a64b-49fa-b8d4-3ef2f6b9f06c",
+            "0811f4d1-d169-4636-869b-50f0830ed1c7"
+          ]
+        }
+      }
+    },
+    {
+      "case": "rollback",
+      "a": {
+        "case": "rollback",
+        "side": "a",
+        "inline": 0,
+        "student": "a90b0000-0000-4000-8000-000000000002",
+        "meanings": 4,
+        "assignment": "f82bc695-06d5-4b57-b744-09454623be33",
+        "backendPid": 67327,
+        "references": [
+          "217ab226-a3f4-41dd-b01d-b47201cb3aa6",
+          "e64d554a-fbb2-47e5-ba88-894749847f46",
+          "733e472f-5e7c-4ca3-b278-8b910544a5ea",
+          "3673df75-a516-48d5-9751-0695117f25fd"
+        ]
+      },
+      "overlap": {
+        "aPid": 67327,
+        "bPid": 66664,
+        "event": "transactionid",
+        "blockers": [
+          67327
+        ],
+        "eventType": "Lock"
+      },
+      "aOutcome": "rollback",
+      "http": {
+        "case": "rollback",
+        "project": "wojxpruvbjzbhrpmsbuy",
+        "sentAt": "2026-10-03T07:35:21.026Z",
+        "finishedAt": "2026-10-03T07:35:22.116Z",
+        "durationMs": 1090,
+        "status": 200,
+        "data": {
+          "case": "rollback",
+          "side": "b",
+          "inline": 0,
+          "student": "a90b0000-0000-4000-8000-000000000003",
+          "meanings": 4,
+          "assignment": "55167402-65ed-4750-8107-a190d06e25b9",
+          "backendPid": 66664,
+          "references": [
+            "8bd4458d-c348-432d-ac9d-b53db0e185ce",
+            "d2a4b254-119a-45f8-970b-5211aa28ef03",
+            "da9f9eb0-9d62-4f0d-b6c5-c6af6d5ca438",
+            "5a265bce-2e82-4d10-8145-2543a58dc737"
+          ]
+        }
+      }
+    }
+  ],
+  "cleanup": {
+    "beforeFixture": {
+      "meanings": 4,
+      "questions": 4,
+      "adminActive": true,
+      "assignments": 1,
+      "questionHash": "2b56da5a3599ad1e6d82c805e74d8d3c",
+      "studentCount": 2,
+      "activeStudents": 2,
+      "oldQuestionsHash": "2b56da5a3599ad1e6d82c805e74d8d3c",
+      "activeAssignments": 1
+    },
+    "preretire": {
+      "meanings": 16,
+      "questions": 16,
+      "adminActive": true,
+      "assignments": 4,
+      "questionHash": "364947b7b806608f3e825c1760382117",
+      "studentCount": 2,
+      "activeStudents": 2,
+      "oldQuestionsHash": "2b56da5a3599ad1e6d82c805e74d8d3c",
+      "activeAssignments": 4
+    },
+    "after": {
+      "meanings": 16,
+      "questions": 16,
+      "adminActive": false,
+      "assignments": 4,
+      "questionHash": "364947b7b806608f3e825c1760382117",
+      "studentCount": 2,
+      "activeStudents": 0,
+      "oldQuestionsHash": "2b56da5a3599ad1e6d82c805e74d8d3c",
+      "activeAssignments": 0
+    },
+    "datasets": [
+      {
+        "id": "a90b0000-0000-4000-8000-000000000004",
+        "active": false
+      },
+      {
+        "id": "c44482a7-755c-41f1-ad41-0bdb13d48893",
+        "active": false
+      }
+    ],
+    "students": [
+      {
+        "id": "a90b0000-0000-4000-8000-000000000002",
+        "status": "blocked",
+        "deleted": true
+      },
+      {
+        "id": "a90b0000-0000-4000-8000-000000000003",
+        "status": "blocked",
+        "deleted": true
+      }
+    ],
+    "probeCount": 0,
+    "assignments": [
+      {
+        "id": "7e9d17bf-7688-4c88-8dc0-e1568a415a98",
+        "status": "closed",
+        "deleted": true
+      },
+      {
+        "id": "dda11127-a185-4236-98a4-c8ec1edf4590",
+        "status": "closed",
+        "deleted": true
+      },
+      {
+        "id": "ff857532-c709-4221-8e12-48858b539cd8",
+        "status": "closed",
+        "deleted": true
+      },
+      {
+        "id": "55167402-65ed-4750-8107-a190d06e25b9",
+        "status": "closed",
+        "deleted": true
+      }
+    ],
+    "dropHistory": [
+      {
+        "name": "remove_app09_preview_assignment_probe",
+        "version": "20261003073638"
+      }
+    ]
+  },
+  "validation": {
+    "full": {
+      "files": 629,
+      "passed": 5103,
+      "existingSkipped": 1,
+      "seconds": 351.96
+    },
+    "directFinal": {
+      "passed": 6
+    },
+    "hundredAssignments": {
+      "questionInsert": 5000,
+      "questionUpdate": 0,
+      "inlineAtInsert": 0,
+      "meaningRefs": 5000,
+      "commonContent": 50
+    },
+    "types": "pass",
+    "lint": "pass",
+    "map": "pass",
+    "uiArchitecture": "pass",
+    "buildPages": 53,
+    "offlineAssets": 25,
+    "exactKitLastLocalPassed": 1,
+    "newUI": "not applicable: same final values, permissions, API, routes and UI"
+  },
+  "measurement": {
+    "report": "docs/verification/OPS-20261003-02_배정저장보완후_결과.md",
+    "rawSha256": "25553a836c7214325adf7ec3a1c96e08006e6b6dc12694e8d7065801eb1f91ff",
+    "perExamRows": 299,
+    "perExamDatumBytes": 109030.5,
+    "perExamTrackedPhysicalBytes": 207872,
+    "previousTrackedPhysicalBytes": 249344,
+    "limits": "Separate synthetic 32 exams; independent UUID/time/index allocation. Not a guaranteed causal saving or cloud capacity."
+  },
+  "failedSetups": [
+    {
+      "case": "local failed-transaction fixture",
+      "cause": "RESET ROLE was attempted before rollback-to-savepoint; fixture fixed and direct6 passed"
+    },
+    {
+      "case": "first full test launch",
+      "cause": "project maxWorkers=4 omitted; canceled unbounded run and passed standard4 without changing product/test deadlines"
+    },
+    {
+      "case": "Preview seed30s",
+      "cause": "whole fake setup transaction exceeded30s; account/source/assignment0 verified, setup120s succeeded; product limits unchanged"
+    },
+    {
+      "case": "Preview overlap attempts1 and2",
+      "cause": "observer did not refresh PostgreSQL activity snapshot; first also filtered potentially truncated query text. Both A and B rolled back, assignment count remained1. pg_stat_clear_snapshot plus returned backend PID verification added; final2 cases passed. No product change."
+    }
+  ],
+  "notes": [
+    "Probe exercises the shared private composition-bank creator; it is not a test of every outer public bulk/queue API.",
+    "Duplicate-choice fixture inserts only a new synthetic composition at a lower boundary, because the official upstream importer rejects it first.",
+    "Unmodified real students/records are protected; fake records remain soft-closed, not deleted physically.",
+    "Test kit log initially recorded an earlier script revision. Latest exact kit3.66s passed after adding returned connection PID; scripts archived here are the final versions."
+  ],
+  "files": [
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-full-final.log.txt",
+      "bytes": 2049,
+      "sha256": "7b635ceac7cb1938cc40c3f938ff3a8ab7221e0ea276f9d78009e3fa07b9bb98"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-direct-final.log.txt",
+      "bytes": 280,
+      "sha256": "42966b70741f7f9fd48a9a962fc0c5a8ed5074b3d4ecc647f5008b52b26f74e6"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-kit-final.log.txt",
+      "bytes": 279,
+      "sha256": "0237ff4c9e19ac9e27edeb2c4502c5acb9a2f6bce2e16d559da970ecf71bc752"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-types.log.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-lint.log.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-map-final.log.txt",
+      "bytes": 557,
+      "sha256": "c716059db5e7871e33fe797e4b9bfa236b15c247cc7ea84b1eede7efa5a32842"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-map-changed.log.txt",
+      "bytes": 2628,
+      "sha256": "44bd3ca0c25980b7b1b8e98f596df709d1026399403ab0ba9e9e9998e0cc8db1"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-format.log.txt",
+      "bytes": 100,
+      "sha256": "a9a3dce7349fe141932a87f101fa8368008a09d14266369fb6736e4db6d97f1a"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-design.log.txt",
+      "bytes": 98,
+      "sha256": "7ed29fc52c54744f1fe34fbeb3dd042cb0efca08ab08f2a4e4472cc465a4d803"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-ui-architecture.log.txt",
+      "bytes": 6686,
+      "sha256": "d6e3285cf695f51139f64f53e29a1e6db80f435e25eae178432eb13a21b6ec6c"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-build.log.txt",
+      "bytes": 4537,
+      "sha256": "bd88ab5f2d98a14801a9fb314fcd1c30dd20eb214c7af1638c4836ebbfff2eee"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-offline-build.log.txt",
+      "bytes": 55,
+      "sha256": "5c3878b7e0b323080acc702d5a88ad77b82c597d0f27fe5d3f17a0966bae1479"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-kit.mjs.txt",
+      "bytes": 17093,
+      "sha256": "96e71d6a2fae1e3296614bb4a4ec4b3f82dbc2895b2e098f6673c2fcbe69de38"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-kit.test.ts.txt",
+      "bytes": 3150,
+      "sha256": "bad1b35611ad4580631793de2b3a0b6e8243f35cb67a881ff022523fffd4db4a"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-config.ts.txt",
+      "bytes": 370,
+      "sha256": "d3f4506f280ef7d734bb3411c001bfa6863b611d1357028e64de443ae83b5b13"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-races.mjs.txt",
+      "bytes": 1342,
+      "sha256": "7292b980324c5724055f2186b4a609cfb183abb23df7d2dcd7b9455ab9d78697"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-http.mjs.txt",
+      "bytes": 1904,
+      "sha256": "dc8e4a897c93d043530f0fd4a48fd21fae04dc36983708a885ef6919ed2c1c01"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-seed.sql.txt",
+      "bytes": 8501,
+      "sha256": "79757523e7a9ab7d008b285daa6a49838391be2ebd32af8d6b846427b045f56e"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-probe.sql.txt",
+      "bytes": 3478,
+      "sha256": "291ba1d485f03319d22e1aa9d94a9218e9ce8981d94a6a3a4e83ab76d3621db1"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-snapshot.sql.txt",
+      "bytes": 6935,
+      "sha256": "900d25ddd4abde257d33c2b3c646bac10eb53905a2d6dc6aae2ee66e2beccf88"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-fixture.sql.txt",
+      "bytes": 1694,
+      "sha256": "179c2ceb490ee1b57ac2126805c3bad1786e1b5079602f74a4f4aac325f50f95"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-readback.sql.txt",
+      "bytes": 1790,
+      "sha256": "426f0511d1daf16faf331becc6a8f6f15b378ec5d6518f02b3d11f0a1017a1a7"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-cleanup.sql.txt",
+      "bytes": 1565,
+      "sha256": "b058c7cb240b92ceb15fc7fe13281a86cc3ce75efc9c8ec1b259aa8c54c58608"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-drop.sql.txt",
+      "bytes": 70,
+      "sha256": "c80535082abd0dc08c2b25575695878d11a8f8ed04dc327748f81bad9db91580"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-race-commit.sql.txt",
+      "bytes": 1182,
+      "sha256": "bea653a933ab7e3621a0b77009a6a770f10ae5d4301cc5dfea13351057b60d50"
+    },
+    {
+      "path": "docs/verification/APP-20261003-09_근거/app09-preview-race-rollback.sql.txt",
+      "bytes": 1190,
+      "sha256": "dd3762cbca3e1dd1cc964508a904055322b066813bf9278df355e118f37ee488"
+    }
+  ],
+  "finalIndependentReview": {
+    "agent": "/root/capacity_code_audit",
+    "blockingFindings": 0,
+    "scope": "26 evidence hashes and884 implementation inputs; product unchanged frome6b98ab;25tables14433rows; actual transaction locks and returned PID identity; commit/rollback and soft closure; failure/production/capacity limitations verified; read-only review"
+  }
+}

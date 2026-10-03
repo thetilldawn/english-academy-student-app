@@ -1,0 +1,1 @@
+drop function public.app09_preview_create_fixture_v1(uuid,text,text);

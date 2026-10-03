@@ -1,0 +1,39 @@
+import fs from 'node:fs';
+import {it,expect} from 'vitest';
+import {createFinalSchemaDatabase} from '@/test-support/final-schema-database';
+import {seedSql,probeSql,metaSql,nonce,admin,snapshotSql,fixtureSql,cleanupSql,dropProbeSql} from './app09-preview-kit.mjs';
+it('validates the exact Preview setup and scoped probe locally',async()=>{
+ let prior:Record<string,unknown>={},oldFixture:Record<string,unknown>={},baseline:unknown;
+ const db=await createFinalSchemaDatabase({beforeMigration:async(d,name)=>{
+  if(name!=='20261003234500_insert_composition_question_refs_directly.sql')return;
+  const seeded=await d.exec(seedSql);
+  const value=seeded.flatMap(x=>x.rows).find((x:any)=>x.value?.oldAssignment)?.value;
+  expect(value).toBeTruthy();
+  fs.writeFileSync('.codex-tmp/app09-preview-local-seed.json',JSON.stringify(value,null,2));
+  prior=(await d.query<any>(metaSql)).rows[0].value;
+  oldFixture=(await d.query<any>(fixtureSql)).rows[0].value;
+  baseline=(await d.query(snapshotSql)).rows;
+ }});
+ try{
+  const meta=(await db.query<any>(metaSql)).rows[0].value;
+  const {definition:beforeDefinition,...before}=prior;const {definition:afterDefinition,...after}=meta;
+  expect(after).toEqual(before);expect(afterDefinition).not.toBe(beforeDefinition);
+  expect((await db.query<any>(fixtureSql)).rows[0].value).toEqual(oldFixture);
+  await db.exec(probeSql);
+  await db.exec(`select set_config('request.jwt.claim.role','service_role',false);select set_config('request.jwt.claims','{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}',false);`);
+  const call=async(c:string,s:string)=>(await db.query<any>('select public.app09_preview_create_fixture_v1($1,$2,$3)value',[nonce,c,s])).rows[0].value;
+  const a=await call('commit','a'),b=await call('commit','b');
+  expect(a.references).toEqual(b.references);expect(a.meanings).toBe(4);expect(b.inline).toBe(0);
+  await db.exec('begin');const rolled=await call('rollback','a');await db.exec('rollback');
+  const kept=await call('rollback','b');expect(kept.references).toHaveLength(4);expect(kept.references).not.toEqual(rolled.references);
+  expect((await db.query<{n:number}>('select count(*)::int n from public.assignments where created_by=$1',[admin])).rows[0].n).toBe(4);
+  expect((await db.query(snapshotSql)).rows).toEqual(baseline);
+  const endBefore=(await db.query<any>(fixtureSql)).rows[0].value;
+  await db.exec(cleanupSql);await db.exec(dropProbeSql);
+  const endAfter=(await db.query<any>(fixtureSql)).rows[0].value;
+  expect(endAfter.questionHash).toBe(endBefore.questionHash);expect(endAfter.oldQuestionsHash).toBe(oldFixture.oldQuestionsHash);
+  expect(endAfter.activeStudents).toBe(0);expect(endAfter.activeAssignments).toBe(0);expect(endAfter.adminActive).toBe(false);
+  expect(endAfter.questions).toBe(16);expect(endAfter.meanings).toBe(16);expect((await db.query(snapshotSql)).rows).toEqual(baseline);
+  console.log(JSON.stringify({localSetup:true,writerAttributesPreserved:true,sequentialSharedReferences:true,rollbackCreatedNewReferences:true,assignments:4,cleanupPreservedQuestions:true,baselineTables:(baseline as unknown[]).length}));
+ }finally{await db.close();}
+},90000);

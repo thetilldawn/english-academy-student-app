@@ -1,0 +1,9 @@
+select jsonb_build_object('adminActive',(select is_active from public.admin_profiles where user_id='a90b0000-0000-4000-8000-000000000001'),
+'studentCount',(select count(*)from public.students where id=any(array['a90b0000-0000-4000-8000-000000000002','a90b0000-0000-4000-8000-000000000003']::uuid[])),
+'activeStudents',(select count(*)from public.students where id=any(array['a90b0000-0000-4000-8000-000000000002','a90b0000-0000-4000-8000-000000000003']::uuid[])and status='active' and deleted_at is null),
+'assignments',(select count(*)from public.assignments where created_by='a90b0000-0000-4000-8000-000000000001'),
+'activeAssignments',(select count(*)from public.assignments where created_by='a90b0000-0000-4000-8000-000000000001' and deleted_at is null),
+'questions',(select count(*)from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='a90b0000-0000-4000-8000-000000000001'),
+'questionHash',(select md5(string_agg(md5(to_jsonb(q)::text),''order by q.id))from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='a90b0000-0000-4000-8000-000000000001'),
+'meanings',(select count(*)from private.assignment_vocabulary_meaning_refs r join public.assignment_questions q on q.id=r.assignment_question_id join public.assignments a on a.id=q.assignment_id where a.created_by='a90b0000-0000-4000-8000-000000000001'),
+'oldQuestionsHash',(select md5(string_agg(md5(to_jsonb(q)::text),''order by q.id))from public.assignment_questions q join public.assignments a on a.id=q.assignment_id where a.created_by='a90b0000-0000-4000-8000-000000000001' and a.title='[배정 저장 검증] 이전 배정'))value;
