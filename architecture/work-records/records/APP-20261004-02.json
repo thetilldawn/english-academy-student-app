@@ -164,6 +164,18 @@
         "student-quiz-attempt",
         "student-assignment-study-read"
       ]
+    },
+    {
+      "path": "test/e2e/support/vocab-journey.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": []
+    },
+    {
+      "path": "test/e2e/fixtures/preview-run.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": []
     }
   ],
   "requirements": [
@@ -451,7 +463,7 @@
       "id": "T5",
       "kind": "browser",
       "target": "test/e2e/authenticated/transition-read.spec.ts",
-      "scenario": "실제 검토 호환 앱에서 뜻/예문 새 참조배정 학습 화면과 서버 준비를 읽고 새 응시는 만들지 않음",
+      "scenario": "실제 검토 호환 앱에서 뜻/예문 새 참조배정 학습 화면과 서버 준비를 읽고 새 응시는 만들지 않음; 실제 선택 대화상자와 숫자 입력 접근성 역할로 조작, 동일 출처 CSS 사전 로딩 안내는 별도 기록하고 그 외 경고/오류는 실패",
       "expected": "각4개 표시/준비 성공/응시404/가짜학생 정리, 운영변경0",
       "topics": [
         "behavior",

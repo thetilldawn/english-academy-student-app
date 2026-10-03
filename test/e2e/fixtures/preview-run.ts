@@ -41,6 +41,7 @@ export class PreviewRun {
   readonly targetDeploymentSha: string;
   readonly targetGitRef: string;
   readonly browserMessages: string[] = [];
+  readonly browserAdvisories: string[] = [];
   private readonly browser: Browser;
   private readonly students: PreviewCleanupStudent[] = [];
   private readonly studentContexts: BrowserContext[] = [];
@@ -69,7 +70,16 @@ export class PreviewRun {
   private captureBrowserMessages(page: Page) {
     page.on("console", (message) => {
       if (message.type() === "warning" || message.type() === "error") {
-        this.browserMessages.push(`console.${message.type()}: ${message.text()}`);
+        const text = message.text();
+        const preload = text.match(/^The resource (https:\/\/[^ ]+) was preloaded using link preload but not used within a few seconds from the window's load event\. Please make sure it has an appropriate `as` value and it is preloaded intentionally\.$/);
+        if (message.type() === "warning" && preload) {
+          const resource = new URL(preload[1]);
+          if (resource.origin === this.origin && /^\/_next\/static\/(?:css|chunks)\/[a-zA-Z0-9_-]+\.css$/.test(resource.pathname)) {
+            this.browserAdvisories.push(text);
+            return;
+          }
+        }
+        this.browserMessages.push(`console.${message.type()}: ${text}`);
       }
     });
     page.on("pageerror", (error) => {
@@ -240,6 +250,7 @@ export class PreviewRun {
       path.join(process.cwd(), "test-results", "e2e-receipts"),
       `${this.runId}-receipt`,
       {
+        browserAdvisories: this.browserAdvisories,
         checkRunnerSha: this.checkRunnerSha,
         origin: this.origin,
         runId: this.runId,
@@ -255,6 +266,7 @@ export class PreviewRun {
       path.join(process.cwd(), "test-results", "e2e-manifests"),
       this.runId,
       {
+        browserAdvisories: this.browserAdvisories,
         checkRunnerSha: this.checkRunnerSha,
         origin: this.origin,
         runId: this.runId,
