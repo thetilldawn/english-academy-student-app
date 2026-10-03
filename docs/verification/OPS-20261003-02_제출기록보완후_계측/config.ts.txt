@@ -1,0 +1,2 @@
+import {defineConfig}from 'vitest/config';import{fileURLToPath}from'node:url';
+export default defineConfig({test:{environment:'node',include:['.codex-tmp/m09-after-receipt/*.test.ts'],maxWorkers:1,fileParallelism:false,testTimeout:180000,hookTimeout:120000},resolve:{alias:{'@':fileURLToPath(new URL('../../src',import.meta.url)),'server-only':fileURLToPath(new URL('../../test/server-only.ts',import.meta.url))}}});

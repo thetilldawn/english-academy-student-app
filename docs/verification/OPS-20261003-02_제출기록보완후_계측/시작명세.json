@@ -1,0 +1,8 @@
+{
+  "sourceCommit": "f5eea58116f940822e4dca1c5e85e2043d7efaea",
+  "startedAt": "2026-10-03T06:15:10.699Z",
+  "method": "Same32 committed synthetic exams, changed storage only. No cloud calls.",
+  "baselineEvidence": "docs/verification/OPS-20261003-02_계측",
+  "modelSha256": "d063032b5099d61073362a98c84ef12470e23e225fdf1b3fff0ad1353f6c1d5f",
+  "migrationSha256": "4fe0715962439c03956aed5f939a3745283aeab77c34871bce57ba0271b4fc3e"
+}
