@@ -239,6 +239,13 @@ export class PreviewRun {
     return context;
   }
 
+  async openStudentTab(existing: Page) {
+    expect(this.studentContexts).toContain(existing.context());
+    const page = await existing.context().newPage();
+    this.captureBrowserMessages(page);
+    return page;
+  }
+
   async verifyCurrentDeployment(next?: { deploymentOrigin: string; targetDeploymentSha: string }) {
     const expected = next ? { ...this.runtimeExpected, ...next } : this.runtimeExpected;
     const response = await this.adminContext.request.get("/api/preview-identity");

@@ -99,6 +99,12 @@
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "test/e2e/authenticated/maintenance-compatibility.spec.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
     }
   ],
   "requirements": [
