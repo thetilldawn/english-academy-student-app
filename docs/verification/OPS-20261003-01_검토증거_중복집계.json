@@ -1,0 +1,53 @@
+{
+  "task": "OPS-20261003-01",
+  "source": "read-only delegated audit",
+  "project": "xdxhswjgksukjmpbzqgz",
+  "collectedAtKst": "2026-10-03 09:16-09:21",
+  "statementTimeoutSeconds": 20,
+  "readOnly": true,
+  "table": "private.reviewed_mock_source_resources_v1",
+  "rows": 16894,
+  "payloadJsonTextBytes": 95968098,
+  "components": {
+    "fiveLearningFieldEvidenceArraysBytes": 43986815,
+    "reviewRecordsBytes": 22992712,
+    "sourceEvidenceBytes": 5291590,
+    "nonOverlappingSubtotalBytes": 72271117,
+    "reviewRecordEvidenceAlreadyIncludedBytes": 11941190,
+    "fiveLearningFieldReasonsBytes": 6897740
+  },
+  "nonNullValues": {
+    "definition": {
+      "rows": 449,
+      "bytes": 27746
+    },
+    "example": {
+      "rows": 341,
+      "bytes": 22912
+    },
+    "pos": {
+      "rows": 5065,
+      "bytes": 35886
+    },
+    "dictionary": {
+      "rows": 10450,
+      "bytes": 1396018
+    },
+    "pronunciation": {
+      "rows": 4662,
+      "bytes": 1358252
+    }
+  },
+  "evidenceObjects": {
+    "references": 220399,
+    "distinctSha256": 63869,
+    "repeatedJsonTextBytes": 60812585,
+    "distinctJsonTextBytes": 20395879,
+    "logicalDuplicateBytesBeforeReferenceAndIndexCosts": 40416706,
+    "maximumRepetition": 37245
+  },
+  "learningValueCorrespondence": "Production M01 tables not installed; correspondence unmeasured, not zero mismatches",
+  "limitation": "JSON text bytes are not physical storage or reclaimed space. Exact duplicate evidence sharing is the candidate; definition/example leaf sharing alone is negligible.",
+  "writes": 0,
+  "rawBodiesOrPersonalDataExported": 0
+}

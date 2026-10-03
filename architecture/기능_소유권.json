@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 142,
-      "pathSetSha256": "23532e67f512b2da5f231725db6c3a005fa1ae19fa0039373a532c880ab397e1"
+      "fileCount": 143,
+      "pathSetSha256": "a36299ed1c2784456c4aa6bdc71b03998266fa379eaf9a79e0a1c85ed150ceea"
     },
     {
       "path": "src/lib/deploy",
@@ -3073,6 +3073,11 @@
     },
     {
       "path": "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
     }
@@ -5330,7 +5335,8 @@
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
           "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
-          "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql"
+          "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+          "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
@@ -5372,7 +5378,8 @@
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
           "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
           "src/lib/database/exam-use-package-archive.integration.test.ts",
-          "src/lib/database/exam-use-occurrence-archive.integration.test.ts"
+          "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+          "src/lib/database/reviewed-resource-archive.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7422,7 +7429,8 @@
           "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql",
           "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
           "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
-          "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql"
+          "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+          "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7505,7 +7513,8 @@
           "src/lib/database/historical-question-migration.integration.test.ts",
           "src/lib/database/historical-learning-migration.integration.test.ts",
           "src/lib/database/exam-use-package-archive.integration.test.ts",
-          "src/lib/database/exam-use-occurrence-archive.integration.test.ts"
+          "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+          "src/lib/database/reviewed-resource-archive.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8220,7 +8229,8 @@
           "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
           "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
           "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
-          "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql"
+          "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+          "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -8264,7 +8274,8 @@
           "src/lib/database/historical-learning-migration.integration.test.ts",
           "src/lib/database/reviewed-bundle-archive.integration.test.ts",
           "src/lib/database/exam-use-package-archive.integration.test.ts",
-          "src/lib/database/exam-use-occurrence-archive.integration.test.ts"
+          "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+          "src/lib/database/reviewed-resource-archive.integration.test.ts"
         ]
       },
       "requiredImportEdges": [],
@@ -8750,3 +8761,4 @@
     }
   ]
 }
+
