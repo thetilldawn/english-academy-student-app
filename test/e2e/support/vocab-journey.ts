@@ -6,6 +6,7 @@ type AssignmentPlan = {
   datasetId?: string;
   direction?: "english_to_korean" | "korean_to_english" | "mixed";
   perQuestionSeconds?: number;
+  totalMinutes?: number;
   questionCount?: number;
   questionMode?:
     | "book_meaning_choice"
@@ -13,7 +14,7 @@ type AssignmentPlan = {
     | "canonical_example_to_headword";
   rangeMode?: "all" | "first-unit" | "second-unit" | "two-units";
   scheduleEnabled?: boolean;
-  timeLimit?: "none" | "per-question";
+  timeLimit?: "none" | "per-question" | "total";
 };
 
 async function chooseDataset(page: Page, datasetId?: string) {
@@ -141,6 +142,10 @@ async function configureRangeAssignment(page: Page, plan: AssignmentPlan = {}) {
     await page
       .getByRole("spinbutton", { name: "문제당 시간(초)" })
       .fill(String(plan.perQuestionSeconds ?? 5));
+  } else if (plan.timeLimit === "total") {
+    await setCheckbox(page, "timing", true);
+    await page.getByRole("button", { name: "전체 시험", exact: true }).click();
+    await page.getByRole("textbox", { name: "전체 시간(분)", exact: true }).fill(String(plan.totalMinutes ?? 0.5));
   } else {
     await setCheckbox(page, "timing", false);
   }

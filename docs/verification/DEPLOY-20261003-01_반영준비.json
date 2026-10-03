@@ -2,8 +2,8 @@
   "work": "DEPLOY-20261003-01",
   "status": "preparation-not-deployed",
   "baseline": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
-  "candidate": "39584224e9d3fc49237a85024d8ad1e9b1ca2721",
-  "recordedAt": "2026-10-03T11:02:36.075Z",
+  "candidate": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
+  "recordedAt": "2026-10-03T12:45:39.743Z",
   "migrations": [
     {
       "order": 1,
@@ -307,6 +307,20 @@
       ],
       "production": [],
       "note": null
+    },
+    {
+      "order": 23,
+      "file": "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
+      "name": "pause_new_assigned_quiz_attempts",
+      "sha256": "b8439c04248da8d30b5d239f9944de7a6f60a4c97cc3394b41bac5f10cd6e6c5",
+      "preview": [
+        {
+          "name": "pause_new_assigned_quiz_attempts",
+          "version": "20261003120312"
+        }
+      ],
+      "production": [],
+      "note": "depends only on existing 20260906 start guard; preserved Preview fixture migrations excluded"
     }
   ],
   "preview": {
@@ -569,11 +583,29 @@
     "source": "logged-in browser project overview and build settings; git ls-remote exact repository URL"
   },
   "openGates": [
-    "new assigned-attempt pause without blocking existing answers/replay/retry",
     "same-origin update/compatible rollback with device answers",
     "authenticated Preview complete fake flow",
     "frozen per-operation production preservation manifest"
   ],
   "productionWrites": 0,
-  "appDeployments": 0
+  "appDeployments": 0,
+  "previousCandidate": "39584224e9d3fc49237a85024d8ad1e9b1ca2721",
+  "completedPrerequisites": [
+    {
+      "work": "APP-20261002-03-START",
+      "implementation": "c2376fbea89627445a75748003d0c41da5606169",
+      "verification": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
+      "previewMigration": "20261003120312",
+      "report": "APP-20261002-03-START_검증결과.md"
+    }
+  ],
+  "previewAlias": "https://english-academy-student-a-git-d9206d-thetilldawn-3859s-projects.vercel.app",
+  "previewExecution": {
+    "baselineA": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
+    "baselineAIsCompatible": true,
+    "finalB": "검사 도구 보완 커밋 뒤 고정",
+    "sameRuntimeContract": true,
+    "allowPreviewDeployment": true,
+    "allowProductionBeforeT1ThroughT5": false
+  }
 }

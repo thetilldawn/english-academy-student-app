@@ -5,7 +5,7 @@
   "size": "full",
   "gate": "design",
   "guide": "docs/work-orders/DEPLOY-20261003-01.md",
-  "baseline": "39584224e9d3fc49237a85024d8ad1e9b1ca2721",
+  "baseline": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
   "owners": [
     "architecture-meta"
   ],
@@ -24,6 +24,54 @@
     },
     {
       "path": "docs/verification/DEPLOY-20261003-01_반영준비.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "test/e2e/support/environment.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "test/e2e/fixtures/preview-run.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "test/e2e/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "playwright.config.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/test-support/preview-e2e-safety.test.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "test/e2e/support/local-quiz-journey.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "test/e2e/authenticated/maintenance-local-quiz.spec.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "test/e2e/support/vocab-journey.ts",
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
@@ -119,7 +167,7 @@
       "owner": "engineering",
       "state": "resolved",
       "question": "코드/SQL 고정",
-      "answer": "후보3958422와22SQL부터 조사하며 선행 보완 뒤 최종 후보와 실행명세 갱신",
+      "answer": "호환 빌드 A 2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b와 23SQL. 검사 도구 보완 뒤 B 고정. 두 배포의 실제 HTML/SW 해시 차이와 같은 시험 규격 확인",
       "source": "M10 선행 검토"
     },
     {
@@ -127,7 +175,7 @@
       "owner": "engineering",
       "state": "resolved",
       "question": "선행 조건",
-      "answer": "신규 시작 제어/같은주소 복귀/인증 검토흐름이 남아 지금은 새배포/운영쓰기0",
+      "answer": "새 시작 제어 검증 완료. Preview A/B 배포 후 실제 인증 흐름·같은 주소 B→A→B 검증. T1~T5 통과 전 운영 변경0",
       "source": "독립 코드/환경 조사와 M10-T8"
     },
     {
@@ -181,8 +229,8 @@
       "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
     },
     "tests": {
-      "status": "not_applicable",
-      "reason": "DEPLOY는 기존 APP 결과의 환경 반영·검증을 소유하며 제품 코드를 이 기록에서 수정하지 않는다."
+      "status": "changed",
+      "reason": "제품 코드는 유지하며 고정 alias 안전 검사와 실제 신규 회차 제출·배포 교체 도구만 보완"
     }
   },
   "policies": {
@@ -271,7 +319,7 @@
     {
       "id": "T2",
       "kind": "review",
-      "target": null,
+      "target": "src/test-support/preview-e2e-safety.test.ts",
       "scenario": "로컬 빌드·자산·기록",
       "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
       "topics": [
@@ -286,7 +334,7 @@
     {
       "id": "T3",
       "kind": "browser",
-      "target": null,
+      "target": "test/e2e/authenticated/maintenance-local-quiz.spec.ts",
       "scenario": "실제 검토 앱 전체 흐름",
       "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
       "topics": [
@@ -301,7 +349,7 @@
     {
       "id": "T4",
       "kind": "browser",
-      "target": null,
+      "target": "test/e2e/authenticated/maintenance-local-quiz.spec.ts",
       "scenario": "구형/신규 시험·종료 제출",
       "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
       "topics": [
@@ -316,7 +364,7 @@
     {
       "id": "T5",
       "kind": "browser",
-      "target": null,
+      "target": "test/e2e/authenticated/maintenance-local-quiz.spec.ts",
       "scenario": "동일 주소 배포/복구·새 시작 제한",
       "expected": "지시서 해당 T의 실제 근거 확보·보존 차이0·미검증은 명시",
       "topics": [

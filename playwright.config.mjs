@@ -13,7 +13,7 @@ const isLocal = baseHost === "127.0.0.1" || baseHost === "localhost";
 const isApprovedPreviewHost =
   /^english-academy-student-[a-z0-9]+-thetilldawn-3859s-projects\.vercel\.app$/.test(
     baseHost,
-  );
+  ) || baseURL === "https://english-academy-student-a-git-d9206d-thetilldawn-3859s-projects.vercel.app";
 if (!isLocal && !isApprovedPreviewHost) {
   throw new Error("Playwright는 로컬 또는 승인된 Vercel Preview 주소만 사용할 수 있습니다.");
 }

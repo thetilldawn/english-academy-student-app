@@ -44,6 +44,10 @@ export class PreviewRun {
   private readonly browser: Browser;
   private readonly students: PreviewCleanupStudent[] = [];
   private readonly studentContexts: BrowserContext[] = [];
+  private runtimeExpected: Parameters<typeof assertPreviewRuntimeIdentity>[1];
+  private readonly deploymentChecks: Array<{ deploymentHost: string; gitCommitSha: string }> = [];
+  readonly expectedNetworkFailures: Array<{ pathname: string; code: string }> = [];
+  private readonly networkFaultWindows = new Set<string>();
 
   private constructor(input: {
     adminContext: BrowserContext;
@@ -54,6 +58,8 @@ export class PreviewRun {
     runId: string;
     targetDeploymentSha: string;
     targetGitRef: string;
+    deploymentOrigin: string;
+    projectRef: string;
   }) {
     this.adminContext = input.adminContext;
     this.adminPage = input.adminPage;
@@ -63,18 +69,39 @@ export class PreviewRun {
     this.runId = input.runId;
     this.targetDeploymentSha = input.targetDeploymentSha;
     this.targetGitRef = input.targetGitRef;
+    this.runtimeExpected = {
+      origin: input.origin,
+      deploymentOrigin: input.deploymentOrigin,
+      projectRef: input.projectRef,
+      gitRef: input.targetGitRef,
+      targetDeploymentSha: input.targetDeploymentSha,
+    };
     this.captureBrowserMessages(this.adminPage);
   }
 
   private captureBrowserMessages(page: Page) {
     page.on("console", (message) => {
       if (message.type() === "warning" || message.type() === "error") {
+        const location = message.location().url;
+        let pathname = "";
+        try { pathname = new URL(location).pathname; } catch { /* Non-URL console locations remain visible errors. */ }
+        const code = /net::(ERR_FAILED|ERR_INTERNET_DISCONNECTED|ERR_ABORTED)/.exec(message.text())?.[1];
+        if (code && this.networkFaultWindows.has(pathname)) {
+          this.expectedNetworkFailures.push({ pathname, code });
+          return;
+        }
         this.browserMessages.push(`console.${message.type()}: ${message.text()}`);
       }
     });
     page.on("pageerror", (error) => {
       this.browserMessages.push(`pageerror: ${error.message}`);
     });
+  }
+
+  allowQuizNetworkFaults() {
+    const pathname = "/api/student/local-quiz";
+    this.networkFaultWindows.add(pathname);
+    return () => { this.networkFaultWindows.delete(pathname); };
   }
 
   static async start(browser: Browser, workerIndex: number) {
@@ -109,6 +136,8 @@ export class PreviewRun {
       runId,
       targetDeploymentSha: environment.targetDeploymentSha,
       targetGitRef: environment.gitRef,
+      deploymentOrigin: environment.deploymentOrigin,
+      projectRef: environment.projectRef,
     });
     await run.loginAdmin(environment.adminEmail, environment.adminPassword);
     return run;
@@ -174,8 +203,8 @@ export class PreviewRun {
     return student;
   }
 
-  async openStudent(student: PreviewStudent) {
-    const context = await this.openAnonymousContext();
+  async openStudent(student: PreviewStudent, viewport?: { width: number; height: number }) {
+    const context = await this.openAnonymousContext(viewport);
     const page = await context.newPage();
     this.captureBrowserMessages(page);
     await page.goto("/");
@@ -190,21 +219,40 @@ export class PreviewRun {
     return page;
   }
 
-  async openAnonymousContext() {
+  async openAnonymousContext(viewport?: { width: number; height: number }) {
     const context = await this.browser.newContext({
       baseURL: this.origin,
       extraHTTPHeaders: {
         origin: this.origin,
       },
-      viewport: { width: 1440, height: 1000 },
+      viewport: viewport ?? { width: 1440, height: 1000 },
     });
     await establishVercelProtectionSession(context, process.env);
     this.studentContexts.push(context);
     return context;
   }
 
+  async verifyCurrentDeployment(next?: { deploymentOrigin: string; targetDeploymentSha: string }) {
+    const expected = next ? { ...this.runtimeExpected, ...next } : this.runtimeExpected;
+    const response = await this.adminContext.request.get("/api/preview-identity");
+    expect(response.status(), "Preview 환경 재확인 실패").toBe(200);
+    const identity = assertPreviewRuntimeIdentity(await response.json(), expected);
+    this.runtimeExpected = expected;
+    this.deploymentChecks.push({ deploymentHost: identity.deploymentHost, gitCommitSha: identity.gitCommitSha });
+    return identity;
+  }
+
   async cleanup() {
     await Promise.allSettled(this.studentContexts.map((context) => context.close()));
+    // Never delete through an alias that moved to an unapproved deployment.
+    try {
+      await this.verifyCurrentDeployment();
+    } catch {
+      await this.writeManifest();
+      await this.writeReceipt();
+      await this.adminContext.close();
+      throw new Error("Preview 환경이 달라 정리를 중단했습니다. 가짜 학생 복구 명세를 보존했습니다.");
+    }
     for (const student of [...this.students].reverse()) {
       try {
         await cleanupPreviewStudent(
@@ -241,6 +289,8 @@ export class PreviewRun {
       `${this.runId}-receipt`,
       {
         checkRunnerSha: this.checkRunnerSha,
+        deploymentChecks: this.deploymentChecks,
+        expectedNetworkFailures: this.expectedNetworkFailures,
         origin: this.origin,
         runId: this.runId,
         students: this.students,
@@ -256,6 +306,7 @@ export class PreviewRun {
       this.runId,
       {
         checkRunnerSha: this.checkRunnerSha,
+        deploymentChecks: this.deploymentChecks,
         origin: this.origin,
         runId: this.runId,
         students: this.students,

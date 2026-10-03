@@ -11,6 +11,7 @@ import {
   assertPreviewRuntimeIdentity,
   assertReadOnlyE2EEnvironment,
   establishVercelProtectionSession,
+  MAINTENANCE_PREVIEW_ORIGIN,
 } from "../../test/e2e/support/environment";
 import {
   cleanupPreviewStudent,
@@ -22,6 +23,47 @@ const previewOrigin =
   "https://english-academy-student-example1-thetilldawn-3859s-projects.vercel.app";
 
 describe("Preview E2E 실행 경계", () => {
+  it("명세의 고정 주소 한 개만 허용하고 비슷한 다른 별칭은 거절한다", () => {
+    expect(assertReadOnlyE2EEnvironment({ PLAYWRIGHT_BASE_URL: MAINTENANCE_PREVIEW_ORIGIN }).target).toBe("preview");
+    expect(() => assertReadOnlyE2EEnvironment({ PLAYWRIGHT_BASE_URL: MAINTENANCE_PREVIEW_ORIGIN.replace("d9206d", "another") })).toThrow(/Preview 주소/);
+  });
+
+  it("고정 주소 쓰기는 승인 브랜치와 실제 개별 배포 주소가 추가로 필요하다", () => {
+    const input = {
+      PLAYWRIGHT_BASE_URL: MAINTENANCE_PREVIEW_ORIGIN,
+      E2E_EXPECTED_PREVIEW_ORIGIN: MAINTENANCE_PREVIEW_ORIGIN,
+      E2E_EXPECTED_DEPLOYMENT_ORIGIN: previewOrigin,
+      E2E_EXPECTED_GIT_REF: "codex/vocabulary-templates-20260920",
+      E2E_EXPECTED_SUPABASE_PROJECT_REF: "wojxpruvbjzbhrpmsbuy",
+      E2E_ALLOW_PREVIEW_MUTATION: "1",
+      E2E_TARGET_DEPLOYMENT_SHA: "2".repeat(40),
+      E2E_CHECK_RUNNER_SHA: "1".repeat(40),
+      PREVIEW_E2E_ADMIN_EMAIL: "preview-admin@example.com",
+      PREVIEW_E2E_ADMIN_PASSWORD: "fake-only",
+    };
+    expect(assertPreviewMutationEnvironment(input).deploymentOrigin).toBe(previewOrigin);
+    expect(() => assertPreviewMutationEnvironment({ ...input, E2E_EXPECTED_DEPLOYMENT_ORIGIN: undefined })).toThrow(/개별 Preview/);
+    expect(() => assertPreviewMutationEnvironment({ ...input, E2E_EXPECTED_GIT_REF: "codex/other" })).toThrow(/승인 브랜치/);
+    expect(() => assertPreviewMutationEnvironment({ ...input, E2E_EXPECTED_DEPLOYMENT_ORIGIN: "https://english-academy-student-app.vercel.app" })).toThrow(/개별 Preview/);
+  });
+
+  it("같은 주소와 SHA라도 승인한 배포와 다르면 교체/정리 검사를 거절한다", () => {
+    const expected = {
+      origin: MAINTENANCE_PREVIEW_ORIGIN,
+      deploymentOrigin: previewOrigin,
+      gitRef: "codex/vocabulary-templates-20260920",
+      projectRef: "wojxpruvbjzbhrpmsbuy",
+      targetDeploymentSha: "2".repeat(40),
+    };
+    const identity = { deploymentHost: new URL(previewOrigin).hostname,
+      gitCommitRef: expected.gitRef, gitCommitSha: expected.targetDeploymentSha,
+      supabaseProjectRef: expected.projectRef, vercelEnvironment: "preview" };
+    expect(assertPreviewRuntimeIdentity(identity, expected).deploymentHost).toBe(identity.deploymentHost);
+    expect(() => assertPreviewRuntimeIdentity(identity, { ...expected, deploymentOrigin: previewOrigin.replace("example1", "example2") })).toThrow(/실제 Preview 환경/);
+    expect(() => assertPreviewRuntimeIdentity(identity, { ...expected, targetDeploymentSha: "3".repeat(40) })).toThrow(/실제 Preview 환경/);
+    expect(() => assertPreviewRuntimeIdentity({ ...identity, vercelEnvironment: "production" }, expected)).toThrow(/실제 Preview 환경/);
+  });
+
   it("로컬 읽기 검사와 승인된 Preview 읽기 검사만 허용한다", () => {
     expect(assertReadOnlyE2EEnvironment({}).target).toBe("local");
     expect(

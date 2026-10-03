@@ -4,6 +4,9 @@ const PRODUCTION_ORIGINS = new Set([
 ]);
 const PREVIEW_HOST_PATTERN =
   /^english-academy-student-[a-z0-9]+-thetilldawn-3859s-projects\.vercel\.app$/;
+export const MAINTENANCE_PREVIEW_ORIGIN =
+  "https://english-academy-student-a-git-d9206d-thetilldawn-3859s-projects.vercel.app";
+const MAINTENANCE_PREVIEW_BRANCH = "codex/vocabulary-templates-20260920";
 
 type E2EEnvironment = Record<string, string | undefined>;
 
@@ -42,7 +45,7 @@ export function assertReadOnlyE2EEnvironment(
   if (
     url.protocol !== "https:" ||
     PRODUCTION_ORIGINS.has(origin) ||
-    !PREVIEW_HOST_PATTERN.test(url.hostname)
+    (!PREVIEW_HOST_PATTERN.test(url.hostname) && origin !== MAINTENANCE_PREVIEW_ORIGIN)
   ) {
     throw new Error("읽기 E2E는 승인된 Vercel Preview 주소에서만 실행할 수 있습니다.");
   }
@@ -74,6 +77,16 @@ export function assertPreviewMutationEnvironment(
   if (!gitRef || gitRef === "main" || !/^[A-Za-z0-9][A-Za-z0-9._/-]+$/.test(gitRef)) {
     throw new Error("인증 쓰기 E2E에는 승인된 Preview Git 브랜치가 필요합니다.");
   }
+  if (target.origin === MAINTENANCE_PREVIEW_ORIGIN && gitRef !== MAINTENANCE_PREVIEW_BRANCH) {
+    throw new Error("고정 Preview 주소의 승인 브랜치가 다릅니다.");
+  }
+  const deploymentOrigin = normalizeOrigin(
+    environment.E2E_EXPECTED_DEPLOYMENT_ORIGIN ?? expectedOrigin,
+    "E2E_EXPECTED_DEPLOYMENT_ORIGIN",
+  );
+  if (!isPreviewDeploymentOrigin(deploymentOrigin)) {
+    throw new Error("실제 개별 Preview 배포 주소가 필요합니다.");
+  }
   const targetDeploymentSha = environment.E2E_TARGET_DEPLOYMENT_SHA;
   if (!targetDeploymentSha || !/^[0-9a-f]{40}$/i.test(targetDeploymentSha)) {
     throw new Error("인증 쓰기 E2E에는 대상 배포 Git SHA가 필요합니다.");
@@ -89,11 +102,18 @@ export function assertPreviewMutationEnvironment(
     adminEmail: environment.PREVIEW_E2E_ADMIN_EMAIL,
     adminPassword: environment.PREVIEW_E2E_ADMIN_PASSWORD,
     checkRunnerSha,
+    deploymentOrigin,
     gitRef,
     origin: target.origin,
     projectRef,
     targetDeploymentSha,
   };
+}
+
+function isPreviewDeploymentOrigin(origin: string) {
+  const url = new URL(origin);
+  return url.protocol === "https:" && !url.port && !url.username && !url.password &&
+    PREVIEW_HOST_PATTERN.test(url.hostname);
 }
 
 export function assertPreviewRuntimeIdentity(
@@ -103,13 +123,20 @@ export function assertPreviewRuntimeIdentity(
     origin: string;
     projectRef: string;
     targetDeploymentSha: string;
+    deploymentOrigin?: string;
   },
 ) {
   if (!value || typeof value !== "object") {
     throw new Error("Preview 실행 환경 확인 응답이 올바르지 않습니다.");
   }
   const identity = value as Record<string, unknown>;
-  const expectedHost = new URL(expected.origin).hostname;
+  const connection = assertReadOnlyE2EEnvironment({ PLAYWRIGHT_BASE_URL: expected.origin });
+  const deploymentOrigin = normalizeOrigin(expected.deploymentOrigin ?? expected.origin, "실제 배포 주소");
+  if (connection.target !== "preview" || !isPreviewDeploymentOrigin(deploymentOrigin) ||
+      (expected.origin === MAINTENANCE_PREVIEW_ORIGIN && expected.gitRef !== MAINTENANCE_PREVIEW_BRANCH)) {
+    throw new Error("실제 Preview 배포 주소나 브랜치가 승인값과 다릅니다.");
+  }
+  const expectedHost = new URL(deploymentOrigin).hostname;
   if (
     identity.vercelEnvironment !== "preview" ||
     identity.gitCommitRef !== expected.gitRef ||
