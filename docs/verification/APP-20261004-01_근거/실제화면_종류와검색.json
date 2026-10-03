@@ -1,0 +1,596 @@
+{
+  "fakeStudentId": "744e1eaf-0ef6-4d94-ad6b-f1c1a22095ee",
+  "templates": [
+    [
+      "74632fa9-04c9-4ff1-8267-f15c0d68a9b5",
+      {
+        "title": "[M10 가짜] ee5bc2ea 종류",
+        "revision": 5,
+        "deleted": true
+      }
+    ],
+    [
+      "9063f2d0-ad8a-4f05-aa28-72f3b5e1dc8a",
+      {
+        "title": "[M10 가짜] ee5bc2ea 미분류 이름수정",
+        "revision": 2,
+        "deleted": true
+      }
+    ]
+  ],
+  "pendingCreates": [],
+  "evidence": [
+    {
+      "case": "ui-template-start",
+      "id": 1,
+      "search": "",
+      "templateKind": "all",
+      "at": 1791044788664
+    },
+    {
+      "case": "ui-template-query",
+      "id": 1,
+      "search": "",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044788663.489,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.068,
+        "responseStart": 3770.871,
+        "responseEnd": 3772.08
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 1,
+      "timing": {
+        "startTime": 1791044788663.489,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.068,
+        "responseStart": 3770.871,
+        "responseEnd": 3772.08
+      },
+      "at": 1791044792439
+    },
+    {
+      "case": "ui-template-body",
+      "id": 1,
+      "itemCount": 18,
+      "trackedIds": []
+    },
+    {
+      "case": "ui-template-start",
+      "id": 2,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "at": 1791044795119
+    },
+    {
+      "case": "ui-template-query",
+      "id": 2,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044795119.005,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.42,
+        "responseStart": 2857.752,
+        "responseEnd": 2858.571
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 2,
+      "timing": {
+        "startTime": 1791044795119.005,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.42,
+        "responseStart": 2857.752,
+        "responseEnd": 2858.571
+      },
+      "at": 1791044797980
+    },
+    {
+      "case": "ui-template-body",
+      "id": 2,
+      "itemCount": 1,
+      "trackedIds": [
+        "74632fa9-04c9-4ff1-8267-f15c0d68a9b5"
+      ]
+    },
+    {
+      "case": "ui-template-start",
+      "id": 3,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "at": 1791044799738
+    },
+    {
+      "case": "ui-template-query",
+      "id": 3,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044799737.4639,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.516,
+        "responseStart": 2311.016,
+        "responseEnd": 2311.849
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 3,
+      "timing": {
+        "startTime": 1791044799737.4639,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.516,
+        "responseStart": 2311.016,
+        "responseEnd": 2311.849
+      },
+      "at": 1791044802051
+    },
+    {
+      "case": "ui-template-body",
+      "id": 3,
+      "itemCount": 1,
+      "trackedIds": [
+        "74632fa9-04c9-4ff1-8267-f15c0d68a9b5"
+      ]
+    },
+    {
+      "case": "ui-template-start",
+      "id": 4,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "at": 1791044803865
+    },
+    {
+      "case": "ui-template-query",
+      "id": 4,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044803865.72,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.555,
+        "responseStart": 1457.347,
+        "responseEnd": 1458.227
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 4,
+      "timing": {
+        "startTime": 1791044803865.72,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.555,
+        "responseStart": 1457.347,
+        "responseEnd": 1458.227
+      },
+      "at": 1791044805327
+    },
+    {
+      "case": "ui-template-body",
+      "id": 4,
+      "itemCount": 1,
+      "trackedIds": [
+        "74632fa9-04c9-4ff1-8267-f15c0d68a9b5"
+      ]
+    },
+    {
+      "case": "ui-template-start",
+      "id": 5,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "at": 1791044807214
+    },
+    {
+      "case": "ui-template-query",
+      "id": 5,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044807214.385,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.445,
+        "responseStart": 1455.013,
+        "responseEnd": 1456.158
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 5,
+      "timing": {
+        "startTime": 1791044807214.385,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.445,
+        "responseStart": 1455.013,
+        "responseEnd": 1456.158
+      },
+      "at": 1791044808678
+    },
+    {
+      "case": "ui-template-body",
+      "id": 5,
+      "itemCount": 1,
+      "trackedIds": [
+        "74632fa9-04c9-4ff1-8267-f15c0d68a9b5"
+      ]
+    },
+    {
+      "case": "kinds",
+      "id": "74632fa9-04c9-4ff1-8267-f15c0d68a9b5",
+      "kinds": [
+        "performance_assessment",
+        "exam_prep",
+        "mock_exam",
+        "other",
+        "performance_assessment"
+      ],
+      "revisions": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "unchangedVersion": "48e86de1-33f7-4a68-8674-e8f75f253c9d",
+      "unchangedContentHash": "3848ffab3b9b23848d5fe63593e2a568b75cdc177bb03c44ee848edaa4f8ea5a"
+    },
+    {
+      "case": "ui-template-start",
+      "id": 6,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "at": 1791044810056
+    },
+    {
+      "case": "ui-template-start",
+      "id": 7,
+      "search": "[M10 가짜] ee5bc2ea 미분류",
+      "templateKind": "unclassified",
+      "at": 1791044818014
+    },
+    {
+      "case": "ui-template-query",
+      "id": 7,
+      "search": "[M10 가짜] ee5bc2ea 미분류",
+      "templateKind": "unclassified",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044818015.337,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.952,
+        "responseStart": 2700.116,
+        "responseEnd": 2702.19
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 7,
+      "timing": {
+        "startTime": 1791044818015.337,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.952,
+        "responseStart": 2700.116,
+        "responseEnd": 2702.19
+      },
+      "at": 1791044820717
+    },
+    {
+      "case": "ui-template-body",
+      "id": 7,
+      "itemCount": 1,
+      "trackedIds": [
+        "9063f2d0-ad8a-4f05-aa28-72f3b5e1dc8a"
+      ]
+    },
+    {
+      "case": "ui-template-start",
+      "id": 8,
+      "search": "[M10 가짜] ee5bc2ea 미분류",
+      "templateKind": "unclassified",
+      "at": 1791044822695
+    },
+    {
+      "case": "ui-template-query",
+      "id": 8,
+      "search": "[M10 가짜] ee5bc2ea 미분류",
+      "templateKind": "unclassified",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044822695.312,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.599,
+        "responseStart": 2675.787,
+        "responseEnd": 2678.157
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 8,
+      "timing": {
+        "startTime": 1791044822695.312,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.599,
+        "responseStart": 2675.787,
+        "responseEnd": 2678.157
+      },
+      "at": 1791044825384
+    },
+    {
+      "case": "ui-template-body",
+      "id": 8,
+      "itemCount": 1,
+      "trackedIds": [
+        "9063f2d0-ad8a-4f05-aa28-72f3b5e1dc8a"
+      ]
+    },
+    {
+      "case": "unclassified",
+      "id": "9063f2d0-ad8a-4f05-aa28-72f3b5e1dc8a",
+      "versionId": "84b9317a-001f-40c4-b17e-68be104946d1",
+      "contentHash": "3848ffab3b9b23848d5fe63593e2a568b75cdc177bb03c44ee848edaa4f8ea5a",
+      "templateKind": null
+    },
+    {
+      "case": "ui-template-start",
+      "id": 9,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "at": 1791044825955
+    },
+    {
+      "case": "ui-template-query",
+      "id": 9,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044825955.062,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.604,
+        "responseStart": 1793.616,
+        "responseEnd": 1794.268
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 9,
+      "timing": {
+        "startTime": 1791044825955.062,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.604,
+        "responseStart": 1793.616,
+        "responseEnd": 1794.268
+      },
+      "at": 1791044827753
+    },
+    {
+      "case": "ui-template-body",
+      "id": 9,
+      "itemCount": 1,
+      "trackedIds": [
+        "74632fa9-04c9-4ff1-8267-f15c0d68a9b5"
+      ]
+    },
+    {
+      "case": "ui-template-start",
+      "id": 10,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "at": 1791044828712
+    },
+    {
+      "case": "ui-template-query",
+      "id": 10,
+      "search": "[M10 가짜] ee5bc2ea 종류",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044828712.011,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.611,
+        "responseStart": 7655.774,
+        "responseEnd": 7656.715
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 10,
+      "timing": {
+        "startTime": 1791044828712.011,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.611,
+        "responseStart": 7655.774,
+        "responseEnd": 7656.715
+      },
+      "at": 1791044836371
+    },
+    {
+      "case": "ui-template-body",
+      "id": 10,
+      "itemCount": 0,
+      "trackedIds": []
+    },
+    {
+      "case": "ui-template-start",
+      "id": 11,
+      "search": "[M10 가짜] ee5bc2ea 미분류 이름수정",
+      "templateKind": "all",
+      "at": 1791044836693
+    },
+    {
+      "case": "ui-template-query",
+      "id": 11,
+      "search": "[M10 가짜] ee5bc2ea 미분류 이름수정",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044836692.851,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.972,
+        "responseStart": 7721.739,
+        "responseEnd": 7724.087
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 11,
+      "timing": {
+        "startTime": 1791044836692.851,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.972,
+        "responseStart": 7721.739,
+        "responseEnd": 7724.087
+      },
+      "at": 1791044844418
+    },
+    {
+      "case": "ui-template-body",
+      "id": 11,
+      "itemCount": 1,
+      "trackedIds": [
+        "9063f2d0-ad8a-4f05-aa28-72f3b5e1dc8a"
+      ]
+    },
+    {
+      "case": "ui-template-start",
+      "id": 12,
+      "search": "[M10 가짜] ee5bc2ea 미분류 이름수정",
+      "templateKind": "all",
+      "at": 1791044845383
+    },
+    {
+      "case": "ui-template-query",
+      "id": 12,
+      "search": "[M10 가짜] ee5bc2ea 미분류 이름수정",
+      "templateKind": "all",
+      "status": 200,
+      "timing": {
+        "startTime": 1791044845383.187,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.916,
+        "responseStart": 9290.44,
+        "responseEnd": 9292.542
+      }
+    },
+    {
+      "case": "ui-template-finished",
+      "id": 12,
+      "timing": {
+        "startTime": 1791044845383.187,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.916,
+        "responseStart": 9290.44,
+        "responseEnd": 9292.542
+      },
+      "at": 1791044854676
+    },
+    {
+      "case": "ui-template-body",
+      "id": 12,
+      "itemCount": 0,
+      "trackedIds": []
+    },
+    {
+      "case": "cleanup",
+      "errors": []
+    }
+  ],
+  "forbidden": []
+}

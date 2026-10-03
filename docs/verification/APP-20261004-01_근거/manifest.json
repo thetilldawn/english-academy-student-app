@@ -1,0 +1,74 @@
+{
+  "work": "APP-20261004-01",
+  "implementation": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "previewMigration": "20261003161522",
+  "previewExistingTables": 151,
+  "otherFunctions": 826,
+  "originalBodyMd5": "e841349184a4aaec37cd48e1f9474f83",
+  "newBodyMd5": "31d96ce16e409440078f0bbecc4ee4eb",
+  "targetOid": 371490,
+  "allSearchesEqual": 18,
+  "allSearchMs": 3969.521,
+  "uiSearches": 11,
+  "uiMinMs": 1456.158,
+  "uiMaxMs": 9292.542,
+  "productionWrites": 0,
+  "files": [
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-search-probe.json",
+      "sha256": "b4cccc8a713c205a4495e19c815a21176ce7fe7197841b87f23e3d58f2f018a2"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-all-search-comparison.sql",
+      "sha256": "7268095d120f99f7e7a098648b35e9e99b0946e9d0a059d62bfd0215d3687766"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-all-search-comparison.json",
+      "sha256": "0f785bf196597eeaca461310b47c6a08768ff0abb86539f57a0b15ec6ed22ce6"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-preview-apply.sql",
+      "sha256": "de88859079d29e26217e85794e9e43e9031f3d457cc8cf13535661a6e29f9ad9"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-apply.json",
+      "sha256": "4a4fc504955179b1f965430a7b31cd9ceb098a24914334d0f26212323579fa5b"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-apply-status.json",
+      "sha256": "90cc8c848e6e3728b0469e73300b5bb25230bb252e9c8f12e2f0d2f3b8d390ea"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-confirmed-history.json",
+      "sha256": "5cc147d3b889c78065585abb8c0d0ac2ae1b9fdd5bf79218baf1f922153f4e0e"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-after-search.json",
+      "sha256": "b92cc6f9661c1864afad6098125160fbbaf4b5882f7f0971c04c53654b1ba333"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-template-final-db.json",
+      "sha256": "b6a8e0197b30edf524aaa2784fc0e8a6114619b8ac08cd6614d7b779fca3bbf2"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/app13-tests.log",
+      "sha256": "3af53d15d72fe560b01253a14c72c540667a38dabd27727b04e30476e8577ecf"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/실제화면_실행결과.json",
+      "sha256": "75358feccd95af5006b45ecd160854078961097d78b7a0ae5715ac58a421d708"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/실제화면_검사.log",
+      "sha256": "6ae355734572720f19adc30aec80d4278c619132c02d8b6837518fd2b1dbb8c2"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/실제화면_종류와검색.json",
+      "sha256": "0b09e26551b79e3b828e343c2293f441bbdc06c1ee8b7217c8d1ca0d6351719b"
+    },
+    {
+      "path": "docs/verification/APP-20261004-01_근거/최종함수와적용확인.json",
+      "sha256": "0c120d74a7585b9e2c83eaf7043c77b3728b767218cd7f8ada5909571f14411e"
+    }
+  ]
+}
