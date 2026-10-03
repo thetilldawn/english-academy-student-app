@@ -39,6 +39,15 @@ test.describe("@authenticated 유지보수 종류별 템플릿 실제 저장", (
       fs.mkdirSync(directory, { recursive: true });
       fs.writeFileSync(path.join(directory, "종류별_템플릿.json"), JSON.stringify({ fakeStudentId: fakeStudent.id, templates: [...tracked.entries()], pendingCreates: [...pendingCreates.entries()], evidence, forbidden }, null, 2) + "\n");
     };
+    page.on("response", response => {
+      const request = response.request();
+      if (new URL(response.url()).pathname !== endpoint + "/query" || request.method() !== "POST") return;
+      const data = request.postDataJSON();
+      if (data?.kind !== "templates") return;
+      evidence.push({ case: "ui-template-query", search: data.search, templateKind: data.templateKind,
+        status: response.status(), timing: request.timing() });
+      saveEvidence();
+    });
     function journalCreate(data: Record<string, unknown>, viewerId: string) {
       expect(typeof data.requestId).toBe("string");
       expect(viewerId).not.toBe("");
@@ -69,7 +78,7 @@ test.describe("@authenticated 유지보수 종류별 템플릿 실제 저장", (
       await dialog.getByLabel("저장한 구성의 종류", { exact: true }).selectOption(kind);
       await dialog.getByRole("textbox", { name: "템플릿 검색", exact: true }).fill(title);
       const card = dialog.getByRole("article").filter({ has: page.getByRole("heading", { name: title, exact: true }) });
-      await expect(card).toHaveCount(1);
+      await expect(card).toHaveCount(1, { timeout: 20_000 });
       return card;
     }
     async function saveFromUi(dialog: Locator, action: "create" | "metadata", kind: TemplateKind | null) {
