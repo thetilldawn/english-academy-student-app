@@ -1,22 +1,22 @@
 {
   "kind": "maintenance-instruction-document-validation",
-  "revision": 8,
+  "revision": 9,
   "state": "passed",
-  "checked_at": "2026-10-02T14:51:35.393Z",
-  "scope": "Revision 8: D13 approved at 24 hours; M06 local implementation and verification in APP-20261002-04. D12 preserved. Audio content review remains with students.",
+  "checked_at": "2026-10-03T04:53:45.182Z",
+  "scope": "Revision 9: user approved toast-only patch notices, fully separated administrator students, private drafts and opt-in shared wordbooks. Document review only; no feature implementation or deployment.",
   "baseline": {
     "docs_head": "7c1c281",
     "runtime": "fa4357e",
-    "implementation_head": "4611b9d1b00c2980542454b5e9b650588125aadf"
+    "implementation_head": "90793bb"
   },
   "counts": {
-    "markdown_files": 16,
+    "markdown_files": 17,
     "modules": 13,
     "requirements": 70,
     "planned_checks": 119,
     "decisions": 21,
-    "local_links": 116,
-    "total_markdown_lines": 1521,
+    "local_links": 119,
+    "total_markdown_lines": 1501,
     "common_ui_states": 10,
     "integrated_scenarios": 10
   },
@@ -31,11 +31,7 @@
     "changed_original_inputs": [],
     "review_incomplete": []
   },
-  "decision_open": [
-    "D16",
-    "D17",
-    "D18"
-  ],
+  "decision_open": [],
   "modules": [
     {
       "id": "M01",
@@ -478,7 +474,7 @@
   "files": [
     {
       "path": "00_유지보수_전체지시서.md",
-      "sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
+      "sha256": "8b08e3ae0256207c14345d6a7390635c720f8f98c31800a8a941ac58ff9cfd68",
       "lines": 106
     },
     {
@@ -533,34 +529,39 @@
     },
     {
       "path": "11_패치공지_별도기능.md",
-      "sha256": "e6e914e2b516ea0c0ec78e39c15b8b42c5c9222263f77e3c52a1cb948c169752",
-      "lines": 76
+      "sha256": "43723b6580f23acc57f12878607b1c3e70019b969442016e055c3cef90705a5d",
+      "lines": 53
     },
     {
       "path": "12_관리자별학생관리_별도기능.md",
-      "sha256": "61656020486a185a2ad4e86849ff3bdb8434ece9ffafbcbb5c103c283d945785",
-      "lines": 88
+      "sha256": "33b462bb9de33f2589a11d057805b738c95dc2089211d4148004473367714fde",
+      "lines": 73
     },
     {
       "path": "13_공통보존과_결정검사기준.md",
-      "sha256": "3fc756cc3ed9dbbe34d37bd187409f0d58530f0b80b7cac6a481192c84977b66",
+      "sha256": "ab3775e9ced11b51264d54c835b876e9d260cabcdd5a527c87eaf98819c37217",
       "lines": 136
     },
     {
       "path": "14_문서검토결과.md",
-      "sha256": "cd7af9b3aabb3df960e7e7d5b3b336845fb2dbe9c8bbf550b39ee36e1bac908f",
-      "lines": 99
+      "sha256": "6a15e98004a357c6f59cc41a8750abcb48d5414fd1532b1ceae6957bce2707f6",
+      "lines": 107
     },
     {
       "path": "15_답복구와_종료실패수리.md",
       "sha256": "fdb5dac994b73c7d1b972f44aed7b36039a566ef550cfff457deddbafa5f4e49",
       "lines": 108
+    },
+    {
+      "path": "20261003_공지와관리자_확정사항.md",
+      "sha256": "1cd4c79df14d842273105c6c01dbdcc601ef1bea919692ca170fe11cabcd4af4",
+      "lines": 10
     }
   ],
   "previous_revision": {
-    "revision": 7,
+    "revision": 8,
     "overview_sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
-    "manifest_sha256": "1c5035c7cbdf8d9740dce6b951700940870ad2ebe9e128ff0ba80310171fe478",
+    "manifest_sha256": "4c8103e435386c7fd3f269d4f6645af005c45077213316e221f356866dd9a0a4",
     "counts": {
       "markdown_files": 16,
       "modules": 13,
@@ -568,14 +569,14 @@
       "planned_checks": 119,
       "decisions": 21,
       "local_links": 116,
-      "total_markdown_lines": 1517,
+      "total_markdown_lines": 1521,
       "common_ui_states": 10,
       "integrated_scenarios": 10
     },
     "prior_history": {
-      "revision": 6,
+      "revision": 7,
       "overview_sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
-      "manifest_sha256": "25da4eb22c1c669778048d193ab82f47034edfb99e25f90233ac7c252f0db881",
+      "manifest_sha256": "1c5035c7cbdf8d9740dce6b951700940870ad2ebe9e128ff0ba80310171fe478",
       "counts": {
         "markdown_files": 16,
         "modules": 13,
@@ -583,14 +584,14 @@
         "planned_checks": 119,
         "decisions": 21,
         "local_links": 116,
-        "total_markdown_lines": 1507,
+        "total_markdown_lines": 1517,
         "common_ui_states": 10,
         "integrated_scenarios": 10
       },
       "prior_history": {
-        "revision": 5,
+        "revision": 6,
         "overview_sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
-        "manifest_sha256": "b1035ee72b4bb0614ecd5a374d693d8a1b19e4a14675cfd80cbbff7c4621e0a3",
+        "manifest_sha256": "25da4eb22c1c669778048d193ab82f47034edfb99e25f90233ac7c252f0db881",
         "counts": {
           "markdown_files": 16,
           "modules": 13,
@@ -603,9 +604,9 @@
           "integrated_scenarios": 10
         },
         "prior_history": {
-          "revision": 4,
+          "revision": 5,
           "overview_sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
-          "manifest_sha256": "5e3ee5e1a1f8b198cdbfacbf4d95de193950945b6b03c3ebdc9981c4e5aba591",
+          "manifest_sha256": "b1035ee72b4bb0614ecd5a374d693d8a1b19e4a14675cfd80cbbff7c4621e0a3",
           "counts": {
             "markdown_files": 16,
             "modules": 13,
@@ -613,14 +614,14 @@
             "planned_checks": 119,
             "decisions": 21,
             "local_links": 116,
-            "total_markdown_lines": 1501,
+            "total_markdown_lines": 1507,
             "common_ui_states": 10,
             "integrated_scenarios": 10
           },
           "prior_history": {
-            "revision": 3,
-            "overview_sha256": "802e0a6b5582e5b47ccc6146cdefb2abf12dabea8a3271e8eceaceef28dc2fa8",
-            "manifest_sha256": "ce42439136629e95518d2d0d5bfbecedf9114cc7d543b09d6533f39cf4c4e281",
+            "revision": 4,
+            "overview_sha256": "c58dee8d51e3f07a99847c94ad0aafbd6ff7e806a83da56ea99b618787fa8c23",
+            "manifest_sha256": "5e3ee5e1a1f8b198cdbfacbf4d95de193950945b6b03c3ebdc9981c4e5aba591",
             "counts": {
               "markdown_files": 16,
               "modules": 13,
@@ -628,14 +629,14 @@
               "planned_checks": 119,
               "decisions": 21,
               "local_links": 116,
-              "total_markdown_lines": 1497,
+              "total_markdown_lines": 1501,
               "common_ui_states": 10,
               "integrated_scenarios": 10
             },
             "prior_history": {
-              "revision": 2,
-              "overview_sha256": "e3b91d8174561a5e9a27bb8ad606963b2a600cb1be5b9ed40093dd54faf4b0ab",
-              "manifest_sha256": "5103bfbe092f260bf32ac5bff43dfcc4068f0bbc26b2da03a94e6337533ef83c",
+              "revision": 3,
+              "overview_sha256": "802e0a6b5582e5b47ccc6146cdefb2abf12dabea8a3271e8eceaceef28dc2fa8",
+              "manifest_sha256": "ce42439136629e95518d2d0d5bfbecedf9114cc7d543b09d6533f39cf4c4e281",
               "counts": {
                 "markdown_files": 16,
                 "modules": 13,
@@ -643,21 +644,37 @@
                 "planned_checks": 119,
                 "decisions": 21,
                 "local_links": 116,
-                "total_markdown_lines": 1483,
+                "total_markdown_lines": 1497,
                 "common_ui_states": 10,
                 "integrated_scenarios": 10
               },
               "prior_history": {
-                "overview_sha256": "faad0b31d5bc6189af02adb738184b0d63b5a664fbe3bbd66c39edf70603bf90",
-                "manifest_sha256": "d084b6750ebe1645f28d4e6809ec8eab9ebe2856ab3c7ae7a3b6580f39a758cb",
-                "requirements": 59,
-                "planned_checks": 94,
-                "capacity_model_MB": [
-                  39.064,
-                  43.224,
-                  57.784
-                ],
-                "note": "Historical revision1 figures; capacity was not remeasured in revision2."
+                "revision": 2,
+                "overview_sha256": "e3b91d8174561a5e9a27bb8ad606963b2a600cb1be5b9ed40093dd54faf4b0ab",
+                "manifest_sha256": "5103bfbe092f260bf32ac5bff43dfcc4068f0bbc26b2da03a94e6337533ef83c",
+                "counts": {
+                  "markdown_files": 16,
+                  "modules": 13,
+                  "requirements": 70,
+                  "planned_checks": 119,
+                  "decisions": 21,
+                  "local_links": 116,
+                  "total_markdown_lines": 1483,
+                  "common_ui_states": 10,
+                  "integrated_scenarios": 10
+                },
+                "prior_history": {
+                  "overview_sha256": "faad0b31d5bc6189af02adb738184b0d63b5a664fbe3bbd66c39edf70603bf90",
+                  "manifest_sha256": "d084b6750ebe1645f28d4e6809ec8eab9ebe2856ab3c7ae7a3b6580f39a758cb",
+                  "requirements": 59,
+                  "planned_checks": 94,
+                  "capacity_model_MB": [
+                    39.064,
+                    43.224,
+                    57.784
+                  ],
+                  "note": "Historical revision1 figures; capacity was not remeasured in revision2."
+                }
               }
             }
           }
@@ -665,19 +682,21 @@
       }
     }
   },
-  "no_app_or_production_changes": false,
+  "no_app_or_production_changes": true,
   "changed_documents": [
-    "06_임시자료와_운영로그정리.md",
+    "00_유지보수_전체지시서.md",
+    "11_패치공지_별도기능.md",
+    "12_관리자별학생관리_별도기능.md",
     "13_공통보존과_결정검사기준.md",
-    "14_문서검토결과.md"
+    "14_문서검토결과.md",
+    "20261003_공지와관리자_확정사항.md"
   ],
   "independent_delta_review": {
     "agents": [
-      "m05_db_review",
-      "m05_browser_review"
+      "m05_record_review"
     ],
-    "review_kind": "Independent read-only review of retention SQL and recovery, plus main local regression validation",
-    "application_checks_executed": true
+    "review_kind": "Read-only user-decision/document review; 3 findings corrected and final recheck had zero findings. Administrator disable does not implicitly revoke wordbook sharing.",
+    "application_checks_executed": false
   },
-  "no_app_or_production_changes_scope": "Revision 8 includes local M06 SQL and tests. At this document check no remote M06 migration, operational deletion, schedule activation, Production change or audio content review occurred. Later Preview verification is tracked in APP-20261002-04."
+  "no_app_or_production_changes_scope": "This revision updates documents only. Earlier maintenance implementation and Preview evidence remain separately recorded. No F01/F02 implementation, Production writes, student data mutation or deployment in this document revision."
 }
