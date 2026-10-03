@@ -76,7 +76,7 @@ test.describe.serial("@authenticated 유지보수 실제 회차 제출과 배포
     await page.goto("/student/wordbook?view=current");
     await expect(page.getByRole("list", { name: "내 단어장" }).getByRole("listitem")).toHaveCount(1);
     await expect(page.getByText("1개 단어 · 현재 오답 2회", { exact: true })).toBeVisible();
-    const reviewAssignment = assignmentId(await assignDirectReview(previewRun.adminPage, student), student.id, true);
+    const reviewAssignment = assignmentId(await assignDirectReview(previewRun.adminPage, student, plan.datasetId, 1), student.id, true);
     await startLocalAssignment(page, reviewAssignment);
     const solved = await finishLocalPhase(page);
     expect(solved.result).toMatchObject({ finalized: true, attempt: { finalScore: 100, passed: true, unresolvedWrongCount: 0 } });

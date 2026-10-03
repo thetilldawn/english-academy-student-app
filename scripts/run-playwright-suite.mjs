@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { once } from "node:events";
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:net";
+import { assertMaintenanceRunnerSource } from "../test/e2e/support/runner-source.mjs";
 
 const require = createRequire(import.meta.url);
 const playwrightCli = require.resolve("@playwright/test/cli");
@@ -25,7 +26,7 @@ if (suite !== "smoke" && suite !== "authenticated") {
 function readGitValue(arguments_) {
   const result = spawnSync(
     "git",
-    ["-c", `safe.directory=${process.cwd()}`, ...arguments_],
+    ["-c", `safe.directory=${process.cwd()}`, "-c", "core.quotepath=false", ...arguments_],
     {
       cwd: process.cwd(),
       encoding: "utf8",
@@ -52,7 +53,12 @@ if (suite === "authenticated" && !listOnly) {
       throw new Error("로컬 브랜치가 승인한 Preview Git 브랜치와 다릅니다.");
     }
     if (process.env.E2E_TARGET_DEPLOYMENT_SHA !== localSha) {
-      throw new Error("로컬 HEAD가 검사할 Preview 배포 SHA와 다릅니다.");
+      const target = process.env.E2E_TARGET_DEPLOYMENT_SHA;
+      if (!/^[0-9a-f]{40}$/i.test(target ?? "")) throw new Error("대상 Preview SHA가 올바르지 않습니다.");
+      assertMaintenanceRunnerSource({ environment: process.env,
+        changed: readGitValue(["diff", "--no-renames", "--name-only", `${target}..HEAD`, "--"]).split("\n").filter(Boolean),
+        dirty: [...readGitValue(["diff", "--no-renames", "--name-only", "HEAD", "--"]).split("\n"), ...readGitValue(["ls-files", "--others", "--exclude-standard"]).split("\n")].filter(Boolean),
+      });
     }
   }
 }

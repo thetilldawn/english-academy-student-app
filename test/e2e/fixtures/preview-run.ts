@@ -41,6 +41,7 @@ export class PreviewRun {
   readonly targetDeploymentSha: string;
   readonly targetGitRef: string;
   readonly browserMessages: string[] = [];
+  readonly browserAdvisories: string[] = [];
   private readonly browser: Browser;
   private readonly students: PreviewCleanupStudent[] = [];
   private readonly studentContexts: BrowserContext[] = [];
@@ -82,6 +83,12 @@ export class PreviewRun {
   private captureBrowserMessages(page: Page) {
     page.on("console", (message) => {
       if (message.type() === "warning" || message.type() === "error") {
+        const preload = /^The resource (https:\/\/[^ ]+\/_next\/static\/css\/[0-9a-f]+\.css) was preloaded using link preload but not used within a few seconds from the window's load event\. Please make sure it has an appropriate `as` value and it is preloaded intentionally\.$/.exec(message.text());
+        if (message.type() === "warning" && preload && new URL(preload[1]).origin === this.origin) {
+          // Retain the observed Next navigation hint separately from app failures.
+          this.browserAdvisories.push(message.text());
+          return;
+        }
         const location = message.location().url;
         let pathname = "";
         try { pathname = new URL(location).pathname; } catch { /* Non-URL console locations remain visible errors. */ }
@@ -289,6 +296,7 @@ export class PreviewRun {
       `${this.runId}-receipt`,
       {
         checkRunnerSha: this.checkRunnerSha,
+        browserAdvisories: this.browserAdvisories,
         deploymentChecks: this.deploymentChecks,
         expectedNetworkFailures: this.expectedNetworkFailures,
         origin: this.origin,

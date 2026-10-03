@@ -6,6 +6,7 @@ import type { BrowserContext } from "@playwright/test";
 import { describe, expect, it, vi } from "vitest";
 
 import { writeJsonSnapshot } from "../../test/e2e/support/atomic-json";
+import { assertMaintenanceRunnerSource } from "../../test/e2e/support/runner-source.mjs";
 import {
   assertPreviewMutationEnvironment,
   assertPreviewRuntimeIdentity,
@@ -21,6 +22,24 @@ import {
 
 const previewOrigin =
   "https://english-academy-student-example1-thetilldawn-3859s-projects.vercel.app";
+
+describe("유지보수 검사 도구와 배포 코드 구분", () => {
+  const environment = { E2E_MAINTENANCE_ROLLBACK: "1", E2E_ALLOW_RUNNER_TOOLS_ONLY: "1",
+    PLAYWRIGHT_BASE_URL: MAINTENANCE_PREVIEW_ORIGIN, E2E_EXPECTED_GIT_REF: "codex/vocabulary-templates-20260920" };
+  it("커밋된 검사만 다르고 제품이 같으면 두 SHA를 따로 기록할 수 있다", () => {
+    expect(() => assertMaintenanceRunnerSource({ environment, changed: ["test/e2e/support/vocab-journey.ts"], dirty: ["00_앱_인계서.md"] })).not.toThrow();
+  });
+  it.each(["src/app/page.tsx", "supabase/migrations/change.sql", "package.json", "next.config.ts", "public/quiz-offline-sw.js"])("제품·빌드 변경은 거절한다: %s", file => {
+    expect(() => assertMaintenanceRunnerSource({ environment, changed: [file], dirty: [] })).toThrow();
+  });
+  it("미커밋 검사 코드도 거절한다", () => {
+    expect(() => assertMaintenanceRunnerSource({ environment, changed: ["test/e2e/support/vocab-journey.ts"], dirty: ["test/e2e/support/vocab-journey.ts"] })).toThrow();
+  });
+  it("일반 검사나 다른 주소에는 예외를 허용하지 않는다", () => {
+    for (const replacement of [{ E2E_MAINTENANCE_ROLLBACK: "0" }, { PLAYWRIGHT_BASE_URL: previewOrigin }])
+      expect(() => assertMaintenanceRunnerSource({ environment: { ...environment, ...replacement }, changed: ["test/e2e/support/vocab-journey.ts"], dirty: [] })).toThrow();
+  });
+});
 
 describe("Preview E2E 실행 경계", () => {
   it("명세의 고정 주소 한 개만 허용하고 비슷한 다른 별칭은 거절한다", () => {

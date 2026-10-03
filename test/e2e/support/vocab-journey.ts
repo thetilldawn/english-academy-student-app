@@ -1,6 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
 import type { PreviewStudent } from "../fixtures/preview-run";
+import { datasetPickerTitle } from "../../../src/features/assignments/presentation/assignment-dataset-picker-view";
+import type { AssignmentDatasetItem } from "../../../src/features/assignments/catalog-types";
 
 type AssignmentPlan = {
   datasetId?: string;
@@ -18,21 +20,25 @@ type AssignmentPlan = {
 };
 
 async function chooseDataset(page: Page, datasetId?: string) {
-  const select = page.locator('select[data-field-key="dataset"]');
-  await expect(select).toBeVisible();
+  let title: string | undefined;
   if (datasetId) {
-    await expect(select.locator(`option[value="${datasetId}"]`)).toHaveCount(1);
-    await select.selectOption(datasetId);
-    await expect(select).toHaveValue(datasetId);
-    return;
+    const response = await page.request.get("/api/admin/assignment-workspace/datasets");
+    expect(response.status()).toBe(200);
+    const { datasets } = await response.json() as { datasets: AssignmentDatasetItem[] };
+    const dataset = datasets.find(d => d.id === datasetId);
+    if (!dataset) throw Error("지정한 검토 단어장이 배정 목록에 없습니다.");
+    title = datasetPickerTitle(dataset);
   }
-  const value = await select.inputValue();
-  if (value) return;
-  const firstValue = await select.locator("option:not([disabled])").evaluateAll(
-    (options) => options.map((option) => (option as HTMLOptionElement).value).find(Boolean),
-  );
-  if (!firstValue) throw new Error("Preview에 배정 가능한 단어장이 없습니다.");
-  await select.selectOption(firstValue);
+  await page.locator('button[data-field-key="dataset"]').click();
+  const dialog = page.getByRole("dialog", { name: "단어장 찾기", exact: true });
+  await dialog.getByRole("button", { name: "검색·필터 초기화", exact: true }).click();
+  if (title) await dialog.getByRole("searchbox", { name: "단어장 검색", exact: true }).fill(title);
+  const book = title ? dialog.getByRole("button").filter({ has: page.getByText(title, { exact: true }) })
+    : dialog.getByRole("listitem").getByRole("button").first();
+  await expect(book).toHaveCount(1);
+  title ??= (await book.locator("strong").textContent())!;
+  await book.click();
+  await expect(page.locator('button[data-field-key="dataset"]')).toContainText(title);
 }
 
 async function chooseQuestionMode(
@@ -64,7 +70,7 @@ async function chooseRange(page: Page, mode: AssignmentPlan["rangeMode"]) {
     expect(await units.count()).toBeGreaterThan(index);
     await units.nth(index).click();
     await page.getByRole("button", { name: "단어 수", exact: true }).click();
-    await page.getByRole("spinbutton", { name: "회차당 단어 수" }).fill("4");
+    await page.getByRole("textbox", { name: "회차당 단어 수" }).fill("4");
     return;
   }
   if (mode === "two-units") {
@@ -77,7 +83,7 @@ async function chooseRange(page: Page, mode: AssignmentPlan["rangeMode"]) {
   }
   await group.getByRole("button", { name: "전체 선택", exact: true }).click();
   await page.getByRole("button", { name: "단어 수", exact: true }).click();
-  const count = page.getByRole("spinbutton", { name: "회차당 단어 수" });
+  const count = page.getByRole("textbox", { name: "회차당 단어 수" });
   await count.fill(String(4));
 }
 
@@ -133,14 +139,14 @@ async function configureRangeAssignment(page: Page, plan: AssignmentPlan = {}) {
   }
   if (plan.questionCount && plan.questionCount !== 4) {
     await page
-      .getByRole("spinbutton", { name: "회차당 단어 수" })
+      .getByRole("textbox", { name: "회차당 단어 수" })
       .fill(String(plan.questionCount));
   }
   if (plan.timeLimit === "per-question") {
     await setCheckbox(page, "timing", true);
     await page.getByRole("button", { name: "문제당", exact: true }).click();
     await page
-      .getByRole("spinbutton", { name: "문제당 시간(초)" })
+      .getByRole("textbox", { name: "문제당 시간(초)" })
       .fill(String(plan.perQuestionSeconds ?? 5));
   } else if (plan.timeLimit === "total") {
     await setCheckbox(page, "timing", true);
@@ -279,23 +285,22 @@ export async function assignBulkRange(
   return waitForAssignmentSave(page, /\/api\/admin\/bulk-assignments$/);
 }
 
-export async function assignDirectReview(page: Page, student: PreviewStudent) {
+export async function assignDirectReview(page: Page, student: PreviewStudent, datasetId?: string, expectedCount?: number) {
   await openSingleAssignment(page, student);
   await page.getByRole("tab", { name: "오답 시험" }).click();
+  await chooseDataset(page, datasetId);
   const calculation = page.locator('[data-field-key="questionCount"]');
-  await expect(calculation).not.toHaveAttribute("data-status", /idle|loading/);
-  const datasetButtons = page.locator('[data-field-key="dataset"] button:not([disabled])');
-  await expect(datasetButtons.first()).toBeVisible();
-  await datasetButtons.first().click();
   const levelButtons = page.locator('[data-field-key="reviewLevels"] button:not([disabled])');
   const levelCount = await levelButtons.count();
   for (let index = 0; index < levelCount; index += 1) {
     const button = levelButtons.nth(index);
     if ((await button.getAttribute("aria-pressed")) !== "true") await button.click();
   }
+  await expect(calculation).toHaveAttribute("data-status", "ready");
+  if (expectedCount !== undefined) await expect(calculation).toHaveText(`단어 ${expectedCount}개`);
   await setCheckbox(page, "timing", true);
   await page.getByRole("button", { name: "문제당", exact: true }).click();
-  await page.getByRole("spinbutton", { name: "문제당 시간(초)" }).fill("5");
+  await page.getByRole("textbox", { name: "문제당 시간(초)" }).fill("5");
   return waitForAssignmentSave(page, /\/api\/admin\/exact-review-assignments$/);
 }
 
