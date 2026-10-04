@@ -152,5 +152,56 @@
     "preview": "20261004091529",
     "production": "20261004091600"
   },
-  "sqlFileSha256": "ad3a0dfbe12349822302e1be83b2a02619ec4da794f30651b790109177a3ea3c"
+  "sqlFileSha256": "ad3a0dfbe12349822302e1be83b2a02619ec4da794f30651b790109177a3ea3c",
+  "deployment": {
+    "code": "fce758d009c5aaa32166fb0447b18e2085c9e042",
+    "preview": {
+      "id": "dpl_H7JV5sHGJLmzxNReskcSG69Z34R8",
+      "url": "https://english-academy-student-fg5kgqfx6-thetilldawn-3859s-projects.vercel.app",
+      "state": "READY",
+      "identityEndpointVerified": true,
+      "supabaseProjectRef": "wojxpruvbjzbhrpmsbuy"
+    },
+    "production": {
+      "id": "dpl_2DTt8VN9W9wNwqdDHFmetYuRnnYq",
+      "url": "https://english-academy-student-app.vercel.app",
+      "state": "READY"
+    },
+    "publicDatabaseEnvironments": [
+      {
+        "value": "https://xdxhswjgksukjmpbzqgz.supabase.co",
+        "target": [
+          "production"
+        ],
+        "branch": null
+      },
+      {
+        "value": "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+        "target": [
+          "preview"
+        ],
+        "branch": null
+      }
+    ],
+    "http": [
+      {
+        "path": "/admin/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "path": "/api/admin/wordbook-library",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/api/preview-identity",
+        "status": 404,
+        "expected": 404
+      }
+    ],
+    "curlCreatedAccessTokenRevoked": true,
+    "originalProtectionPreserved": true,
+    "authenticatedAdministratorBrowserWriteTest": false
+  }
 }
