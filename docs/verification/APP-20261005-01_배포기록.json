@@ -1,0 +1,48 @@
+{
+  "work": "APP-20261005-01",
+  "code": "9b6ab61e871f5f60d3083c5ff9cc16e8309a2e66",
+  "preview": {
+    "deployment": "dpl_ChPLmFUmHrFrkMCKhzmrUj97HbbY",
+    "state": "READY",
+    "public_quiz_http": 200,
+    "migration": "20261004165331"
+  },
+  "production": {
+    "deployment": "dpl_CHHRvFRmmXzoMimCb4tzW4Kp3AdW",
+    "state": "READY",
+    "migration": "20261004171146",
+    "public_quiz_http": 200
+  },
+  "database_readback": {
+    "old_100ms_accepted": true,
+    "new_250ms_accepted": true,
+    "first_question_open_zero": true,
+    "study_access_service_only": true,
+    "new_dictionary_or_body_table": false
+  },
+  "preview_temporary_access_removed": true,
+  "actual_student_exam_writes": 0,
+  "canonical": {
+    "id": "dpl_CHHRvFRmmXzoMimCb4tzW4Kp3AdW",
+    "sha": "9b6ab61e871f5f60d3083c5ff9cc16e8309a2e66",
+    "state": "READY",
+    "target": "production"
+  },
+  "publicDatabaseEnvironments": [
+    {
+      "value": "https://xdxhswjgksukjmpbzqgz.supabase.co",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "value": "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      "target": [
+        "preview"
+      ],
+      "branch": null
+    }
+  ],
+  "verifiedAt": "2026-10-04T17:27:30.371Z"
+}

@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-04T17:20:18.972Z",
+  "scope": "격리된 localhost 실제 Next 라우터와 가짜 학생 인증; 외부 DB 없음",
+  "cancelBeforeNavigation": true,
+  "lateResponseIgnored": true,
+  "interceptedPreparation": true,
+  "listDomPreserved": true,
+  "sameDocument": true,
+  "cancelReturnsToList": true,
+  "interceptedPlayAndGrading": true,
+  "stopContinueAndReturn": true,
+  "actions": [
+    "prepare",
+    "prepare",
+    "prefetch",
+    "prepare",
+    "begin"
+  ],
+  "consoleErrors": []
+}
