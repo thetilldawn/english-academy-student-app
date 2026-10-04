@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Button, ButtonLink, ButtonSpinner } from "@/design-system/primitives/button/button";
 import { DialogFrame } from "@/design-system/primitives/dialog/dialog";
 import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
@@ -97,7 +97,28 @@ function Player({ localKey, retry, presentation }: { localKey: string; retry: bo
   return content;
 }
 export function LocalQuizPlayer({ presentation = "page" }: { presentation?: "page" | "dialog" }) {
-  const hash = useSyncExternalStore(subscribeHash, () => window.location.hash, () => null);
+  const pathname = usePathname();
+  const [hash, setHash] = useState<string | null>(null);
+  useEffect(() => {
+    // App Router can restore this preserved slot with pushState, which does not
+    // fire hashchange. Read the committed URL again on each route change.
+    const changed = () => {
+      const currentHash = window.location.hash;
+      // Next 16.2 cached soft navigation can append the same fragment again.
+      // Collapse identical keys only; different/invalid keys remain rejected.
+      const repeated = /^#([0-9a-f-]{36}(?:\/retry)?)(?:#\1)+$/.exec(currentHash);
+      const nextHash = repeated ? `#${repeated[1]}` : currentHash;
+      if (nextHash !== currentHash) window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${nextHash}`);
+      setHash(nextHash);
+    };
+    changed();
+    window.addEventListener("hashchange", changed);
+    window.addEventListener("popstate", changed);
+    return () => {
+      window.removeEventListener("hashchange", changed);
+      window.removeEventListener("popstate", changed);
+    };
+  }, [pathname]);
   if (hash === null && presentation === "dialog") return <LocalQuizLoadingDialog />;
   if (hash === null) return <main id="main-content"><p role="status" className={styles.loadingStatus}><ButtonSpinner />저장한 시험을 확인하고 있습니다.</p></main>;
   const match = /^#([0-9a-f-]{36})(\/retry)?$/.exec(hash);
@@ -111,10 +132,6 @@ export function LocalQuizLoadingDialog({ onCancel }: { onCancel?: () => void }) 
     <section className={styles.finalizing}><p className={styles.loadingStatus} role="status"><ButtonSpinner className={styles.loadingSpinner} />시험 자료를 준비하고 있습니다.</p>
       <Button onClick={cancel}>취소</Button></section>
   </DialogFrame>;
-}
-function subscribeHash(changed: () => void) {
-  window.addEventListener("hashchange", changed);
-  return () => window.removeEventListener("hashchange", changed);
 }
 export function LocalQuizResume({ studentId, attemptId, retry = false }: { studentId: string; attemptId: string; retry?: boolean }) {
   const [error, setError] = useState("");

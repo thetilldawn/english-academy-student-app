@@ -4,7 +4,7 @@ import { webcrypto } from "node:crypto";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const m=vi.hoisted(()=>({controller:vi.fn(),stop:vi.fn(),back:vi.fn(),replace:vi.fn()}));
-vi.mock("next/navigation",()=>({useRouter:()=>({back:m.back,replace:m.replace})}));
+vi.mock("next/navigation",()=>({useRouter:()=>({back:m.back,replace:m.replace}),usePathname:()=>window.location.pathname}));
 vi.mock("../controllers/use-local-quiz-player-controller",()=>({useLocalQuizPlayerController:m.controller}));
 vi.mock("../../controller/use-quiz-audio",()=>({useQuizAudio:()=>({stopAudio:m.stop,playAudio:vi.fn()})}));
 import { localFixture } from "../../test-support/local-quiz-fixtures";
@@ -31,4 +31,22 @@ it("기기 답 저장 실패 때 ESC는 남은 선택을 버리고 나가지 않
   render(<LocalQuizPlayer presentation="dialog"/>);
   expect(screen.getByRole("button",{name:"시험 중지"})).toBeDisabled();
   fireEvent.keyDown(screen.getByRole("dialog",{name:"단어 시험"}),{key:"Escape"});expect(m.back).not.toHaveBeenCalled();
+});
+it("취소 뒤 같은 시험에 다시 진입하면 보존된 화면도 새 주소의 시험 키를 읽는다",()=>{
+  const key = window.location.hash;
+  const view = render(<LocalQuizPlayer presentation="dialog"/>);
+  window.history.pushState(null,"","/student");
+  view.rerender(<LocalQuizPlayer presentation="dialog"/>);
+  window.history.pushState(null,"",`/quiz-offline${key}`);
+  view.rerender(<LocalQuizPlayer presentation="dialog"/>);
+  expect(screen.getByRole("button",{name:"시험 중지"})).toBeVisible();
+  expect(screen.queryByText("시험 목록에서 시험을 선택해 주세요.")).not.toBeInTheDocument();
+});
+it("라우터가 같은 시험 주소의 키를 두 번 붙여도 기존 키 하나로 복구한다",()=>{
+  const key = window.location.hash;
+  window.history.replaceState({ retained: true },"",`/quiz-offline${key}${key}`);
+  render(<LocalQuizPlayer presentation="dialog"/>);
+  expect(screen.getByRole("button",{name:"시험 중지"})).toBeVisible();
+  expect(window.location.hash).toBe(key);
+  expect(window.history.state).toEqual({retained:true});
 });
