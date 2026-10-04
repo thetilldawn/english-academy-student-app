@@ -8,7 +8,7 @@ import { compositionQuestionInputSchema, compositionStepSchema } from "@/feature
 const adminId = "00000000-0000-4000-8000-000000008101", project = "wojxpruvbjzbhrpmsbuy";
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 describe.sequential("bounded composition commits and publication", () => {
-  let db: PGlite, template: LibraryTemplate, source: string, dataset: string;
+  let db: PGlite, template: LibraryTemplate, source: string;
   let questions: { vocabEntryId: number; direction: string; prompt: string; choices: string[]; choiceVocabEntryIds: number[]; correctChoiceIndex: number }[];
   let command: { action: string; requestId: string; templateId: string; versionId: string; contentHash: string };
   const scalar = async <T>(sql: string, args: unknown[] = []) => (await db.query<{ value: T }>(sql, args)).rows[0]!.value;
@@ -18,7 +18,8 @@ describe.sequential("bounded composition commits and publication", () => {
   const advance = async () => compositionStepSchema.parse(await scalar("select public.advance_vocabulary_template_book_v1($1::jsonb) value", [JSON.stringify(command)]));
   const finish = async (payload: unknown = null) => compositionStepSchema.parse(await scalar("select public.advance_vocabulary_composition_questions_v1($1,$2,$3::jsonb) value", [command.versionId, command.contentHash, payload === null ? null : JSON.stringify(payload)]));
   const counts = () => scalar<{ rows: number; next: number; contexts: number; items: number; plans: number; status: string; assignable: boolean }>(`select jsonb_build_object(
-    'rows',(select count(*) from public.vocab_entries where dataset_id=c.dataset_id),'next',b.next_row,
+    'rows',(select count(*) from private.vocabulary_composition_entries where version_id=c.version_id),'next',b.next_row,
+    'copies',(select count(*) from public.vocab_entries where dataset_id=c.dataset_id),
     'contexts',(select count(*) from private.vocabulary_composition_write_context),
     'items',(select count(*) from private.vocabulary_composition_items where version_id=c.version_id),
     'plans',(select count(*) from private.vocabulary_composition_question_plans where version_id=c.version_id),
@@ -51,7 +52,7 @@ describe.sequential("bounded composition commits and publication", () => {
   }, 60000);
   afterAll(async () => { await db?.close(); });
   it("keeps the first 500 rows hidden and blocks every legacy preparation/finalization shortcut", async () => {
-    const step = await advance(); dataset = step.datasetId;
+    const step = await advance();
     expect(step).toMatchObject({ state: "preparing", stage: "entries", done: 500, total: 501 });
     await expect(db.query("select public.prepare_vocabulary_template_question_input_v1($1::jsonb)", [JSON.stringify(command)])).rejects.toThrow("composition_preparation_incomplete");
     await service();
@@ -59,12 +60,12 @@ describe.sequential("bounded composition commits and publication", () => {
     await expect(finish([])).rejects.toThrow("composition_preparation_incomplete");
     await owner(); expect(await counts()).toMatchObject({ rows: 500, next: 501, contexts: 0, status: "pending_review", assignable: false });
     const beforeShared = await scalar("select jsonb_build_object('values',(select count(*) from private.vocabulary_learning_value_versions),'bindings',(select count(*) from private.vocabulary_learning_value_bindings)) value");
-    await db.exec(`create function public.fake_fail_last_row() returns trigger language plpgsql as $$begin if new.dataset_id='${dataset}' and new.source_row=501 then raise exception 'fake_last_row_failure'; end if; return new; end;$$;
-      create trigger fake_last_row_failure after insert on public.vocab_entries for each row execute function public.fake_fail_last_row()`);
+    await db.exec(`create function public.fake_fail_last_row() returns trigger language plpgsql as $$begin if new.version_id='${command.versionId}' and new.source_entry_id=(select id from public.vocab_entries where dataset_id='${source}' and source_row=501) then raise exception 'fake_last_row_failure'; end if; return new; end;$$;
+      create trigger fake_last_row_failure after insert on private.vocabulary_composition_entries for each row execute function public.fake_fail_last_row()`);
     await admin(); await expect(advance()).rejects.toThrow("fake_last_row_failure");
     await owner(); expect(await counts()).toMatchObject({ rows: 500, next: 501, contexts: 0 });
     expect(await scalar("select jsonb_build_object('values',(select count(*) from private.vocabulary_learning_value_versions),'bindings',(select count(*) from private.vocabulary_learning_value_bindings)) value")).toEqual(beforeShared);
-    await db.exec("drop trigger fake_last_row_failure on public.vocab_entries; drop function public.fake_fail_last_row()");
+    await db.exec("drop trigger fake_last_row_failure on private.vocabulary_composition_entries; drop function public.fake_fail_last_row()");
     await admin(); expect(await advance()).toMatchObject({ stage: "entries", done: 501 });
     expect(await advance()).toMatchObject({ stage: "prepared", done: 501 });
     const prep = compositionQuestionInputSchema.parse(await scalar("select public.prepare_vocabulary_template_question_input_v1($1::jsonb) value", [JSON.stringify(command)]));
@@ -88,7 +89,7 @@ describe.sequential("bounded composition commits and publication", () => {
     await expect(finish(changed)).rejects.toThrow("composition_question_plan_changed");
     await expect(db.query("select public.finalize_vocabulary_composition_summary_v1($1,$2,'[]')", [command.versionId, command.contentHash])).rejects.toThrow("composition_bounded_completion_required");
     expect(await finish()).toMatchObject({ stage: "questions", done: 501, state: "preparing" });
-  });
+  }, 30_000);
   it("rechecks the source before publication, preserving committed chunks on conflict", async () => {
     await owner(); expect(await counts()).toMatchObject({ rows: 501, items: 501, status: "pending_review", assignable: false });
     await db.exec("begin");
@@ -99,7 +100,8 @@ describe.sequential("bounded composition commits and publication", () => {
     await service(); expect(await finish()).toMatchObject({ state: "ready", stage: "complete" });
     expect(await finish()).toMatchObject({ state: "ready" });
     await owner(); expect(await counts()).toMatchObject({ rows: 501, items: 501, plans: 1, contexts: 0, status: "ready", assignable: true });
-    expect(await scalar("select bool_and(resources#>>'{selected,schemaVersion}'='vocabulary-resource-ref-v2') value from private.vocabulary_composition_entries where version_id=$1", [command.versionId])).toBe(true);
+    expect(await counts()).toMatchObject({ rows: 501, copies: 0 });
+    expect(await scalar("select bool_and(vocab_entry_id=source_entry_id and resources#>>'{selected,schemaVersion}'='vocabulary-source-key-v3') value from private.vocabulary_composition_entries where version_id=$1", [command.versionId])).toBe(true);
     const stored = await scalar("select jsonb_agg(jsonb_build_object('vocabEntryId',vocab_entry_id,'direction',direction,'prompt',prompt,'choices',choice_texts,'choiceVocabEntryIds',choice_vocab_entry_ids,'correctChoiceIndex',correct_choice_index) order by vocab_entry_id) value from private.vocabulary_composition_items where version_id=$1", [command.versionId]);
     expect(stored).toEqual([...questions].sort((a, b) => a.vocabEntryId - b.vocabEntryId));
     await admin(); expect(await advance()).toMatchObject({ state: "ready" });
@@ -111,7 +113,9 @@ describe.sequential("bounded composition commits and publication", () => {
       await expect(db.query("select private.insert_vocabulary_composition_question_batch_v1($1,'[]')", [command.versionId])).rejects.toThrow(/permission denied/);
       await expect(db.query("select private.advance_vocabulary_composition_build_v1($1,$2,null,null)", [command.versionId, command.contentHash])).rejects.toThrow(/permission denied/);
     }
-    await owner(); await expect(db.query("update public.vocab_entries set pronunciation_ko='forged' where dataset_id=$1", [dataset])).rejects.toThrow("composition_content_immutable");
+    await owner();
+    expect(await scalar("select count(*)::int value from private.vocabulary_composition_entries where version_id=$1", [command.versionId])).toBe(501);
+    await expect(db.query("update private.vocabulary_composition_entries set entry_sha256=repeat('a',64) where version_id=$1", [command.versionId])).rejects.toThrow("immutable");
   });
   it("keeps management ownership, immutable input, and completion receipt atomic across several calls", async () => {
     await admin();

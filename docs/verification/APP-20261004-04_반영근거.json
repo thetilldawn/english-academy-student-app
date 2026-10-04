@@ -1,0 +1,156 @@
+{
+  "recordedAt": "2026-10-04T09:18:17.995Z",
+  "before": {
+    "wojxpruvbjzbhrpmsbuy": {
+      "words": {
+        "keys": "954315f2392aaa645cfc7493bf6d6d21",
+        "count": 39624
+      },
+      "newFormatRows": 0,
+      "selectionKeys": {
+        "keys": "da47d8f13cd2d5515de1c4fb84f50342",
+        "count": 15969
+      },
+      "studentRecords": {
+        "attempts": {
+          "hash": "1594bcbc8d415591be3aa4872bdb7923",
+          "count": 171
+        },
+        "questions": {
+          "hash": "210a68eadacd11ecd94c5a150cc28874",
+          "count": 1742
+        },
+        "assignments": {
+          "hash": "3ed56fd165cf376889cdf75b87ae8ae2",
+          "count": 293
+        },
+        "wrongEvents": {
+          "hash": "5787e90111d65b1097265fa99a84e951",
+          "count": 887
+        },
+        "assignmentQuestions": {
+          "hash": "e8dcaabedf4498801d08d7d9e84605a0",
+          "count": 5787
+        }
+      }
+    },
+    "xdxhswjgksukjmpbzqgz": {
+      "words": {
+        "keys": "3e3a5b5d128b8ace9408701e6c357679",
+        "count": 30073
+      },
+      "newFormatRows": 0,
+      "selectionKeys": {
+        "keys": "0eaa7148a52e399e3d9454fe14c22ff9",
+        "count": 7532
+      },
+      "studentRecords": {
+        "attempts": {
+          "hash": "ca9ca6f662f0eda6ed80124ec80f34a8",
+          "count": 89
+        },
+        "questions": {
+          "hash": "ef4d7bb4de5bc98a13509e7982d540a5",
+          "count": 7617
+        },
+        "assignments": {
+          "hash": "53f93360be54033df3c88cb7365ebf47",
+          "count": 188
+        },
+        "wrongEvents": {
+          "hash": "3b8c0d75ff13caff2e85e099f5c1a89a",
+          "count": 1901
+        },
+        "assignmentQuestions": {
+          "hash": "7801bb7be5299f934ebeb6111191ba41",
+          "count": 17990
+        }
+      }
+    }
+  },
+  "after": {
+    "wojxpruvbjzbhrpmsbuy": {
+      "words": {
+        "keys": "954315f2392aaa645cfc7493bf6d6d21",
+        "count": 39624
+      },
+      "newFormatRows": 0,
+      "selectionKeys": {
+        "keys": "da47d8f13cd2d5515de1c4fb84f50342",
+        "count": 15969
+      },
+      "studentRecords": {
+        "attempts": {
+          "hash": "1594bcbc8d415591be3aa4872bdb7923",
+          "count": 171
+        },
+        "questions": {
+          "hash": "210a68eadacd11ecd94c5a150cc28874",
+          "count": 1742
+        },
+        "assignments": {
+          "hash": "3ed56fd165cf376889cdf75b87ae8ae2",
+          "count": 293
+        },
+        "wrongEvents": {
+          "hash": "5787e90111d65b1097265fa99a84e951",
+          "count": 887
+        },
+        "assignmentQuestions": {
+          "hash": "e8dcaabedf4498801d08d7d9e84605a0",
+          "count": 5787
+        }
+      }
+    },
+    "xdxhswjgksukjmpbzqgz": {
+      "words": {
+        "keys": "3e3a5b5d128b8ace9408701e6c357679",
+        "count": 30073
+      },
+      "newFormatRows": 0,
+      "selectionKeys": {
+        "keys": "0eaa7148a52e399e3d9454fe14c22ff9",
+        "count": 7532
+      },
+      "studentRecords": {
+        "attempts": {
+          "hash": "ca9ca6f662f0eda6ed80124ec80f34a8",
+          "count": 89
+        },
+        "questions": {
+          "hash": "ef4d7bb4de5bc98a13509e7982d540a5",
+          "count": 7617
+        },
+        "assignments": {
+          "hash": "53f93360be54033df3c88cb7365ebf47",
+          "count": 188
+        },
+        "wrongEvents": {
+          "hash": "3b8c0d75ff13caff2e85e099f5c1a89a",
+          "count": 1901
+        },
+        "assignmentQuestions": {
+          "hash": "7801bb7be5299f934ebeb6111191ba41",
+          "count": 17990
+        }
+      }
+    }
+  },
+  "existingFunctionMetadataPreserved": true,
+  "functionCount": 31,
+  "matchingFunctionBodies": 30,
+  "preexistingPreviewDifference": {
+    "function": "private.replace_student_assignment_v4",
+    "field": "internal cancellation reason text",
+    "production": "배정 수정으로 교체",
+    "preview": "諛곗젙 ?섏젙?쇰줈 援먯껜",
+    "changedByThisMigration": false
+  },
+  "studentTestWrites": 0,
+  "historicalCleanupResumed": false,
+  "migrationVersions": {
+    "preview": "20261004091529",
+    "production": "20261004091600"
+  },
+  "sqlFileSha256": "ad3a0dfbe12349822302e1be83b2a02619ec4da794f30651b790109177a3ea3c"
+}

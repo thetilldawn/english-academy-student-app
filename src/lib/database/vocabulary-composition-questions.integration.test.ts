@@ -10,6 +10,8 @@ import { planLibraryUnits } from "@/features/wordbook-compositions/domain/librar
 import { reviewedExamFixture } from "@/test-support/reviewed-exam-fixtures";
 import { vocabPronunciationReleaseHeader } from "@/lib/vocab/vocab-pronunciation-release-v2-contract";
 import { buildPracticePlan, practiceSourceSchema } from "@/features/quiz-player/domain/practice-plan";
+import { localPhasePlanSchema, localReceiptSchema, type LocalPhasePlan, type LocalBatch } from "@/features/quiz-player/contracts/local-quiz";
+import { mistakePracticeSourceSchema } from "@/features/quiz-player/domain/mistake-practice-plan";
 vi.mock("server-only", () => ({}));
 
 const adminId = "00000000-0000-4000-8000-000000008001";
@@ -61,6 +63,10 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
   }, 60_000);
   afterAll(async () => { await db?.close(); });
   it("materializes consecutive disjoint units while keeping overlap membership and source order", async () => {
+    await db.exec("reset role");
+    const originalRows = await scalar("select jsonb_agg(to_jsonb(e) order by id) value from public.vocab_entries e");
+    const learningRows = await scalar("select jsonb_build_array((select count(*) from private.vocabulary_learning_value_versions),(select count(*) from private.vocabulary_learning_value_bindings)) value");
+    await admin();
     const v = template.versions[0]!;
     const command = { action: "materialize", requestId: randomUUID(), templateId: template.id, versionId: v.id, contentHash: v.contentHash };
     const slim = compositionQuestionInputSchema.parse(await scalar("select public.prepare_vocabulary_template_question_input_v1($1::jsonb) value", [JSON.stringify(command)]));
@@ -81,6 +87,12 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     expect(dbUnits.map(u => u.metadata.librarySourceScopes.map(s => s.id).sort())).toEqual(units.map(u => [...u.scopeIds].sort()));
     expect(await scalar("select public.prepare_vocabulary_composition_v1($1,$2) value", [v.id, v.contentHash])).toEqual(prepared);
     expect(await scalar("select count(*)::int value from public.vocab_entries where dataset_id=$1", [originalDataset])).toBe(6);
+    expect(prepared.entries.every(e => e.id === e.sourceEntryId)).toBe(true);
+    await db.exec("reset role");
+    expect(await scalar("select jsonb_agg(to_jsonb(e) order by id) value from public.vocab_entries e")).toEqual(originalRows);
+    expect(await scalar("select jsonb_build_array((select count(*) from private.vocabulary_learning_value_versions),(select count(*) from private.vocabulary_learning_value_bindings)) value")).toEqual(learningRows);
+    expect(await scalar("select bool_and(vocab_entry_id=source_entry_id and resources#>>'{selected,schemaVersion}'='vocabulary-source-key-v3') value from private.vocabulary_composition_entries where version_id=$1", [v.id])).toBe(true);
+    await admin();
   });
   it("rejects browser-provided question contents and changed generated choices without partial publication", async () => {
     const v = template.versions[0]!;
@@ -102,7 +114,8 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     expect(catalog.templates[0]!.versions[0]!.datasetId).toBe(prepared.datasetId);
     await db.exec("reset role");
     expect(await scalar("select count(*)::int value from private.vocabulary_composition_items where version_id=$1", [v.id])).toBe(12);
-    await expect(db.query("update public.vocab_entries set pronunciation_ko='변경' where dataset_id=$1", [prepared.datasetId])).rejects.toThrow("immutable");
+    expect(await scalar("select count(*)::int value from private.vocabulary_composition_entries where version_id=$1", [prepared.versionId])).toBe(6);
+    await expect(db.query("update private.vocabulary_composition_entries set entry_sha256=repeat('a',64) where version_id=$1", [prepared.versionId])).rejects.toThrow("immutable");
     await expect(db.query("update private.vocabulary_composition_items set prompt='변경' where version_id=$1", [v.id])).rejects.toThrow("immutable");
     await admin();
   });
@@ -115,12 +128,12 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     try { return await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [learner, assignment]); }
     finally { await db.exec("reset role; select set_config('request.jwt.claim.role','authenticated',false)"); }
   }
-  async function bankPlan() {
-    const units = await scalar<string[]>("select jsonb_agg(id order by sort_index) value from public.vocab_units where dataset_id=$1", [prepared.datasetId]);
+  async function bankPlan(source = prepared) {
+    const units = await scalar<string[]>("select jsonb_agg(id order by sort_index) value from public.vocab_units where dataset_id=$1", [source.datasetId]);
     const rows = (await db.query<{ vocab_entry_id: number; question_item_id: string; question_item_sha256: string; direction: string }>(
-      "select * from public.list_active_vocabulary_composition_questions_v1($1,$2::uuid[],'book_meaning_choice')", [prepared.datasetId, units])).rows.filter(q => q.direction === "english_to_korean");
+      "select * from public.list_active_vocabulary_composition_questions_v1($1,$2::uuid[],'book_meaning_choice')", [source.datasetId, units])).rows.filter(q => q.direction === "english_to_korean");
     return { units, questions: rows.map((q, index) => ({ vocab_entry_id: q.vocab_entry_id, base_order_index: index + 1, direction: q.direction,
-      composition_bank: { mode: "book_meaning_choice", version_id: prepared.versionId, content_sha256: prepared.contentHash, question_item_id: q.question_item_id, question_item_sha256: q.question_item_sha256 } })) };
+      composition_bank: { mode: "book_meaning_choice", version_id: source.versionId, content_sha256: source.contentHash, question_item_id: q.question_item_id, question_item_sha256: q.question_item_sha256 } })) };
   }
   it("keeps the smaller preparation and completion APIs behind the original role boundaries", async () => {
     const v = template.versions[0]!;
@@ -147,6 +160,127 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     const expected = new Map(prepared.entries.map(e => [e.id, e.resources.pronunciation]));
     expect(resources).toEqual(plan.questions.map(q => expected.get(q.vocab_entry_id)));
   });
+  it("reuses original keys across two selections and students through local preparation, retry and replay", async () => {
+    await db.exec("reset role; begin");
+    try {
+      await db.exec("grant usage on schema auth,extensions to service_role; alter role service_role bypassrls");
+      const extraDataset = await scalar<string>("insert into public.vocab_datasets(dataset_key,title,source_label,source_sha256,row_count,status,is_active) values('fake-source-key-second','가짜 두 번째 원자료','fake',repeat('F',64),1,'ready',true) returning id value");
+      const extraUnit = await scalar<string>("insert into public.vocab_units(dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count) values($1,'DAY 1','day1','day',1,1,1) returning id value", [extraDataset]);
+      await db.query("insert into public.vocab_dataset_catalog(dataset_id,display_name,catalog_group,material_kind,is_assignable) values($1,'가짜 두 번째 원자료','high','wordbook',true)", [extraDataset]);
+      const extraId = await scalar<number>("insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type) values($1,1,'extraoriginal','extraoriginal',array['다른 원자료 뜻'],'다른 원자료 뜻',repeat('F',64),$2,1,'word') returning id value", [extraDataset, extraUnit]);
+      await db.query("insert into public.vocab_entry_quiz_eligibility(vocab_entry_id,dataset_id,quiz_mode,status,input_content_hash,rule_version,evaluated_at_utc) select $1,$2,m,'eligible',repeat('F',64),'fake',now() from unnest(array['book_meaning_en_to_ko','book_meaning_ko_to_en'])m", [extraId, extraDataset]);
+      const extraBundle = { schemaVersion: "vocabulary-library-import-v1", sourceCatalogHash: hash("extra-catalog"), linksHash: hash("extra-links"), referenceCatalogHash: hash("extra-refs"), scopes: [{ key: "fake-extra-source", name: "가짜 추가 범위", sourceTitle: "가짜 두 번째 원자료",
+        source: { datasetId: extraDataset, unitId: extraUnit, kind: "legacy_vocab", releaseId: null, releaseVersion: "f".repeat(64), fileHash: "f".repeat(64), locator: "fake-extra.json" },
+        classification: { kind: "wordbook", sourceGrade: "g11", exam: null, lesson: null, day: 1, publisher: null, school: null, targetGrade: null, schoolYear: null, semester: null, assessment: null, purpose: null },
+        rows: [{ sourceRow: 1, rowHash: "f".repeat(64), resources: { entryHash: "f".repeat(64), linkRecordHash: hash("extra-row"), selected: resource } }] }] };
+      const extraText = JSON.stringify(extraBundle), extraHash = await scalar<string>("select private.reviewed_exam_sha256_v1($1::jsonb) value", [extraText]);
+      await db.query("insert into private.vocabulary_library_import_approvals values('wojxpruvbjzbhrpmsbuy',$1,$2,1,'fake-extra-source-key')", [hash(extraText), extraHash]);
+      await service(); await db.query("select public.import_vocabulary_library_v1($1)", [extraText]); await admin();
+      const extraScope = libraryCatalogSchema.parse(await scalar("select public.list_vocabulary_library_v1() value")).scopes.find(s => s.name === "가짜 추가 범위")!;
+      await db.exec("reset role");
+      const beforeWords = await scalar("select jsonb_agg(to_jsonb(e) order by id) value from public.vocab_entries e");
+      const beforeValues = await scalar("select jsonb_build_array((select count(*) from private.vocabulary_learning_value_versions),(select count(*) from private.vocabulary_learning_value_bindings)) value");
+      const learners = [randomUUID(), randomUUID()];
+      for (const learner of learners) await db.query("insert into public.students(id,display_name,created_by,school_name,grade_label) values($1,'가짜 원키 검사 학생',$2,'가상고','고2')", [learner, adminId]);
+      await admin();
+      const copied = libraryCommandResultSchema.parse(await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({ action: "create", requestId: randomUUID(), metadata: template.metadata,
+        recipe: { ...template.versions[0]!.recipe, scopes: [...template.versions[0]!.recipe.scopes, { id: extraScope.id, version: extraScope.version }] } })])).template.versions[0]!;
+      const second = compositionPreparationSchema.parse(await scalar("select public.prepare_vocabulary_composition_v1($1,$2) value", [copied.id, copied.contentHash]));
+      await service();
+      await db.query("select public.finalize_vocabulary_composition_summary_v1($1,$2,$3::jsonb)", [copied.id, copied.contentHash, JSON.stringify(planCompositionQuestions(second))]);
+      await admin();
+      expect(second.entries.slice(0, 6).map(e => e.id)).toEqual(prepared.entries.map(e => e.id));
+      expect(second.entries[6]!.id).toBe(extraId);
+      await db.exec("reset role");
+      await db.query("update public.vocab_datasets set status='retired',is_active=false where id=$1", [extraDataset]);
+      await admin();
+      const assignments: string[] = [];
+      for (const [index, source] of [prepared, second].entries()) {
+        const bank = await bankPlan(source);
+        expect(bank.questions).toHaveLength(source === prepared ? 6 : 7);
+        const questions = bank.questions.slice(index * 2, index * 2 + 4).map((q, i) => ({ ...q, base_order_index: i + 1 }));
+        assignments.push(await scalar<string>("select public.create_assignment_with_delivery_v7('가짜 원키 시험',$1::uuid,$2::uuid[],4,100::smallint,300,80::smallint,true,80::smallint,'fixed',null,array[$3::uuid],'none',null,$4::jsonb) value", [source.datasetId, bank.units, learners[index], JSON.stringify(questions)]));
+      }
+      await db.exec("reset role");
+      expect(await scalar("select bool_and(variants=1) value from (select vocab_entry_id,count(distinct private.assignment_vocabulary_meaning_v1(id)->>'meaningKey') variants from public.assignment_questions where assignment_id=any($1::uuid[]) group by vocab_entry_id having count(*)=2) s", [assignments])).toBe(true);
+      expect(await scalar("select count(*)::int value from public.assignment_questions where assignment_id=any($1::uuid[]) and dataset_id<>$2", [assignments, originalDataset])).toBe(0);
+      for (const [index, assignment] of assignments.entries()) {
+        const learner = learners[index]!, device = hash(`source-key-device-${index}`);
+        const rpc = async <T>(name: string, args: unknown[]) => { await service(); return scalar<T>(`select public.${name}(${args.map((_, i) => `$${i + 1}`).join(",")}) value`, args); };
+        const preparation = await rpc<{ preparationId: string; planHash: string }>("prepare_local_quiz_v1", [learner, assignment, device, null]);
+        const phase = localPhasePlanSchema.parse(await rpc("begin_local_quiz_v1", [learner, preparation.preparationId, device, preparation.planHash]));
+        expect(phase.items).toHaveLength(4);
+        const submit = async (plan: LocalPhasePlan, wrong: boolean) => {
+          const batch: LocalBatch = { submissionId: randomUUID(), attemptId: plan.attemptId, phase: plan.phase, planHash: plan.planHash,
+            answers: plan.items.map((q, i) => ({ id: q.id, order: i + 1, kind: "answer", choice: (q.correctChoiceIndex + (wrong && i === 0 ? 1 : 0)) % 4, openedMs: i * 100, elapsedMs: i * 100 })),
+            completion: { reason: "answered", elapsedMs: (plan.items.length - 1) * 100 } };
+          await db.exec("reset role");
+          const passed = await scalar<number>("select extract(epoch from(clock_timestamp()-$1::timestamptz))*1000 value", [plan.startedAt]);
+          await new Promise(resolve => setTimeout(resolve, Math.max(0, batch.completion.elapsedMs - Number(passed) + 30)));
+          const args = [learner, batch.attemptId, batch.phase, device, batch.planHash, batch.submissionId, batch.answers, batch.completion];
+          const receipt = localReceiptSchema.parse(await rpc("submit_local_quiz_phase_v1", args));
+          expect(await rpc("submit_local_quiz_phase_v1", args)).toEqual(receipt);
+        };
+        await submit(phase, true);
+        const retry = localPhasePlanSchema.parse(await rpc("begin_local_quiz_retry_v1", [learner, phase.attemptId, device]));
+        expect(retry.items).toHaveLength(1);
+        await submit(retry, false);
+        await db.exec("reset role");
+        expect(await scalar("select status value from public.quiz_attempts where id=$1", [phase.attemptId])).toBe("completed");
+      }
+      // A later wrong answer from B must not hide A's source when both use one key.
+      const learner = learners[0]!, device = hash("source-key-review-device");
+      const rpc = async <T>(name: string, args: unknown[]) => { await service(); return scalar<T>(`select public.${name}(${args.map((_, i) => `$${i + 1}`).join(",")}) value`, args); };
+      const sourceAttempts: string[] = [];
+      for (const source of [prepared, second]) {
+        await admin();
+        const bank = await bankPlan(source);
+        const selected = source === prepared ? bank.questions.slice(2, 6) : [bank.questions[2]!, bank.questions[6]!, bank.questions[3]!, bank.questions[4]!];
+        const questions = selected.map((q, i) => ({ ...q, base_order_index: i + 1 }));
+        const assignment = await scalar<string>("select public.create_assignment_with_delivery_v7('가짜 공통 원키 오답',$1::uuid,$2::uuid[],4,100::smallint,300,80::smallint,false,null,'fixed',null,array[$3::uuid],'none',null,$4::jsonb) value", [source.datasetId, bank.units, learner, JSON.stringify(questions)]);
+        const prep = await rpc<{ preparationId: string; planHash: string }>("prepare_local_quiz_v1", [learner, assignment, device, null]);
+        const plan = localPhasePlanSchema.parse(await rpc("begin_local_quiz_v1", [learner, prep.preparationId, device, prep.planHash]));
+        sourceAttempts.push(plan.attemptId);
+        const answers = plan.items.map((q, i) => ({ id: q.id, order: i + 1, kind: "answer", choice: (q.correctChoiceIndex + (i === 0 || source === second && i === 1 ? 1 : 0)) % 4, openedMs: i * 100, elapsedMs: i * 100 }));
+        await new Promise(resolve => setTimeout(resolve, 310));
+        const receipt = localReceiptSchema.parse(await rpc("submit_local_quiz_phase_v1", [learner, plan.attemptId, plan.phase, device, plan.planHash, randomUUID(), answers, { reason: "answered", elapsedMs: 300 }]));
+        expect(receipt.result).toMatchObject({ state: "failed", finalized: true });
+      }
+      const selectionA = { mode: "direct", datasetId: prepared.datasetId, reviewLevels: [1, 2] };
+      const sourceA = mistakePracticeSourceSchema.parse(await rpc("prepare_book_mistake_assignment_source_v1", [adminId, learner, selectionA]));
+      expect(sourceA.words).toHaveLength(1);
+      expect(sourceA.words[0]!.sourceAttemptId).toBe(sourceAttempts[0]);
+      expect(sourceA.words[0]!.latestDatasetId).toBe(originalDataset);
+      const selection = { ...selectionA, datasetId: second.datasetId };
+      const source = mistakePracticeSourceSchema.parse(await rpc("prepare_book_mistake_assignment_source_v1", [adminId, learner, selection]));
+      expect(source.words).toHaveLength(2);
+      expect(new Set(source.words.map(w => w.latestDatasetId))).toEqual(new Set([originalDataset, extraDataset]));
+      await db.exec("reset role");
+      const questions = await Promise.all(source.words.map(async word => {
+        const voice = await scalar<{ target: unknown; choices: unknown[] }>("select aq.composition_pronunciation_snapshot value from public.quiz_questions q join private.assignment_question_contents_v1 aq on aq.id=q.assignment_question_id where q.id=$1", [word.sourceQuestionId]);
+        return { ...word.frozenQuestion, wordKey: word.wordKey, meaningKey: word.meaningKey,
+        episodeId: word.episodeId, sourceQuestionId: word.sourceQuestionId, sourcePhase: word.sourcePhase, sourceContentHash: word.sourceContentHash,
+        pronunciation: voice.target, choicePronunciations: voice.choices, choiceSources: [], bankIndex: 0 }; }));
+      const batch = { studentId: learner, selection, sourceHash: source.sourceHash, audienceMode: "single", gradeConfirmed: true,
+        settings: { questionCount: 2, englishToKoreanRatio: 100, timingMode: "none", timeLimitSeconds: null, questionTimeLimitSeconds: null,
+          passingScore: 80, retryEnabled: false, retryPassingScore: null, title: "가짜 원키 오답 배정", questionOrderMode: "fixed", availableFrom: null, availableUntil: null },
+        questions, banks: [{ index: 0, questionCount: 2, englishToKoreanRatio: 100, timeLimitSeconds: null }] };
+      const saved = await rpc<{ assignmentId: string }[]>("create_book_mistake_assignments_v1", [adminId, randomUUID(), hash(JSON.stringify(batch)), JSON.stringify([batch])]);
+      expect(saved).toHaveLength(1);
+      const reviewPrep = await rpc<{ preparationId: string; planHash: string }>("prepare_local_quiz_v1", [learner, saved[0]!.assignmentId, device, null]);
+      const reviewPlan = localPhasePlanSchema.parse(await rpc("begin_local_quiz_v1", [learner, reviewPrep.preparationId, device, reviewPrep.planHash]));
+      await new Promise(resolve => setTimeout(resolve, 110));
+      await rpc("submit_local_quiz_phase_v1", [learner, reviewPlan.attemptId, reviewPlan.phase, device, reviewPlan.planHash, randomUUID(),
+        reviewPlan.items.map((q, i) => ({ id: q.id, order: i + 1, kind: "answer", choice: (q.correctChoiceIndex + 1) % 4, openedMs: i * 100, elapsedMs: i * 100 })),
+        { reason: "answered", elapsedMs: 100 }]);
+      const nextSource = mistakePracticeSourceSchema.parse(await rpc("prepare_book_mistake_assignment_source_v1", [adminId, learner, selection]));
+      expect(nextSource.words).toHaveLength(2);
+      expect(nextSource.words.every(w => w.sourceAttemptId === reviewPlan.attemptId)).toBe(true);
+      await db.exec("reset role; set constraints all immediate");
+      expect(await scalar("select jsonb_agg(to_jsonb(e) order by id) value from public.vocab_entries e")).toEqual(beforeWords);
+      expect(await scalar("select jsonb_build_array((select count(*) from private.vocabulary_learning_value_versions),(select count(*) from private.vocabulary_learning_value_bindings)) value")).toEqual(beforeValues);
+    } finally { await db.exec("rollback"); await admin(); }
+  }, 30_000);
   it("preserves shared selections through real wrong answers, notebook assignment, and study reads", async () => {
     type Study = { entryId: number; definition: string | null; example: string | null; exampleKo?: string | null; compositionPronunciation?: unknown; notebookPronunciation?: unknown };
     type Wrong = { key: string; latestVocabEntryId: number; latestQuestionId: string; studySource: Study };

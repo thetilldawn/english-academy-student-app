@@ -8,7 +8,7 @@ import { createFinalSchemaDatabase } from "@/test-support/final-schema-database"
 import { EMPTY_LIBRARY_FILTERS, libraryCatalogSchema, libraryCommandResultSchema } from "@/features/wordbook-compositions/contracts/library";
 import { compositionQuestionInputSchema, compositionStepSchema } from "@/features/wordbook-compositions/contracts/library-materialization";
 
-const migration = "20261003235000_share_composition_assignment_hashes.sql";
+const migration = "20261004083102_reuse_original_vocabulary_keys_in_selections.sql";
 const adminId = "a9100000-0000-4000-8000-000000000001";
 const studentId = "a9100000-0000-4000-8000-000000000002";
 const project = "wojxpruvbjzbhrpmsbuy";
@@ -115,7 +115,7 @@ describe.sequential("배정의 두 공용 확인값을 중복 저장하지 않�
   }
   async function snapshot() {
     await owner();
-    const tables = ["public.assignments", "public.assignment_students", "public.assignment_units", "public.assignment_questions", "private.vocabulary_question_content_versions", "private.assignment_vocabulary_meaning_refs", "private.vocabulary_question_meaning_versions", "public.audit_events", "private.quiz_attempt_preparations", "private.local_quiz_preparations"];
+    const tables = ["public.vocab_entries", "private.vocabulary_composition_entries", "private.vocabulary_composition_items", "private.vocabulary_library_scopes", "private.vocabulary_library_scope_rows", "public.assignments", "public.assignment_students", "public.assignment_units", "public.assignment_questions", "private.vocabulary_question_content_versions", "private.assignment_vocabulary_meaning_refs", "private.vocabulary_question_meaning_versions", "public.audit_events", "private.quiz_attempt_preparations", "private.local_quiz_preparations"];
     const result: Record<string, unknown> = {};
     for (const table of tables) result[table] = await scalar(`select coalesce(jsonb_agg(to_jsonb(r) order by to_jsonb(r)::text),'[]') value from ${table} r`);
     return result;

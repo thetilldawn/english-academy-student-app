@@ -3007,6 +3007,11 @@
       "flow": "student-quiz-attempt"
     },
     {
+      "path": "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
       "path": "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
@@ -7485,7 +7490,8 @@
           "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
           "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
           "supabase/migrations/20261004050000_stop_duplicate_local_quiz_state.sql",
-          "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql"
+          "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
+          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7573,7 +7579,9 @@
           "src/lib/database/reviewed-resource-archive.integration.test.ts",
           "src/lib/database/local-quiz-receipt-storage.integration.test.ts",
           "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
-          "src/features/quiz-player/server/quiz-ready-http.test.ts"
+          "src/features/quiz-player/server/quiz-ready-http.test.ts",
+          "src/lib/database/vocabulary-composition-questions.integration.test.ts",
+          "src/lib/database/composition-assignment-hash-sharing.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8290,7 +8298,8 @@
           "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
           "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
           "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
-          "supabase/migrations/20261004000000_bound_template_search_document_reads.sql"
+          "supabase/migrations/20261004000000_bound_template_search_document_reads.sql",
+          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -8451,7 +8460,8 @@
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
-          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql"
+          "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
+          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql"
         ],
         "cacheStreaming": [
           "src/app/api/student/wrong-words/route.ts",
@@ -8492,7 +8502,8 @@
           "src/features/session/controller/student-private-cache-events.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
           "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
-          "src/lib/database/historical-learning-migration.integration.test.ts"
+          "src/lib/database/historical-learning-migration.integration.test.ts",
+          "src/lib/database/vocabulary-composition-questions.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8637,7 +8648,8 @@
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
-          "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql"
+          "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql",
+          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql"
         ],
         "cacheStreaming": [
           "src/features/quiz-player/server/practice-http.ts",
@@ -8678,7 +8690,8 @@
           "src/features/quiz-player/domain/mistake-practice-plan.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
           "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
-          "src/lib/database/practice-completion-sync.integration.test.ts"
+          "src/lib/database/practice-completion-sync.integration.test.ts",
+          "src/lib/database/vocabulary-composition-questions.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8784,7 +8797,8 @@
           "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
           "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
-          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql"
+          "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql"
         ],
         "cacheStreaming": [
           "src/features/assignments/controller/use-notebook-assignment.ts",
@@ -8804,7 +8818,9 @@
           "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
           "src/features/assignments/domain/mistake-assignment-banks.test.ts",
           "src/lib/database/vocabulary-mistake-episodes.integration.test.ts",
-          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts"
+          "src/lib/database/vocabulary-mistake-legacy-boundary.integration.test.ts",
+          "src/lib/database/vocabulary-composition-questions.integration.test.ts",
+          "src/lib/database/composition-assignment-hash-sharing.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

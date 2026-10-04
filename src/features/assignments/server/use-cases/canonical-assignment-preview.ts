@@ -213,7 +213,9 @@ export async function resolveCanonicalBulkAssignmentPreview(
   };
   const availableCount = eligible.length;
   const countBreakdown = ready && !planningError ? checkedAssignmentCountBreakdown({
-    sourceCount: await loadSelectedVocabularyRowCount(plan.datasetId, selectedUnits.map(unit => unit.id)),
+    sourceCount: planning.dataset?.questionBankKind === "vocabulary_composition_v1"
+      ? selectedUnits.reduce((count, unit) => count + unit.entryCount, 0)
+      : await loadSelectedVocabularyRowCount(plan.datasetId, selectedUnits.map(unit => unit.id)),
     candidateCount: targetCandidates(candidates).length,
     activeReviewExcludedCount: 0,
     directionExcludedCount: targetCandidates(candidates).length - availableCount,

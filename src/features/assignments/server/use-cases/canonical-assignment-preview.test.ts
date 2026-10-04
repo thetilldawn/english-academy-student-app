@@ -21,7 +21,7 @@ beforeEach(() => { vi.clearAllMocks(); mocks.count.mockResolvedValue(null); mock
 describe("composition scope and paginated candidates", () => {
   const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
   function setup(size = 12, pageCap = 1000) {
-    const units = [0, 1, 2].map(i => ({ id: id(100 + i), label: `가짜 ${i + 1}번`, sortIndex: i + 1 }));
+    const units = [0, 1, 2].map(i => ({ id: id(100 + i), label: `가짜 ${i + 1}번`, sortIndex: i + 1, entryCount: Math.max(0, Math.min(Math.ceil(size / 3), size - i * Math.ceil(size / 3))) }));
     const input = request(); input.questionMode = "book_meaning_choice"; input.englishToKoreanRatio = 100;
     input.commonPlan = { ...input.commonPlan, datasetId: id(10), orderedUnitIds: units.map(u => u.id), distribution: "split", splitBasis: "range_unit",
       rangeUnitCounts: [1], unitAllocationRule: { schemaVersion: 1, mode: "same", unitsPerSession: 1, weekdayUnitsPerSession: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 } },
@@ -44,6 +44,8 @@ describe("composition scope and paginated candidates", () => {
     const { input, units, rpc } = setup();
     const split = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
     expect(split.preview.items[0]).toMatchObject({ available: true, totalAvailableQuestionCount: 12, scheduledQuestionCount: 12, remainingQuestionCount: 0 });
+    expect(split.preview.items[0]!.countBreakdown?.sourceCount).toBe(12);
+    expect(mocks.count).not.toHaveBeenCalled();
     expect(split.canonicalPlansByStudent.get("fake-student")!.map(rows => rows.map(r => r.id))).toEqual([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]);
     expect(rpc.mock.calls.every(([, args]) => args.p_unit_ids.length === 1)).toBe(true);
     input.commonPlan.splitBasis = "question_count"; input.commonPlan.distribution = "repeat"; input.commonPlan.sessions = [{ unitIds: units.map(u => u.id), availableFrom: null, availableUntil: null }];
