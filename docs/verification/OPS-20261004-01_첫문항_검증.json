@@ -1,0 +1,56 @@
+{
+  "work": "OPS-20261004-01",
+  "kind": "assignment",
+  "rows": 1,
+  "archiveBytes": 2810,
+  "archiveSha256": "6e4f24067ef3e29c28512ba5b15de420bc680fc8835fe04898da5b5515e6cd68",
+  "externalBackupDirectory": "C:/Users/임성열/AppData/Local/EnglishAcademyBackups/OPS-20261004-01",
+  "fileAccessVerified": true,
+  "preparedAt": "2026-10-04T03:56:41.70382+00:00",
+  "stages": [
+    {
+      "action": "compact",
+      "at": "2026-10-04T03:59:35.264617+00:00",
+      "rows": 1,
+      "changed": 1,
+      "idempotent": true,
+      "preservedGroups": 9,
+      "hasReference": true,
+      "physicalHash": "2a5a05eff2259c5cc0c4ea0719e1e176eac6ce5b6da6ea749a3e71750e6cf7db",
+      "visibleHash": "f12cd70846e40eb0c54b3524378c9a148ddd455eb096a1d5657888bcba627508",
+      "identityHash": "006e188facf9a42758d1937bd3e2d734a51be64ed2a6e604256ac34221260ff4",
+      "meaningHash": "6526f7e4a1eda383daa363ce8480ec68c007b6cdb95db9a424c463241eb64b4c",
+      "databaseBytes": 784321683
+    },
+    {
+      "action": "restore",
+      "at": "2026-10-04T03:59:37.678207+00:00",
+      "rows": 1,
+      "changed": 1,
+      "idempotent": true,
+      "preservedGroups": 9,
+      "hasReference": true,
+      "physicalHash": "115b430187a80012473ca3feea142a8c97af7082e4aedddfde71437c87418149",
+      "visibleHash": "f12cd70846e40eb0c54b3524378c9a148ddd455eb096a1d5657888bcba627508",
+      "identityHash": "006e188facf9a42758d1937bd3e2d734a51be64ed2a6e604256ac34221260ff4",
+      "meaningHash": "6526f7e4a1eda383daa363ce8480ec68c007b6cdb95db9a424c463241eb64b4c",
+      "databaseBytes": 784321683
+    },
+    {
+      "action": "compact",
+      "at": "2026-10-04T03:59:40.111994+00:00",
+      "rows": 1,
+      "changed": 1,
+      "idempotent": true,
+      "preservedGroups": 9,
+      "hasReference": true,
+      "physicalHash": "2a5a05eff2259c5cc0c4ea0719e1e176eac6ce5b6da6ea749a3e71750e6cf7db",
+      "visibleHash": "f12cd70846e40eb0c54b3524378c9a148ddd455eb096a1d5657888bcba627508",
+      "identityHash": "006e188facf9a42758d1937bd3e2d734a51be64ed2a6e604256ac34221260ff4",
+      "meaningHash": "6526f7e4a1eda383daa363ce8480ec68c007b6cdb95db9a424c463241eb64b4c",
+      "databaseBytes": 784321683
+    }
+  ],
+  "studentAnswerSubmissions": 0,
+  "productionBackupsExist": true
+}
