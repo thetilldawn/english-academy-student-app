@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-03T18:58:21.641Z",
+  "id": "dpl_6uHqhtGfb6yrDHKx8dZp9Nwk7Qqq",
+  "url": "english-academy-student-cpttqyc30-thetilldawn-3859s-projects.vercel.app",
+  "sha": "1e292900e92137368e6ff602551812aa3d7d8b5f",
+  "branch": "codex/m10-production-bridge-20261004",
+  "target": "production",
+  "readyState": "READY",
+  "autoAssignCustomDomains": false,
+  "checkedAt": "2026-10-03T19:27:51.920Z",
+  "alias": [
+    "english-academy-student-app-thetilldawn-3859s-projects.vercel.app",
+    "english-academy-student-a-git-4ff80a-thetilldawn-3859s-projects.vercel.app"
+  ],
+  "aliasAssigned": true,
+  "builds": []
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "errors",
+    "at": "2026-10-04T03:20:41.966Z",
+    "deployment": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
+    "since": "2026-10-04T03:16:00Z",
+    "exitCode": 0,
+    "count": 0,
+    "truncatedAt100": false
+  },
+  {
+    "name": "server-errors",
+    "at": "2026-10-04T03:20:46.074Z",
+    "deployment": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
+    "since": "2026-10-04T03:16:00Z",
+    "exitCode": 0,
+    "count": 0,
+    "truncatedAt100": false
+  }
+]

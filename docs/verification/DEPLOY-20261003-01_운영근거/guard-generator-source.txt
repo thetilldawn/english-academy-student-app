@@ -1,0 +1,125 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+const folder='.codex-tmp/DEPLOY-20261003-01/transition/';
+const contract=JSON.parse(fs.readFileSync(folder+'function-contract.json','utf8'));
+const expectedFunctions=contract.changed.map(c=>({schema:c.before.schema,name:c.before.name,args:c.before.args,old_hash:c.before.body_md5,new_hash:c.after.body_md5,old_language:c.before.language,new_language:c.after.language,old_security:c.before.security_definer,new_security:c.after.security_definer,old_volatility:c.before.volatility,new_volatility:c.after.volatility}));
+const dynamicNullChecks={assert_assignment_question_body_v1:['q.prompt is null','q.choices is null'],assert_exam_use_question_body_v1:['q.headword_snapshot is null','q.primary_meaning_snapshot is null','q.pronunciation_snapshot is null','q.choice_dictionary_snapshots is null']};
+function permutations(items){return items.length<2?[items]:items.flatMap((item,index)=>permutations(items.filter((_,i)=>i!==index)).map(rest=>[item,...rest]));}
+const bodyForms=[];
+function allowedBodyHashes(c){
+ const expected=dynamicNullChecks[c.name];if(c.schema!=='private'||!expected)return [c.body_md5];
+ assert.equal(c.args,c.name==='assert_assignment_question_body_v1'?'q assignment_questions':'q assignment_question_exam_use_snapshot');
+ assert.equal(typeof c.body,'string');assert.equal(createHash('md5').update(c.body).digest('hex'),c.body_md5);
+ const prefix='declare failures text[]; begin if ',suffix=" then raise exception 'question_body_not_null'";
+ assert(c.body.startsWith(prefix));const end=c.body.indexOf(suffix,prefix.length);assert(end>prefix.length);
+ const terms=c.body.slice(prefix.length,end).split(' or ');assert.deepEqual([...terms].sort(),[...expected].sort());
+ const forms=permutations(terms).map(order=>({schema:c.schema,name:c.name,args:c.args,order,body:prefix+order.join(' or ')+c.body.slice(end)}));
+ for(const form of forms){form.md5=createHash('md5').update(form.body).digest('hex');bodyForms.push(form);}
+ const hashes=forms.map(x=>x.md5);assert.equal(new Set(hashes).size,c.name==='assert_assignment_question_body_v1'?2:24);return hashes;
+}
+const addedFunctions=contract.added.map(c=>({schema:c.schema,name:c.name,args:c.args,body_md5:c.body_md5,body_md5s:allowedBodyHashes(c),language:c.language,security_definer:c.security_definer,volatility:c.volatility,acl:c.acl,config:c.config,result:c.result}));
+assert.equal(expectedFunctions.length,99);assert.equal(addedFunctions.length,237);
+const newColumns=JSON.parse(fs.readFileSync(folder+'local-result.json','utf8')).newColumnsAllNull;
+const newTables=JSON.parse(fs.readFileSync(folder+'local-result.json','utf8')).newTableCounts.map(({count,...table})=>table);
+assert.equal(newColumns.length,10);assert.equal(newTables.length,46);
+const json=(x)=>"'"+JSON.stringify(x).replaceAll("'","''")+"'::jsonb";
+const beforeSql=`
+set local search_path=public;
+set local lock_timeout='5s';
+set local statement_timeout='120s';
+set local timezone='UTC';
+create temporary table m10_clock on commit drop as select transaction_timestamp() started;
+create temporary table m10_allowed_functions on commit drop as select * from jsonb_to_recordset(${json(expectedFunctions)}) as x(schema text,name text,args text,old_hash text,new_hash text,old_language text,new_language text,old_security boolean,new_security boolean,old_volatility text,new_volatility text);
+create temporary table m10_added_functions on commit drop as select * from jsonb_to_recordset(${json(addedFunctions)}) as x(schema text,name text,args text,body_md5 text,body_md5s text[],language text,security_definer boolean,volatility text,acl text,config jsonb,result text);
+create temporary table m10_old_functions on commit drop as select p.oid,n.nspname schema,p.proname name,pg_get_function_identity_arguments(p.oid) args,to_jsonb(p) metadata,p.prosrc body from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private','word_index');
+create temporary table m10_columns on commit drop as select c.oid,n.nspname schema,c.relname name,array_agg(a.attname::text order by a.attnum) columns from pg_class c join pg_namespace n on n.oid=c.relnamespace join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped where c.relkind='r' and n.nspname in ('public','private','word_index','cron') group by c.oid,n.nspname,c.relname;
+create temporary table m10_original_policy on commit drop as select to_jsonb(p) metadata from pg_policy p where polrelid in (select oid from m10_columns);
+create temporary table m10_original_table_security on commit drop as select c.oid,c.relrowsecurity,c.relforcerowsecurity,c.relacl,c.relowner from pg_class c where c.oid in (select oid from m10_columns);
+create temporary table m10_catalog_expected on commit drop as select cat.dataset_id,cat.metadata||jsonb_build_object('school',t.metadata->'school','audience',case when t.metadata->>'school' is null then 'common' else 'school' end,'purpose',null,'semester',t.metadata->'semester','templateMetadata',t.metadata,'templateKind',null) expected from public.vocab_dataset_catalog cat join private.vocabulary_compositions c on c.dataset_id=cat.dataset_id join private.vocabulary_library_versions v on v.id=c.version_id join private.vocabulary_library_templates t on t.id=v.template_id where cat.metadata is distinct from cat.metadata||jsonb_build_object('school',t.metadata->'school','audience',case when t.metadata->>'school' is null then 'common' else 'school' end,'purpose',null,'semester',t.metadata->'semester','templateMetadata',t.metadata,'templateKind',null);
+create temporary table m10_jobs_expected on commit drop as select j.jobid,j.jobname,j.schedule,j.database,j.username,j.command from cron.job j join (values
+('english-academy-finalize-missed-assignments','selectpublic.finalize_missed_assignments(null,250);'),
+('english-academy-finalize-stale-attempts','selectprivate.run_stale_quiz_attempt_maintenance_v1(10,25,1000);'),
+('english-academy-expire-review-drafts','selectprivate.run_expired_review_draft_maintenance_v1(10,50,10,1000);'),
+('english-academy-materialize-ready-vocab-queues','selectprivate.run_ready_vocab_queue_maintenance_v1(2,1000);')) expected(name,command) on j.jobname=expected.name where j.username='postgres' and j.database=current_database() and regexp_replace(j.command,'\\s','','g')=expected.command;
+create temporary table m10_hashes(table_oid oid primary key,row_count bigint,content_hash text) on commit drop;
+do $guard$
+declare t record;cols text;cnt bigint;h text;
+begin
+ if current_setting('transaction_isolation')<>'repeatable read' then raise exception 'm10_snapshot_isolation_required';end if;
+ perform 1 from private.quiz_start_control where paused=true for share;
+ if not found then raise exception 'm10_new_starts_not_paused';end if;
+ if (select count(*) from m10_allowed_functions)<>(select count(*) from m10_allowed_functions a join m10_old_functions p on p.schema=a.schema and p.name=a.name and p.args=a.args where md5(p.body)=a.old_hash and (select lanname from pg_language where oid=(p.metadata->>'prolang')::oid)=a.old_language and (p.metadata->>'prosecdef')::boolean=a.old_security and p.metadata->>'provolatile'=a.old_volatility) then raise exception 'm10_function_baseline_drift';end if;
+ if exists(select 1 from m10_added_functions a join m10_old_functions p on p.schema=a.schema and p.name=a.name and p.args=a.args) then raise exception 'm10_function_already_exists';end if;
+ if (select paused from private.quiz_start_control) is distinct from true then raise exception 'm10_new_starts_not_paused';end if;
+ for t in select * from m10_columns loop
+  select string_agg(format('t.%I',x),',' order by n) into cols from unnest(t.columns) with ordinality as u(x,n);
+  if t.schema='public' and t.name='vocab_dataset_catalog' then
+   execute format('select count(*),md5(coalesce(string_agg(h,'''' order by h),'''')) from (select md5((case when e.dataset_id is null then to_jsonb(r) else to_jsonb(r)||jsonb_build_object(''metadata'',e.expected,''updated_at'',c.started) end)::text) h from (select %s from %I.%I t) r left join pg_temp.m10_catalog_expected e on e.dataset_id=r.dataset_id cross join pg_temp.m10_clock c)s',cols,t.schema,t.name) into cnt,h;
+  else
+   execute format('select count(*),md5(coalesce(string_agg(h,'''' order by h),'''')) from (select md5(to_jsonb(r)::text) h from (select %s from %I.%I t)r)s',cols,t.schema,t.name) into cnt,h;
+  end if;
+  insert into m10_hashes values(t.oid,cnt,h);
+ end loop;
+end;$guard$;
+`;
+const afterSql=`
+set local search_path=public;
+do $guard$
+declare t record;old_fn record;new_fn record;a record;cols text;cnt bigint;h text;expected jsonb;actual jsonb;
+begin
+ if exists(select 1 from m10_original_table_security b left join pg_class c on c.oid=b.oid where c.oid is null or c.relrowsecurity is distinct from b.relrowsecurity or c.relforcerowsecurity is distinct from b.relforcerowsecurity or c.relacl is distinct from b.relacl or c.relowner is distinct from b.relowner) then raise exception 'm10_table_security_changed';end if;
+ for t in select c.*,b.row_count,b.content_hash from m10_columns c join m10_hashes b on b.table_oid=c.oid loop
+  if to_regclass(format('%I.%I',t.schema,t.name))::oid is distinct from t.oid then raise exception 'm10_original_table_changed: %.%',t.schema,t.name;end if;
+  select string_agg(format('t.%I',x),',' order by n) into cols from unnest(t.columns) with ordinality as u(x,n);
+  execute format('select count(*),md5(coalesce(string_agg(h,'''' order by h),'''')) from (select md5(to_jsonb(r)::text) h from (select %s from %I.%I t)r)s',cols,t.schema,t.name) into cnt,h;
+  if cnt<>t.row_count or h is distinct from t.content_hash then raise exception 'm10_original_data_changed: %.%',t.schema,t.name;end if;
+ end loop;
+ for old_fn in select * from m10_old_functions loop
+  select * into a from m10_allowed_functions x where x.schema=old_fn.schema and x.name=old_fn.name and x.args=old_fn.args;
+  expected:=old_fn.metadata;
+  if found then
+   expected:=expected||jsonb_build_object('prosrc',(select prosrc from pg_proc where oid=old_fn.oid),'prolang',(select oid from pg_language where lanname=a.new_language),'prosecdef',a.new_security,'provolatile',a.new_volatility);
+   if md5((select prosrc from pg_proc where oid=old_fn.oid)) is distinct from a.new_hash then raise exception 'm10_function_body_mismatch: %.%',old_fn.schema,old_fn.name;end if;
+  end if;
+  select to_jsonb(f) into actual from pg_proc f where f.oid=old_fn.oid;
+  if actual is distinct from expected then raise exception 'm10_function_metadata_changed: %.%',old_fn.schema,old_fn.name;end if;
+ end loop;
+ if (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private','word_index') and not exists(select 1 from m10_old_functions b where b.oid=p.oid))<>237 then raise exception 'm10_new_function_count';end if;
+ for a in select * from m10_added_functions loop
+  select p.*,l.lanname language into new_fn from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang where n.nspname=a.schema and p.proname=a.name and pg_get_function_identity_arguments(p.oid)=a.args;
+  if not found or (md5(new_fn.prosrc)=any(a.body_md5s)) is distinct from true or new_fn.language<>a.language or new_fn.prosecdef<>a.security_definer or new_fn.provolatile<>a.volatility or new_fn.proacl::text is distinct from a.acl or to_jsonb(new_fn.proconfig) is distinct from a.config or pg_get_function_result(new_fn.oid)<>a.result then raise exception 'm10_new_function_contract: %.%',a.schema,a.name;end if;
+ end loop;
+ for a in select * from jsonb_to_recordset(${json(newColumns)}) as x(schema text,name text,column_name text,"column" text) loop
+  execute format('select count(*) from %I.%I where %I is not null',a.schema,a.name,a."column") into cnt;
+  if cnt<>0 then raise exception 'm10_new_column_backfilled: %.%.%',a.schema,a.name,a."column";end if;
+ end loop;
+ if (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind='r' and n.nspname in ('public','private','word_index') and not exists(select 1 from m10_columns b where b.oid=c.oid))<>46 then raise exception 'm10_new_table_count';end if;
+ for t in select * from jsonb_to_recordset(${json(newTables)}) as x(schema text,name text,rls boolean,force_rls boolean,acl text,owner text) loop
+  if not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname=t.schema and c.relname=t.name and c.relrowsecurity=t.rls and c.relforcerowsecurity=t.force_rls and c.relacl::text is not distinct from t.acl and pg_get_userbyid(c.relowner)=t.owner) then raise exception 'm10_new_table_security: %.%',t.schema,t.name;end if;
+  if t.name='operational_retention_policy' then
+   if (select count(*) from private.operational_retention_policy)<>1 or (select to_jsonb(p)-'changed_at'-'changed_by' from private.operational_retention_policy p) is distinct from '{"singleton":true,"version":1,"success_days":7,"failure_days":30,"session_days":7,"login_hours":24,"preparation_hours":24}'::jsonb then raise exception 'm10_retention_defaults';end if;
+  elsif t.name='operational_retention_jobs' then
+   if exists((select * from m10_jobs_expected except select * from private.operational_retention_jobs) union all (select * from private.operational_retention_jobs except select * from m10_jobs_expected)) then raise exception 'm10_retention_jobs_changed';end if;
+  else
+   execute format('select count(*) from %I.%I',t.schema,t.name) into cnt;
+   if cnt<>0 then raise exception 'm10_unexpected_new_data: %.%',t.schema,t.name;end if;
+  end if;
+ end loop;
+ if exists((select metadata from m10_original_policy except select to_jsonb(p) from pg_policy p where polrelid in (select oid from m10_columns)) union all (select to_jsonb(p) from pg_policy p where polrelid in (select oid from m10_columns) except select metadata from m10_original_policy)) then raise exception 'm10_existing_policy_changed';end if;
+end;$guard$;
+select started as transition_time from m10_clock;
+select jsonb_build_object('originalTables',(select count(*) from m10_columns),'originalRows',(select sum(row_count) from m10_hashes),'expectedCatalogChanges',(select count(*) from m10_catalog_expected),'existingFunctions',(select count(*) from m10_old_functions),'allowedFunctionChanges',(select count(*) from m10_allowed_functions),'addedFunctions',237,'newTables',46,'nullNewColumns',10,'newStartsPaused',(select paused from private.quiz_start_control),'preserved',true) m10_preservation;
+`;
+assert.equal(bodyForms.length,26);
+fs.writeFileSync(folder+'dynamic-null-body-forms.json',JSON.stringify(bodyForms,null,2)+'\n');
+for(const file of ['guarded-production.sql','guard-before.sql','guard-after.sql'])if(!fs.existsSync(folder+file.replace('.sql','-attempt1.sql')))fs.copyFileSync(folder+file,folder+file.replace('.sql','-attempt1.sql'));
+fs.writeFileSync(folder+'guard-before.sql',beforeSql);fs.writeFileSync(folder+'guard-after.sql',afterSql);
+const sources=JSON.parse(fs.readFileSync('docs/verification/DEPLOY-20261003-01_반영준비.json','utf8')).migrations.filter(m=>m.order!==23);
+const boundary=/^((?:\s|--[^\n]*(?:\n|$))*)begin\s*;\s*/i;
+const parts=sources.map(m=>{const source=fs.readFileSync(m.file,'utf8');assert.equal(createHash('sha256').update(source).digest('hex'),m.sha256);const raw=source.replaceAll('\r\n','\n').trim();assert.equal(boundary.test(raw),/commit\s*;$/i.test(raw));const body=boundary.test(raw)?raw.replace(boundary,'$1').replace(/\s*commit\s*;$/i,''):raw;assert(!/^\s*(commit|rollback)\s*;/mi.test(body));return "select set_config('search_path','public',true);\n"+body;});
+const combined='begin;\n'+parts.join('\n\n')+'\ncommit;';
+fs.writeFileSync(folder+'combined-raw.sql',combined);
+const guarded=combined.replace('begin;', 'begin isolation level repeatable read;\n'+beforeSql).replace(/commit;$/,afterSql+'\ncommit;');
+fs.writeFileSync(folder+'guarded-production.sql',guarded);
+console.log(JSON.stringify({bytes:Buffer.byteLength(guarded),sha256:createHash('sha256').update(guarded).digest('hex'),changed:expectedFunctions.length,added:addedFunctions.length}));

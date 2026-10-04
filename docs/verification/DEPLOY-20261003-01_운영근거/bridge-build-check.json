@@ -1,0 +1,22 @@
+{
+  "id": "dpl_6uHqhtGfb6yrDHKx8dZp9Nwk7Qqq",
+  "sha": "1e292900e92137368e6ff602551812aa3d7d8b5f",
+  "target": "production",
+  "checks": {
+    "prebuild": true,
+    "build": true,
+    "postbuild": false,
+    "offlineAssets": false
+  },
+  "buildLines": [
+    "> english-academy-student-app@0.1.0 prebuild",
+    "> node scripts/verify-preview-environment.mjs && node scripts/check-feature-map.mjs --verify && node scripts/check-work-records.mjs --phase format",
+    "> next build",
+    "✓ Compiled successfully in 27.4s",
+    "  Generating static pages using 1 worker (0/49) ...",
+    "  Generating static pages using 1 worker (12/49) \r",
+    "  Generating static pages using 1 worker (24/49) \r",
+    "  Generating static pages using 1 worker (36/49) \r",
+    "✓ Generating static pages using 1 worker (49/49) in 539ms"
+  ]
+}

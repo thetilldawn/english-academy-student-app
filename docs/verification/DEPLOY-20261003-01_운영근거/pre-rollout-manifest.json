@@ -1,9 +1,9 @@
 {
   "work": "DEPLOY-20261003-01",
-  "status": "production-applied-verification-complete",
+  "status": "production-transition-compatibility-validation-pending",
   "baseline": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
   "candidate": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
-  "recordedAt": "2026-10-04T03:38:11.589Z",
+  "recordedAt": "2026-10-03T16:40:44.485Z",
   "migrations": [
     {
       "order": 1,
@@ -11,13 +11,7 @@
       "name": "confirm_practice_completion",
       "sha256": "fc38921ed8f2429e9c9262539d1066f3213a5b305b84e45add793c390dc343a8",
       "preview": [],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": "Preview skipped original; reconciled by sync_practice_completion_confirmation, do not replay original"
     },
     {
@@ -31,13 +25,7 @@
           "version": "20261001141842"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -51,13 +39,7 @@
           "version": "20261001164430"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -71,13 +53,7 @@
           "version": "20261002013952"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -91,13 +67,7 @@
           "version": "20261002020012"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -111,13 +81,7 @@
           "version": "20261002030342"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -131,13 +95,7 @@
           "version": "20261002045831"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -151,13 +109,7 @@
           "version": "20261002085219"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -171,13 +123,7 @@
           "version": "20261002145332"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -191,13 +137,7 @@
           "version": "20261002152819"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -211,13 +151,7 @@
           "version": "20261002173220"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -231,13 +165,7 @@
           "version": "20261002184942"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -251,13 +179,7 @@
           "version": "20261002203618"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -271,13 +193,7 @@
           "version": "20261002220826"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -291,13 +207,7 @@
           "version": "20261002234601"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -311,13 +221,7 @@
           "version": "20261003011141"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -331,13 +235,7 @@
           "version": "20261003022128"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -351,13 +249,7 @@
           "version": "20261003055205"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -371,13 +263,7 @@
           "version": "20261003072444"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -391,13 +277,7 @@
           "version": "20261003083737"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -411,13 +291,7 @@
           "version": "20261003100356"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -431,13 +305,7 @@
           "version": "20261003104755"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": null
     },
     {
@@ -451,13 +319,7 @@
           "version": "20261003120312"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_transition_control",
-          "version": "20261003192946",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": "depends only on existing 20260906 start guard; preserved Preview fixture migrations excluded"
     },
     {
@@ -471,13 +333,7 @@
           "version": "20261003144923"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": "APP-20261003-12: student notification lock order; preserve original body metadata and no existing row changes"
     },
     {
@@ -491,13 +347,7 @@
           "version": "20261003161522"
         }
       ],
-      "production": [
-        {
-          "name": "m10_preserved_shared_vocabulary_local_quiz",
-          "version": "20261004031221",
-          "appliedAsPreservedBundle": true
-        }
-      ],
+      "production": [],
       "note": "APP-20261004-01; preserved actual151tables/826otherfunctions, exact18search strings"
     }
   ],
@@ -728,53 +578,45 @@
     "databaseBytes": 821292179
   },
   "production": {
-    "project": "xdxhswjgksukjmpbzqgz",
-    "checkedAt": "2026-10-04T03:18:49Z",
-    "functions": 828,
-    "databaseBytes": 784166035,
-    "newStartsPaused": false,
-    "resumedAt": "2026-10-04T03:17:36.545627Z",
+    "reader": {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "oid": "150162",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "definitionSha256": "e3c79fbf6711c75a0a3024148fac185fa42d1bf9978d0fa88d2908d50559cddf"
+    },
+    "readOnly": "on",
+    "checkedAt": "2026-10-03T10:58:48.687536+00:00",
     "migrations": [
       {
-        "name": "m10_preserved_transition_control",
-        "version": "20261003192946",
-        "sha256": "603057e9562fc53ef91a1c9158087f774ce2248de5021ee72f9f17fe81059d7b"
-      },
-      {
-        "name": "m10_preserved_shared_vocabulary_local_quiz",
-        "version": "20261004031221",
-        "sha256": "f8af4d659579d748595921eaefaa121d444ba55b02b498e83701a94d25022bb7",
-        "statementMd5": "729fef9726254e850eaf19744c1e6bbf",
-        "bytes": 1001293
+        "name": "prepare_quiz_before_start",
+        "version": "20261001040745"
       }
-    ]
+    ],
+    "databaseBytes": 780274835
   },
   "vercel": {
     "projectId": "prj_7xrnd3opFQ8Pz7wsQMkCHF0qzD21",
     "teamId": "team_XZeAoV0MqheWJHPvZNOSflMw",
     "name": "english-academy-student-app",
-    "currentProduction": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
+    "currentProduction": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
     "currentPreview": "dpl_GmgoCwXLt4Rj8iNjeC6xbxuxJQpM",
-    "observedCode": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+    "observedCode": "fa4357e8bff2e9eb98e10c2b520c907f667a943b",
     "buildOverride": false,
     "node": "24.x",
     "source": "logged-in browser project overview and build settings; git ls-remote exact repository URL",
-    "observedPreviewCode": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
-    "previousProduction": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
-    "productionToolbar": false,
-    "productionEnvironmentAdded": {
-      "key": "VERCEL_PREVIEW_FEEDBACK_ENABLED",
-      "value": "0"
-    }
+    "observedPreviewCode": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e"
   },
-  "openGates": [],
-  "productionWrites": {
-    "committedSchemaTransactions": 2,
-    "startControlTransactions": 4,
-    "newStudentAttempts": 0,
-    "studentAnswerSubmissions": 0,
-    "historicalBodyCompaction": 0
-  },
+  "openGates": [
+    "production baseline app compatibility bridge and old-to-new SQL transition",
+    "frozen per-operation production preservation manifest and actual concurrent answers",
+    "final exact fake-admin/dataset cleanup and before/after preservation"
+  ],
+  "productionWrites": 0,
   "previousCandidate": "39584224e9d3fc49237a85024d8ad1e9b1ca2721",
   "completedPrerequisites": [
     {
@@ -802,67 +644,13 @@
     ],
     "evidence": "DEPLOY-20261003-01_실제검토근거/manifest.json"
   },
-  "productionDeployments": {
-    "created": 3,
-    "canonicalPromotions": 2,
-    "final": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
-    "discardedToolbarBuild": "dpl_7PE2Lw5ak2DyQoPfQC4qiy2m85h3"
-  },
-  "previousProductionSnapshot": {
-    "reader": {
-      "acl": [
-        "postgres=X/postgres"
-      ],
-      "oid": "150162",
-      "owner": "postgres",
-      "config": [
-        "search_path=\"\""
-      ],
-      "definitionSha256": "e3c79fbf6711c75a0a3024148fac185fa42d1bf9978d0fa88d2908d50559cddf"
-    },
-    "readOnly": "on",
-    "checkedAt": "2026-10-03T10:58:48.687536+00:00",
-    "migrations": [
-      {
-        "name": "prepare_quiz_before_start",
-        "version": "20261001040745"
-      }
-    ],
-    "databaseBytes": 780274835
-  },
-  "executedProductionSequence": [
+  "productionDeployments": 0,
+  "proposedProductionSequence": [
     "independent #23 start-control and narrow transition reader preinstall; original metadata/rows preserved",
     "separate short transaction pause new starts",
     "tested baseline-compatible bridge app",
     "one transaction for remaining #1..22,#24,#25 with per-source reset and original-column preservation",
     "activate final candidate and verify reads",
     "separate short transaction resume new starts"
-  ],
-  "productionEvidence": "DEPLOY-20261003-01_운영근거/manifest.json",
-  "rolloutIncidents": [
-    {
-      "kind": "new-start-pause",
-      "from": "2026-10-03T19:34:50.781150Z",
-      "to": "2026-10-04T02:41:54.501589Z",
-      "seconds": 25623.720439,
-      "reason": "First full apply rolled back on exact generated-body hash mismatch; long call-to-execution gap cause unconfirmed",
-      "userImpact": "not established"
-    },
-    {
-      "kind": "new-start-pause",
-      "from": "2026-10-04T02:56:34.635606Z",
-      "to": "2026-10-04T03:17:36.545627Z",
-      "seconds": 1261.910021,
-      "reason": "Retry completed after interrupted tool response; actual migration readback verified before final promotion and resume",
-      "userImpact": "not established"
-    }
-  ],
-  "remainingSeparateWork": [
-    "M08-B actual historical-body backups/compaction/space recovery",
-    "M06 first log cleanup and scheduler activation",
-    "F01 patch toasts",
-    "F02 administrator ownership isolation",
-    "WORD missing pronunciation linkage",
-    "M09 remote load and monthly egress measurement"
   ]
 }

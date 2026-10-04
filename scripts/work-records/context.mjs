@@ -45,7 +45,7 @@ export function createContext(root) {
         registry.retiredPathOwners?.find((item) => item.path === file)?.owner ??
         (/^(?:scripts|docs|architecture)\//.test(file) || /(^|\/)AGENTS\.md$/.test(file) ||
           ["00_앱_인계서.md", "package.json", "package-lock.json"].includes(file) ||
-          /^(?:e2e|\.github\/workflows)\//.test(file) || /^[^/]+\.(?:[cm]?[jt]sx?|json)$/.test(file)
+          /^(?:e2e|test\/e2e|\.github\/workflows)\//.test(file) || /^[^/]+\.(?:[cm]?[jt]sx?|json)$/.test(file)
           ? "architecture-meta" : file.startsWith("public/") ? "app-shell" : null);
     },
     flowIdsForPath(file) { return getFlows().get(file) ?? []; },

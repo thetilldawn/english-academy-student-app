@@ -1,0 +1,28 @@
+[
+  {
+    "cleanup_preflight": {
+      "admin": {
+        "active": true,
+        "marker": "DEPLOY-20261003-01-fake-admin",
+        "user_id": "b6100000-0000-4000-8000-000000000001",
+        "banned_until": null
+      },
+      "dataset": {
+        "id": "b6100000-0000-4000-8000-000000000004",
+        "key": "m10-preview-fake-b610",
+        "active": true,
+        "status": "ready",
+        "metadata": {},
+        "assignable": true,
+        "catalog_metadata": {}
+      },
+      "entries": 4,
+      "students": {
+        "total": 33,
+        "not_deleted": 0
+      },
+      "quiz_attempts": 171,
+      "assignment_questions": 5787
+    }
+  }
+]

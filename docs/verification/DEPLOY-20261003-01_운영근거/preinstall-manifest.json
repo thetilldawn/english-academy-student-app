@@ -1,0 +1,24 @@
+{
+  "sha256": "603057e9562fc53ef91a1c9158087f774ce2248de5021ee72f9f17fe81059d7b",
+  "bytes": 9023,
+  "sources": [
+    {
+      "order": 23,
+      "file": "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
+      "name": "pause_new_assigned_quiz_attempts",
+      "sha256": "b8439c04248da8d30b5d239f9944de7a6f60a4c97cc3394b41bac5f10cd6e6c5",
+      "preview": [
+        {
+          "name": "pause_new_assigned_quiz_attempts",
+          "version": "20261003120312"
+        }
+      ],
+      "production": [],
+      "note": "depends only on existing 20260906 start guard; preserved Preview fixture migrations excluded"
+    },
+    {
+      "file": "../student-app-m10-bridge-20261004/supabase/migrations/20261004001500_add_transition_question_reader.sql",
+      "sha256": "cfa1df697f789ce86725881af1515c40eef874e84f4f524109f8993f85ebd480"
+    }
+  ]
+}

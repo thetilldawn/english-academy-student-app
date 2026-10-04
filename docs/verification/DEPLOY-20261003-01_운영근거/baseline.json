@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-03T18:49:26.968Z",
+  "id": "prj_7xrnd3opFQ8Pz7wsQMkCHF0qzD21",
+  "name": "english-academy-student-app",
+  "link": {
+    "type": "github",
+    "repo": "english-academy-student-app",
+    "org": "thetilldawn",
+    "repoId": 1315214177,
+    "productionBranch": "main"
+  },
+  "productionTarget": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+  "rootDirectory": null,
+  "buildCommand": null,
+  "installCommand": null,
+  "nodeVersion": "24.x",
+  "aliases": [
+    {
+      "domain": "english-academy-student-app.vercel.app",
+      "id": "cf15197576d73f145840496b6186242a4e0c78f4461cae49c381e23073688796eb1b933e6f960ab9de1c363a956a163ba5ed4617dcca9a6632b66677212dde28",
+      "deploymentId": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+      "redirect": null,
+      "gitBranch": null
+    }
+  ],
+  "lastAliasRequest": null,
+  "protection": {
+    "deploymentType": "all_except_custom_domains"
+  }
+}

@@ -1,0 +1,476 @@
+{
+  "originalTableCount": 145,
+  "originalRowsPreserved": true,
+  "allowedCatalogChangeCount": 1,
+  "rollbackPreserved": true,
+  "newColumnsAllNull": [
+    {
+      "schema": "private",
+      "name": "student_word_practice_questions",
+      "column": "content_version_id"
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_library_templates",
+      "column": "template_kind"
+    },
+    {
+      "schema": "public",
+      "name": "assignment_question_exam_use_snapshot",
+      "column": "content_version_id"
+    },
+    {
+      "schema": "public",
+      "name": "assignment_questions",
+      "column": "content_version_id"
+    },
+    {
+      "schema": "public",
+      "name": "assignment_review_targets",
+      "column": "meaning_key_snapshot"
+    },
+    {
+      "schema": "public",
+      "name": "assignment_review_targets",
+      "column": "mistake_episode_id"
+    },
+    {
+      "schema": "public",
+      "name": "quiz_questions",
+      "column": "content_version_id"
+    },
+    {
+      "schema": "public",
+      "name": "student_vocab_review_queue",
+      "column": "meaning_key_snapshot"
+    },
+    {
+      "schema": "public",
+      "name": "student_vocab_review_queue",
+      "column": "mistake_episode_id"
+    },
+    {
+      "schema": "public",
+      "name": "student_vocab_review_queue",
+      "column": "source_phase_snapshot"
+    }
+  ],
+  "newTableCounts": [
+    {
+      "schema": "private",
+      "name": "assignment_vocabulary_meaning_refs",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "assignment_vocabulary_new_questions",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "exam_use_occurrence_archive_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "exam_use_occurrence_archives",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "exam_use_occurrence_write_permits",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "exam_use_package_archive_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "exam_use_package_archives",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "exam_use_package_write_permits",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "historical_learning_migrations",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "historical_learning_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "historical_learning_write_permits",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "historical_question_migration_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "historical_question_migrations",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "historical_question_write_permits",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "local_quiz_phase_plans",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "local_quiz_phase_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "local_quiz_preparations",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "local_quiz_runs",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "notebook_question_origins_v2",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "operational_retention_holds",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "operational_retention_jobs",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 1
+    },
+    {
+      "schema": "private",
+      "name": "operational_retention_policy",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 1
+    },
+    {
+      "schema": "private",
+      "name": "operational_retention_state",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "quiz_preparation_compaction_checks",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "quiz_preparation_expirations",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "reviewed_bundle_archive_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "reviewed_bundle_archives",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "reviewed_bundle_write_permits",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "reviewed_evidence_objects",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "reviewed_resource_archive_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "reviewed_resource_archives",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "reviewed_resource_write_permits",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "student_vocabulary_meaning_states",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "student_vocabulary_versions",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_answer_receipts",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_composition_storage_formats",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_expired_answer_results",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_learning_value_bindings",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_learning_value_versions",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_legacy_question_baselines",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_legacy_state_baselines",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_phase_results",
+      "rls": false,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_question_content_versions",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_question_meaning_versions",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "vocabulary_result_policies",
+      "rls": false,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    },
+    {
+      "schema": "private",
+      "name": "worksheet_mistake_items",
+      "rls": true,
+      "force_rls": false,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "owner": "postgres",
+      "count": 0
+    }
+  ],
+  "elapsedMs": 679.1072000000004,
+  "sha256": "f8af4d659579d748595921eaefaa121d444ba55b02b498e83701a94d25022bb7"
+}

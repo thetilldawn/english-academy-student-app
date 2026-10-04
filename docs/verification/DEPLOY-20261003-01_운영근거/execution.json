@@ -1,0 +1,151 @@
+{
+  "searchPath": "public",
+  "sha256": "f8af4d659579d748595921eaefaa121d444ba55b02b498e83701a94d25022bb7",
+  "delegateSha256": "cfa1df697f789ce86725881af1515c40eef874e84f4f524109f8993f85ebd480",
+  "sources": [
+    {
+      "order": 1,
+      "file": "supabase/migrations/20261001113432_confirm_practice_completion.sql",
+      "sha256": "fc38921ed8f2429e9c9262539d1066f3213a5b305b84e45add793c390dc343a8",
+      "bodySha256": "64f2cd6f0a55e329604b5512ae4632ed89e7fad1697555837a58ec84610560aa"
+    },
+    {
+      "order": 2,
+      "file": "supabase/migrations/20261001132340_compact_vocabulary_learning_values.sql",
+      "sha256": "d680b3577d9baf9176d28d3ff61d3207769c5d266d0b49ca0691d4b2ac326f27",
+      "bodySha256": "b3d0e4894f60cc906b8d63bd91c75209177806ba904dd1835425344e5b0c94b5"
+    },
+    {
+      "order": 3,
+      "file": "supabase/migrations/20261001145444_share_vocabulary_question_content.sql",
+      "sha256": "3e195f7ea237a4ef42d2cdab144573f444b51296817074c8f5f8ef5b171b6b79",
+      "bodySha256": "56c60a55bc0c6b7c65036dbb1cb913cddbfe48ee84b4f6ee3e793f1c34bb61c2"
+    },
+    {
+      "order": 4,
+      "file": "supabase/migrations/20261002011000_track_vocabulary_mistake_episodes.sql",
+      "sha256": "0bcb3ad7fd42ee1c9ec820a1313e3b9ddc209b9e13a7bfa78294b02aa439b6cc",
+      "bodySha256": "14b76473983f23ab1ca0affed5d21b720b38cd55aeb85d6b758b6581064d5277"
+    },
+    {
+      "order": 5,
+      "file": "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
+      "sha256": "d81ef5ed1ce051deba049141a1fa24bc58c2081aca61d0d3ff14d17589d3a8c5",
+      "bodySha256": "fce679aaef7bd3ef3c58f04c0dfea1675fb32132f445002cd5193d00dcd5a648"
+    },
+    {
+      "order": 6,
+      "file": "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
+      "sha256": "6d36b38cff2e5e3dc5c0dcbffca58ec3ac6ff8f5e810bed08d55fda10b083e59",
+      "bodySha256": "1c0495e46f41a1bd1ccb345f09cbacd1f3437466120a9a7eff6b65f8e8a2cd5a"
+    },
+    {
+      "order": 7,
+      "file": "supabase/migrations/20261002040000_preserve_compact_vocabulary_results.sql",
+      "sha256": "78ebd8f0222ef900e36a12aadd388b63a45c1a62072419210dcb1b1607e9aff4",
+      "bodySha256": "a5109eff2c184fb75eb9aba5d48e4c59553ad4cbc663e63eadc45b5455134331"
+    },
+    {
+      "order": 8,
+      "file": "supabase/migrations/20261002060000_submit_local_quiz_phase_batches.sql",
+      "sha256": "65bb3a3ec1c527e8f9175a9c0fd90a2de472d126479ffe58785fca1f1cc49011",
+      "bodySha256": "c76cb4506c74e243855c753e653fe852f9b043de52ce993096cc5c6e7b3c9e67"
+    },
+    {
+      "order": 9,
+      "file": "supabase/migrations/20261002140634_retain_operational_logs_and_preparations.sql",
+      "sha256": "af3db832a99b36327586ef11ca66a0675045613dc285de477bbe6de4c94e5453",
+      "bodySha256": "9c174d54dd0e0f1f9dc005c4aa03f12a4c51b139075fc8c3a58f7588560503e8"
+    },
+    {
+      "order": 10,
+      "file": "supabase/migrations/20261002151801_validate_cron_retention_with_read_permissions.sql",
+      "sha256": "6f37cf30c870bcb820df4c65cd6629a9c9bfbe1b39cac37a5dea7f3e0b938461",
+      "bodySha256": "951960d2099550e420bec69c122fff567f1ffa526652e204164bbff816ff1bc7"
+    },
+    {
+      "order": 11,
+      "file": "supabase/migrations/20261002155950_classify_wordbook_templates.sql",
+      "sha256": "4bf364e8abc80c3a7504266feebc686cf7d89bd53d6bfe338c3551c3bddd81f7",
+      "bodySha256": "e941e63661593f4862792033423da286f23a8b61fc7d72254f88a72cc3831227"
+    },
+    {
+      "order": 12,
+      "file": "supabase/migrations/20261002190000_migrate_historical_question_bodies.sql",
+      "sha256": "64d6b57b9f001b53e549ababce192a9198992e51e0faa41ebaae953a8a04fd05",
+      "bodySha256": "169b2800ba7bde3f3d9104f137b2d25bc1406fb7442d1b98b300be4fd0f86ccc"
+    },
+    {
+      "order": 13,
+      "file": "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
+      "sha256": "1782965a78c2a933c73722d823c230188724ff115a0c95c5304ff5a6dd5207ba",
+      "bodySha256": "850f717a56d1dc2e18dc95ac2b1e26cd2ac33f7ce37e8f6c6331fa53c1abfcd5"
+    },
+    {
+      "order": 14,
+      "file": "supabase/migrations/20261003200000_archive_reviewed_source_bundles.sql",
+      "sha256": "d41ce8ff3e6c9a9c07ab575b9d90ed1ebf16cd0d2880f10be2805067a69bbc97",
+      "bodySha256": "03fe74241e2507f2960ef9d6cfee87cd40dbd8e8b7cea744f3e265e7fd943e38"
+    },
+    {
+      "order": 15,
+      "file": "supabase/migrations/20261003210000_share_reviewed_package_entries.sql",
+      "sha256": "4c83da3a6ece9a1a9fc6e0e0f0a149431569c552f571ac630bd995e3cbd3e985",
+      "bodySha256": "e96fc7ff522ff5e090ccaee4cedebe9ab5a3b4b2eeb85d5a9a73139c402d202f"
+    },
+    {
+      "order": 16,
+      "file": "supabase/migrations/20261003220000_share_reviewed_occurrence_entries.sql",
+      "sha256": "157b932d60b7a7c217a3677f7759817b2b797ad100550fd03b811a8dad56fb6b",
+      "bodySha256": "034d5ef16a658ef094a055e618302ec722d397472cd10b68883b83da90e7d79e"
+    },
+    {
+      "order": 17,
+      "file": "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
+      "sha256": "04fb85d6769d87ee6d826cc15831cac530d39b55710eceebc9107fd9f43e3fc2",
+      "bodySha256": "f3693a74547d794886806c9531c579587c06b4765afc941cb1311b09dd681b85"
+    },
+    {
+      "order": 18,
+      "file": "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
+      "sha256": "4fe0715962439c03956aed5f939a3745283aeab77c34871bce57ba0271b4fc3e",
+      "bodySha256": "71571833994b52106cb572389d47b04cdc56ca588619a91dc38109cb5a143d83"
+    },
+    {
+      "order": 19,
+      "file": "supabase/migrations/20261003234500_insert_composition_question_refs_directly.sql",
+      "sha256": "b0f49a50a1109c0413e7cc845a185178cd156c05bb46f8001bdde1377feb1030",
+      "bodySha256": "17b1b9b57889b3c6d258c34e7d114b1366417040844aaf0b6d66deb942d8c0a3"
+    },
+    {
+      "order": 20,
+      "file": "supabase/migrations/20261003235000_share_composition_assignment_hashes.sql",
+      "sha256": "23b08ce1e2368863592666974a0e538b23b9d1f7208acc603f34742e236770e3",
+      "bodySha256": "47bd9a7ce12c76066fbef32060e47016f9fd7187fc22b16cb8b5bb3a167f257c"
+    },
+    {
+      "order": 21,
+      "file": "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+      "sha256": "01c6d084bd629ddd721c7c79eb8c817937067db3af3bf056d3600ee8d9eed476",
+      "bodySha256": "25bac28cb406d8a1e77b5414e2b66dca4ffdfe06f51869f7cb65301581c6cadc"
+    },
+    {
+      "order": 22,
+      "file": "supabase/migrations/20261003235900_sync_practice_completion_confirmation.sql",
+      "sha256": "08174baf11db16cbb6574a150846c9f88d94461a1585b7c13d2536323f255d00",
+      "bodySha256": "68cd3911349ce46eb098b272c9c917295aae35557414b13fbb78cfec23cd3ff5"
+    },
+    {
+      "order": 24,
+      "file": "supabase/migrations/20261003235930_order_student_notification_locks.sql",
+      "sha256": "8a1a1aad356b3e4ec4feb49112a545b25ed39faa50ce47bc46700017263c3629",
+      "bodySha256": "f33543efa67286796cd0b17d74c21f942dceb2393305c178e59589bb0310ef4a"
+    },
+    {
+      "order": 25,
+      "file": "supabase/migrations/20261004000000_bound_template_search_document_reads.sql",
+      "sha256": "3d72914a773a858d822ffeb1670e5938e86b72b690fb162cc477a45acda0538c",
+      "bodySha256": "5bdb0678cd4117e81ab4d8b6f16bfa2e686f8ad9e35214118aff47c4791dbec7"
+    }
+  ]
+}

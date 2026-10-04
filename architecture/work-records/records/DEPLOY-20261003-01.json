@@ -3,7 +3,7 @@
   "id": "DEPLOY-20261003-01",
   "title": "유지보수 검토 배포와 운영 반영",
   "size": "full",
-  "gate": "design",
+  "gate": "verified",
   "guide": "docs/work-orders/DEPLOY-20261003-01.md",
   "baseline": "2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b",
   "owners": [
@@ -255,6 +255,318 @@
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "scripts/work-records/context.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영반영.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/.gitattributes",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/asset-read-cleanup.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/authenticated-read-check.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/baseline.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/before-tables.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/bridge-build-check.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/bridge-canonical-checks.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/bridge-deployment.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/bridge-promotion-readback.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/core-hashes-after.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/dynamic-null-body-forms.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/execution.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/final-resume.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/final2-build-check.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/final2-canonical-checks.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/final2-deployment.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/final2-promotion-readback.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/full-apply-intent.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/full-apply-response.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/full-apply2-intent.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/full-apply2-verified.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/full-rollback-and-resume.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/generated-contract-repair.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/guard-generator-source.txt",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/guarded-production.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/local-result.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/pause-result.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/pause2-result.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/post-state.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/pre-rollout-manifest.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/preinstall-guarded.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/preinstall-manifest.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/preinstall-verified.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/preview-auth-retired.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/preview-cleanup-before.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/preview-cleanup-result.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/preview-cleanup.sql",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/runtime-errors.jsonl",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/runtime-server-errors.jsonl",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/runtime-summary.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/security-advisors.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/staged-read-checks-final2.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/toolbar-production-result.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/transition-test-source.txt",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/transition-tests.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/manifest.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/record-tests.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/record-path-check.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/completion.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/DEPLOY-20261003-01_운영근거/changed-design.log",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
     }
   ],
   "requirements": [
@@ -347,7 +659,7 @@
       "owner": "engineering",
       "state": "resolved",
       "question": "코드/SQL 고정",
-      "answer": "호환 빌드 A 2dd0b54b7ca38ecf09e1f885e271d5050b1fd88b와 학생 알림 수리를 포함한 24SQL. 검사 도구 보완 뒤 B 고정. 두 배포의 실제 HTML/SW 해시 차이와 같은 시험 규격 확인",
+      "answer": "최종 코드51e01413cc9c5cbf3b4331a42ea74b424d3a731e와 25원본 SQL. #23+호환 읽기 선행 설치 후 나머지24원본을 보존 거래로 적용. 원본별 SHA와 두 실제 이력을 연결",
       "source": "M10 선행 검토"
     },
     {
@@ -355,7 +667,7 @@
       "owner": "engineering",
       "state": "resolved",
       "question": "선행 조건",
-      "answer": "새 시작 제어 검증 완료. Preview A/B 배포 후 실제 인증 흐름·같은 주소 B→A→B 검증. T1~T5 통과 전 운영 변경0",
+      "answer": "검토 인증/같은주소 호환 복귀 뒤 선행설치→새시작중지→호환앱→나머지SQL→최종앱→재개. 두 지정 동적함수의 초기 NULL OR 순열만 전체 본문 해시 허용; 나머지 보존/권한 검사는 그대로",
       "source": "독립 코드/환경 조사와 M10-T8"
     },
     {
@@ -365,6 +677,14 @@
       "question": "후속 경계",
       "answer": "토스트/관리자완전분리/개인초안·선택공유·발음업무 별도",
       "source": "사용자 F01/F02/WORD 확정 답변"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "실제 브라우저 검사 경로 소유 연결",
+      "answer": "기존 e2e와 test/e2e를 동일한 architecture-meta로 분류. 다른 경로/기록 형식/완료 검사 변경 없음",
+      "source": "APP-20261004-02에서 검증한 동일 보완; M10 최종 독립 기록 검토"
     }
   ],
   "impacts": {
@@ -410,7 +730,7 @@
     },
     "tests": {
       "status": "changed",
-      "reason": "제품 코드는 유지하며 고정 alias 안전 검사와 실제 신규 회차 제출·배포 교체 도구만 보완"
+      "reason": "제품은 유지하며 실제 인증/기기답/배포교체 검사 도구와 실제 test/e2e의 기록 소유 연결, 운영 보존 근거를 보완"
     }
   },
   "policies": {
@@ -602,5 +922,259 @@
       ]
     }
   ],
-  "verification": null
+  "verification": {
+    "fingerprint": "c2872777e2914e4ecda09f67c93f00241079acd522d4262e5d2475e1b57a5ca2",
+    "files": [
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "8a65a29f326db980184d1d1dd8e898f720e052243363bafbde22b37c220a7430"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "9220aea242cf0d92776ea8a67d37334d632b3029cf9b0a31759691a1b292b173"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "3a4e58c471c0c8f2f3139349f4cb06d8f6d9d25df974b45877ed323aef0c769c"
+      },
+      {
+        "path": "package.json",
+        "sha256": "270a813421b5be605a19b70f5a24a2a51d440429ea9e2ff6290a447d9c351c68"
+      },
+      {
+        "path": "playwright.config.mjs",
+        "sha256": "110d7486add82a536448e0fddbaf12cf67217b9208d0d536a4d9c3d5c3c69db0"
+      },
+      {
+        "path": "scripts/check-feature-map.mjs",
+        "sha256": "2ad96ff5c5f0e3e690a128eee90d24f6ad78a5bee650da42fcf7f43779d96e3b"
+      },
+      {
+        "path": "scripts/check-work-records.mjs",
+        "sha256": "b8a95754aa77e329ffd748ca91587996be221ea471a117ba816d0c61a0e2881f"
+      },
+      {
+        "path": "scripts/feature-map/change-impact.mjs",
+        "sha256": "a081f65b5915daf08e0e635c49e744a6b02ef480a46ae5ad0e2b63f203b71444"
+      },
+      {
+        "path": "scripts/feature-map/common.mjs",
+        "sha256": "69b9dad7ca7d05246233c00e0f10666486ed55890c120a6ebba7f496fb8130bc"
+      },
+      {
+        "path": "scripts/feature-map/flow-verification.mjs",
+        "sha256": "8cec86985fff2751e944ae60163c0f5ae8ab18e0a36981ae24eaebb66df4f0fd"
+      },
+      {
+        "path": "scripts/feature-map/import-graph.mjs",
+        "sha256": "82edb9b2bcc06ab69f6e7b545062e54a2b9b4363aa3e6dbc31a7298635622716"
+      },
+      {
+        "path": "scripts/feature-map/owner-output.mjs",
+        "sha256": "17d5ba87dc9b0796d84ca70703198e4bb8d150f56f0e3deda9e9c05fcc8ab187"
+      },
+      {
+        "path": "scripts/feature-map/ownership-catalog.mjs",
+        "sha256": "e88264dc3ecf42826152e060bad474a775fed1d66f6c7b5738352a7207235f76"
+      },
+      {
+        "path": "scripts/feature-map/runtime-flow.mjs",
+        "sha256": "9c2915e2b4be51b55840dbfda3ef8452f510412191980eeb4e914a5766317afc"
+      },
+      {
+        "path": "scripts/run-playwright-suite.mjs",
+        "sha256": "30380cc0cf47d7d97b59cc8fedf97cbc1bfbd94c89701d629af2c3bf6ef4310c"
+      },
+      {
+        "path": "scripts/verify-ui-architecture.mjs",
+        "sha256": "dd7b31f9017f71e0777596a794c7e841c52923966881534666614935a39ed880"
+      },
+      {
+        "path": "scripts/work-records/context.mjs",
+        "sha256": "1736d0934f948c34a5ad69e8b9fcc1cbe4c7929c994dee38886a6e3eb9116a5c"
+      },
+      {
+        "path": "scripts/work-records/evidence.mjs",
+        "sha256": "d95c7d886a03dd96fe3dfb7fb67579b719063aa870c0131da21ce0967904874e"
+      },
+      {
+        "path": "scripts/work-records/schema.mjs",
+        "sha256": "9c33b3ffd2e27ad73be3c16a5be4513d3b69837b42fac8c1d00aa5d4dad4e5cd"
+      },
+      {
+        "path": "scripts/work-records/validation.mjs",
+        "sha256": "e87a560e851311222590505233c53896348a20bb0f58c46066e15e91a98ddd82"
+      },
+      {
+        "path": "src/app/application-layer-boundaries.test.ts",
+        "sha256": "c3fbff0d6499cac6cb7d1fe515df9b188ffe66f8341cc0d02b9cb94055a91d98"
+      },
+      {
+        "path": "src/app/mobile-production-regression-ui-contract.test.ts",
+        "sha256": "cf577a5c06bcb7f305d93ff6e64aab763616026f9ad9f5717a26234ab2162e01"
+      },
+      {
+        "path": "src/app/preview-environment-contract.test.mjs",
+        "sha256": "d0185efa87e4906df970c921903569cea252982578c64f5cd3d34175aa0a6344"
+      },
+      {
+        "path": "src/app/server-architecture-ratchet.test.ts",
+        "sha256": "f689169488d158b9003b6e779df71cc0299b41b1265e344a8d248c66844431e8"
+      },
+      {
+        "path": "src/app/ui-architecture-ratchet.test.ts",
+        "sha256": "0157d6a24cb6a66dd4d0cb488aaa42a1d39b8266e29c2892475060f7f2d730ac"
+      },
+      {
+        "path": "src/app/work-records.test.mjs",
+        "sha256": "bd65c2f4ca62ca6d620b7f8982d6b0101490e1d85405b934e9c47c9c83c13a69"
+      },
+      {
+        "path": "src/design-system/architecture-boundary.test.ts",
+        "sha256": "4a7e637626250266989ba83e2aa14c9c89813d820491a2023d6ee0c796ef2fab"
+      },
+      {
+        "path": "src/features/assignments/architecture-boundary.test.ts",
+        "sha256": "8f5d79d3d04184c6fc171052e21205e7288af93507e7d05a486c29c7ed583cd3"
+      },
+      {
+        "path": "src/lib/services/regular-assignment-scope-contract.test.ts",
+        "sha256": "df05754c0933ff191b8d3aa7a5fd6cbeb71e07e3cda04e9f94ba532659c878b4"
+      },
+      {
+        "path": "src/test-support/module-boundary.test.ts",
+        "sha256": "d6dc252bef406aec356629a8c71dd3b1a8769e028f1a87e37b7991b0cfb2faa9"
+      },
+      {
+        "path": "src/test-support/module-boundary.ts",
+        "sha256": "88caa81a7f9e912cb0e3fc3667c0d82352e46f0999d61fd546597950ffc3b0c3"
+      },
+      {
+        "path": "src/test-support/preview-e2e-safety.test.ts",
+        "sha256": "36174b5b0432f9873e028f059417907be03bd72436bdbf14a3c7c0ecfa1b6afa"
+      },
+      {
+        "path": "src/test-support/server-architecture.ts",
+        "sha256": "fa5baed3795dffb7b7b9c1f6caa61726e9485981297b4777f88f2d22f50eb5b7"
+      },
+      {
+        "path": "test/e2e/authenticated/maintenance-compatibility.spec.ts",
+        "sha256": "405f431bf8154197e00410f6b14b1a771b37f1256d95b6e08d6798add554cdc4"
+      },
+      {
+        "path": "test/e2e/authenticated/maintenance-local-quiz.spec.ts",
+        "sha256": "171e62a01de4c6d3a195de74196034f4ce1f53b2dcb4862877dfef83a01bd30e"
+      },
+      {
+        "path": "test/e2e/authenticated/maintenance-start-pause.spec.ts",
+        "sha256": "f886fbb9d8f47788332325c93cadae61e8fd832a5076d500b6f44742645829f0"
+      },
+      {
+        "path": "test/e2e/authenticated/maintenance-templates.spec.ts",
+        "sha256": "afde01696bd60fda8fe1b7d510ee99bcccf7bcf511afd03eb175cf97f5be669d"
+      },
+      {
+        "path": "test/e2e/fixtures/preview-run.ts",
+        "sha256": "65e2536a2e4e2cf03828c98eb05e9db430f20f546c41c85bcbbf871cd486c088"
+      },
+      {
+        "path": "test/e2e/support/environment.ts",
+        "sha256": "63f0e2c20ffbaea12dc0a2a0bfa04f005beed794b1b668a42d5dd7894d823684"
+      },
+      {
+        "path": "test/e2e/support/local-quiz-journey.ts",
+        "sha256": "5be3ff36daa5b0325f214569de44336a900d7d0fd24bf0e5a37d605e40edde35"
+      },
+      {
+        "path": "test/e2e/support/runner-source.d.mts",
+        "sha256": "67fc630557ea9b484c9e3819bec478f3b58ee1fec97e89b4d18657afd9e835ed"
+      },
+      {
+        "path": "test/e2e/support/runner-source.mjs",
+        "sha256": "670899daa5b0f1fc42f1afe56208e59d607f4db5898e0ec28566abee7fab9283"
+      },
+      {
+        "path": "test/e2e/support/vocab-journey.ts",
+        "sha256": "29167e86498c59a66c6304b26acff2844653ed40aace5e06e8f0b39c19675855"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "production",
+        "ranAt": "2026-10-04T03:18:49Z",
+        "command": "Supabase readback + frozen source/guard manifests",
+        "summary": "25원본SHA·선행/최종2이력·828함수·기존행/권한/RLS 보존. 최종실행 f8af4d65 및 이력 MD5 일치. 운영근거 manifest 참조"
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-10-04T03:38:35.810Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/app/work-records.test.mjs --maxWorkers=1; production build log/25 asset SHA review",
+        "summary": "기록117·전환10검사, 실제 경로 소유/비대상거절 확인. 기존 최종앱53페이지·25자산 실제운영 일치. 제품코드는 재변경하지 않음"
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "preview",
+        "ranAt": "2026-10-03T16:25:50.071Z",
+        "command": "node scripts/run-playwright-suite.mjs authenticated; maintenance-templates/local-quiz",
+        "summary": "실제검토근거 templates-pass-04와 local-quiz-pass-02, 최종51e0141의 종류별저장·최초/재시험·오답해결. 환경·검사도구 커밋은 operator.json 별도"
+      },
+      {
+        "checkId": "T4",
+        "result": "pass",
+        "environment": "preview",
+        "ranAt": "2026-10-03T16:28:37.991Z",
+        "command": "node scripts/run-playwright-suite.mjs authenticated; maintenance-compatibility/local-quiz",
+        "summary": "compatibility-pass-03 및 local-quiz-pass-02. 구형접수·신규풀이시험API0·회차끝묶음·응답유실 동일재접수"
+      },
+      {
+        "checkId": "T5",
+        "result": "pass",
+        "environment": "preview",
+        "ranAt": "2026-10-03T16:28:37.991Z",
+        "command": "node scripts/run-playwright-suite.mjs authenticated; maintenance-local-quiz/start-pause/compatibility",
+        "summary": "같은주소B→A→B·기기4답·늦은제출/재접수, 원기기/다른기기/두탭/계정전환, 시작중지 중 기존접수 보존. 서로다른규격 전반호환 주장은 제외"
+      },
+      {
+        "checkId": "T6",
+        "result": "pass",
+        "environment": "production",
+        "ranAt": "2026-10-04T03:18:49Z",
+        "command": "Supabase apply_migration guarded preinstall/full; actual readback, source/hash/ACL assertions",
+        "summary": "사전146표 기준선·모든 기존열/함수/권한 검사 확정전 실행. 핵심4표 해시/개수동일. 첫실패전체롤백·두번제한시간/원인미확인 공개"
+      },
+      {
+        "checkId": "T7",
+        "result": "pass",
+        "environment": "production",
+        "ranAt": "2026-10-04T03:20:46.074Z",
+        "command": "m10-verify-canonical.mjs final2; existing browser read; m10-production-log-check.mjs",
+        "summary": "대표주소·7GET/권한·25자산·55점/과거75→100읽기·12:17:36재개·초기오류0/5xx0. 실제학생쓰기0, 관리자저장/실기기/장시간 미실시"
+      },
+      {
+        "checkId": "T8",
+        "result": "pass",
+        "environment": "production",
+        "ranAt": "2026-10-04T03:41:43.440Z",
+        "command": "Production final report + Preview cleanup guards/Auth retirement readback",
+        "summary": "가짜관리자/자료종료·학생33삭제/학습행hash보존·검사암호/접근키회수. 운영반영과 미실시M08-B/M06/M09/F01/F02/WORD·보안경고 구분"
+      }
+    ]
+  }
 }

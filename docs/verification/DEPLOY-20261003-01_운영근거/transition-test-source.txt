@@ -1,0 +1,486 @@
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import type { PGlite } from "@electric-sql/pglite";
+import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from "vitest";
+import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
+import { buildPracticePlan, practiceSourceSchema } from "@/features/quiz-player/domain/practice-plan";
+import type { QuizAttemptResponse } from "@/features/quiz-player/model";
+
+const id = (n: number) => `a2050000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+let db: PGlite, oldRows: unknown, oldPlan: unknown, oldFingerprint: unknown, prep: string, attempt: string;
+let answered: { id: string; correct_choice_index: number }, answerReceipt: unknown;
+let practicePrep:string,practiceRun:QuizAttemptResponse,practicePlan:unknown,practiceAnswerReceipt:unknown,practiceChoice:number;
+const migration = "20261001113432_confirm_practice_completion.sql";
+let preservedTables: Array<{schema:string;name:string;columns:string[]}> = [], allBefore: unknown;
+const quote=(s:string)=>'"'+s.replaceAll('"','""')+'"';
+async function allRows(){const result=[];for(const t of preservedTables){const columns=t.columns.map(quote).join(',');result.push({table:t.schema+'.'+t.name,rows:(await db.query('select '+columns+' from '+quote(t.schema)+'.'+quote(t.name))).rows.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))});}return result;}
+let queueAttempt:string,queueAssignment:string;
+async function rejected(action:()=>Promise<unknown>,message:string){await db.exec('savepoint expected_failure');try{await expect(action()).rejects.toThrow(message);}finally{await db.exec('rollback to expected_failure;release expected_failure');}}
+
+async function value<T>(sql: string, args: unknown[] = []) { return (await db.query<{ value: T }>(sql, args)).rows[0].value; }
+const records = (hasReference: boolean) => `select jsonb_build_object(
+  'banks',(select jsonb_agg(to_jsonb(q)${hasReference ? "-'content_version_id'" : ""} order by id) from public.assignment_questions q),
+  'questions',(select jsonb_agg(to_jsonb(q)${hasReference ? "-'content_version_id'" : ""} order by id) from public.quiz_questions q),
+  'attempts',(select jsonb_agg(to_jsonb(a) order by id) from public.quiz_attempts a),
+  'preparations',(select jsonb_agg(to_jsonb(p) order by id) from private.quiz_attempt_preparations p),
+  'practiceRuns',(select jsonb_agg(to_jsonb(r) order by id) from private.student_word_practice_runs r),
+  'practiceQuestions',(select jsonb_agg(to_jsonb(q)${hasReference ? "-'content_version_id'" : ""} order by id) from private.student_word_practice_questions q)) value`;
+beforeAll(async () => {
+  const stop=Symbol('before-M11');
+  try { await createFinalSchemaDatabase({ beforeMigration: async (database, name) => {
+    if (name !== migration) return;
+    db = database;
+    const definitions=JSON.parse(fs.readFileSync('.codex-tmp/DEPLOY-20261003-01/transition/production-function-definitions.json','utf8')) as Array<{definition:string}>;
+    for(const f of definitions)await db.exec(f.definition);
+
+    // These rows are created in the actual pre-M02 schema, not by leaving a new
+    // column NULL after the change. No production record or original is used.
+    await db.exec(`insert into auth.users(id) values('${id(1)}');
+      insert into public.admin_profiles(user_id,display_name) values('${id(1)}','Fake old admin');
+      insert into public.students(id,display_name,created_by,school_name,grade_label) values('${id(2)}','Fake old student','${id(1)}','Fake school','고2');
+      insert into public.vocab_datasets(id,dataset_key,title,source_label,source_sha256,row_count,status,imported_by)
+        values('${id(3)}','m02-old-format','Fake old dictionary','Fake',repeat('A',64),4,'ready','${id(1)}');
+      insert into public.vocab_units(id,dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count)
+        values('${id(4)}','${id(3)}','DAY 1','day1','day',1,1,4);
+      insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
+        select '${id(3)}',n,'oldword'||n,'oldword'||n,array['당시 뜻'||n],'당시 뜻'||n,repeat('B',63)||n::text,'${id(4)}',n,'word' from generate_series(1,4)n;
+      insert into public.assignments(id,title,dataset_id,range_start,range_end,question_count,english_to_korean_ratio,time_limit_seconds,
+        timing_mode,passing_score,status,created_by,retake_allowed,range_basis,question_bank_version,question_order_mode)
+        select a,'Fake old exam','${id(3)}',1,4,4,100,240,'none',80,'active','${id(1)}',true,'units',1,'fixed'
+        from unnest(array['${id(10)}','${id(11)}','${id(12)}']::uuid[])a;
+      insert into public.assignment_units(assignment_id,dataset_id,unit_id,position,is_primary)
+        select id,'${id(3)}','${id(4)}',1,true from public.assignments;
+      insert into public.assignment_students(assignment_id,student_id,assigned_by) select id,'${id(2)}','${id(1)}' from public.assignments;
+      insert into public.assignment_questions(assignment_id,dataset_id,vocab_entry_id,base_order_index,direction,prompt,choices,correct_choice_index,
+        headword_snapshot,primary_meaning_snapshot,choice_vocab_entry_ids)
+        select a.id,'${id(3)}',e.id,e.source_row,'english_to_korean',e.headword,
+          (select jsonb_agg(primary_meaning order by source_row) from public.vocab_entries),(e.source_row-1)::smallint,
+          e.headword,e.primary_meaning,(select array_agg(id order by source_row) from public.vocab_entries)
+        from public.assignments a cross join public.vocab_entries e;
+      select set_config('request.jwt.claim.role','service_role',false);`);
+    prep = await value<string>("select public.prepare_quiz_attempt_v1($1,$2,null) value", [id(2), id(10)]);
+    oldPlan = await value("select public.get_quiz_preparation_v1($1,$2) value", [id(2), prep]);
+    attempt = await value<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [id(2), id(11)]);
+    answered = (await db.query<{ id: string; correct_choice_index: number }>("select id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index limit 1", [attempt])).rows[0];
+    answerReceipt = await value("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false) value", [id(2), attempt, answered.id, answered.correct_choice_index]);
+    await db.exec('begin'); await rejected(()=>value("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false) value",[id(2),attempt,answered.id,answered.correct_choice_index]),'question_not_started'); await db.exec('rollback');
+    const wrongAttempt=await value<string>("select public.create_quiz_attempt_from_bank($1,$2) value",[id(2),id(12)]);
+    const wrongQuestions=(await db.query<{id:string;correct_choice_index:number}>('select id,correct_choice_index from public.quiz_questions where attempt_id=$1 order by order_index',[wrongAttempt])).rows;
+    for(const [index,q] of wrongQuestions.entries()){
+      if(index)await db.query("select public.resume_quiz_after_feedback_v2($1,$2,$3,'initial',0)",[id(2),wrongAttempt,q.id]);
+      await db.query("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)",[id(2),wrongAttempt,q.id,(q.correct_choice_index+1)%4]);
+    }
+    await db.exec(`insert into public.vocab_entry_quiz_eligibility(vocab_entry_id,dataset_id,quiz_mode,status,input_content_hash,rule_version,evaluated_at_utc)
+      select id,dataset_id,'book_meaning_en_to_ko','eligible',repeat('B',64),'fixture',clock_timestamp() from public.vocab_entries;`);
+    const selection={mode:'filtered',filters:{}},config={questionCount:4,englishToKoreanRatio:100 as const,timingMode:'none' as const,timeLimitSeconds:null,questionTimeLimitSeconds:null};
+    const source=practiceSourceSchema.parse(await value('select public.prepare_student_word_practice_v1($1,$2) value',[id(2),JSON.stringify(selection)]));
+    const plan=buildPracticePlan(source,config,'legacy-practice'),byId=new Map(plan.candidates.map(e=>[e.id,e]));
+    expect(plan.error).toBeNull();
+    const voice={displayKo:null,variantId:null,audioUrl:null,available:false};
+    const questions=plan.questions.map(q=>({...q,wordKey:byId.get(q.vocabEntryId)!.key,pronunciation:voice,choicePronunciations:[voice,voice,voice,voice],
+      choiceSources:q.choiceVocabEntryIds.map(key=>{const e=byId.get(key)!;return {entryId:e.entryId,headword:e.headword,primaryMeaning:e.primaryMeaning};})}));
+    const args=(key:string)=>[id(2),key,'a'.repeat(64),JSON.stringify(selection),JSON.stringify(config),source.sourceHash,JSON.stringify(questions)];
+    practicePrep=await value('select public.prepare_word_practice_start_v1($1,$2,$3,$4,$5,$6,$7) value',args(id(50)));
+    practicePlan=await value('select public.get_quiz_preparation_v1($1,$2) value',[id(2),practicePrep]);
+    practiceRun=await value<QuizAttemptResponse>('select public.start_student_word_practice_v1($1,$2,$3,$4,$5,$6,$7) value',args(id(51)));
+    practiceChoice=questions[0].correctChoiceIndex;
+    practiceAnswerReceipt=await value('select public.answer_student_word_practice_v1($1,$2,$3,$4) value',[id(2),practiceRun.attempt.id,practiceRun.attempt.questions[0].id,practiceChoice]);
+    practiceRun=await value<QuizAttemptResponse>('select public.get_student_word_practice_v1($1,$2) value',[id(2),practiceRun.attempt.id]);
+    await seedQueue();
+    await seedComposition();
+    oldRows = await value(records(false));
+    oldFingerprint = await value("select private.quiz_preparation_fingerprint(a) value from public.assignments a where id=$1", [id(10)]);
+    throw stop;
+  } }); } catch(error){if(error!==stop)throw error;}
+  if(!db)throw Error('baseline_not_captured');
+  expect(await value("select to_regprocedure('public.read_question_contents_v1(text,uuid,uuid,uuid[])') value")).toBeNull();
+  expect(await value("select to_regclass('private.quiz_start_control') value")).toBeNull();
+  await transition();
+}, 120_000);
+beforeEach(async()=>{await db.exec('begin');});
+afterEach(async()=>{await db.exec('rollback;reset role');});
+afterAll(async () => { await db?.close(); });
+it("preserves every old bank, prepared plan, attempt, answer and original preparation fingerprint through the migration", async () => {
+  expect(await value(records(true))).toEqual(oldRows);
+  expect(await value("select private.quiz_preparation_fingerprint(a) value from public.assignments a where id=$1", [id(10)])).toEqual(oldFingerprint);
+  expect(await value("select public.get_quiz_preparation_v1($1,$2) value", [id(2), prep])).toEqual(oldPlan);
+  expect(await value('select public.get_quiz_preparation_v1($1,$2) value',[id(2),practicePrep])).toEqual(practicePlan);
+  expect(await value("select count(*)::int value from private.vocabulary_question_content_versions")).toBe(0);
+  const read = await value<{items: Array<{id: string; prompt: string}>}>("select public.read_question_contents_v1('student_attempt',$1,$2,$3) value", [id(2), attempt, [answered.id]]);
+  expect(read.items).toMatchObject([{ id: answered.id, prompt: "oldword1" }]);
+  expect(answerReceipt).toMatchObject({ correct: true });
+  await rejected(()=>value("select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false) value",[id(2),attempt,answered.id,answered.correct_choice_index]),'question_already_answered');
+});
+it('preserves the old practice answer and starts its old prepared plan without rewriting the receipt',async()=>{
+  const read=await value<QuizAttemptResponse>('select public.get_student_word_practice_v1($1,$2) value',[id(2),practiceRun.attempt.id]);
+  expect(read.attempt.questions).toEqual(practiceRun.attempt.questions);
+  expect(read.attempt.startedAt).toBe(practiceRun.attempt.startedAt);
+  expect(await value('select public.answer_student_word_practice_v1($1,$2,$3,$4) value',[id(2),practiceRun.attempt.id,practiceRun.attempt.questions[0].id,practiceChoice])).toEqual(practiceAnswerReceipt);
+  const before=await value('select plan value from private.quiz_attempt_preparations where id=$1',[practicePrep]);
+  const run=await value<QuizAttemptResponse>('select public.begin_prepared_practice_v1($1,$2) value',[id(2),practicePrep]);
+  expect(await value('select plan value from private.quiz_attempt_preparations where id=$1',[practicePrep])).toEqual(before);
+  expect(await value("select count(*)::int value from private.student_word_practice_questions where run_id=$1 and content_version_id is not null and not(body ? 'prompt' or body ? 'choices')",[run.attempt.id])).toBe(4);
+  expect(run.attempt.questions.map(q=>({prompt:q.prompt,choices:q.choices}))).toEqual(practiceRun.attempt.questions.map(q=>({prompt:q.prompt,choices:q.choices})));
+});
+it("begins the existing prepared plan with the same question IDs and order, leaving its original inline plan intact", async () => {
+  await rejected(()=>value("select public.begin_prepared_quiz_v1($1,$2) value",[id(2),prep]),'quiz_new_attempts_paused');
+  expect(await value('select plan value from private.quiz_attempt_preparations where id=$1',[prep])).toEqual((oldPlan as {plan:unknown}).plan);
+  await db.exec('update private.quiz_start_control set paused=false,changed_at=clock_timestamp()');
+  const started = await value<string>("select public.begin_prepared_quiz_v1($1,$2) value", [id(2), prep]);
+  expect(await value("select public.begin_prepared_quiz_v1($1,$2) value", [id(2), prep])).toBe(started);
+  const original = oldPlan as { plan: Array<{id: string; prompt: string; choices: string[]}> };
+  const restored = (await db.query("select id,prompt,choices from private.quiz_question_contents_v1 where attempt_id=$1 order by order_index", [started])).rows;
+  expect(restored).toEqual(original.plan.map(({ id, prompt, choices }) => ({ id, prompt, choices })));
+  expect(await value("select jsonb_typeof(plan) value from private.quiz_attempt_preparations where id=$1", [prep])).toBe("array");
+  expect(await value("select count(*)::int value from public.quiz_questions where attempt_id=$1 and content_version_id is not null and prompt is null and choices is null", [started])).toBe(4);
+  expect(await value("select count(*)::int value from public.assignment_questions where content_version_id is not null")).toBe(0);
+});
+
+import {computeExamUseEntryContentHash,computeExamUsePackageVersion,validateExamUsePackage} from "@/lib/vocab/exam-use-import-contract";
+function buildEntry(sourceRow: number) {
+  const suffix = String(sourceRow).padStart(12, "0");
+  const entry: Record<string, unknown> = {
+    source_row: sourceRow,
+    sequence_no: sourceRow,
+    unit: "2025-01 장문독해",
+    day: null,
+    position_in_unit: sourceRow,
+    dictionary_id: `word:integration-${sourceRow}`,
+    legacy_ids: [
+      {
+        system: "legacy-word-index",
+        id: `00000000-0000-4000-8000-${suffix}`,
+      },
+    ],
+    sense_id: null,
+    pronunciation_variant_id: `mw:integration-${sourceRow}`,
+    display_headword: `integration${sourceRow}`,
+    display_gloss_ko: `통합 ${sourceRow}`,
+    display_pronunciation_ko: `인티그레이션 ${sourceRow}`,
+    display_pronunciation_review_status: "candidate",
+    audio: {
+      status: "raw_attached",
+      audio_url:
+        `https://media.merriam-webster.com/audio/prons/en/us/mp3/i/integration${sourceRow}.mp3`,
+      sound_audio: `integration${sourceRow}`,
+      raw_response_sha256: "a".repeat(64),
+      raw_source: "api_raw",
+      raw_relative_path: `pron-integration-${sourceRow}.json`,
+      reason: null,
+      selection_status: "single_exact_raw_variant",
+      source_locator: `meta.id=integration${sourceRow} hwi.prs[0]`,
+      variant_id: `mw:integration-${sourceRow}`,
+      variant_pos: "noun",
+      mw_notation: `in-te-gra-tion-${sourceRow}`,
+    },
+    occurrence_id: `occ:integration-${sourceRow}`,
+    occurrence_content_hash: sourceRow.toString(16).padStart(64, "b"),
+    content_hash: "0".repeat(64),
+    exam_review_id: `exam-review:integration-${sourceRow}`,
+    exam_input_hash: sourceRow.toString(16).padStart(64, "c"),
+    exam_use_status: "reviewed_for_preview",
+    context_evidence_status: "source_entry_context",
+    context_evidence: {
+      source: "source_entries",
+      source_entry_id: `entry-integration-${sourceRow}`,
+      source_entry_sha256: sourceRow.toString(16).padStart(64, "d"),
+    },
+    entry_row_sha256: sourceRow
+      .toString(16)
+      .toUpperCase()
+      .padStart(64, "E"),
+    source_entry_id: `entry-integration-${sourceRow}`,
+    source_entry_sha256: sourceRow.toString(16).padStart(64, "d"),
+    include_in_exam: true,
+    manual_review_flags: [],
+  };
+  entry.content_hash = computeExamUseEntryContentHash(entry);
+  return entry;
+}
+
+function buildPackage() {
+  const input: Record<string, unknown> = {
+    schema_version: "1.0",
+    package_type: "student-app-exam-use-wordbook",
+    target_environment: "preview",
+    common_dictionary_release_allowed: false,
+    exam_use_import_allowed: true,
+    package_version: "0".repeat(64),
+    dataset_key: "integration-exam-use-v1",
+    source_sha256: "1".repeat(64),
+    candidate_dictionary_version: "2".repeat(64),
+    manifest_content_hash: "3".repeat(64),
+    exam_review_ledger_sha256: "4".repeat(64),
+    wordbook_id: "integration-wordbook",
+    title: "통합 테스트용 가짜 단어장",
+    generated_at_utc: "2026-08-07T00:00:00Z",
+    entries: [1, 2, 3, 4].map(buildEntry),
+  };
+  input.package_version = computeExamUsePackageVersion(input);
+  validateExamUsePackage(input);
+  return input;
+}
+
+
+async function seedQueue(){
+  const pkg=buildPackage();pkg.dataset_key='m10-transition-queue-v1';pkg.wordbook_id='m10-transition-queue';pkg.title='Fake transition queue dictionary';pkg.package_version=computeExamUsePackageVersion(pkg);validateExamUsePackage(pkg);
+  await db.query("select set_config('request.jwt.claim.role','service_role',false),set_config('request.jwt.claims',$1,false)",[JSON.stringify({role:'service_role'})]);
+  const imported=await value<{datasetId:string;releaseId:string;occurrenceCount:number;includedCount:number}>('select public.import_app_exam_use_package_v1($1::jsonb) value',[JSON.stringify(pkg)]);
+  expect(imported.occurrenceCount).toBe(4);expect(imported.includedCount).toBe(4);
+  const source=(await db.query<{unit_id:string;unit_label:string;vocab_entry_id:number}>("select o.unit_id::text,u.unit_label,o.vocab_entry_id from word_index.app_exam_use_occurrence o join word_index.app_exam_use_release r on r.release_id=o.release_id and r.status='active' join public.vocab_units u on u.id=o.unit_id where o.release_id=$1 and o.dataset_id=$2 and o.include_in_exam order by o.source_row",[imported.releaseId,imported.datasetId])).rows;
+  expect(source).toHaveLength(4);const entryIds=source.map(x=>x.vocab_entry_id);
+  await db.query("insert into word_index.mock_wordbook_identity_review(source_release_id,source_entry_id,source_row_sha256,reviewed_headword,reviewed_gloss,lexical_pos,sense_id,review_evidence_sha256) select o.release_id,e.id,e.row_sha256,e.headword,e.primary_meaning,'noun','m03-remap/'||o.dictionary_id,repeat('d',64) from word_index.app_exam_use_occurrence o join public.vocab_entries e on e.id=o.vocab_entry_id and e.dataset_id=o.dataset_id where o.release_id=$1::uuid and e.id=any($2::bigint[]) and o.include_in_exam",[imported.releaseId,entryIds]);
+  const questions=entryIds.map((entryId,index)=>({vocab_entry_id:entryId,base_order_index:index+1,direction:'english_to_korean',choice_vocab_entry_ids:entryIds}));
+  const common={kind:'regular',student_id:id(2),title:'Fake transition queue',dataset_id:imported.datasetId,unit_ids:[source[0].unit_id],unit_labels:[source[0].unit_label],question_count:4,english_to_korean_ratio:100,time_limit_seconds:3600,passing_score:80,question_order_mode:'fixed',timing_mode:'total',question_time_limit_seconds:null,session_count:2,questions};
+  const now=Date.now(),series=[{student_id:id(2),dataset_id:imported.datasetId,dataset_label:'Fake',range_label:source[0].unit_label,recurrence_slots:[{isodow:1,local_time:'15:00:00',duration_seconds:3600},{isodow:3,local_time:'15:00:00',duration_seconds:3600}],items:[{...common,session_number:1,available_from:new Date(now-60000).toISOString(),available_until:new Date(now+3600000).toISOString()},{...common,session_number:2,available_from:new Date(now+172800000).toISOString(),available_until:new Date(now+176400000).toISOString()}]}];
+  await db.query("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claim.role','authenticated',false),set_config('request.jwt.claims',$2,false)",[id(1),JSON.stringify({role:'authenticated'})]);
+  const created=await value<Array<{assignment_id:string|null;status:string}>>('select public.create_vocab_assignment_queues_v1($1,$2,$3) value',[id(60),'c'.repeat(64),JSON.stringify(series)]);
+  expect(created.map(x=>x.status)).toEqual(['assigned','queued']);queueAssignment=created[0].assignment_id!;
+  await db.exec("select set_config('request.jwt.claim.role','service_role',false);select set_config('request.jwt.claims','{\"role\":\"service_role\"}',false)");
+  queueAttempt=await value('select public.create_quiz_attempt_from_bank($1,$2) value',[id(2),queueAssignment]);
+}
+async function transition(){
+  const manifest=JSON.parse(fs.readFileSync('docs/verification/DEPLOY-20261003-01_반영준비.json','utf8')) as {migrations:Array<{order:number;file:string;sha256:string}>};
+  const hash=(s:string)=>createHash('sha256').update(s).digest('hex');
+  const sources=manifest.migrations.map(m=>{const sql=fs.readFileSync(m.file,'utf8');expect(hash(sql)).toBe(m.sha256);return {...m,sql};});
+  const delegate=fs.readFileSync('../student-app-m10-bridge-20261004/supabase/migrations/20261004001500_add_transition_question_reader.sql','utf8');
+  await db.exec(fs.readFileSync('.codex-tmp/DEPLOY-20261003-01/production/preinstall-guarded.sql','utf8'));
+  await db.exec('begin;update private.quiz_start_control set paused=true,changed_at=clock_timestamp();commit;');
+  expect(await value('select paused value from private.quiz_start_control')).toBe(true);
+  preservedTables=(await db.query<{schema:string;name:string;columns:string[]}>("select n.nspname schema,c.relname name,array_agg(a.attname order by a.attnum) columns from pg_class c join pg_namespace n on n.oid=c.relnamespace join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped where c.relkind='r' and n.nspname in ('public','private','word_index') group by n.nspname,c.relname order by 1,2")).rows;
+  allBefore=await allRows();
+  const searchPath=await value<string>("select current_setting('search_path') value");
+  const boundary=/^((?:\s|--[^\n]*(?:\n|$))*)begin\s*;\s*/i;
+  const parts=sources.filter(m=>m.order!==23).map(m=>{const raw=m.sql.replaceAll('\r\n','\n').trim();expect(boundary.test(raw)).toBe(/commit\s*;$/i.test(raw));const body=boundary.test(raw)?raw.replace(boundary,'$1').replace(/\s*commit\s*;$/i,''):raw;if(/^\s*(commit|rollback)\s*;/mi.test(body))throw Error('inner transaction');return {...m,body};});
+  const body=parts.map(m=>"select set_config('search_path','"+searchPath.replaceAll("'","''")+"',true);\n"+m.body).join('\n\n');
+  const execute=fs.readFileSync('.codex-tmp/DEPLOY-20261003-01/transition/guarded-production.sql','utf8');
+  fs.mkdirSync('.codex-tmp/DEPLOY-20261003-01/transition',{recursive:true});
+  fs.writeFileSync('.codex-tmp/DEPLOY-20261003-01/transition/combined.sql',execute);
+  fs.writeFileSync('.codex-tmp/DEPLOY-20261003-01/transition/execution.json',JSON.stringify({searchPath,sha256:hash(execute),delegateSha256:hash(delegate),sources:parts.map(({order,file,sha256,body})=>({order,file,sha256,bodySha256:hash(body)}))},null,2));
+  const beforeFunctions=(await db.query("select to_jsonb(p) value from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private') order by p.oid")).rows;
+  try{await expect(db.exec('begin;\n'+body+"\ndo $$begin raise exception 'intentional_transition_rollback';end$$;\ncommit;")).rejects.toThrow('intentional_transition_rollback');}finally{await db.exec('rollback');}
+  expect(await allRows()).toEqual(allBefore);
+  expect((await db.query("select to_jsonb(p) value from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private') order by p.oid")).rows).toEqual(beforeFunctions);
+  expect(await value("select to_regprocedure('public.read_question_contents_v1(text,uuid,uuid,uuid[])') value")).toBeNull();
+  const afterGuard=fs.readFileSync('.codex-tmp/DEPLOY-20261003-01/transition/guard-after.sql','utf8');
+  type BodyForm={schema:string;name:string;args:string;body:string;md5:string;order:string[]};
+  const forms=JSON.parse(fs.readFileSync('.codex-tmp/DEPLOY-20261003-01/transition/dynamic-null-body-forms.json','utf8')) as BodyForm[];
+  expect(forms).toHaveLength(26);
+  const createBody=(f:BodyForm,body=f.body)=>'create or replace function private.'+f.name+'('+f.args+") returns void language plpgsql set search_path='' as $m10_test_body$"+body+'$m10_test_body$;';
+  const previewForms=['5e5dc501413faa733ae9b9f7378b2f76','0a28fc13565ba0df7067f1592c37beee'].map(hash=>{const form=forms.find(x=>x.md5===hash);expect(form).toBeDefined();return form!;});
+  await db.exec(execute.replace(afterGuard,()=>previewForms.map(f=>createBody(f)).join('\n')+'\n'+afterGuard).replace(/commit;\s*$/,'rollback;'));
+  expect(await allRows()).toEqual(allBefore);
+  const base=forms.find(f=>f.name==='assert_assignment_question_body_v1')!;
+  const badBodies=[
+    base.body.replace('q.prompt is null or q.choices is null','q.prompt is null'),
+    base.body.replace('q.prompt is null or q.choices is null','q.prompt is null or q.prompt is null'),
+    base.body.replace('q.prompt is null or q.choices is null','q.prompt is null and q.choices is null'),
+    base.body.replace('if cardinality(failures)>0','if cardinality(failures)>1'),
+  ];
+  for(const bad of badBodies){expect(bad).not.toBe(base.body);try{await expect(db.exec(execute.replace(afterGuard,()=>createBody(base,bad)+'\n'+afterGuard))).rejects.toThrow('m10_new_function_contract: private.assert_assignment_question_body_v1');}finally{await db.exec('rollback');}expect(await allRows()).toEqual(allBefore);}
+  for(const [tamper,message] of [
+    ["update public.students set display_name='incorrect transition write' where id='"+id(2)+"';",'m10_original_data_changed: public.students'],
+    ["update private.vocabulary_library_templates set template_kind='other';",'m10_new_column_backfilled'],
+    ["grant execute on function public.read_m10_transition_question_contents_v1(text,uuid,uuid,uuid[]) to anon;",'m10_function_metadata_changed'],
+    ["alter table public.students disable row level security;",'m10_table_security_changed'],
+    ["grant select on public.students to anon;",'m10_table_security_changed']
+  ]){try{await expect(db.exec(execute.replace(afterGuard,tamper+'\n'+afterGuard))).rejects.toThrow(message);}finally{await db.exec('rollback');}expect(await allRows()).toEqual(allBefore);}
+  await captureExpectedCatalog();
+  await captureFunctionContract('before');
+  const started=performance.now();const results=await db.exec(execute.replace('begin;','begin;select transaction_timestamp() as transition_time;'));transitionTime=results.flatMap(r=>r.rows).find((r:any)=>r.transition_time)?.transition_time;const elapsedMs=performance.now()-started;
+  await captureFunctionContract('after');
+  await verifySuccessfulPreservation(elapsedMs,hash(execute),beforeFunctions);
+}
+it('paused existing answer and retry retain receipts while new regular starts fail',async()=>{
+  const qs=(await db.query<{id:string;correct_choice_index:number}>('select id,correct_choice_index from quiz_questions where attempt_id=$1 order by order_index',[attempt])).rows;
+  for(const q of qs.slice(1)){await db.query("select resume_quiz_after_feedback_v2($1,$2,$3,'initial',0)",[id(2),attempt,q.id]);await db.query("select answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)",[id(2),attempt,q.id,(q.correct_choice_index+1)%4]);}
+  expect(await value('select phase value from quiz_attempts where id=$1',[attempt])).toBe('review');
+  await db.query('select start_quiz_retry_v2($1,$2)',[id(2),attempt]);
+  for(const [index,q] of qs.slice(1).entries()){if(index)await db.query("select resume_quiz_after_feedback_v2($1,$2,$3,'retry',0)",[id(2),attempt,q.id]);await db.query("select answer_quiz_question_v4($1,$2,$3,'retry',$4::smallint,false)",[id(2),attempt,q.id,q.correct_choice_index]);}
+  expect(await value('select status::text value from quiz_attempts where id=$1',[attempt])).toBe('completed');
+  const before=await value("select jsonb_agg(to_jsonb(e) order by id) value from student_point_events e");
+  const last=qs.at(-1)!;await db.query("select answer_quiz_question_v4($1,$2,$3,'retry',$4::smallint,false)",[id(2),attempt,last.id,last.correct_choice_index]);
+  expect(await value("select jsonb_agg(to_jsonb(e) order by id) value from student_point_events e")).toEqual(before);
+  expect(await value('select paused value from private.quiz_start_control')).toBe(true);
+});
+it('legacy completion creates exactly one next queued assignment with readable reference bodies',async()=>{
+  const qs=(await db.query<{id:string;correct_choice_index:number}>('select id,correct_choice_index from quiz_questions where attempt_id=$1 order by order_index',[queueAttempt])).rows;
+  for(const [index,q] of qs.entries()){if(index)await db.query("select resume_quiz_after_feedback_v2($1,$2,$3,'initial',0)",[id(2),queueAttempt,q.id]);await db.query("select answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)",[id(2),queueAttempt,q.id,(q.correct_choice_index+1)%4]);}
+  const created=await value<Array<{assignment_id:string}>>('select materialize_ready_vocab_assignment_queue_v1($1,10) value',[id(2)]);expect(created).toHaveLength(1);
+  expect(await value('select materialize_ready_vocab_assignment_queue_v1($1,10) value',[id(2)])).toEqual([]);
+  const newId=created[0].assignment_id;
+  const banks=(await db.query<{id:string;prompt:null;content_version_id:string}>('select id,prompt,content_version_id from assignment_questions where assignment_id=$1 order by base_order_index',[newId])).rows;
+  expect(banks).toHaveLength(4);expect(banks.every(x=>x.prompt===null&&x.content_version_id)).toBe(true);
+  // This queue uses book meanings, so the example-only reader must reject it.
+  await rejected(()=>value("select read_m10_transition_question_contents_v1('student_assignment',$1,$2,$3) value",[id(2),newId,banks.map(q=>q.id)]),'question_not_owned');
+  // Local clock fixture: model the next scheduled session having opened, in a later request.
+  await db.query("update assignments set available_from=clock_timestamp()-interval '1 minute' where id=$1",[newId]);
+  await db.query("update assignment_students set assigned_at=now() where assignment_id=$1",[newId]);
+  const preparation=await value<string>('select prepare_quiz_attempt_v1($1,$2,null) value',[id(2),newId]);
+  const body=await value<{items:Array<{assignment_question:{primary_meaning_snapshot:string}}> }>("select read_m10_transition_question_contents_v1('student_preparation',$1,$2,$3) value",[id(2),preparation,banks.map(q=>q.id)]);
+  expect(body.items.map(x=>x.assignment_question.primary_meaning_snapshot)).toEqual(['통합 1','통합 2','통합 3','통합 4']);
+  await rejected(()=>value('select begin_prepared_quiz_v1($1,$2) value',[id(2),preparation]),'quiz_new_attempts_paused');
+  await rejected(()=>value("select read_m10_transition_question_contents_v1('student_assignment',$1,$2,$3) value",[id(99),newId,banks.map(q=>q.id)]),'student');
+});
+
+async function freshPractice(mode: 'filtered'|'selected', timingMode: 'none'|'total'|'per_question') {
+  const raw=practiceSourceSchema.parse(await value('select prepare_student_word_practice_v1($1,$2) value',[id(2),JSON.stringify({mode:'filtered',filters:{}})]));
+  const selection=mode==='selected'?{mode,keys:raw.words.map(w=>w.key)}:{mode,filters:{}};
+  const source=practiceSourceSchema.parse(await value('select prepare_student_word_practice_v1($1,$2) value',[id(2),JSON.stringify(selection)]));
+  const settings={questionCount:4,englishToKoreanRatio:100 as const,timingMode,timeLimitSeconds:timingMode==='total'?30:null,questionTimeLimitSeconds:timingMode==='per_question'?5:null};
+  const plan=buildPracticePlan(source,settings,'transition-practice'),byId=new Map(plan.candidates.map(e=>[e.id,e]));expect(plan.error).toBeNull();
+  const voice={displayKo:null,variantId:null,audioUrl:null,available:false};
+  const questions=plan.questions.map(q=>({...q,wordKey:byId.get(q.vocabEntryId)!.key,pronunciation:voice,choicePronunciations:[voice,voice,voice,voice],choiceSources:q.choiceVocabEntryIds.map(key=>{const e=byId.get(key)!;return {entryId:e.entryId,headword:e.headword,primaryMeaning:e.primaryMeaning};})}));
+  const preparation=await value<string>('select prepare_word_practice_start_v1($1,$2,$3,$4,$5,$6,$7) value',[id(2),id(80),'d'.repeat(64),JSON.stringify(selection),JSON.stringify(settings),source.sourceHash,JSON.stringify(questions)]);
+  const run=await value<QuizAttemptResponse>('select begin_prepared_practice_v1($1,$2) value',[id(2),preparation]);
+  expect((await value<QuizAttemptResponse>('select begin_prepared_practice_v1($1,$2) value',[id(2),preparation])).attempt.id).toBe(run.attempt.id);
+  expect(run.attempt.questions.map(q=>({prompt:q.prompt,choices:q.choices,pronunciation:q.pronunciation}))).toEqual(questions.map(q=>({prompt:q.prompt,choices:q.choices,pronunciation:q.pronunciation})));
+  return {run,questions};
+}
+const regularRows=()=>value("select jsonb_build_object('attempts',(select jsonb_agg(to_jsonb(a) order by id) from quiz_attempts a),'points',(select jsonb_agg(to_jsonb(e) order by id) from student_point_events e),'wrong',(select jsonb_agg(to_jsonb(e) order by id) from student_vocab_wrong_events e)) value");
+it.each(['filtered','selected'] as const)('pause permits %s practice; local question contents and final receipt are stable',async mode=>{
+  const before=await regularRows(),{run,questions}=await freshPractice(mode,'none');
+  expect(await value('select paused value from private.quiz_start_control')).toBe(true);
+  for(const [index,q]of run.attempt.questions.entries()){
+    if(index)await db.query('select resume_student_word_practice_v1($1,$2,$3,0)',[id(2),run.attempt.id,q.id]);
+    await db.query('select answer_student_word_practice_v1($1,$2,$3,$4)',[id(2),run.attempt.id,q.id,questions[index].correctChoiceIndex]);
+  }
+  const complete=await value<QuizAttemptResponse>('select get_student_word_practice_v1($1,$2) value',[id(2),run.attempt.id]);
+  expect(complete).toMatchObject({completionConfirmed:true,attempt:{status:'completed',phase:'completed'}});
+  expect(await value('select get_student_word_practice_v1($1,$2) value',[id(2),run.attempt.id])).toEqual(complete);
+  expect(await regularRows()).toEqual(before);
+});
+it.each(['total','per_question'] as const)('%s practice expiry confirms only after a stored command, including a lost response',async mode=>{
+  const before=await regularRows(),{run,questions}=await freshPractice('filtered',mode);
+  await db.query('select answer_student_word_practice_v1($1,$2,$3,$4)',[id(2),run.attempt.id,run.attempt.questions[0].id,questions[0].correctChoiceIndex]);
+  // Clock fixture, not a real-time or browser latency measurement.
+  await db.query("update private.student_word_practice_runs set deadline_at=clock_timestamp()-interval '1 second' where id=$1",[run.attempt.id]);
+  const pending=await value<QuizAttemptResponse>('select get_student_word_practice_v1($1,$2) value',[id(2),run.attempt.id]);
+  expect(pending).toMatchObject({completionConfirmed:false,timerRemainingMilliseconds:0,attempt:{status:'in_progress'}});
+  expect(pending.attempt.questions.slice(1).every(q=>q.revealedCorrectChoiceIndex===null)).toBe(true);
+  await db.query('select expire_student_word_practice_v1($1,$2)',[id(2),run.attempt.id]);
+  const read=await value<QuizAttemptResponse>('select get_student_word_practice_v1($1,$2) value',[id(2),run.attempt.id]);
+  expect(read).toMatchObject({completionConfirmed:true,attempt:{status:'expired',phase:'completed'}});
+  expect(read.attempt.questions[0]).toEqual(pending.attempt.questions[0]);
+  await db.query('select expire_student_word_practice_v1($1,$2)',[id(2),run.attempt.id]);
+  const replay=await value<QuizAttemptResponse>('select get_student_word_practice_v1($1,$2) value',[id(2),run.attempt.id]);
+  expect(replay.attempt).toEqual(read.attempt);
+  expect(replay).toMatchObject({completionConfirmed:true,timerRemainingMilliseconds:0});
+  expect(replay.transitionRemainingMilliseconds??0).toBeLessThanOrEqual(read.transitionRemainingMilliseconds??0);
+  expect(await regularRows()).toEqual(before);
+});
+
+async function insert(table:string,row:Record<string,unknown>){const fields=Object.keys(row);await db.query('insert into '+table+'('+fields.join(',')+') values('+fields.map((_,i)=>'$'+(i+1)).join(',')+')',Object.values(row).map(v=>v&&typeof v==='object'&&!Array.isArray(v)?JSON.stringify(v):v));}
+it('new example assignment uses real canonical creation and retains full study text plus preparation snapshots',async()=>{
+  const hash=(s:string)=>createHash('sha256').update(s).digest('hex'), common=hash('transition-examples'), datasetId=id(310), mode='canonical_example_to_headword';
+  await insert("public.vocab_datasets", { id: datasetId, dataset_key: "a4-synthetic-examples", title: "가짜 예문12개", source_label: "synthetic", source_sha256: common.toUpperCase(), row_count: 4, status: "ready", is_active: true });
+  const words = ["amber", "birch", "cabin", "dune"];
+  const entryIds: number[] = [];
+  for (let i = 0; i < 1; i++) await insert("public.vocab_units", { id: id(350 + i), dataset_id: datasetId, unit_label: `DAY ${i + 1}`, normalized_label: `day-${i + 1}`, unit_kind: "day", unit_number: i + 1, sort_index: i + 1, entry_count: 4 });
+  for (let i = 0; i < 4; i++) entryIds.push(await value<number>(`insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
+    values($1,$2,$3,$3,$4,$5,$6,$7,$8,'word') returning id value`, [datasetId, i + 1, words[i], [`가짜 뜻${i}`], `가짜 뜻${i}`, hash("row" + i).toUpperCase(), id(350 + Math.floor(i / 4)), i % 4 + 1]));
+  await insert("word_index.app_exam_use_release", { release_id: id(320), release_key: "a4-synthetic-exam", dataset_id: datasetId, dataset_key: "a4-synthetic-examples", schema_version: "1.0", package_version: common, source_sha256: common, candidate_dictionary_version: common, manifest_content_hash: common, exam_review_ledger_sha256: common, wordbook_id: "a4-fake", title: "가짜 시험용 어휘", target_environment: "preview", common_dictionary_release_allowed: false, exam_use_import_allowed: true, expected_occurrence_count: 4, expected_dictionary_count: 4, expected_included_count: 4, status: "active", package_json: { syntheticFixture: true }, activated_at_utc: "2026-09-01T00:00:00Z" });
+  const sourceId = (i: number) => "entry-" + (i + 1).toString(16).padStart(24, "0");
+  for (let i = 0; i < 4; i++) await insert("word_index.app_exam_use_occurrence", {
+    release_id: id(320), dataset_id: datasetId, source_row: i + 1, vocab_entry_id: entryIds[i], unit_id: id(350 + Math.floor(i / 4)), position_in_unit: i % 4 + 1, dictionary_id: `word:fake-${i}`,
+    display_headword: words[i], display_gloss_ko: `가짜 뜻${i}`, display_pronunciation_review_status: "candidate", audio_status: "disabled", listening_enabled: false,
+    occurrence_id: `occ:a4-${i}`, occurrence_content_hash: hash("occ" + i), package_entry_content_hash: hash("occ" + i), exam_review_id: `exam-review:a4-${i}`, exam_input_hash: common, exam_use_status: "reviewed_for_preview", context_evidence_status: "source_entry_context", context_evidence: { syntheticFixture: true }, source_projection_row_sha256: hash("row" + i), source_entry_id: sourceId(i), source_entry_sha256: hash("row" + i), include_in_exam: true, audio_json: {}, package_entry_json: { syntheticFixture: true },
+  });
+  await insert("word_index.app_canonical_question_preview_release", {
+    release_id: id(330), release_key: "a4-synthetic-questions", dataset_id: datasetId, exam_use_release_id: id(320), release_profile: "simseok_sem2_combined_v2", contract: "simseok-combined-app-preview-question-package-v2", schema_version: "2.0", policy_version: "simseok-sem2-combined-preview-v2",
+    ...Object.fromEntries(["package_file_sha256", "package_content_hash", "manifest_content_hash", "definition_input_sha256", "example_input_sha256", "question_input_sha256", "occurrence_input_sha256", "item_binding_sha256", "handoff_manifest_file_sha256", "independent_review_ledger_sha256", "generator_file_sha256"].map(key => [key, common])),
+    target_environment: "preview", source_shadow_only: true, preview_apply_allowed: true, canonical_approved: false, release_allowed: false, production_apply_allowed: false, expected_item_count: 4, expected_expanded_count: 4, expected_source_entry_count: 4, status: "active", activated_at_utc: "2026-09-01T00:00:00Z",
+  });
+  for (let i = 0; i < 4; i++) {
+    const group = Math.floor(i / 4) * 4, choices = [0, 1, 2, 3].map(j => group + (i % 4 + j) % 4), questionHash = hash("question" + i);
+    await insert("word_index.app_canonical_question_preview_item", {
+      release_id: id(330), dataset_id: datasetId, exam_use_release_id: id(320), source_entry_id: sourceId(i), source_row: i + 1, vocab_entry_id: entryIds[i], unit_id: id(350 + Math.floor(i / 4)), question_item_id: `a4-example-${i}`, question_item_sha256: questionHash,
+      target_definition_item_id: `a4-definition-${i}`, target_sense_family_id: `a4-family-${i}`, target_family_revision_hash: common, target_headword: words[i], target_part_of_speech: "noun", target_pos_signature: ["noun"], quiz_mode: mode,
+      prompt_en: `Synthetic context ${i}: choose _____.`, choice_headwords: choices.map(n => words[n]), choice_source_entry_ids: choices.map(sourceId), choice_vocab_entry_ids: choices.map(n => entryIds[n]), correct_choice_index: 0,
+      source_occurrence_content_hash: hash("occ" + i), source_definition_content_hash: common, source_example_content_hash: hash("Synthetic context " + i + ": choose " + words[i] + "."), source_question_content_hash: questionHash, choice_pool_content_hash: common, prompt_source_hash: hash("prompt" + i), review_input_sha256: questionHash, review_audit_sha256: questionHash, review_solver_sha256: common,
+      required_gates: { bounded_single_answer_heuristic: true, four_unique_choices: true, no_synonym_gloss_or_word_family_conflict: true, prompt_shape_valid: true, same_part_of_speech_signature: true }, provenance: { syntheticFixture: true, sourceShadowOnly: true, productionApplyAllowed: false },
+    });
+    const complete = 'Synthetic context ' + i + ': choose ' + words[i] + '.';
+    await insert('private.assignment_study_examples_v1',{release_id:id(330),vocab_entry_id:entryIds[i],question_item_id:'a4-example-'+i,question_item_sha256:questionHash,source_example_sha256:hash(complete),example_en:complete});
+  }
+
+  await db.exec('grant usage on schema auth,extensions to authenticated,service_role;alter role service_role bypassrls');
+  await db.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claims',$2,true)",[id(1),JSON.stringify({role:'authenticated',ref:'wojxpruvbjzbhrpmsbuy'})]);
+  await db.exec('set local role authenticated');
+  const candidates=(await db.query<{release_id:string;package_sha256:string;vocab_entry_id:number;question_item_id:string;question_item_sha256:string}>('select * from list_active_canonical_question_preview_v1($1,$2,$3) order by vocab_entry_id',[datasetId,[id(350)],mode])).rows;expect(candidates).toHaveLength(4);
+  const batch={kind:'canonical_preview',student_id:id(2),dataset_id:datasetId,unit_ids:[id(350)],unit_labels:['DAY 1'],title:'Fake transition examples',question_count:4,quiz_content_mode:mode,canonical_release_id:candidates[0].release_id,canonical_package_sha256:candidates[0].package_sha256,time_limit_seconds:60,passing_score:80,retry_enabled:true,retry_passing_score:90,question_order_mode:'ascending',available_from:null,available_until:null,timing_mode:'none',question_time_limit_seconds:null,session_number:1,session_count:1,question_targets:candidates.map((q,i)=>({vocab_entry_id:Number(q.vocab_entry_id),base_order_index:i+1,question_item_id:q.question_item_id,question_item_sha256:q.question_item_sha256}))};
+  const saved=await value<Array<{assignment_id:string}>>('select create_bulk_canonical_assignments_preview_v1($1,$2,$3) value',[id(390),hash('example-request'),JSON.stringify([batch])]);expect(saved).toHaveLength(1);
+  const assignment=saved[0].assignment_id;
+  await db.exec('reset role');
+  const rows=(await db.query<{id:string;prompt:null;choices:null;content_version_id:string;eligibility_quiz_mode:string}>('select id,prompt,choices,content_version_id,eligibility_quiz_mode from assignment_questions where assignment_id=$1 order by base_order_index',[assignment])).rows;
+  expect(rows).toHaveLength(4);expect(rows.every(q=>q.prompt===null&&q.choices===null&&q.content_version_id&&q.eligibility_quiz_mode===mode)).toBe(true);
+  // Same transaction's NOW precedes materialization; simulate the following HTTP request's visibility.
+  await db.query('update assignment_students set assigned_at=now() where assignment_id=$1',[assignment]);
+  await db.query("select set_config('request.jwt.claim.role','service_role',true),set_config('request.jwt.claims',$1,true)",[JSON.stringify({role:'service_role'})]);
+  await db.exec('set local role service_role');
+  const study=await value<{words:Array<{example:string;headword:string}>}>('select get_student_assignment_study_v1($1,$2) value',[id(2),assignment]);
+  expect(study.words.map(w=>w.example)).toEqual(words.map((word,i)=>'Synthetic context '+i+': choose '+word+'.'));
+  const ids=rows.map(q=>q.id), read=await value<{items:Array<{prompt:string}>}>("select read_m10_transition_question_contents_v1('student_assignment',$1,$2,$3) value",[id(2),assignment,ids]);
+  expect(read.items.map(q=>q.prompt)).toEqual(words.map((_,i)=>'Synthetic context '+i+': choose _____.'));
+  const preparation=await value<string>('select prepare_quiz_attempt_v1($1,$2,null) value',[id(2),assignment]);
+  const prepared=await value<{items:Array<{assignment_question:{headword_snapshot:string;primary_meaning_snapshot:string}}> }>("select read_m10_transition_question_contents_v1('student_preparation',$1,$2,$3) value",[id(2),preparation,ids]);
+  expect(prepared.items.map(q=>q.assignment_question.headword_snapshot)).toEqual(words);
+  expect(prepared.items.map(q=>q.assignment_question.primary_meaning_snapshot)).toEqual(words.map((_,i)=>'가짜 뜻'+i));
+  await rejected(()=>value("select read_m10_transition_question_contents_v1('student_preparation',$1,$2,$3) value",[id(2),assignment,ids]),'preparation_unavailable');
+  await rejected(()=>value("select read_m10_transition_question_contents_v1('student_assignment',$1,$2,$3) value",[id(2),assignment,[ids[0],ids[0]]]),'question_content_request_invalid');
+  await rejected(()=>value("select read_m10_transition_question_contents_v1('student_assignment',$1,$2,$3) value",[id(99),assignment,ids]),'student_not_found');
+  await rejected(()=>value('select begin_prepared_quiz_v1($1,$2) value',[id(2),preparation]),'quiz_new_attempts_paused');
+});
+import { randomUUID } from 'node:crypto';
+import { EMPTY_LIBRARY_FILTERS } from '@/features/wordbook-compositions/contracts/library';
+let compositionDataset:string, expectedCatalog:any[],expectedJobs:any[],transitionTime:unknown;
+async function seedComposition(){
+  const sha=(s:string)=>createHash('sha256').update(s).digest('hex');
+  await db.exec("reset role");
+  const dataset=id(61),unit=id(62);
+  await db.query("insert into public.vocab_datasets(id,dataset_key,title,source_label,source_sha256,row_count,status,is_active) values($1,'m10-composition-source','Fake independent source','fake',repeat('E',64),4,'ready',true)",[dataset]);
+  await db.query("insert into public.vocab_units(id,dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count) values($1,$2,'DAY 1','day1','day',1,1,4)",[unit,dataset]);
+  await db.query("insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type) select $1,n,'composeword'||n,'composeword'||n,array['가짜 구성 '||n],'가짜 구성 '||n,upper(encode(extensions.digest('composition:'||n,'sha256'),'hex')),$2,n,'word' from generate_series(1,4)n",[dataset,unit]);
+  await db.query("insert into public.vocab_dataset_catalog(dataset_id,display_name,catalog_group,material_kind) values($1,'Fake source','high','wordbook')",[dataset]);
+  await db.query("insert into public.vocab_entry_quiz_eligibility(vocab_entry_id,dataset_id,quiz_mode,status,input_content_hash,rule_version,evaluated_at_utc) select id,dataset_id,'book_meaning_en_to_ko','eligible',row_sha256,'fake',now() from public.vocab_entries where dataset_id=$1",[dataset]);
+  const rows=(await db.query<{source_row:number;row_hash:string}>('select source_row,lower(row_sha256) row_hash from public.vocab_entries where dataset_id=$1 order by source_row',[dataset])).rows;
+  const selected={schemaVersion:'vocabulary-resource-snapshot-v1',sourceFields:{},proofs:{},pronunciation:{displayKo:null,variantId:null,audioUrl:null,available:false},lexicalPos:null,dictionary:null,senseId:null,definitionEn:null,exampleEn:null,exampleKo:null};
+  const bundle={schemaVersion:'vocabulary-library-import-v1',sourceCatalogHash:sha('catalog'),linksHash:sha('links'),referenceCatalogHash:sha('refs'),scopes:[{key:'transition-4',name:'Fake four',sourceTitle:'Fake source',source:{datasetId:dataset,unitId:unit,kind:'legacy_vocab',releaseId:null,releaseVersion:'e'.repeat(64),fileHash:sha('file'),locator:'fake.json'},classification:{kind:'wordbook',sourceGrade:'g11',exam:null,lesson:null,day:1,publisher:null,school:null,targetGrade:null,schoolYear:null,semester:null,assessment:null,purpose:null},rows:rows.map(r=>({sourceRow:r.source_row,rowHash:r.row_hash,resources:{entryHash:r.row_hash,linkRecordHash:sha('row:'+r.source_row),selected}}))}]};
+  const text=JSON.stringify(bundle),contentHash=await value<string>('select private.reviewed_exam_sha256_v1($1::jsonb) value',[text]);
+  await db.query('insert into private.vocabulary_library_import_approvals values($1,$2,$3,1,$4)',['wojxpruvbjzbhrpmsbuy',sha(text),contentHash,'fake-transition']);
+  await db.exec("select set_config('request.jwt.claims','{\"ref\":\"wojxpruvbjzbhrpmsbuy\",\"role\":\"service_role\"}',false);select set_config('request.jwt.claim.role','service_role',false)");
+  await db.query('select public.import_vocabulary_library_v1($1)',[text]);
+  await db.query("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claim.role','authenticated',false),set_config('request.jwt.claims','{\"role\":\"authenticated\"}',false)",[id(1)]);
+  const scopes=(await value<any>('select public.list_vocabulary_library_v1() value')).scopes;
+  const saved=await value<any>('select public.save_vocabulary_library_template_v1($1::jsonb) value',[JSON.stringify({action:'create',requestId:randomUUID(),metadata:{title:'Fake M07 transition',tags:[],school:'Fake school',targetGrade:'g11',schoolYear:2026,semester:2,assessment:null,purpose:'before'},recipe:{filters:EMPTY_LIBRARY_FILTERS,scopes:scopes.map((s:any)=>({id:s.id,version:s.version})),excludedOccurrenceKeys:[],scopeStatus:'confirmed'}})]);
+  const template=saved.template,version=template.versions[0];
+  const result=await value<any>('select public.advance_vocabulary_template_book_v1($1::jsonb) value',[JSON.stringify({action:'materialize',requestId:randomUUID(),templateId:template.id,versionId:version.id,contentHash:version.contentHash})]);
+  compositionDataset=result.datasetId;
+  expect(compositionDataset).toBeTruthy();
+  await db.exec("reset role;select set_config('request.jwt.claim.role','service_role',false);select set_config('request.jwt.claims','{\"role\":\"service_role\"}',false)");
+}
+async function captureExpectedCatalog(){
+ expectedJobs=(await db.query("select j.jobid,j.jobname,j.schedule,j.database,j.username,j.command from cron.job j join (values ('english-academy-finalize-missed-assignments','selectpublic.finalize_missed_assignments(null,250);'),('english-academy-finalize-stale-attempts','selectprivate.run_stale_quiz_attempt_maintenance_v1(10,25,1000);'),('english-academy-expire-review-drafts','selectprivate.run_expired_review_draft_maintenance_v1(10,50,10,1000);'),('english-academy-materialize-ready-vocab-queues','selectprivate.run_ready_vocab_queue_maintenance_v1(2,1000);')) expected(name,command) on j.jobname=expected.name where j.username='postgres' and j.database=current_database() and regexp_replace(j.command,'\\s','','g')=expected.command order by jobid")).rows;
+ expectedCatalog=(await db.query<any>(`select cat.dataset_id,cat.metadata old_metadata,cat.metadata||jsonb_build_object('school',t.metadata->'school','audience',case when t.metadata->>'school' is null then 'common' else 'school' end,'purpose',null,'semester',t.metadata->'semester','templateMetadata',t.metadata,'templateKind',null) expected_metadata from public.vocab_dataset_catalog cat join private.vocabulary_compositions c on c.dataset_id=cat.dataset_id join private.vocabulary_library_versions v on v.id=c.version_id join private.vocabulary_library_templates t on t.id=v.template_id`)).rows;
+ expect(expectedCatalog).toHaveLength(1);expect(expectedCatalog[0].dataset_id).toBe(compositionDataset);expect(expectedCatalog[0].expected_metadata).not.toEqual(expectedCatalog[0].old_metadata);
+}
+async function captureFunctionContract(phase:string){
+ const entries=(await db.query(`select n.nspname schema,p.proname name,pg_get_function_identity_arguments(p.oid) args,md5(p.prosrc) body_md5,p.prosrc body,pg_get_function_result(p.oid) result,l.lanname language,r.rolname owner,p.prosecdef security_definer,p.provolatile volatility,p.proparallel parallel,p.proleakproof leakproof,p.proisstrict strict,p.procost cost,p.prorows estimated_rows,p.proconfig config,p.proacl::text acl,p.proargnames argnames,p.proargmodes argmodes,p.proargdefaults::text defaults,p.oid from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang join pg_roles r on r.oid=p.proowner where n.nspname in ('public','private','word_index') order by n.nspname,p.proname,pg_get_function_identity_arguments(p.oid)`)).rows;
+ fs.writeFileSync('.codex-tmp/DEPLOY-20261003-01/transition/functions-'+phase+'.json',JSON.stringify(entries,null,2));
+}
+async function verifySuccessfulPreservation(elapsedMs:number,sha256:string,_beforeFunctions:unknown){
+ const after=await allRows(),expected=structuredClone(allBefore) as any[];
+ const beforeCatalog=expected.find(x=>x.table==='public.vocab_dataset_catalog');
+ const actualCatalog=after.find(x=>x.table==='public.vocab_dataset_catalog')!;
+ for(const row of beforeCatalog.rows){const allow=expectedCatalog.find(c=>c.dataset_id===row.dataset_id);if(allow){row.metadata=allow.expected_metadata;row.updated_at=transitionTime;}}
+ beforeCatalog.rows.sort((a:any,b:any)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+ expect(after).toEqual(expected);
+ const newColumns=(await db.query<{schema:string;name:string;column:string}>("select n.nspname schema,c.relname name,a.attname column from pg_class c join pg_namespace n on n.oid=c.relnamespace join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped where c.relkind='r' and n.nspname in ('public','private','word_index') order by 1,2,a.attnum")).rows.filter(a=>preservedTables.some(t=>t.schema===a.schema&&t.name===a.name&&!t.columns.includes(a.column)));
+ expect(newColumns).toHaveLength(10);
+ for(const col of newColumns)expect(await value('select count(*)::int value from '+quote(col.schema)+'.'+quote(col.name)+' where '+quote(col.column)+' is not null')).toBe(0);
+ const tables=(await db.query<{schema:string;name:string}>("select n.nspname schema,c.relname name,c.relrowsecurity rls,c.relforcerowsecurity force_rls,c.relacl::text acl,pg_get_userbyid(c.relowner) owner from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind='r' and n.nspname in ('public','private','word_index') order by 1,2")).rows.filter(t=>!preservedTables.some(b=>b.schema===t.schema&&b.name===t.name));
+ const newTableCounts=[];
+ for(const t of tables){const count=await value<number>('select count(*)::int value from '+quote(t.schema)+'.'+quote(t.name));newTableCounts.push({...t,count});if(t.name==='operational_retention_policy')expect(count).toBe(1);else if(t.name==='operational_retention_jobs')expect((await db.query('select * from private.operational_retention_jobs order by jobid')).rows).toEqual(expectedJobs);else expect(count,t.schema+'.'+t.name).toBe(0);}
+ expect(await value("select to_jsonb(p)-'changed_at'-'changed_by' value from private.operational_retention_policy p")).toEqual({singleton:true,version:1,success_days:7,failure_days:30,session_days:7,login_hours:24,preparation_hours:24});
+ fs.writeFileSync('.codex-tmp/DEPLOY-20261003-01/transition/local-result.json',JSON.stringify({originalTableCount:preservedTables.length,originalRowsPreserved:true,allowedCatalogChangeCount:expectedCatalog.length,rollbackPreserved:true,newColumnsAllNull:newColumns,newTableCounts,elapsedMs,sha256},null,2));
+}

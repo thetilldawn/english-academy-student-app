@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-04T03:16:41.083Z",
+  "kind": "final2",
+  "id": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
+  "sha": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "canonical": "https://english-academy-student-app.vercel.app",
+  "results": [
+    {
+      "route": "/",
+      "status": 200
+    },
+    {
+      "route": "/admin/login",
+      "status": 200
+    },
+    {
+      "route": "/code",
+      "status": 307
+    },
+    {
+      "route": "/api/preview-identity",
+      "status": 404
+    },
+    {
+      "route": "/api/student/session",
+      "status": 401
+    },
+    {
+      "route": "/api/admin/wordbook-library",
+      "status": 401
+    },
+    {
+      "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201",
+      "status": 401
+    }
+  ],
+  "assets": {
+    "build": "376ea635684973bba7f28c04fef9680224eb0c4d53fd2b81d695448bc32e6c17",
+    "htmlSha256": "376ea635684973bba7f28c04fef9680224eb0c4d53fd2b81d695448bc32e6c17",
+    "workerSha256": "779667e369c38ef90873bdf7423ae17cb8b97f96205cd0531f8954d11bc727d0",
+    "verifiedAssets": 25
+  },
+  "studentExamWrites": 0,
+  "temporaryKeys": 0
+}

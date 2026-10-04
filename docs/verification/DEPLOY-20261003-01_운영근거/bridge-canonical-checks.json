@@ -1,0 +1,40 @@
+{
+  "at": "2026-10-04T02:54:45.345Z",
+  "kind": "bridge",
+  "id": "dpl_6uHqhtGfb6yrDHKx8dZp9Nwk7Qqq",
+  "sha": "1e292900e92137368e6ff602551812aa3d7d8b5f",
+  "canonical": "https://english-academy-student-app.vercel.app",
+  "results": [
+    {
+      "route": "/",
+      "status": 200
+    },
+    {
+      "route": "/admin/login",
+      "status": 200
+    },
+    {
+      "route": "/code",
+      "status": 307
+    },
+    {
+      "route": "/api/preview-identity",
+      "status": 404
+    },
+    {
+      "route": "/api/student/session",
+      "status": 401
+    },
+    {
+      "route": "/api/admin/wordbook-library",
+      "status": 401
+    },
+    {
+      "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201",
+      "status": 401
+    }
+  ],
+  "assets": null,
+  "studentExamWrites": 0,
+  "temporaryKeys": 0
+}

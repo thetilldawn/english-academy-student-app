@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-03T19:24:55.794Z",
+  "project": "prj_7xrnd3opFQ8Pz7wsQMkCHF0qzD21",
+  "productionToolbar": false,
+  "environment": {
+    "key": "VERCEL_PREVIEW_FEEDBACK_ENABLED",
+    "value": "0",
+    "target": [
+      "production"
+    ],
+    "id": "UrGO80mwa7xG2ARq"
+  },
+  "canonicalTargetUnchanged": "dpl_8u64EVqGctosrAZHQbQRRHSH8Whg",
+  "protectionPreserved": true,
+  "otherEnvironmentPreserved": true,
+  "source": "https://vercel.com/docs/vercel-toolbar/managing-toolbar"
+}

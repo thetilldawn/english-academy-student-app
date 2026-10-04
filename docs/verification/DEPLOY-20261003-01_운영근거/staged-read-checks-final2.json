@@ -1,0 +1,143 @@
+{
+  "at": "2026-10-03T19:28:29.026Z",
+  "studentWrites": 0,
+  "keyRevoked": true,
+  "deployments": [
+    {
+      "kind": "bridge",
+      "id": "dpl_6uHqhtGfb6yrDHKx8dZp9Nwk7Qqq",
+      "sha": "1e292900e92137368e6ff602551812aa3d7d8b5f",
+      "origin": "https://english-academy-student-cpttqyc30-thetilldawn-3859s-projects.vercel.app",
+      "target": "production",
+      "results": [
+        {
+          "route": "/admin/login",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "location": null
+          }
+        },
+        {
+          "route": "/code",
+          "status": 307,
+          "headers": {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "location": "/"
+          }
+        },
+        {
+          "route": "/api/preview-identity",
+          "status": 404,
+          "headers": {
+            "content-type": null,
+            "cache-control": "private, no-store",
+            "location": null
+          }
+        },
+        {
+          "route": "/api/student/session",
+          "status": 401,
+          "headers": {
+            "content-type": "application/json",
+            "cache-control": "private, no-store",
+            "location": null
+          }
+        },
+        {
+          "route": "/api/admin/wordbook-library",
+          "status": 401,
+          "headers": {
+            "content-type": "application/json",
+            "cache-control": "private, no-store",
+            "location": null
+          }
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201",
+          "status": 401,
+          "headers": {
+            "content-type": "application/json",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "location": null
+          }
+        }
+      ],
+      "assets": null
+    },
+    {
+      "kind": "final2",
+      "id": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
+      "sha": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+      "origin": "https://english-academy-student-pjnzjpqlb-thetilldawn-3859s-projects.vercel.app",
+      "target": "production",
+      "results": [
+        {
+          "route": "/admin/login",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "location": null
+          }
+        },
+        {
+          "route": "/code",
+          "status": 307,
+          "headers": {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "location": "/"
+          }
+        },
+        {
+          "route": "/api/preview-identity",
+          "status": 404,
+          "headers": {
+            "content-type": null,
+            "cache-control": "private, no-store",
+            "location": null
+          }
+        },
+        {
+          "route": "/api/student/session",
+          "status": 401,
+          "headers": {
+            "content-type": "application/json",
+            "cache-control": "private, no-store",
+            "location": null
+          }
+        },
+        {
+          "route": "/api/admin/wordbook-library",
+          "status": 401,
+          "headers": {
+            "content-type": "application/json",
+            "cache-control": "private, no-store",
+            "location": null
+          }
+        },
+        {
+          "route": "/api/student/attempts/00000000-0000-4000-8000-000000000201",
+          "status": 401,
+          "headers": {
+            "content-type": "application/json",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "location": null
+          }
+        }
+      ],
+      "assets": {
+        "build": "376ea635684973bba7f28c04fef9680224eb0c4d53fd2b81d695448bc32e6c17",
+        "htmlSha256": "376ea635684973bba7f28c04fef9680224eb0c4d53fd2b81d695448bc32e6c17",
+        "workerSha256": "779667e369c38ef90873bdf7423ae17cb8b97f96205cd0531f8954d11bc727d0",
+        "assets": 25,
+        "workerCacheControl": "no-store, max-age=0"
+      }
+    }
+  ],
+  "errors": [],
+  "finishedAt": "2026-10-03T19:28:59.771Z"
+}

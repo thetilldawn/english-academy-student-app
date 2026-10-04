@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-03T19:25:24.761Z",
+  "id": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
+  "url": "english-academy-student-pjnzjpqlb-thetilldawn-3859s-projects.vercel.app",
+  "sha": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "branch": "codex/vocabulary-templates-20260920",
+  "target": "production",
+  "readyState": "READY",
+  "autoAssignCustomDomains": false,
+  "checkedAt": "2026-10-03T19:27:56.983Z",
+  "alias": [
+    "english-academy-student-app-thetilldawn-3859s-projects.vercel.app"
+  ],
+  "aliasAssigned": true,
+  "builds": []
+}

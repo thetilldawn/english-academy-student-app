@@ -1,0 +1,24 @@
+{
+  "id": "dpl_8XtzgDYerrmHeYA3aSnr9aHPTYMW",
+  "sha": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "target": "production",
+  "checks": {
+    "prebuild": true,
+    "build": true,
+    "postbuild": true,
+    "offlineAssets": true
+  },
+  "buildLines": [
+    "> english-academy-student-app@0.1.0 prebuild",
+    "> node scripts/verify-preview-environment.mjs && node scripts/check-feature-map.mjs --verify && node scripts/check-work-records.mjs --phase format",
+    "> next build --webpack",
+    "✓ Compiled successfully in 35.8s",
+    "  Generating static pages using 1 worker (0/53) ...",
+    "  Generating static pages using 1 worker (13/53) \r",
+    "  Generating static pages using 1 worker (26/53) \r",
+    "  Generating static pages using 1 worker (39/53) \r",
+    "✓ Generating static pages using 1 worker (53/53) in 978ms",
+    "> english-academy-student-app@0.1.0 postbuild",
+    "Offline quiz: 25 verified public assets, 376ea6356849"
+  ]
+}

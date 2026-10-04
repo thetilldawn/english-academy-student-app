@@ -1,0 +1,2239 @@
+{
+  "result": {
+    "lints": [
+      {
+        "name": "rls_enabled_no_policy",
+        "title": "RLS Enabled No Policy",
+        "level": "INFO",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects cases where row level security (RLS) has been enabled on a table but no RLS policies have been created.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+        "count": 140,
+        "findings": [
+          {
+            "detail": "Table \\`private.assignment_release_links_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "assignment_release_links_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.assignment_study_examples_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "assignment_study_examples_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.assignment_vocabulary_meaning_refs\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "assignment_vocabulary_meaning_refs",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.assignment_vocabulary_new_questions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "assignment_vocabulary_new_questions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.entry_source_pronunciations_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "entry_source_pronunciations_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.exam_use_occurrence_archive_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "exam_use_occurrence_archive_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.exam_use_occurrence_archives\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "exam_use_occurrence_archives",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.exam_use_occurrence_write_permits\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "exam_use_occurrence_write_permits",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.exam_use_package_archive_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "exam_use_package_archive_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.exam_use_package_archives\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "exam_use_package_archives",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.exam_use_package_write_permits\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "exam_use_package_write_permits",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.historical_learning_migrations\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "historical_learning_migrations",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.historical_learning_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "historical_learning_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.historical_learning_write_permits\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "historical_learning_write_permits",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.historical_question_migration_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "historical_question_migration_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.historical_question_migrations\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "historical_question_migrations",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.historical_question_write_permits\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "historical_question_write_permits",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.local_quiz_phase_plans\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "local_quiz_phase_plans",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.local_quiz_phase_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "local_quiz_phase_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.local_quiz_preparations\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "local_quiz_preparations",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.local_quiz_runs\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "local_quiz_runs",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.notebook_assignment_requests\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "notebook_assignment_requests",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.notebook_question_origins_v2\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "notebook_question_origins_v2",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.operational_retention_holds\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "operational_retention_holds",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.operational_retention_jobs\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "operational_retention_jobs",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.operational_retention_policy\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "operational_retention_policy",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.operational_retention_state\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "operational_retention_state",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.pronunciation_audio_corrections_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "pronunciation_audio_corrections_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.quiz_preparation_compaction_checks\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "quiz_preparation_compaction_checks",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.quiz_preparation_expirations\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "quiz_preparation_expirations",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.quiz_start_control\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "quiz_start_control",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_bundle_archive_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_bundle_archive_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_bundle_archives\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_bundle_archives",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_bundle_write_permits\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_bundle_write_permits",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_choice_repair_releases_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_choice_repair_releases_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_entry_resource_approvals_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_entry_resource_approvals_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_entry_resource_releases_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_entry_resource_releases_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_entry_resources_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_entry_resources_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_evidence_objects\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_evidence_objects",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_exam_entries\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_exam_entries",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_exam_import_approvals\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_exam_import_approvals",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_exam_items\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_exam_items",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_exam_releases\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_exam_releases",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_mock_source_approvals_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_mock_source_approvals_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_mock_source_releases_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_mock_source_releases_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_mock_source_resources_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_mock_source_resources_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_pronunciation_asset_approvals_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_pronunciation_asset_approvals_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_pronunciation_assets_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_pronunciation_assets_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_resource_archive_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_resource_archive_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_resource_archives\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_resource_archives",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.reviewed_resource_write_permits\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_resource_write_permits",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.school_handout_import_approvals_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "school_handout_import_approvals_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.school_schedule_manual_edits\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "school_schedule_manual_edits",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.school_schedule_versions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "school_schedule_versions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.simseok_production_approvals_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "simseok_production_approvals_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.simseok_production_receipts_v1\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "simseok_production_receipts_v1",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.student_vocabulary_meaning_states\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "student_vocabulary_meaning_states",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.student_vocabulary_versions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "student_vocabulary_versions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.student_word_practice_questions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "student_word_practice_questions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.student_word_practice_runs\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "student_word_practice_runs",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_answer_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_answer_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_build_positions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_build_positions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_builds\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_builds",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_entries\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_entries",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_items\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_items",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_management_approvals\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_management_approvals",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_management_chunks\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_management_chunks",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_management_inputs\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_management_inputs",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_management_requests\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_management_requests",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_management_results\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_management_results",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_question_plans\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_question_plans",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_storage_formats\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_storage_formats",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_composition_write_context\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_composition_write_context",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_compositions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_compositions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_expired_answer_results\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_expired_answer_results",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_learning_value_bindings\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_learning_value_bindings",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_learning_value_versions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_learning_value_versions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_legacy_question_baselines\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_legacy_question_baselines",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_legacy_state_baselines\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_legacy_state_baselines",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_import_approvals\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_import_approvals",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_import_chunks\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_import_chunks",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_management_requests\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_management_requests",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_management_results\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_management_results",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_requests\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_requests",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_row_fingerprints\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_row_fingerprints",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_scope_rows\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_scope_rows",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_scopes\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_scopes",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_template_approvals\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_template_approvals",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_templates\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_templates",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_library_versions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_library_versions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_question_content_versions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_question_content_versions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.vocabulary_question_meaning_versions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocabulary_question_meaning_versions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`private.worksheet_mistake_items\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "worksheet_mistake_items",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.assignment_question_exam_use_snapshot\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "assignment_question_exam_use_snapshot",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.notification_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "notification_receipts",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_entry_pronunciation_bindings_v2\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_entry_pronunciation_bindings_v2",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_entry_pronunciations\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_entry_pronunciations",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_pronunciation_identities_v2\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_pronunciation_identities_v2",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_pronunciation_releases_v2\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_pronunciation_releases_v2",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_pronunciation_tts_assets_v2\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_pronunciation_tts_assets_v2",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_rule_derived_korean_pronunciations\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_rule_derived_korean_pronunciations",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_synthetic_audio_assets\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_synthetic_audio_assets",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`public.vocab_synthetic_audio_bindings\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_synthetic_audio_bindings",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.app_canonical_question_preview_item\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "app_canonical_question_preview_item",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.app_canonical_question_preview_release\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "app_canonical_question_preview_release",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.app_exam_use_occurrence\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "app_exam_use_occurrence",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.app_exam_use_release\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "app_exam_use_release",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.assignment_exam_use_release_snapshot\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "assignment_exam_use_release_snapshot",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.data_issue\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "data_issue",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.dataset_source\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "dataset_source",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.etymology\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "etymology",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.example\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "example",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.import_batch\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "import_batch",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.import_run\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "import_run",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.index_build\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "index_build",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.input_file_manifest\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "input_file_manifest",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.legacy_freeze\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "legacy_freeze",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.level_mapping\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "level_mapping",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.lexeme\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "lexeme",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.lexeme_metric\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "lexeme_metric",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.lexeme_tag\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "lexeme_tag",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.mock_wordbook_composition\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "mock_wordbook_composition",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.mock_wordbook_identity_review\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "mock_wordbook_identity_review",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.mock_wordbook_lineage\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "mock_wordbook_lineage",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.mock_wordbook_scope\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "mock_wordbook_scope",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.occurrence\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "occurrence",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.pipeline_rule\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "pipeline_rule",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.raw_pointer\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "raw_pointer",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.relation\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "relation",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.relation_evidence\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "relation_evidence",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.review\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "review",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.schema_meta\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "schema_meta",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.sense\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "sense",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.source\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "source",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.type_decision\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "type_decision",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.vocab_entry_link\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_entry_link",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.vocab_entry_mapping_candidate\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_entry_mapping_candidate",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.vocab_link_import_batch\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_link_import_batch",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.vocab_link_import_run\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "vocab_link_import_run",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Table \\`word_index.work_queue\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "work_queue",
+              "type": "table",
+              "schema": "word_index"
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          }
+        ]
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "title": "Signed-In Users Can Execute SECURITY DEFINER Function",
+        "level": "WARN",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects `SECURITY DEFINER` functions that are callable by signed-in users. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if signed-in users should not call it.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+        "count": 84,
+        "findings": [
+          {
+            "detail": "Function `public.advance_vocabulary_template_book_v1(p_request jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/advance_vocabulary_template_book_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "advance_vocabulary_template_book_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_assignment_with_delivery_v6(p_title text, p_dataset_id uuid, p_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_student_ids uuid[], p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_assignment_with_delivery_v6`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_assignment_with_delivery_v6",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_title text, p_dataset_id uuid, p_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_student_ids uuid[], p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_assignment_with_delivery_v7(p_title text, p_dataset_id uuid, p_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_student_ids uuid[], p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_assignment_with_delivery_v7`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_assignment_with_delivery_v7",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_title text, p_dataset_id uuid, p_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_student_ids uuid[], p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_bulk_canonical_assignments_preview_v1(p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_bulk_canonical_assignments_preview_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_bulk_canonical_assignments_preview_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_bulk_vocab_assignments_v11(p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_bulk_vocab_assignments_v11`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_bulk_vocab_assignments_v11",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_bulk_vocab_assignments_v5(p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_bulk_vocab_assignments_v5`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_bulk_vocab_assignments_v5",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_bulk_vocab_assignments_v8(p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_bulk_vocab_assignments_v8`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_bulk_vocab_assignments_v8",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_bulk_vocab_assignments_v9(p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_bulk_vocab_assignments_v9`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_bulk_vocab_assignments_v9",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_batches jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_current_wrong_review_assignment_v1(p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_source_question_ids uuid[], p_idempotency_key uuid, p_request_sha256 text, p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_current_wrong_review_assignment_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_current_wrong_review_assignment_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_source_question_ids uuid[], p_idempotency_key uuid, p_request_sha256 text, p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_current_wrong_review_assignment_v2(p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_source_question_ids uuid[], p_idempotency_key uuid, p_request_sha256 text, p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_current_wrong_review_assignment_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_current_wrong_review_assignment_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_source_question_ids uuid[], p_idempotency_key uuid, p_request_sha256 text, p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_current_wrong_review_assignment_v3(p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_source_question_ids uuid[], p_idempotency_key uuid, p_request_sha256 text, p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb, p_expected_source_question_ids uuid[], p_excluded_source_question_ids uuid[], p_selection_sha256 text, p_material_sha256 text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_current_wrong_review_assignment_v3`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_current_wrong_review_assignment_v3",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_source_question_ids uuid[], p_idempotency_key uuid, p_request_sha256 text, p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb, p_expected_source_question_ids uuid[], p_excluded_source_question_ids uuid[], p_selection_sha256 text, p_material_sha256 text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_exact_review_assignment_v6(p_student_id uuid, p_dataset_id uuid, p_selected_queue_ids uuid[], p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_exact_review_assignment_v6`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_exact_review_assignment_v6",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_selected_queue_ids uuid[], p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_exact_review_assignment_v7(p_student_id uuid, p_dataset_id uuid, p_selected_queue_ids uuid[], p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_exact_review_assignment_v7`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_exact_review_assignment_v7",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_selected_queue_ids uuid[], p_title text, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_mixed_review_assignment_v10(p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_title text, p_primary_unit_ids uuid[], p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_mixed_review_assignment_v10`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_mixed_review_assignment_v10",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_title text, p_primary_unit_ids uuid[], p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_mixed_review_assignment_v8(p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_title text, p_primary_unit_ids uuid[], p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_mixed_review_assignment_v8`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_mixed_review_assignment_v8",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_title text, p_primary_unit_ids uuid[], p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_mixed_review_assignment_v9(p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_title text, p_primary_unit_ids uuid[], p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_mixed_review_assignment_v9`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_mixed_review_assignment_v9",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_title text, p_primary_unit_ids uuid[], p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_mock_wordbook_composition_v1(p_request jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_mock_wordbook_composition_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_mock_wordbook_composition_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_student_with_code_v3(p_display_name text, p_school_name text, p_grade_label text, p_current_vocab_dataset_id uuid, p_note text, p_lookup_hmac text, p_encrypted_code text, p_encryption_iv text, p_encryption_tag text, p_school_key text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_student_with_code_v3`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_student_with_code_v3",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_display_name text, p_school_name text, p_grade_label text, p_current_vocab_dataset_id uuid, p_note text, p_lookup_hmac text, p_encrypted_code text, p_encryption_iv text, p_encryption_tag text, p_school_key text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_vocab_assignment_queues_v1(p_idempotency_key uuid, p_request_sha256 text, p_series jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_vocab_assignment_queues_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_vocab_assignment_queues_v1",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_series jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_vocab_assignment_queues_v2(p_idempotency_key uuid, p_request_sha256 text, p_series jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_vocab_assignment_queues_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_vocab_assignment_queues_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_series jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_vocab_assignment_queues_v3(p_idempotency_key uuid, p_request_sha256 text, p_series jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_vocab_assignment_queues_v3`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_vocab_assignment_queues_v3",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text, p_series jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_wrong_word_worksheet_request_v1(p_student_id uuid, p_question_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_wrong_word_worksheet_request_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_wrong_word_worksheet_request_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_question_ids uuid[]",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.create_wrong_word_worksheet_request_v2(p_student_id uuid, p_targets jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_wrong_word_worksheet_request_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "create_wrong_word_worksheet_request_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_targets jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.delete_assignment_v2(p_assignment_id uuid, p_reason text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/delete_assignment_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "delete_assignment_v2",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_assignment_id uuid, p_reason text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.delete_student_v2(p_student_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/delete_student_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "delete_student_v2",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_student_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.export_wrong_word_worksheet_request_v1(p_request_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/export_wrong_word_worksheet_request_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "export_wrong_word_worksheet_request_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_school_schedule_edit_result_v1(p_request_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_school_schedule_edit_result_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_school_schedule_edit_result_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_school_schedule_editor_v1(p_school_key text, p_academic_year integer, p_semester integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_school_schedule_editor_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_school_schedule_editor_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_school_key text, p_academic_year integer, p_semester integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_school_schedules_v1(p_student_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_school_schedules_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_school_schedules_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_ids uuid[]",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_student_detail_initial_v2(p_student_id uuid, p_snapshot_at timestamp with time zone)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_student_detail_initial_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_student_detail_initial_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_snapshot_at timestamp with time zone",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_student_profile_v1(p_student_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_student_profile_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_student_profile_v1",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_student_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_student_wrong_word_page_v1(p_student_id uuid, p_dataset_id uuid, p_level text, p_query text, p_event_upper_id bigint, p_after_wrong_at timestamp with time zone, p_after_key text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_student_wrong_word_page_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_student_wrong_word_page_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_level text, p_query text, p_event_upper_id bigint, p_after_wrong_at timestamp with time zone, p_after_key text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_student_wrong_word_page_v2(p_student_id uuid, p_dataset_id uuid, p_level text, p_query text, p_event_upper_id bigint, p_after_wrong_at timestamp with time zone, p_after_key text, p_min_wrong_count integer, p_max_wrong_count integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_student_wrong_word_page_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_student_wrong_word_page_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_level text, p_query text, p_event_upper_id bigint, p_after_wrong_at timestamp with time zone, p_after_key text, p_min_wrong_count integer, p_max_wrong_count integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_vocabulary_mistake_episodes_v1(p_student_id uuid, p_meaning_key text, p_upper bigint, p_cursor jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_vocabulary_mistake_episodes_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_vocabulary_mistake_episodes_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_meaning_key text, p_upper bigint, p_cursor jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_admin_vocabulary_mistake_page_v1(p_student_id uuid, p_filters jsonb, p_cursor jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_admin_vocabulary_mistake_page_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_admin_vocabulary_mistake_page_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_filters jsonb, p_cursor jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_assignment_edit_series_context_v1(p_assignment_id uuid, p_student_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_assignment_edit_series_context_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_assignment_edit_series_context_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_assignment_id uuid, p_student_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_canonical_assignment_preview_result_v1(p_idempotency_key uuid, p_request_sha256 text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_canonical_assignment_preview_result_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_canonical_assignment_preview_result_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_current_wrong_review_assignment_result_v1(p_student_id uuid, p_dataset_id uuid, p_idempotency_key uuid, p_request_sha256 text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_current_wrong_review_assignment_result_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_current_wrong_review_assignment_result_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_idempotency_key uuid, p_request_sha256 text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_current_wrong_review_material_fingerprint_v1(p_dataset_id uuid, p_questions jsonb, p_source_question_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_current_wrong_review_material_fingerprint_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_current_wrong_review_material_fingerprint_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid, p_questions jsonb, p_source_question_ids uuid[]",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_student_assignment_replacement_result_v1(p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_student_assignment_replacement_result_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_student_assignment_replacement_result_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_student_assignment_replacement_result_v2(p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_available_from timestamp with time zone, p_review_scope text, p_retry_enabled boolean, p_retry_passing_score smallint)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_student_assignment_replacement_result_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_student_assignment_replacement_result_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_available_from timestamp with time zone, p_review_scope text, p_retry_enabled boolean, p_retry_passing_score smallint",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_vocab_assignment_queue_result_v1(p_idempotency_key uuid, p_request_sha256 text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_vocab_assignment_queue_result_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_vocab_assignment_queue_result_v1",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_idempotency_key uuid, p_request_sha256 text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_vocabulary_composition_summary_v1(p_version_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_vocabulary_composition_summary_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_vocabulary_composition_summary_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_version_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_vocabulary_composition_summary_v2(p_version_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_vocabulary_composition_summary_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_vocabulary_composition_summary_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_version_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.get_vocabulary_composition_summary_v3(p_version_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_vocabulary_composition_summary_v3`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_vocabulary_composition_summary_v3",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_version_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.hide_admin_history_entry_v2(p_assignment_id uuid, p_student_id uuid, p_attempt_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/hide_admin_history_entry_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "hide_admin_history_entry_v2",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_assignment_id uuid, p_student_id uuid, p_attempt_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_active_canonical_question_preview_v1(p_dataset_id uuid, p_unit_ids uuid[], p_quiz_mode text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_active_canonical_question_preview_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_active_canonical_question_preview_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid, p_unit_ids uuid[], p_quiz_mode text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_active_exam_use_eligibility_v1(p_dataset_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_active_exam_use_eligibility_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_active_exam_use_eligibility_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_active_exam_use_eligibility_v2(p_dataset_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_active_exam_use_eligibility_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_active_exam_use_eligibility_v2",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_dataset_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_active_reviewed_exam_questions_v1(p_dataset_id uuid, p_unit_ids uuid[], p_quiz_mode text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_active_reviewed_exam_questions_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_active_reviewed_exam_questions_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid, p_unit_ids uuid[], p_quiz_mode text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_active_vocabulary_composition_questions_v1(p_dataset_id uuid, p_unit_ids uuid[], p_quiz_mode text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_active_vocabulary_composition_questions_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_active_vocabulary_composition_questions_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid, p_unit_ids uuid[], p_quiz_mode text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_assignment_question_dictionary_identities_v1(p_assignment_ids uuid[], p_dataset_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_assignment_question_dictionary_identities_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_assignment_question_dictionary_identities_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_assignment_ids uuid[], p_dataset_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_assignment_question_mode_availability_v1()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_assignment_question_mode_availability_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_assignment_question_mode_availability_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_assignment_question_mode_availability_v2()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_assignment_question_mode_availability_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_assignment_question_mode_availability_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_mock_composition_targets_v1(p_dataset_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_mock_composition_targets_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_mock_composition_targets_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_mock_wordbook_scopes_v1()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_mock_wordbook_scopes_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_mock_wordbook_scopes_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_reviewed_exam_review_choices_v1(p_dataset_id uuid, p_vocab_entry_ids bigint[], p_quiz_mode text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_reviewed_exam_review_choices_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_reviewed_exam_review_choices_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid, p_vocab_entry_ids bigint[], p_quiz_mode text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_student_direct_mistake_dataset_summaries_v1(p_student_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_student_direct_mistake_dataset_summaries_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_student_direct_mistake_dataset_summaries_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_student_direct_review_candidates_v1(p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_limit integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_student_direct_review_candidates_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_student_direct_review_candidates_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_dataset_id uuid, p_review_levels smallint[], p_limit integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_student_direct_review_dataset_summaries_v1(p_student_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_student_direct_review_dataset_summaries_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_student_direct_review_dataset_summaries_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_vocab_assignment_queue_summaries_v1(p_include_closed boolean, p_student_id uuid, p_before_updated_at timestamp with time zone, p_before_series_id uuid, p_limit integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_vocab_assignment_queue_summaries_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_vocab_assignment_queue_summaries_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_include_closed boolean, p_student_id uuid, p_before_updated_at timestamp with time zone, p_before_series_id uuid, p_limit integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_vocab_assignment_queue_summaries_v2(p_include_closed boolean, p_student_id uuid, p_before_updated_at timestamp with time zone, p_before_series_id uuid, p_limit integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_vocab_assignment_queue_summaries_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_vocab_assignment_queue_summaries_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_include_closed boolean, p_student_id uuid, p_before_updated_at timestamp with time zone, p_before_series_id uuid, p_limit integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_vocab_assignment_unit_rules_v1(p_assignment_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_vocab_assignment_unit_rules_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_vocab_assignment_unit_rules_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_assignment_ids uuid[]",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_vocabulary_choice_safety_v1(p_dataset_id uuid, p_after_entry_id bigint, p_limit integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_vocabulary_choice_safety_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_vocabulary_choice_safety_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid, p_after_entry_id bigint, p_limit integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_vocabulary_composition_review_choices_v1(p_dataset_id uuid, p_vocab_entry_ids bigint[], p_quiz_mode text, p_scope_unit_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_vocabulary_composition_review_choices_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_vocabulary_composition_review_choices_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid, p_vocab_entry_ids bigint[], p_quiz_mode text, p_scope_unit_ids uuid[]",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_vocabulary_library_v1()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_vocabulary_library_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_vocabulary_library_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.list_vocabulary_unit_source_classifications_v1(p_dataset_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/list_vocabulary_unit_source_classifications_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "list_vocabulary_unit_source_classifications_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_dataset_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.prepare_vocabulary_composition_v1(p_version_id uuid, p_content_sha256 text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/prepare_vocabulary_composition_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "prepare_vocabulary_composition_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_version_id uuid, p_content_sha256 text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.prepare_vocabulary_template_book_v1(p_request jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/prepare_vocabulary_template_book_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "prepare_vocabulary_template_book_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.prepare_vocabulary_template_question_input_v1(p_request jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/prepare_vocabulary_template_question_input_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "prepare_vocabulary_template_question_input_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.query_vocabulary_library_v1(p_query jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/query_vocabulary_library_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "query_vocabulary_library_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_query jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.query_vocabulary_library_v2(p_query jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/query_vocabulary_library_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "query_vocabulary_library_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_query jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.queue_student_vocabulary_mistakes_v1(p_student_id uuid, p_targets jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/queue_student_vocabulary_mistakes_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "queue_student_vocabulary_mistakes_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_student_id uuid, p_targets jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.replace_student_assignment_v4(p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_selected_queue_ids uuid[], p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/replace_student_assignment_v4`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "replace_student_assignment_v4",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_selected_queue_ids uuid[], p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.replace_student_assignment_v5(p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_selected_queue_ids uuid[], p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/replace_student_assignment_v5`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "replace_student_assignment_v5",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_selected_queue_ids uuid[], p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.replace_student_assignment_v6(p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/replace_student_assignment_v6`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "replace_student_assignment_v6",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.replace_student_assignment_v7(p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_questions jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/replace_student_assignment_v7`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "replace_student_assignment_v7",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_source_assignment_id uuid, p_student_id uuid, p_idempotency_key uuid, p_request_sha256 text, p_replacement_kind text, p_review_snapshot_mode text, p_title text, p_dataset_id uuid, p_primary_unit_ids uuid[], p_question_count integer, p_english_to_korean_ratio smallint, p_time_limit_seconds integer, p_passing_score smallint, p_retry_enabled boolean, p_retry_passing_score smallint, p_question_order_mode public.question_order_mode, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_timing_mode text, p_question_time_limit_seconds integer, p_review_levels smallint[], p_review_scope text, p_selected_queue_ids uuid[], p_questions jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.resolve_vocab_assignment_queue_attention_v3(p_series_id uuid, p_action text, p_expected_item_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/resolve_vocab_assignment_queue_attention_v3`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "resolve_vocab_assignment_queue_attention_v3",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_series_id uuid, p_action text, p_expected_item_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.save_admin_school_schedule_event_v1(p_input jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_admin_school_schedule_event_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "save_admin_school_schedule_event_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_input jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.save_vocabulary_library_template_v1(p_request jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_vocabulary_library_template_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "save_vocabulary_library_template_v1",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.save_vocabulary_library_template_v2(p_request jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_vocabulary_library_template_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "save_vocabulary_library_template_v2",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.save_vocabulary_library_template_v3(p_request jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_vocabulary_library_template_v3`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "save_vocabulary_library_template_v3",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_request jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.update_admin_student_profile_v1(p_student_id uuid, p_base_version timestamp with time zone, p_display_name text, p_school_name text, p_grade_label text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/update_admin_student_profile_v1`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "update_admin_student_profile_v1",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_student_id uuid, p_base_version timestamp with time zone, p_display_name text, p_school_name text, p_grade_label text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          },
+          {
+            "detail": "Function `public.update_admin_student_profile_v2(p_student_id uuid, p_base_version timestamp with time zone, p_display_name text, p_school_name text, p_grade_label text, p_school_key text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/update_admin_student_profile_v2`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "update_admin_student_profile_v2",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_student_id uuid, p_base_version timestamp with time zone, p_display_name text, p_school_name text, p_grade_label text, p_school_key text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-04T03:18:50.970Z"
+          }
+        ]
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "title": "Leaked Password Protection Disabled",
+        "level": "WARN",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Leaked password protection is currently disabled.",
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+        "count": 1,
+        "findings": [
+          {
+            "detail": "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.",
+            "metadata": {
+              "type": "auth",
+              "entity": "Auth"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
