@@ -11,9 +11,10 @@ import {
   quizPromptDensity,
 } from "../domain/quiz-session";
 import type { QuizAttempt, QuizAttemptResponse } from "../model";
-import { Button, ButtonLink } from "@/design-system/primitives/button/button";
+import { Button, ButtonLink, ButtonSpinner } from "@/design-system/primitives/button/button";
 import type { QuizChoiceFeedback } from "./quiz-choice";
 import { QuizFrame } from "./quiz-frame";
+import { QuizExitDialog } from "./quiz-exit-dialog";
 import styles from "./quiz-player.module.css";
 
 export function formatQuizTime(seconds: number) {
@@ -44,7 +45,7 @@ export function QuizPlayer({
     initialTimerReady,
     preparedResponse: preparation?.response,
   });
-  const { currentQuestion, state } = controller;
+  const { currentQuestion, state, stopOpen } = controller;
   // A later question or recovery also pauses timer synchronization. Only the
   // first clock receipt owns the initial preparation screen.
   const initialPreparing = Boolean(preparation) && state.attempt.startedAt === null;
@@ -86,7 +87,7 @@ export function QuizPlayer({
   };
 
   return (
-    <main className={styles.shell} id="main-content">
+    <><main className={styles.shell} id="main-content">
       <div className={styles.stage} ref={preparation?.frameRef} aria-busy={initialPreparing || state.transitionPending}>
       <div className={initialPreparing ? styles.initialHidden : state.transitionPending ? styles.waiting : state.revealQuestion ? styles.reveal : undefined}
         inert={initialPreparing || state.transitionPending || undefined} aria-hidden={initialPreparing || state.transitionPending || undefined}>
@@ -107,7 +108,7 @@ export function QuizPlayer({
             : "--:--"
         }
         onChoose={choose}
-        onPlayAudio={controller.playAudio}
+        onPlayAudio={url => { if (!stopOpen) controller.playAudio(url); }}
         onRetrySynchronization={controller.retrySynchronization}
         phase={state.attempt.phase === "retry" ? "retry" : "initial"}
         phaseQuestionCount={controller.phaseQuestionCount}
@@ -118,7 +119,14 @@ export function QuizPlayer({
         promptRef={controller.promptRef}
         quizContentMode={state.attempt.quizContentMode}
         remainingSeconds={state.remainingSeconds}
+        timerLimitMilliseconds={state.attempt.timingMode === "per_question"
+          ? (state.attempt.questionTimeLimitSeconds ?? 0) * 1000
+          : state.attempt.deadlineAt && state.attempt.startedAt ? Date.parse(state.attempt.deadlineAt) - Date.parse(state.attempt.startedAt) : null}
+        answerCorrect={state.feedback?.correct ?? null}
+        onRequestStop={controller.requestStop}
+        stopDisabled={state.submitting || state.pendingChoice !== null || Boolean(state.feedback)}
         submitting={
+          stopOpen ||
           state.submitting ||
           !state.timerSynchronized ||
           (quizAttemptUsesDeadlineClock(state.attempt) &&
@@ -134,10 +142,10 @@ export function QuizPlayer({
       {state.expirationPending ? <p role="status">시험 종료를 확인하고 있습니다.</p> : null}
       {initialPreparing ? <div className={styles.initialPreparing}>
         <strong>{state.attempt.assignmentTitle}</strong>
-        <div className={styles.prepareBody}>{preparation?.error ? <><p role="alert">{preparation.error}</p>{preparation.retry ? <Button onClick={preparation.retry}>다시 확인</Button> : null}<ButtonLink href="/student">목록으로</ButtonLink></> : <p role="status">시험 준비 중</p>}</div>
+        <div className={styles.prepareBody}>{preparation?.error ? <><p role="alert">{preparation.error}</p>{preparation.retry ? <Button onClick={preparation.retry}>다시 확인</Button> : null}</> : <p role="status" className={styles.loadingStatus}><ButtonSpinner className={styles.loadingSpinner} />시험 준비 중</p>}<ButtonLink href="/student">취소</ButtonLink></div>
       </div> : null}
       {state.transitionPending ? <div className={styles.preparing} role="status">다음 문제 준비 중</div> : null}
       </div>
-    </main>
+    </main>{stopOpen ? <QuizExitDialog onContinue={controller.continueQuiz} onExit={controller.exitQuiz} /> : null}</>
   );
 }

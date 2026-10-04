@@ -6,10 +6,12 @@ import { localQuizPreparationSchema, type LocalQuizRun } from "../../contracts/l
 import { cacheLocalQuizContents, findLocalQuizRun, getLocalQuizDevice, knownLocalQuizContentKeys,
   readLocalQuizContents, saveLocalQuizRun, pruneLocalQuizContents } from "./local-quiz-store";
 
-export async function prepareLocalQuiz(assignmentId: string) {
+export async function prepareLocalQuiz(assignmentId: string, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const identity = studentIdentityGeneration(); const device = await getLocalQuizDevice();
   await pruneLocalQuizContents();
-  const response = await requestLocalQuiz({ action: "prepare", assignmentId, device, knownKeys: await knownLocalQuizContentKeys() });
+  const response = await requestLocalQuiz({ action: "prepare", assignmentId, device, knownKeys: await knownLocalQuizContentKeys() }, signal);
+  signal?.throwIfAborted();
   if (studentIdentityGeneration() !== identity) throw new Error("학생 계정이 바뀌었습니다. 다시 열어 주세요.");
   const resume = z.object({ protocol: z.enum(["legacy", "local_batch_v1"]), studentId: z.uuid(), resumeId: z.uuid() }).safeParse(response);
   if (resume.success) {
@@ -23,14 +25,17 @@ export async function prepareLocalQuiz(assignmentId: string) {
   const contents = await readLocalQuizContents(prepared.items.map(i => i.key));
   if (contents.size !== new Set(prepared.items.map(i => i.key)).size) {
     // Never start with a missing/corrupt body. Same preparation receipt, no new clock.
-    const repaired = localQuizPreparationSchema.parse(await requestLocalQuiz({ action: "prepare", assignmentId, device, knownKeys: [] }));
+    const repaired = localQuizPreparationSchema.parse(await requestLocalQuiz({ action: "prepare", assignmentId, device, knownKeys: [] }, signal));
+    signal?.throwIfAborted();
     if (repaired.preparationId !== prepared.preparationId || repaired.planHash !== prepared.planHash) throw new Error("시험 준비가 바뀌었습니다. 다시 열어 주세요.");
     await cacheLocalQuizContents(repaired.packet); prepared = repaired;
   }
   const verified = await readLocalQuizContents(prepared.items.map(i => i.key));
+  signal?.throwIfAborted();
   if (verified.size !== new Set(prepared.items.map(i => i.key)).size) throw new Error("시험 자료를 모두 준비하지 못했습니다. 다시 시도해 주세요.");
   if (studentIdentityGeneration() !== identity) throw new Error("학생 계정이 바뀌었습니다. 다시 열어 주세요.");
   const existing = await findLocalQuizRun(prepared.preparationId, prepared.studentId);
+  signal?.throwIfAborted();
   if (existing?.plan || existing?.startRequested) return `/quiz-offline#${existing.key}`;
   const { packet: _packet, ...preparation } = prepared; void _packet;
   const run: LocalQuizRun = { key: prepared.preparationId, revision: existing ? existing.revision + 1 : 0, identity, studentId: prepared.studentId, device, preparation,

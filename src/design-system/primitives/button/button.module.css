@@ -120,6 +120,7 @@
 }
 
 .spinner {
+  display: inline-block;
   width: 18px;
   height: 18px;
   flex: none;
@@ -127,6 +128,7 @@
   border-top-color: currentColor;
   border-radius: 999px;
   animation: spin 720ms linear infinite;
+  will-change: transform;
 }
 
 @keyframes spin {
@@ -140,5 +142,6 @@
   .spinner {
     animation: none;
     transition: none;
+    will-change: auto;
   }
 }

@@ -1,5 +1,5 @@
 /** Only the public offline screen is in the worker's scope. */
-export async function prepareLocalQuizScreen() {
+export async function prepareLocalQuizScreen(detached = false) {
   if (!('serviceWorker' in navigator)) throw new Error('local_offline_screen_unavailable');
   let disposed = false; let listener: (() => void) | null = null; let channel: MessageChannel | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -17,7 +17,7 @@ export async function prepareLocalQuizScreen() {
         if (disposed) return;
         // An update may decline installation because another test is playing.
         // The complete active build remains usable for this attempt.
-        if (registration.active && navigator.serviceWorker.controller === registration.active && await isReady(registration.active)) return;
+        if (registration.active && (detached || navigator.serviceWorker.controller === registration.active) && await isReady(registration.active)) return;
         // Finish a currently installing update before starting any clock.
         const installing = registration.installing;
         if (installing) await new Promise<void>((resolve, reject) => {
@@ -31,6 +31,12 @@ export async function prepareLocalQuizScreen() {
           stopInstalling = () => installing.removeEventListener("statechange", changed);
           installing.addEventListener("statechange", changed); changed();
         });
+        if (detached) {
+          const worker = registration.active ?? registration.waiting ?? installing;
+          if (!worker) throw new Error('local_offline_screen_unavailable');
+          if (!await isReady(worker) && !await isReady(worker, true)) throw new Error('local_offline_screen_incomplete');
+          return;
+        }
         await navigator.serviceWorker.ready;
         if (disposed) return;
         if (!navigator.serviceWorker.controller) await new Promise<void>(resolve => {

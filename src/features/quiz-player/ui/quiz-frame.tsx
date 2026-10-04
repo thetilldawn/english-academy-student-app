@@ -9,11 +9,13 @@ import {
   inlineHelpClassName,
 } from "@/design-system/primitives/tooltip/help-tip";
 import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
+import { Button } from "@/design-system/primitives/button/button";
 import type { PriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 import { questionSemantics } from "@/lib/quiz/question-semantics";
 
 import { quizChoicePresentation, type QuizChoiceLength } from "../domain/quiz-session";
+import { quizTimeBar } from "../domain/quiz-time-bar";
 import type { QuizQuestion } from "../model";
 import { QuizChoice, type QuizChoiceFeedback } from "./quiz-choice";
 import { QuizSynchronizationError } from "./quiz-synchronization-error";
@@ -61,6 +63,11 @@ export function QuizFrame({
   timeWarning,
   timedOut,
   timingMode,
+  timerRemainingMilliseconds,
+  timerLimitMilliseconds = null,
+  answerCorrect = null,
+  onRequestStop,
+  stopDisabled = false,
 }: {
   answerAnnouncement: string;
   assignmentTitle: string;
@@ -88,7 +95,13 @@ export function QuizFrame({
   timeWarning: string;
   timedOut: boolean;
   timingMode: "none" | "total" | "per_question";
+  timerRemainingMilliseconds?: number;
+  timerLimitMilliseconds?: number | null;
+  answerCorrect?: boolean | null;
+  onRequestStop?: () => void;
+  stopDisabled?: boolean;
 }) {
+  const timeBar = quizTimeBar(timerRemainingMilliseconds ?? remainingSeconds * 1000, timerLimitMilliseconds, answerCorrect);
   const roles = questionSemantics(currentQuestion.quizContentMode ?? quizContentMode, currentQuestion.direction);
   const isEnglishPrompt = roles.prompt !== "korean_meaning";
   const isEnglishChoice = roles.choice === "headword";
@@ -117,6 +130,12 @@ export function QuizFrame({
         }
       }}
     >
+      {timeBar.visible ? <div className={styles.timeTrack} role="progressbar" aria-label="남은 시간"
+        aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(timeBar.ratio * 100)}
+        data-feedback={timeBar.feedback || undefined}>
+        <div className={styles.timeValue} data-tone={timeBar.tone} data-urgent={timeBar.urgent || undefined}
+          style={{ width: `${timeBar.ratio * 100}%` }} />
+      </div> : null}
       <div className={styles.topline}>
         <div className={styles.heading}>
           <p className={styles.phase}>
@@ -126,6 +145,8 @@ export function QuizFrame({
           </p>
           <strong className={styles.title}>{assignmentTitle}</strong>
         </div>
+        <div className={styles.timerControls}>
+        {onRequestStop ? <Button size="small" variant="quiet" disabled={stopDisabled} onClick={onRequestStop}>시험 중지</Button> : null}
         <span
           aria-busy={!timerSynchronized}
           aria-label={formatContentText(studentAppText.attempt.remaining, {
@@ -148,6 +169,7 @@ export function QuizFrame({
           {timingMode === "per_question" ? <small className={styles.timerLabel}>문제당</small> : null}
           <span>{formattedRemaining}</span>
         </span>
+        </div>
       </div>
 
       <div

@@ -1,5 +1,6 @@
 import type { CommonQuizBody, LocalAnswer, LocalBatch, LocalPhasePlan, LocalQuizRun, LocalReceipt } from "../contracts/local-quiz";
 import { canonicalDisplayJson, displayDigest } from "@/lib/quiz/shared-display";
+import { ANSWER_RESULT_VISIBLE_MS } from "./quiz-session";
 
 /** One canonical representation in Node and browsers; independent of JSON insertion order. */
 export const canonicalLocalJson = canonicalDisplayJson;
@@ -46,6 +47,6 @@ export function recordLocalAnswer(run: LocalQuizRun, choice: number | null, elap
   }
   const batch: LocalBatch | null = answers.length === plan.items.length ? { submissionId, attemptId: plan.attemptId, phase: plan.phase, planHash: plan.planHash,
     answers, completion: { elapsedMs: finished, reason } } : null;
-  return { ...run, revision: run.revision + 1, answers, openedMs: finished + 100, batch,
+  return { ...run, revision: run.revision + 1, answers, openedMs: finished + ANSWER_RESULT_VISIBLE_MS, batch,
     clock: { wallAt: wallNow, elapsedAt: elapsed } };
 }

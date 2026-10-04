@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 const maximumTimeoutMilliseconds = 2_147_000_000;
@@ -13,11 +13,18 @@ export function AssignmentBoundaryRefresh({
   initialRemainingMilliseconds: number;
 }) {
   const router = useRouter();
+  const quizOpen = usePathname() === "/quiz-offline";
+  const clock = useRef<{ boundary: string; remaining: number; startedAt: number } | null>(null);
   const refreshedRef = useRef(false);
 
   useEffect(() => {
+    if (clock.current?.boundary !== boundaryAt || clock.current.remaining !== initialRemainingMilliseconds) {
+      clock.current = { boundary: boundaryAt, remaining: initialRemainingMilliseconds, startedAt: performance.now() };
+      refreshedRef.current = false;
+    }
+    if (quizOpen) return;
     let timeoutId: number | null = null;
-    const startedAt = performance.now();
+    const startedAt = clock.current.startedAt;
 
     const schedule = () => {
       if (timeoutId !== null) window.clearTimeout(timeoutId);
@@ -36,7 +43,6 @@ export function AssignmentBoundaryRefresh({
       );
     };
 
-    refreshedRef.current = false;
     schedule();
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") schedule();
@@ -47,7 +53,7 @@ export function AssignmentBoundaryRefresh({
       if (timeoutId !== null) window.clearTimeout(timeoutId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [boundaryAt, initialRemainingMilliseconds, router]);
+  }, [boundaryAt, initialRemainingMilliseconds, router, quizOpen]);
 
   return null;
 }

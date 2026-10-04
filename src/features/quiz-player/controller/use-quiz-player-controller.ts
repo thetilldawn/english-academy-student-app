@@ -44,6 +44,7 @@ export function useQuizPlayerController(input: {
     ), timerSynchronized: Boolean(input.initialTimerReady) },
   );
   const deadlineSubmissionNotBefore = useRef(0);
+  const { stopOpen } = state;
   const inFlightRequest = useRef<string | null>(null);
   const timeWarningAnnounced = useRef(false);
   const mounted = useRef(false);
@@ -61,6 +62,7 @@ export function useQuizPlayerController(input: {
   } = useQuizAudio({
     attemptId: state.attempt.id,
     autoPlayEnabled:
+      !stopOpen &&
       state.timerSynchronized &&
       state.remainingSeconds > 0 &&
       !state.submitting &&
@@ -72,6 +74,7 @@ export function useQuizPlayerController(input: {
     questionId: currentQuestion?.id ?? null,
     promptAudioUrl: audioPresentation.promptAudioUrl,
   });
+  useEffect(() => { if (stopOpen) stopAudio(); }, [stopOpen, stopAudio]);
 
   const handleClockTick = useCallback((remainingSeconds: number) => {
     dispatch({
@@ -207,8 +210,8 @@ export function useQuizPlayerController(input: {
   ]);
 
   useEffect(() => {
-    if (state.timerSynchronized) promptRef.current?.focus({ preventScroll: false });
-  }, [currentQuestion?.id,state.timerSynchronized]);
+    if (state.timerSynchronized && !stopOpen) promptRef.current?.focus({ preventScroll: false });
+  }, [currentQuestion?.id,state.timerSynchronized,stopOpen]);
 
   const priorWrongIndicator = currentQuestion
     ? getPriorWrongIndicator(currentQuestion.priorWrongLevel)
@@ -226,6 +229,11 @@ export function useQuizPlayerController(input: {
     currentQuestion,
     phaseQuestionCount: phaseSnapshot.questions.length,
     playAudio,
+    stopAudio,
+    stopOpen,
+    requestStop: () => { stopAudio(); dispatch({ type: "stop-dialog-changed", open: true }); },
+    continueQuiz: () => dispatch({ type: "stop-dialog-changed", open: false }),
+    exitQuiz: () => router.replace("/student"),
     priorWrongIndicator,
     progress: phaseSnapshot.progress,
     promptRef,

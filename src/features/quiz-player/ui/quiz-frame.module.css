@@ -1,10 +1,22 @@
 .frame {
+  position: relative;
   width: min(100%, 620px);
   padding: clamp(20px, 4vw, 38px);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--card);
 }
+
+.timerControls { display: grid; justify-items: end; gap: 8px; flex: none; }
+.timeTrack { position: absolute; inset: 0 0 auto; height: 6px; overflow: hidden; border-radius: var(--radius-card) var(--radius-card) 0 0; background: var(--line); }
+.timeValue { height: 100%; transition: width 100ms ease-in-out, background-color 100ms ease-in-out; }
+.timeValue[data-tone="green"] { background: var(--pass); }
+.timeValue[data-tone="yellow"] { background: var(--retry-bar); }
+.timeValue[data-tone="orange"] { background: var(--quiz-time-orange); }
+.timeValue[data-tone="red"] { background: var(--fail); }
+.timeValue[data-urgent] { animation: urgentTime calc(1s / 3) ease-in-out infinite both; }
+@keyframes urgentTime { 0%, 100% { background-color: var(--fail); } 50% { background-color: var(--quiz-time-dark); } }
+@media (prefers-reduced-motion: reduce) { .timeValue, .timeValue[data-urgent] { transition: none; animation: none; } }
 
 .timeoutOverlay {
   position: fixed;

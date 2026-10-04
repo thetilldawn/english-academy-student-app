@@ -1,9 +1,12 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { Button, ButtonLink } from "@/design-system/primitives/button/button";
+import { useRouter } from "next/navigation";
+import { Button, ButtonLink, ButtonSpinner } from "@/design-system/primitives/button/button";
+import { DialogFrame } from "@/design-system/primitives/dialog/dialog";
 import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 import type { QuizQuestion } from "../../model";
 import { QuizFrame } from "../../ui/quiz-frame";
+import { QuizExitDialog } from "../../ui/quiz-exit-dialog";
 import { quizAnswerAnnouncement, quizAudioPresentation, quizChoiceAudioUrls, quizChoicesDensity, quizPromptDensity } from "../../domain/quiz-session";
 import { useQuizAudio } from "../../controller/use-quiz-audio";
 import { useLocalQuizPlayerController } from "../controllers/use-local-quiz-player-controller";
@@ -11,7 +14,7 @@ import { findLocalQuizRun } from "../flows/local-quiz-store";
 import styles from "../../ui/quiz-player.module.css";
 
 type Controller = ReturnType<typeof useLocalQuizPlayerController>;
-function LocalQuizFrame({ controller: c }: { controller: Controller }) {
+function LocalQuizFrame({ controller: c, stopOpen, onRequestStop }: { controller: Controller; stopOpen: boolean; onRequestStop: () => void }) {
   const { run, contents, feedback } = c;
   const index = feedback?.index ?? run?.answers.length ?? 0;
   const item = run?.plan?.items[index]; const promptRef = useRef<HTMLHeadingElement>(null);
@@ -37,12 +40,12 @@ function LocalQuizFrame({ controller: c }: { controller: Controller }) {
   const audio = question ? quizAudioPresentation(question) : { promptAudioUrl: null };
   const phase = run?.plan?.phase ?? "initial";
   const { playAudio, stopAudio } = useQuizAudio({ attemptId: run?.plan?.attemptId ?? "", phase, questionId: question?.id ?? null,
-    autoPlayEnabled: c.view === "playing" && !c.busy && c.pendingChoice === null && !feedback, playbackReady: true,
+    autoPlayEnabled: c.view === "playing" && !stopOpen && !c.busy && c.pendingChoice === null && !feedback, playbackReady: true,
     preloadAudioUrls, promptAudioUrl: audio.promptAudioUrl });
   useEffect(() => {
-    if (c.pendingChoice !== null || c.busy || feedback) stopAudio();
-  }, [c.pendingChoice, c.busy, feedback, stopAudio]);
-  useEffect(() => { promptRef.current?.focus(); }, [question?.id]);
+    if (stopOpen || c.pendingChoice !== null || c.busy || feedback) stopAudio();
+  }, [c.pendingChoice, c.busy, feedback, stopOpen, stopAudio]);
+  useEffect(() => { if (!stopOpen) promptRef.current?.focus(); }, [question?.id, stopOpen]);
   if (!run?.plan || !question) return <p role="status">시험 결과를 준비하고 있습니다.</p>;
   const seconds = Number.isFinite(c.remaining) ? Math.ceil(c.remaining / 1000) : Infinity;
   const time = Number.isFinite(seconds) ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` : "제한 없음";
@@ -52,19 +55,31 @@ function LocalQuizFrame({ controller: c }: { controller: Controller }) {
     promptDensity={quizPromptDensity(question.prompt, question.direction, run.preparation.quizContentMode)} choiceDensity={quizChoicesDensity(question.choices)}
     answerAnnouncement={quizAnswerAnnouncement(phase, feedback?.correct ?? null, feedback?.timedOut ?? false)}
     formattedRemaining={time} remainingSeconds={Number.isFinite(seconds) ? seconds : 1} timingMode={run.preparation.timingMode}
-    timerSynchronized={true} submitting={c.view !== "playing" || c.busy || Boolean(feedback)} error={c.error} timeWarning="" timedOut={feedback?.timedOut ?? false}
-    promptAudioUrl={audio.promptAudioUrl} onPlayAudio={url => { if (c.pendingChoice === null && !c.busy && !feedback) playAudio(url); }}
+    timerRemainingMilliseconds={c.remaining} timerLimitMilliseconds={run.preparation.timingMode === "per_question" ? run.plan.questionLimitMs : run.plan.limitMs}
+    answerCorrect={feedback?.correct ?? null} onRequestStop={() => { stopAudio(); onRequestStop(); }} stopDisabled={c.busy || Boolean(feedback) || c.pendingChoice !== null}
+    timerSynchronized={true} submitting={stopOpen || c.view !== "playing" || c.busy || Boolean(feedback)} error={c.error} timeWarning="" timedOut={feedback?.timedOut ?? false}
+    promptAudioUrl={audio.promptAudioUrl} onPlayAudio={url => { if (!stopOpen && c.pendingChoice === null && !c.busy && !feedback) playAudio(url); }}
     onChoose={index => { stopAudio(); c.choose(index); }} onRetrySynchronization={() => void c.recover()}
     choiceFeedback={i => feedback ? feedback.answer === i ? "correct" : feedback.selected === i ? "wrong" : null : c.pendingChoice === i ? "selected" : null} />;
 }
-function Player({ localKey, retry }: { localKey: string; retry: boolean }) {
-  const controller = useLocalQuizPlayerController(localKey, retry);
+function Player({ localKey, retry, presentation }: { localKey: string; retry: boolean; presentation: "page" | "dialog" }) {
+  const router = useRouter();
+  const [stopOpen, setStopOpen] = useState(false);
+  const controller = useLocalQuizPlayerController(localKey, retry, presentation === "dialog");
   const { view, error, run } = controller;
-  return <main className={styles.shell} id="main-content"><div className={styles.stage}>
-    {view === "playing" || (view === "failed" && controller.pendingChoice !== null && run?.plan && !run.batch) ? <LocalQuizFrame controller={controller} /> : <section className={styles.finalizing}>
+  const exit = () => { if (presentation === "dialog") router.back(); else router.replace("/student"); };
+  const requestClose = () => {
+    // A failed local write still owns the selected answer in memory.
+    if (controller.pendingChoice !== null || controller.busy || controller.feedback) return;
+    if (view === "playing") {
+      setStopOpen(true);
+    } else exit();
+  };
+  const content = <><main className={styles.shell} id={presentation === "dialog" ? "quiz-main-content" : "main-content"}><div className={styles.stage}>
+    {view === "playing" || (view === "failed" && controller.pendingChoice !== null && run?.plan && !run.batch) ? <LocalQuizFrame controller={controller} stopOpen={stopOpen} onRequestStop={() => setStopOpen(true)} /> : <section className={styles.finalizing}>
       {view !== "blocked" && run ? <strong>{run.preparation.title}</strong> : null}
-      {view === "preparing" ? <p role="status">시험 자료를 기기에 준비하고 있습니다.</p> : null}
-      {view === "sending" ? <p role="status">답은 기기에 보관됐습니다. 시험 결과를 제출하고 있습니다.</p> : null}
+      {view === "preparing" ? <p role="status" className={styles.loadingStatus}><ButtonSpinner className={styles.loadingSpinner} />시험 자료를 기기에 준비하고 있습니다.</p> : null}
+      {view === "sending" ? <p role="status" className={styles.loadingStatus}><ButtonSpinner className={styles.loadingSpinner} />답은 기기에 보관됐습니다. 시험 결과를 제출하고 있습니다.</p> : null}
       {error ? <p role="alert">{error}</p> : null}
       {view === "failed" || view === "blocked" ? <Button onClick={() => void controller.recover()}>{view === "blocked" ? "계정 확인 후 이어가기" : "다시 확인"}</Button> : null}
       {view === "blocked" ? <ButtonLink href="/" prefetch={false}>로그인 화면</ButtonLink> : null}
@@ -73,16 +88,29 @@ function Player({ localKey, retry }: { localKey: string; retry: boolean }) {
         {!run.receipt.result.finalized && run.receipt.retryTargets.length > 0 ? <Button onClick={controller.retry}>재시험 시작</Button> : null}
         <ButtonLink href={`/student/result/${run.plan!.attemptId}`} prefetch={false}>결과 보기</ButtonLink>
       </> : null}
-      <ButtonLink href="/student" prefetch={false}>시험 목록</ButtonLink>
+      <Button onClick={exit}>{view === "preparing" ? "취소" : "시험 목록"}</Button>
     </section>}
-  </div></main>;
+  </div></main>
+  {stopOpen ? <QuizExitDialog onContinue={() => setStopOpen(false)} onExit={exit} /> : null}</>;
+  if (presentation === "dialog") return <DialogFrame aria-label={view === "preparing" ? "시험 준비 중" : "단어 시험"}
+    onRequestClose={requestClose} className={view === "preparing" ? styles.preparationDialog : styles.fullScreenDialog}>{content}</DialogFrame>;
+  return content;
 }
-export function LocalQuizPlayer() {
+export function LocalQuizPlayer({ presentation = "page" }: { presentation?: "page" | "dialog" }) {
   const hash = useSyncExternalStore(subscribeHash, () => window.location.hash, () => null);
-  if (hash === null) return <main id="main-content"><p role="status">저장한 시험을 확인하고 있습니다.</p></main>;
+  if (hash === null && presentation === "dialog") return <LocalQuizLoadingDialog />;
+  if (hash === null) return <main id="main-content"><p role="status" className={styles.loadingStatus}><ButtonSpinner />저장한 시험을 확인하고 있습니다.</p></main>;
   const match = /^#([0-9a-f-]{36})(\/retry)?$/.exec(hash);
   if (!match) return <main id="main-content"><p>시험 목록에서 시험을 선택해 주세요.</p><ButtonLink href="/student" prefetch={false}>시험 목록</ButtonLink></main>;
-  return <Player key={hash} localKey={match[1]} retry={Boolean(match[2])} />;
+  return <Player key={hash} localKey={match[1]} retry={Boolean(match[2])} presentation={presentation} />;
+}
+export function LocalQuizLoadingDialog({ onCancel }: { onCancel?: () => void }) {
+  const router = useRouter();
+  const cancel = onCancel ?? (() => router.back());
+  return <DialogFrame aria-label="시험 준비 중" onRequestClose={cancel} className={styles.preparationDialog}>
+    <section className={styles.finalizing}><p className={styles.loadingStatus} role="status"><ButtonSpinner className={styles.loadingSpinner} />시험 자료를 준비하고 있습니다.</p>
+      <Button onClick={cancel}>취소</Button></section>
+  </DialogFrame>;
 }
 function subscribeHash(changed: () => void) {
   window.addEventListener("hashchange", changed);

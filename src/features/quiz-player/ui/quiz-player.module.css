@@ -25,6 +25,17 @@
   width: min(100%, 620px);
 }
 
+.loadingStatus { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 56px; }
+.loadingSpinner { display: inline-block; will-change: transform; }
+.exitDialog::backdrop, .preparationDialog::backdrop { background: rgb(0 0 0 / 45%); backdrop-filter: blur(5px); }
+.exitDialog .exitActions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+dialog.preparationDialog { width: min(620px, calc(100vw - 32px)); }
+.preparationDialog .shell { min-height: auto; padding: 0; }
+.preparationDialog .finalizing { border: 0; padding: 24px; }
+dialog.fullScreenDialog[open] { position: fixed; inset: 0; margin: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; padding: 0; border: 0; border-radius: 0; background: var(--paper); overflow-y: auto; }
+.fullScreenDialog .shell { width: 100%; }
+@media (prefers-reduced-motion: reduce) { .loadingSpinner { will-change: auto; } }
+
 .initialPreparing {
   position: absolute;
   inset: 0;

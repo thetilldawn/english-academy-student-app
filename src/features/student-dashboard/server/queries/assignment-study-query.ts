@@ -25,6 +25,20 @@ import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import type { AssignmentStudyResult } from "../../contracts/assignment-study";
 import { studyExampleRanges } from "../../domain/study-example-ranges";
 import { getStudyExamplePrompts } from "./assignment-study-example-query";
+import { studyAccessSchema, type StudyAccess } from "../../contracts/study-materials";
+
+/** Permission and reference revision only; never assembles word or audio bodies. */
+export async function getAssignmentStudyAccess(student: Pick<StudentSession, "studentId">, assignmentId: string): Promise<StudyAccess | null> {
+  if (!z.uuid().safeParse(assignmentId).success) return null;
+  const { data, error } = await getServiceSupabaseClient().rpc("get_student_assignment_study_access_v1",
+    { p_assignment_id: assignmentId, p_student_id: student.studentId });
+  if (error) throw new Error("assignment_study_access_failed", { cause: error.code });
+  if (data === null) return null;
+  const access = studyAccessSchema.parse({ ...data, mode: normalizeQuizContentMode(data.mode), studentId: student.studentId });
+  if (access.assignmentId !== assignmentId || "release" in access &&
+      (isAssignmentReleaseOpen(access.release) || access.release.state === "unavailable")) throw new Error("assignment_study_access_invalid");
+  return access;
+}
 
 const wordSchema = z.object({
   notebookPronunciation: frozenPronunciationSchema.nullable().optional(),

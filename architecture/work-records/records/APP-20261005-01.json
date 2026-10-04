@@ -1,0 +1,1021 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261005-01",
+  "title": "시험 화면과 반복 자료 조회 보수",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261005-01.md",
+  "baseline": "40b06406e57badbbcd56fdfe9df98585bf22c17d",
+  "owners": [
+    "quiz-player",
+    "student-dashboard",
+    "session",
+    "notifications",
+    "database-contract",
+    "architecture-meta",
+    "shared-ui"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-preparation.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-prefetch.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-prefetch.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-screen.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-screen.test.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/local-quiz.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/local-quiz.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-session.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-session.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-time-bar.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-time-bar.test.ts",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-frame.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-frame.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-frame.module.css",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.module.css",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-exit-dialog.tsx",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-exit-dialog.test.tsx",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/public-local-client.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-service.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/AGENTS.md",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/start-attempt-button.test.tsx",
+      "state": "planned",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/deadline-countdown.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/controller/use-shared-study.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/controller/use-shared-study.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/cached-assignment-study-reader.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/contracts/study-materials.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/assignment-study-content.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/AGENTS.md",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/session/ui/student-session-renewal.tsx",
+      "state": "existing",
+      "owner": "session",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/components/notification-bootstrap.tsx",
+      "state": "existing",
+      "owner": "notifications",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(...)quiz-offline/page.tsx",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(...)quiz-offline/loading.tsx",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20261004161947_improve_quiz_feedback_and_study_cache_access.sql",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/local-quiz-batches.integration.test.ts",
+      "state": "planned",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/contracts/local-quiz.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-service.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/public-server.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/session/ui/student-session-renewal.test.tsx",
+      "state": "existing",
+      "owner": "session",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/components/notification-bootstrap.test.tsx",
+      "state": "existing",
+      "owner": "notifications",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/deadline-countdown.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/design-system/primitives/button/button.module.css",
+      "state": "existing",
+      "owner": "shared-ui",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/prepared-quiz-player.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/resolve-quiz-feedback-transition.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/components/local-quiz-player.test.tsx",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/styles/tokens.css",
+      "state": "existing",
+      "owner": "shared-ui",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-player-state.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "준비를 목록 위 모달과 취소·로딩으로 표시한다.",
+      "acceptance": "준비를 목록 위 모달과 취소·로딩으로 표시한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "시험 중지 확인창을 제공하고 기존 답·마감·음원을 보존한다.",
+      "acceptance": "시험 중지 확인창을 제공하고 기존 답·마감·음원을 보존한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "카드 위 시간 막대를 남은 비율과 급박도에 맞게 표시한다.",
+      "acceptance": "카드 위 시간 막대를 남은 비율과 급박도에 맞게 표시한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "250ms 정오답과100ms 바 전환을 기존100ms 기기 답과 호환한다.",
+      "acceptance": "250ms 정오답과100ms 바 전환을 기존100ms 기기 답과 호환한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "단어보기와 미리 받기의 중복 자료 조회를 제거한다.",
+      "acceptance": "단어보기와 미리 받기의 중복 자료 조회를 제거한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R6",
+      "source": "user",
+      "text": "화면 준비·뒤쪽 자동 갱신 때문에 시험 중 통신/로딩이 생기지 않게 한다.",
+      "acceptance": "화면 준비·뒤쪽 자동 갱신 때문에 시험 중 통신/로딩이 생기지 않게 한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "준비를 목록 위 모달과 취소·로딩으로 표시한다.",
+      "answer": "지시서 D1의 기존 구조 재사용과 보존 기준으로 처리한다.",
+      "source": "2026-10-05 사용자 화면 지시와 docs/work-orders/APP-20261005-01.md"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "시험 중지 확인창을 제공하고 기존 답·마감·음원을 보존한다.",
+      "answer": "지시서 D2의 기존 구조 재사용과 보존 기준으로 처리한다.",
+      "source": "2026-10-05 사용자 화면 지시와 docs/work-orders/APP-20261005-01.md"
+    },
+    {
+      "id": "D3",
+      "owner": "user",
+      "state": "resolved",
+      "question": "카드 위 시간 막대를 남은 비율과 급박도에 맞게 표시한다.",
+      "answer": "지시서 D3의 기존 구조 재사용과 보존 기준으로 처리한다.",
+      "source": "2026-10-05 사용자 화면 지시와 docs/work-orders/APP-20261005-01.md"
+    },
+    {
+      "id": "D4",
+      "owner": "user",
+      "state": "resolved",
+      "question": "250ms 정오답과100ms 바 전환을 기존100ms 기기 답과 호환한다.",
+      "answer": "지시서 D4의 기존 구조 재사용과 보존 기준으로 처리한다.",
+      "source": "2026-10-05 사용자 화면 지시와 docs/work-orders/APP-20261005-01.md"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "단어보기와 미리 받기의 중복 자료 조회를 제거한다.",
+      "answer": "지시서 D5의 기존 구조 재사용과 보존 기준으로 처리한다.",
+      "source": "2026-10-05 사용자 화면 지시와 docs/work-orders/APP-20261005-01.md"
+    },
+    {
+      "id": "D6",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "화면 준비·뒤쪽 자동 갱신 때문에 시험 중 통신/로딩이 생기지 않게 한다.",
+      "answer": "지시서 D6의 기존 구조 재사용과 보존 기준으로 처리한다.",
+      "source": "2026-10-05 사용자 화면 지시와 docs/work-orders/APP-20261005-01.md"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "state": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "api": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "cache": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "security": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "기존 카드·Dialog·기기 캐시·접수 호환을 연결한다. 상세 경계는 지시서 D1-D6."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 학생 세션·권한·정답/개인자료 경계·48시간 공용 캐시를 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 세션·권한·정답/개인자료 경계·48시간 공용 캐시를 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 세션·권한·정답/개인자료 경계·48시간 공용 캐시를 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "기존 학생 세션·권한·정답/개인자료 경계·48시간 공용 캐시를 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "인증된 목록→취소가능 준비→기기 시험→기기 채점/답 보관→종료1회 접수. 학습 접근판→같은 계정 목록 캐시→기존 공용 본문.",
+    "reuse": "기존 Dialog/QuizFrame/48시간 IndexedDB와 기존 답/계획 형식 재사용. 새 DB저장표 없음.",
+    "cache": "공용48시간, 개인 manifest는계정세대+학생+배정+판별 메모리. 계정전환폐기, 배정판변경/누락/만료재조회.",
+    "compatibility": "100/250ms 두 간격과 첫0만허용. 기존 답/영수증/해시 보존. 직접 offline주소 유지.",
+    "rollback": "UI/생성기만 복귀 가능. 새250ms 미접수답 수신조건은 유지하고 기기답삭제 없음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "initial-loading",
+      "message": "시험 자료를 준비하고 있습니다.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "취소로 이전 목록",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "refreshing",
+      "message": "자료를 다시 확인하고 있습니다.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "같은 준비키 재확인",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "unselected",
+      "message": "시험 목록에서 시험을 선택해 주세요.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "목록 복귀",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "empty",
+      "message": "표시할 단어가 없습니다.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "목록 복귀",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "validation",
+      "message": "시험 요청 정보를 확인해 주세요.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "목록에서 다시선택",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "load-error",
+      "message": "자료를 불러오지 못했습니다. 다시 확인해 주세요.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "재시도",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "save-error",
+      "message": "답을 기기에 보관하지 못했습니다. 선택은 그대로 두고 다시 저장해 주세요.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "저장 재시도",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "auth-error",
+      "message": "학생 계정이 바뀌었습니다. 목록에서 다시 열어 주세요.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "이전목록폐기·다시로그인",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "not-found",
+      "message": "시험을 찾지 못했습니다.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "목록 복귀",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "unexpected-error",
+      "message": "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요.",
+      "behavior": "기존 자료/기기답을 보존하며 오류와 잠김/없음을 구분해 표시한다.",
+      "recovery": "기기답보관·재확인",
+      "component": "src/features/quiz-player/client/components/local-quiz-player.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "APP-20261005-01",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "변경 범위만 기능·화면·기록 보존을 검증한다."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "component",
+      "target": "src/features/quiz-player/ui/quiz-frame.test.tsx",
+      "scenario": "시간막대·중단창·취소·250ms피드백",
+      "expected": "지시한 화면/요청수/기록보존이 일치하고 다른 학생·마감·변조를 거절한다.",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "unit",
+      "target": "src/features/student-dashboard/controller/use-shared-study.test.tsx",
+      "scenario": "단어보기1회/재진입0회와 계정·잠김·누락복구",
+      "expected": "지시한 화면/요청수/기록보존이 일치하고 다른 학생·마감·변조를 거절한다.",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/local-quiz-batches.integration.test.ts",
+      "scenario": "기존100·새250·혼합·첫0·시간제한과 학습접근권한",
+      "expected": "지시한 화면/요청수/기록보존이 일치하고 다른 학생·마감·변조를 거절한다.",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "browser",
+      "target": null,
+      "scenario": "모달진입·직접주소·모바일·실제통신·타입/구조/빌드",
+      "expected": "지시한 화면/요청수/기록보존이 일치하고 다른 학생·마감·변조를 거절한다.",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}

@@ -261,7 +261,7 @@ describe("quiz session domain", () => {
         ANSWER_AUDIO_START_TIMEOUT_MS +
         ANSWER_AUDIO_END_TIMEOUT_MS,
     );
-    expect(ANSWER_RESULT_VISIBLE_MS).toBe(100);
+    expect(ANSWER_RESULT_VISIBLE_MS).toBe(250);
     expect(PROMPT_AUDIO_AUTOPLAY_DELAY_MS).toBe(250);
   });
 

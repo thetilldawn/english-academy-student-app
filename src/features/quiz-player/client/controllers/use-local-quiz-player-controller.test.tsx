@@ -59,7 +59,7 @@ describe("기기에서 진행하는 시험", () => {
     expect(m.request).not.toHaveBeenCalled();
     await act(async () => pending.resolve()); await settle();
     expect(h.result.current.run?.answers).toHaveLength(1); expect(h.result.current.feedback).toMatchObject({ index: 0, correct: true });
-    await advance(100); expect(h.result.current.feedback).toBeNull(); expect(m.request).not.toHaveBeenCalled();
+    await advance(249); expect(h.result.current.feedback).not.toBeNull(); await advance(1); expect(h.result.current.feedback).toBeNull(); expect(m.request).not.toHaveBeenCalled();
     window.dispatchEvent(new Event("online")); await settle(); expect(m.request).not.toHaveBeenCalled();
   });
   it("용량 부족 뒤 선택을 보존하고 재저장이 확정된 다음에만 채점한다", async () => {
@@ -68,13 +68,13 @@ describe("기기에서 진행하는 시험", () => {
     expect(h.result.current.view).toBe("failed"); expect(h.result.current.pendingChoice).toBe(0); expect(h.result.current.run?.answers).toHaveLength(0);
     await act(async () => h.result.current.recover());
     expect(h.result.current.feedback).toMatchObject({ index: 0, correct: true }); expect(durable.answers).toHaveLength(1);
-    await advance(100); expect(h.result.current.view).toBe("playing"); expect(h.result.current.feedback).toBeNull(); expect(m.request).not.toHaveBeenCalled();
+    await advance(250); expect(h.result.current.view).toBe("playing"); expect(h.result.current.feedback).toBeNull(); expect(m.request).not.toHaveBeenCalled();
   });
   it("정상 진행은 통신하지 않고 마지막 답의 고정 묶음만 한 번 제출한다", async () => {
     m.request.mockImplementation(async input => receiptFor(input.batch)); const h = await mount();
     for (let i = 0; i < 3; i++) {
       act(() => h.result.current.choose(i)); await advance(20);
-      if (i < 2) expect(m.request).not.toHaveBeenCalled(); await advance(100);
+      if (i < 2) expect(m.request).not.toHaveBeenCalled(); await advance(250);
     }
     // WebCrypto resolves on the real task queue, independent from fake timers.
     for (let i = 0; i < 20 && h.result.current.view !== "confirmed"; i++) await act(async () => { await new Promise(resolve => setImmediate(resolve)); });
@@ -84,7 +84,7 @@ describe("기기에서 진행하는 시험", () => {
   });
   it("최종 제출 응답이 유실돼도 같은 ID와 같은 답만 재제출한다", async () => {
     const h = await mount(); m.request.mockRejectedValueOnce(new Error("lost"));
-    for (let i = 0; i < 3; i++) { act(() => h.result.current.choose(i)); await advance(120); }
+    for (let i = 0; i < 3; i++) { act(() => h.result.current.choose(i)); await advance(270); }
     expect(h.result.current.view).toBe("failed"); expect(durable.batch).not.toBeNull(); expect(durable.receipt).toBeNull();
     const first = structuredClone(m.request.mock.calls[0][0]); m.request.mockImplementation(async input => receiptFor(input.batch));
     await act(async () => h.result.current.recover()); expect(m.request.mock.calls[1][0]).toEqual(first);
@@ -93,7 +93,7 @@ describe("기기에서 진행하는 시험", () => {
   });
   it("접수 목록이 일부뿐이면 공식 완료로 표시하지 않는다", async () => {
     m.request.mockImplementation(async input => { const r = await receiptFor(input.batch); r.accepted = r.accepted.slice(1); return r; });
-    const h = await mount(); for (let i = 0; i < 3; i++) { act(() => h.result.current.choose(i)); await advance(120); }
+    const h = await mount(); for (let i = 0; i < 3; i++) { act(() => h.result.current.choose(i)); await advance(270); }
     for (let i = 0; i < 20 && h.result.current.view === "sending"; i++) await act(async () => { await new Promise(resolve => setImmediate(resolve)); });
     expect(h.result.current.view).toBe("failed"); expect(durable.receipt).toBeNull(); expect(durable.batch?.answers).toHaveLength(3);
     expect(m.announce).not.toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe("기기에서 진행하는 시험", () => {
     expect(h.result.current.view).toBe("blocked"); expect(h.result.current.feedback).toBeNull(); expect(durable.answers).toHaveLength(1); expect(m.request).not.toHaveBeenCalled();
   });
   it("새로 열어도 기기의 마지막 답 다음에서 통신 없이 이어간다", async () => {
-    const first = await mount(); act(() => first.result.current.choose(0)); await advance(120); first.unmount();
+    const first = await mount(); act(() => first.result.current.choose(0)); await advance(270); first.unmount();
     await advance(200); const second = await mount();
     expect(second.result.current.view).toBe("playing"); expect(second.result.current.run?.answers).toHaveLength(1);
     expect(second.result.current.remaining).toBeLessThan(5000); expect(m.request).not.toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe("기기에서 진행하는 시험", () => {
     expect(m.request).toHaveBeenCalledTimes(1); expect(m.request.mock.calls[0][0].action).toBe("begin");
   });
   it("재시험 시작 응답이 유실된 상태를 같은 재시험 시작 ID로 복구한다", async () => {
-    for (let i = 0; i < 3; i++) durable = recordLocalAnswer(durable, 3, i * 150 + 50, Date.now(), localId(90));
+    for (let i = 0; i < 3; i++) durable = recordLocalAnswer(durable, 3, i * 300 + 50, Date.now(), localId(90));
     durable.receipt = await receiptFor(durable.batch!, false); durable.startRequested = true;
     const retryPlan = { ...durable.plan!, phase: "retry", officialPhase: "retry", planHash: "f".repeat(64) };
     m.request.mockResolvedValue(retryPlan); const h = await mount();
@@ -164,6 +164,6 @@ describe("기기에서 진행하는 시험", () => {
     durable = recordLocalAnswer(durable, 0, 50, Date.now(), localId(90));
     const h = await mount(); act(() => h.result.current.choose(1)); await advance(20);
     expect(durable.answers).toHaveLength(1); expect(h.result.current.view).toBe("playing"); expect(m.request).not.toHaveBeenCalled();
-    await advance(100); act(() => h.result.current.choose(1)); await advance(20); expect(durable.answers).toHaveLength(2);
+    await advance(250); act(() => h.result.current.choose(1)); await advance(20); expect(durable.answers).toHaveLength(2);
   });
 });

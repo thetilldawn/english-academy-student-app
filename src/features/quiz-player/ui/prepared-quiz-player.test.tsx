@@ -96,7 +96,7 @@ describe("first prepared exam display",()=>{
     render(<PreparedQuizPlayer preparation={preparation}/>);await advance(32);
     expect(screen.getByRole("alert")).toHaveTextContent("목록에서 다시 시작");
     expect(screen.queryByRole("button",{name:"다시 확인"})).toBeNull();
-    expect(screen.getByRole("link",{name:"목록으로"})).toHaveAttribute("href","/student");
+    expect(screen.getByRole("link",{name:"취소"})).toHaveAttribute("href","/student");
     fireEvent(document,new Event("visibilitychange"));await advance(1000);
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
@@ -116,7 +116,7 @@ describe("first prepared exam display",()=>{
       timerRemainingMilliseconds:5500,transitionRemainingMilliseconds:500,
     }));
     render(<PreparedQuizPlayer preparation={prepared}/>);await advance(32);
-    fireEvent.click(screen.getByRole("button",{name:/1.*사과/}));await advance(120);
+    fireEvent.click(screen.getByRole("button",{name:/1.*사과/}));await advance(270);
     expect(screen.getByText("다음 문제 준비 중")).toBeInTheDocument();
     expect(screen.queryByText("시험 준비 중")).toBeNull();
     if(!failure)mocks.feedback.mockImplementationOnce(async()=>({ok:false,payload:{}}))

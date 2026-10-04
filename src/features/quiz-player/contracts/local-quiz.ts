@@ -43,7 +43,7 @@ export const localReceiptSchema = z.object({ protocol: z.literal(LOCAL_QUIZ_PROT
 const device = z.string().regex(/^[a-f0-9]{64}$/);
 export const localQuizRequestSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("study"), assignmentId: uuid, knownKeys: z.array(z.string().max(110)).max(5500) }).strict(),
-  z.object({ action: z.literal("prefetch"), assignmentId: uuid, knownKeys: z.array(z.string().max(110)).max(5500) }).strict(),
+  z.object({ action: z.literal("prefetch"), assignmentId: uuid, knownKeys: z.array(z.string().max(110)).max(5500), includeRefs: z.boolean().optional() }).strict(),
   z.object({ action: z.literal("prepare"), assignmentId: uuid, device, knownKeys: z.array(z.string().max(110)).max(5500) }).strict(),
   z.object({ action: z.literal("begin"), preparationId: uuid, planHash: digest, device }).strict(),
   z.object({ action: z.literal("retry"), attemptId: uuid, device }).strict(),

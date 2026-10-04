@@ -1,17 +1,26 @@
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const m=vi.hoisted(()=>({rpc:vi.fn(),queue:vi.fn(),study:vi.fn(),pack:vi.fn(),start:vi.fn(),prepare:vi.fn(),hydrate:vi.fn()}));
+const m=vi.hoisted(()=>({rpc:vi.fn(),queue:vi.fn(),study:vi.fn(),access:vi.fn(),pack:vi.fn(),start:vi.fn(),prepare:vi.fn(),hydrate:vi.fn()}));
 vi.mock("@/lib/supabase/service",()=>({getServiceSupabaseClient:()=>({rpc:m.rpc})}));
 vi.mock("@/lib/services/vocab-assignment-queue-command",()=>({materializeReadyVocabAssignmentQueue:m.queue}));
 vi.mock("@/lib/services/quiz/attempt-start",()=>({startStudentAttempt:m.start}));
 vi.mock("./attempt-preparation",()=>({getQuizPreparation:m.prepare}));
-vi.mock("@/features/student-dashboard/public-server",()=>({getAssignmentStudy:m.study,packAssignmentStudy:m.pack}));
+vi.mock("@/features/student-dashboard/public-server",()=>({getAssignmentStudy:m.study,getAssignmentStudyAccess:m.access,packAssignmentStudy:m.pack}));
 vi.mock("@/lib/services/quiz/attempt-query",()=>({hydrateQuizQuestions:m.hydrate}));
 import { handleLocalQuizCommand } from "./local-quiz-service";
 import { localFixture, localId, receiptFor } from "../test-support/local-quiz-fixtures";
 import { recordLocalAnswer } from "../domain/local-quiz";
 beforeEach(()=>{vi.resetAllMocks();m.queue.mockResolvedValue([]);});
 describe("기기 시험 서버 연결",()=>{
+  it("학습 본문은 한 번 읽으며 전후 배정판이 바뀌면 캐시에 넣을 응답을 거절한다",async()=>{
+    const access={studentId:localId(1),assignmentId:localId(4),title:"가짜",mode:"book_meaning_choice",revision:"a".repeat(32)};
+    const study={assignmentId:localId(4),words:[]};m.study.mockResolvedValue(study);m.pack.mockResolvedValue({manifest:{assignmentId:localId(4)},atoms:[]});
+    m.access.mockResolvedValue(access);
+    const request={action:"study" as const,assignmentId:localId(4),knownKeys:[]};
+    expect(await handleLocalQuizCommand(localId(1),request)).toMatchObject({access});expect(m.study).toHaveBeenCalledTimes(1);expect(m.access).toHaveBeenCalledTimes(2);
+    m.access.mockResolvedValueOnce(access).mockResolvedValueOnce({...access,revision:"b".repeat(32)});
+    await expect(handleLocalQuizCommand(localId(1),request)).rejects.toMatchObject({code:"study_changed",status:409});
+  });
   it("새 시작 중지는 준비 만료나 접수 실패와 구별해 안내한다",async()=>{
     const {run}=await localFixture();
     m.rpc.mockResolvedValue({data:null,error:{code:"55000",message:"quiz_new_attempts_paused"}});
@@ -20,7 +29,7 @@ describe("기기 시험 서버 연결",()=>{
     expect(m.queue).not.toHaveBeenCalled();
   });
   it.each([true,false])("공식 접수 후 다음 예약 시험 준비를 이어간다: 완료=%s",async finalized=>{
-    let {run}=await localFixture();for(let i=0;i<3;i++)run=recordLocalAnswer(run,i,i*150+50,Date.now(),localId(90));
+    let {run}=await localFixture();for(let i=0;i<3;i++)run=recordLocalAnswer(run,i,i*300+50,Date.now(),localId(90));
     const receipt=await receiptFor(run.batch!,finalized);m.rpc.mockResolvedValue({data:receipt,error:null});
     expect(await handleLocalQuizCommand(run.studentId,{action:"submit",device:run.device,batch:run.batch!})).toEqual(receipt);
     expect(m.rpc).toHaveBeenCalledWith("submit_local_quiz_phase_v1",expect.objectContaining({p_student_id:run.studentId,p_device_hash:createHash("sha256").update(run.device).digest("hex"),p_submission_id:run.batch!.submissionId}));

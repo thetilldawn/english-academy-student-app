@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import type { StudyPresentation } from "../../contracts/assignment-study";
 import { CachedAssignmentStudyReader } from "../../client/components/cached-assignment-study-reader";
-import { packAssignmentStudy } from "../../domain/study-materials";
-import { getAssignmentStudy } from "../queries/assignment-study-query";
+import { getAssignmentStudyAccess } from "../queries/assignment-study-query";
 import { AssignmentStudyFrame } from "../../ui/assignment-study-frame";
 import { assignmentReleaseNotice } from "@/lib/assignment/assignment-release";
 import { AssignmentBoundaryRefresh } from "../../ui/assignment-boundary-refresh";
@@ -15,7 +14,7 @@ export async function AssignmentStudyContent({ params, presentation }: {
 }) {
   const student = await requireStudentSession();
   const { id } = await params;
-  const study = await getAssignmentStudy(student, id, true);
+  const study = await getAssignmentStudyAccess(student, id);
   if (!study) notFound();
   if ("release" in study) {
     const remaining = millisecondsUntil(study.release.opensAt, currentTimeMilliseconds());
@@ -26,6 +25,5 @@ export async function AssignmentStudyContent({ params, presentation }: {
         : null}
     </AssignmentStudyFrame>;
   }
-  const { manifest } = await packAssignmentStudy(study);
-  return <CachedAssignmentStudyReader key={`${study.assignmentId}:${study.mode}`} presentation={presentation} manifest={manifest} />;
+  return <CachedAssignmentStudyReader key={`${study.studentId}:${study.assignmentId}:${study.revision}`} presentation={presentation} access={study} />;
 }

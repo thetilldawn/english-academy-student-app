@@ -37,14 +37,14 @@ describe("기기 답 기록과 공용 표시 자료", () => {
   });
   it("답과 다음 위치를 같은 값에 담고 마지막 답만 고정된 제출을 만든다", () => {
     let value = run();
-    value = recordLocalAnswer(value, 1, 50, 1050, id(90)); expect(value.openedMs).toBe(150); expect(value.batch).toBeNull();
-    value = recordLocalAnswer(value, 2, 200, 1200, id(91));
-    value = recordLocalAnswer(value, 3, 350, 1350, id(92));
-    expect(value.batch).toMatchObject({ submissionId: id(92), completion: { elapsedMs: 350, reason: "answered" } });
-    expect(value.answers.map(a => a.openedMs)).toEqual([0, 150, 300]); expect(value.revision).toBe(3);
+    value = recordLocalAnswer(value, 1, 50, 1050, id(90)); expect(value.openedMs).toBe(300); expect(value.batch).toBeNull();
+    value = recordLocalAnswer(value, 2, 350, 1350, id(91));
+    value = recordLocalAnswer(value, 3, 650, 1650, id(92));
+    expect(value.batch).toMatchObject({ submissionId: id(92), completion: { elapsedMs: 650, reason: "answered" } });
+    expect(value.answers.map(a => a.openedMs)).toEqual([0, 300, 600]); expect(value.revision).toBe(3);
     expect(() => recordLocalAnswer(value, 0, 400, 1400, id(93))).toThrow("local_phase_not_active");
   });
-  it("전환 100ms 사이 전체 마감이 와도 나머지를 미응답으로 끝낸다", () => {
+  it("전환 250ms 사이 전체 마감이 와도 나머지를 미응답으로 끝낸다", () => {
     const first = recordLocalAnswer(run(240000, null), 1, 239950, 240950, id(90));
     const done = recordLocalAnswer(first, null, 240000, 241000, id(91));
     expect(done.batch?.completion).toEqual({ elapsedMs: 240000, reason: "deadline" });
@@ -63,7 +63,7 @@ describe("기기 답 기록과 공용 표시 자료", () => {
   });
   it("접수된 마지막 답뿐 아니라 모든 문항과 확인값을 대조한다", async () => {
     let value = run();
-    for (let i = 0; i < 3; i++) value = recordLocalAnswer(value, i, i * 100, 1000 + i * 100, id(90));
+    for (let i = 0; i < 3; i++) value = recordLocalAnswer(value, i, i * 250, 1000 + i * 250, id(90));
     const batch = value.batch!;
     const receipt: LocalReceipt = { protocol: "local_batch_v1", submissionId: batch.submissionId, phase: batch.phase, planHash: batch.planHash,
       payloadHash: "f".repeat(64), accepted: await Promise.all(batch.answers.map(async (a, i) => ({ id: a.id, answerHash: await localAnswerHash(a), sequence: i + 1 }))),

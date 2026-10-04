@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { notificationText } from "@/content/ko/notifications";
 import { requestNotificationDelivery } from "@/features/notifications/api/notification-delivery";
@@ -12,11 +13,12 @@ export function NotificationBootstrap({
 }: {
   role: "student" | "admin";
 }) {
+  const quizOpen = usePathname() === "/quiz-offline";
   const inFlight = useRef(false);
   const lastAttemptedAt = useRef(0);
 
   const deliver = useCallback(async (force = false) => {
-    if (inFlight.current || document.visibilityState === "hidden") return;
+    if (inFlight.current || document.visibilityState === "hidden" || window.location.pathname === "/quiz-offline") return;
     const now = Date.now();
     if (!force && now - lastAttemptedAt.current < RECHECK_INTERVAL_MS) {
       return;
@@ -26,7 +28,7 @@ export function NotificationBootstrap({
     inFlight.current = true;
     try {
       const delivery = await requestNotificationDelivery(role);
-      if (!delivery) return;
+      if (!delivery || window.location.pathname === "/quiz-offline") return;
 
       if (delivery.newAssignmentCount > 0) {
         toast.info(
@@ -48,6 +50,7 @@ export function NotificationBootstrap({
   }, [role]);
 
   useEffect(() => {
+    if (quizOpen) return;
     void deliver(true);
     const intervalId = window.setInterval(
       () => void deliver(),
@@ -64,7 +67,7 @@ export function NotificationBootstrap({
         handleVisibilityChange,
       );
     };
-  }, [deliver]);
+  }, [deliver, quizOpen]);
 
   return null;
 }

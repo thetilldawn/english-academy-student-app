@@ -26,9 +26,11 @@ export type QuizPlayerState = {
   transitionPending: boolean;
   revealQuestion: boolean;
   timeWarning: string;
+  stopOpen: boolean;
 };
 
 export type QuizPlayerAction =
+  | { type: "stop-dialog-changed"; open: boolean }
   | { type: "timer-ticked"; remainingSeconds: number }
   | { type: "time-warning"; message: string }
   | { type: "synchronization-started"; preserveTransition?: boolean }
@@ -68,6 +70,7 @@ export function createQuizPlayerState(
     transitionPending: false,
     revealQuestion: false,
     timeWarning: "",
+    stopOpen: false,
   };
 }
 
@@ -76,6 +79,8 @@ export function quizPlayerReducer(
   action: QuizPlayerAction,
 ): QuizPlayerState {
   switch (action.type) {
+    case "stop-dialog-changed":
+      return { ...state, stopOpen: action.open };
     case "timer-ticked":
       return action.remainingSeconds === state.remainingSeconds
         ? state

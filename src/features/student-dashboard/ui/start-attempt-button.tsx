@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { studentAppText } from "@/content/ko/student-app";
 import { Button } from "@/design-system/primitives/button/button";
 
-import { prepareLocalQuiz, prefetchLocalQuiz } from "@/features/quiz-player/public-local-client";
+import { LocalQuizLoadingDialog, prepareLocalQuiz, prefetchLocalQuiz } from "@/features/quiz-player/public-local-client";
 import styles from "./start-attempt-button.module.css";
 
 export function StartAttemptButton({
@@ -20,8 +20,14 @@ export function StartAttemptButton({
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const prefetch = useRef<AbortController | null>(null);
+  const preparation = useRef<AbortController | null>(null);
   const cancelPrefetch = () => { prefetch.current?.abort(); prefetch.current = null; };
-  useEffect(() => () => { prefetch.current?.abort(); }, [assignmentId]);
+  useEffect(() => () => { prefetch.current?.abort(); preparation.current?.abort(); }, [assignmentId]);
+  function cancelPreparation() {
+    preparation.current?.abort();
+    preparation.current = null;
+    setSubmitting(false);
+  }
   function warm() {
     if (disabled || submitting || prefetch.current) return;
     const controller = new AbortController(); prefetch.current = controller;
@@ -31,22 +37,25 @@ export function StartAttemptButton({
   }
 
   async function start() {
+    if (preparation.current) return;
     cancelPrefetch();
+    const controller = new AbortController();
+    preparation.current = controller;
     setError("");
     setSubmitting(true);
     try {
-      const href = await prepareLocalQuiz(assignmentId);
-      if (href.startsWith("/quiz-offline#")) window.location.assign(href);
-      else router.push(href);
+      const href = await prepareLocalQuiz(assignmentId, controller.signal);
+      if (!controller.signal.aborted) router.push(href);
     } catch (failure) {
-      setError(failure instanceof Error && /[가-힣]/.test(failure.message) ? failure.message : studentAppText.actions.networkError);
+      if (!controller.signal.aborted) setError(failure instanceof Error && /[가-힣]/.test(failure.message) ? failure.message : studentAppText.actions.networkError);
     } finally {
-      setSubmitting(false);
+      if (preparation.current === controller) { preparation.current = null; setSubmitting(false); }
     }
   }
 
   return (
     <div className={styles.stack}>
+      {submitting ? <LocalQuizLoadingDialog onCancel={cancelPreparation} /> : null}
       <Button
         disabled={disabled || submitting}
         onClick={start}

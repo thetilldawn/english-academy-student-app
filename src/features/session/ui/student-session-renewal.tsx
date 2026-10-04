@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 import { requestStudentSessionRenewal } from "../api/session";
 import { announceStudentPrivateCacheChange } from "../controller/student-private-cache-events";
@@ -12,22 +13,25 @@ export function StudentSessionRenewal({
 }: {
   initialDelayMilliseconds: number;
 }) {
+  const quizOpen = usePathname() === "/quiz-offline";
+  const nextCheck = useRef<number | null>(null);
   useEffect(() => {
+    if (quizOpen) return;
     let disposed = false;
     let timerId: number | undefined;
     let controller: AbortController | undefined;
     let inFlight = false;
-    let nextCheckAt = Date.now();
+    nextCheck.current ??= Date.now() + initialDelayMilliseconds;
 
     const schedule = (delayMilliseconds: number) => {
       if (timerId !== undefined) window.clearTimeout(timerId);
       const delay = Math.max(0, delayMilliseconds);
-      nextCheckAt = Date.now() + delay;
+      nextCheck.current = Date.now() + delay;
       timerId = window.setTimeout(async () => {
         timerId = undefined;
         if (disposed || inFlight) return;
         if (document.visibilityState !== "visible") {
-          nextCheckAt = Date.now();
+          nextCheck.current = Date.now();
           return;
         }
         inFlight = true;
@@ -53,13 +57,13 @@ export function StudentSessionRenewal({
         !disposed &&
         !inFlight &&
         document.visibilityState === "visible" &&
-        Date.now() >= nextCheckAt
+        Date.now() >= (nextCheck.current ?? 0)
       ) {
         schedule(0);
       }
     };
 
-    schedule(initialDelayMilliseconds);
+    schedule(nextCheck.current - Date.now());
     document.addEventListener("visibilitychange", resumeIfDue);
     window.addEventListener("pageshow", resumeIfDue);
     window.addEventListener("online", resumeIfDue);
@@ -71,7 +75,7 @@ export function StudentSessionRenewal({
       window.removeEventListener("pageshow", resumeIfDue);
       window.removeEventListener("online", resumeIfDue);
     };
-  }, [initialDelayMilliseconds]);
+  }, [initialDelayMilliseconds, quizOpen]);
 
   return null;
 }

@@ -5,19 +5,26 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AssignmentBoundaryRefresh } from "./assignment-boundary-refresh";
 
-const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }));
+const { refresh, path } = vi.hoisted(() => ({ refresh: vi.fn(), path:{value:"/student"} }));
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => path.value,
   useRouter: () => ({ refresh }),
 }));
 
 afterEach(() => {
   cleanup();
-  refresh.mockReset();
+  refresh.mockReset();path.value="/student";
   vi.useRealTimers();
 });
 
 describe("AssignmentBoundaryRefresh", () => {
+  it("시험 모달 중에는 갱신을 쉬고 목록 복귀 시 지난 공개시간을 반영한다",async()=>{
+    vi.useFakeTimers();const element=<AssignmentBoundaryRefresh boundaryAt="2099-01-01" initialRemainingMilliseconds={1000}/>;
+    const view=render(element);path.value="/quiz-offline";view.rerender(<AssignmentBoundaryRefresh boundaryAt="2099-01-01" initialRemainingMilliseconds={1000}/>);
+    await act(async()=>vi.advanceTimersByTimeAsync(2000));expect(refresh).not.toHaveBeenCalled();
+    path.value="/student";view.rerender(<AssignmentBoundaryRefresh boundaryAt="2099-01-01" initialRemainingMilliseconds={1000}/>);expect(refresh).toHaveBeenCalledTimes(1);
+  });
   it("refreshes once when a scheduled assignment reaches its opening time", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-22T00:00:00.000Z"));

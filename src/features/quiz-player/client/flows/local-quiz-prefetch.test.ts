@@ -11,6 +11,14 @@ beforeEach(async () => {
   prefetch = (await import("./local-quiz-prefetch")).prefetchLocalQuiz;
 });
 describe("목록의 공용 자료 미리 받기", () => {
+  it("성공한 hover는 재요청하지 않고 캐시 누락·만료 시에만 다시 받는다",async()=>{
+    m.request.mockResolvedValue({...packet,requiredKeys:["cached-key"]});
+    await prefetch("warm");await tick();m.known.mockResolvedValue(["cached-key"]);
+    await prefetch("warm");await tick();expect(m.request).toHaveBeenCalledTimes(1);
+    m.known.mockResolvedValue([]);await prefetch("warm");await tick();expect(m.request).toHaveBeenCalledTimes(2);
+    m.known.mockResolvedValue(["cached-key"]);const now=Date.now();const clock=vi.spyOn(Date,"now").mockReturnValue(now+48*60*60*1000);
+    try{await prefetch("warm");await tick();expect(m.request).toHaveBeenCalledTimes(3);}finally{clock.mockRestore();}
+  });
   it("여러 배정에서도 동시 두 요청을 넘지 않고 대기 포함 여덟 개만 받는다", async () => {
     const release: Array<() => void> = []; let active = 0; let max = 0;
     m.request.mockImplementation(() => new Promise(resolve => {

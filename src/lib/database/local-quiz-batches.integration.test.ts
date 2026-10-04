@@ -157,6 +157,28 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
     await owner("select private.create_local_quiz_phase_plan_v1($1,'initial')",[p.attemptId]);
     return rpc<Plan>('read_local_quiz_plan_v1',[student,p.attemptId,device,'initial']);
   }
+  it.each([[0,250,500,750],[0,100,350,600]])('새250ms와 갱신 중 혼합 답을 기존 결과로 받는다: %j',async(...times)=>{
+    const p=await aged(await localStart(),2),list=answers(p).map((a,i)=>({...a,openedMs:times[i],elapsedMs:times[i]}));
+    const result=await batch(p,list);expect(result.result.attempt.finalScore).toBe(100);
+    expect(await batch(p,list)).toEqual(result);
+  });
+  it('첫 문제150ms나 허용하지 않은 전환 간격은 저장 전 거절한다',async()=>{
+    const p=await aged(await localStart(),2),list=answers(p);
+    await fails(()=>batch(p,[{...list[0],openedMs:150,elapsedMs:150},...list.slice(1)]),'local_quiz_time_invalid');
+    await fails(()=>batch(p,list.map((a,i)=>({...a,openedMs:i*200,elapsedMs:i*200}))),'local_quiz_time_invalid');
+    expect((await owner('select count(*)::integer n from private.local_quiz_phase_receipts where attempt_id=$1',[p.attemptId])).rows[0].n).toBe(0);
+  });
+  it('학습 접근은 본문 없이 본인 참조판만 읽고 배정 변경을 구별한다',async()=>{
+    await seedRelease(id(4),id(601));const bank=await approvedBank(602,id(4),id(100),id(601));
+    const first=await rpc<{revision:string;assignmentId:string}>('get_student_assignment_study_access_v1',[student,bank]);
+    expect(Object.keys(first).sort()).toEqual(['assignmentId','mode','revision','title']);
+    expect(first.assignmentId).toBe(bank);expect(first.revision).toMatch(/^[a-f0-9]{32}$/);
+    expect(await rpc('get_student_assignment_study_access_v1',[id(3),bank])).toBeNull();
+    expect(await rpc('get_student_assignment_study_access_v1',[student,bank])).toEqual(first);
+    await owner("update assignments set title=title||' changed' where id=$1",[bank]);
+    expect((await rpc<{revision:string}>('get_student_assignment_study_access_v1',[student,bank])).revision).not.toBe(first.revision);
+    expect((await owner("select has_function_privilege('anon','public.get_student_assignment_study_access_v1(uuid,uuid)','EXECUTE') as anon,has_function_privilege('authenticated','public.get_student_assignment_study_access_v1(uuid,uuid)','EXECUTE') as authenticated")).rows[0]).toEqual({anon:false,authenticated:false});
+  });
   it.each([false,true])('시작은 한번만 고정하고 중지 뒤에도 기존 시작 재전송을 보존한다: 중지=%s',async paused=>{
     const p=await localPrepare();
     await fails(()=>begin(p.preparationId),'local_quiz_batch_required');

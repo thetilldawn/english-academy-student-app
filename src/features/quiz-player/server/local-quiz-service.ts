@@ -9,7 +9,7 @@ import { getQuizPreparation } from "./attempt-preparation";
 import { commonQuizBodySchema, localPhasePlanSchema, localQuizPreparationSchema, localReceiptSchema, type CommonQuizContent, type LocalQuizRequest } from "../contracts/local-quiz";
 import { commonContentKey } from "../domain/local-quiz";
 import { packLocalQuizContents } from "../domain/local-quiz-content";
-import { getAssignmentStudy, packAssignmentStudy } from "@/features/student-dashboard/public-server";
+import { getAssignmentStudy, getAssignmentStudyAccess, packAssignmentStudy } from "@/features/student-dashboard/public-server";
 import { hydrateQuizQuestions, type QuestionRow } from "@/lib/services/quiz/attempt-query";
 import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
 
@@ -31,16 +31,26 @@ const deviceHash = (device: string) => createHash("sha256").update(device).diges
 export async function handleLocalQuizCommand(studentId: string, command: LocalQuizRequest) {
   if (command.action === "identity") return { studentId };
   if (command.action === "study") {
+    const before = await getAssignmentStudyAccess({ studentId }, command.assignmentId);
+    if (!before) throw new LocalQuizError("study_unavailable", 404, "배정된 단어장을 찾지 못했습니다.");
+    if ("release" in before) return { locked: before };
     const study = await getAssignmentStudy({ studentId }, command.assignmentId, true);
     if (!study) throw new LocalQuizError("study_unavailable", 404, "배정된 단어장을 찾지 못했습니다.");
-    if ("release" in study) return { locked: study };
-    return packAssignmentStudy(study, command.knownKeys);
+    if ("release" in study) return { locked: { ...study, studentId } };
+    const packet = await packAssignmentStudy(study, command.knownKeys);
+    const after = await getAssignmentStudyAccess({ studentId }, command.assignmentId);
+    if (after && "release" in after) return { locked: after };
+    if (!after || before.revision !== after.revision) throw new LocalQuizError("study_changed", 409, "배정이 변경됐습니다. 다시 확인해 주세요.");
+    return { ...packet, access: after };
   }
   if (command.action === "prefetch") {
     const raw = await rpc("read_local_quiz_materials_v1", { p_student_id: studentId, p_assignment_id: command.assignmentId });
     if (!raw || (raw as { items?: unknown[] }).items?.length === 0) {
       const study = await getAssignmentStudy({ studentId }, command.assignmentId, true);
-      return { contents: [], atoms: study && !("release" in study) ? (await packAssignmentStudy(study, command.knownKeys)).atoms : [] };
+      if (!study || "release" in study) return { contents: [], atoms: [], ...(command.includeRefs ? { requiredKeys: [] } : {}) };
+      const packet = await packAssignmentStudy(study);
+      const known = new Set(command.knownKeys);
+      return { contents: [], atoms: packet.atoms.filter(atom => !known.has(atom.key)), ...(command.includeRefs ? { requiredKeys: packet.atoms.map(atom => atom.key) } : {}) };
     }
     const material = raw as { mode: string; items: Array<QuestionRow & { content_version_id: string }> };
     if (!Array.isArray(material.items) || material.items.length > 500) throw new Error("local_materials_invalid");
@@ -52,7 +62,7 @@ export async function handleLocalQuizCommand(studentId: string, command: LocalQu
         direction: q.direction, prompt: q.prompt, choices: q.choices, pronunciation: q.pronunciation, choicePronunciations: q.choicePronunciations });
       return { key: await commonContentKey(body), body };
     }));
-    return packLocalQuizContents(contents, command.knownKeys);
+    return { ...await packLocalQuizContents(contents, command.knownKeys), ...(command.includeRefs ? { requiredKeys: contents.map(content => content.key) } : {}) };
   }
   const base = { p_student_id: studentId, p_device_hash: deviceHash(command.device) };
   if (command.action === "prepare") {

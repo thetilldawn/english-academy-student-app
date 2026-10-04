@@ -1,6 +1,7 @@
 import { studentIdentityGeneration } from "@/features/session/public-client";
+import { z } from "zod";
 import { requestLocalQuiz } from "../../api/local-quiz";
-import { commonQuizPacketSchema } from "../../contracts/local-quiz";
+import { COMMON_QUIZ_FRESH_MS, commonQuizPacketSchema } from "../../contracts/local-quiz";
 import { cacheLocalQuizContents, knownLocalQuizContentKeys } from "./local-quiz-store";
 
 type Task = {
@@ -9,6 +10,8 @@ type Task = {
   subscribers: number; settled: boolean;
 };
 const tasks = new Map<string, Task>();
+const completed = new Map<string, { fetchedAt: number; keys: string[] }>();
+const prefetchPacket = commonQuizPacketSchema.extend({ requiredKeys: z.array(z.string()).max(5500).default([]) });
 const queue: Task[] = [];
 let active = 0;
 const cancelled = () => new DOMException("Prefetch cancelled", "AbortError");
@@ -23,10 +26,20 @@ function drain() {
       check();
       const knownKeys = await knownLocalQuizContentKeys();
       check();
-      const packet = commonQuizPacketSchema.parse(await requestLocalQuiz(
-        { action: "prefetch", assignmentId: task.assignmentId, knownKeys }, task.controller.signal));
+      const previous = completed.get(task.key);
+      const age = previous ? Date.now() - previous.fetchedAt : Infinity;
+      const known = new Set(knownKeys);
+      if (previous && age >= 0 && age < COMMON_QUIZ_FRESH_MS && previous.keys.every(key => known.has(key))) return;
+      completed.delete(task.key);
+      const packet = prefetchPacket.parse(await requestLocalQuiz(
+        { action: "prefetch", assignmentId: task.assignmentId, knownKeys, includeRefs: true }, task.controller.signal));
       check();
-      await cacheLocalQuizContents(packet);
+      await cacheLocalQuizContents({ contents: packet.contents, atoms: packet.atoms });
+      check();
+      if (packet.requiredKeys.length) {
+        if (completed.size >= 64) completed.delete(completed.keys().next().value!);
+        completed.set(task.key, { fetchedAt: Date.now(), keys: packet.requiredKeys });
+      }
     })().then(task.resolve, task.reject).finally(() => {
       task.settled = true;
       if (tasks.get(task.key) === task) tasks.delete(task.key);

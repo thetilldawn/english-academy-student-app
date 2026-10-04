@@ -8,6 +8,7 @@ import { phaseRemainingMs, receiptConfirmsBatch, recordLocalAnswer, restoredLoca
 import { getLocalQuizRun, holdLocalQuizTab, readLocalQuizContents, saveLocalQuizRun } from "../flows/local-quiz-store";
 import { holdLocalQuizScreen, prepareLocalQuizScreen } from "../flows/local-quiz-screen";
 import { anchorLocalQuizClock } from "../flows/local-quiz-clock-anchor";
+import { ANSWER_RESULT_VISIBLE_MS } from "../../domain/quiz-session";
 
 type View = "preparing" | "playing" | "sending" | "confirmed" | "blocked" | "failed";
 type Feedback = { index: number; correct: boolean; selected: number | null; answer: number; timedOut: boolean };
@@ -21,7 +22,7 @@ function message(error: unknown) {
   return "시험 자료를 준비하지 못했습니다. 연결 후 다시 열어 주세요. 저장한 답은 기기에 보관됩니다.";
 }
 
-export function useLocalQuizPlayerController(key: string, retryIntent: boolean) {
+export function useLocalQuizPlayerController(key: string, retryIntent: boolean, detachedScreen = false) {
   const [run, setRun] = useState<LocalQuizRun | null>(null);
   const [contents, setContents] = useState(new Map<string, CommonQuizContent>());
   const [view, setView] = useState<View>("preparing"); const [error, setError] = useState("");
@@ -112,7 +113,7 @@ export function useLocalQuizPlayerController(key: string, retryIntent: boolean) 
     feedbackTimer.current = setTimeout(() => {
       feedbackTimer.current = null; setFeedback(null); setBusy(false);
       if (next.batch) void submit();
-    }, 100);
+    }, ANSWER_RESULT_VISIBLE_MS);
   }, [submit]);
   const accept = useCallback(async (choice: number | null, at: number) => {
     const value = current.current;
@@ -163,7 +164,7 @@ export function useLocalQuizPlayerController(key: string, retryIntent: boolean) 
         if (!sameIdentity()) { block(); return; }
         const material = await readLocalQuizContents(value.preparation.items.map(i => i.key), true);
         if (material.size !== new Set(value.preparation.items.map(i => i.key)).size) throw new Error("local_content_missing");
-        await prepareLocalQuizScreen();
+        await prepareLocalQuizScreen(detachedScreen);
         if (disposed || !sameIdentity()) return;
         releaseScreen = await holdLocalQuizScreen(abort.signal);
         if (disposed || !sameIdentity()) { releaseScreen(); return; }
@@ -184,7 +185,7 @@ export function useLocalQuizPlayerController(key: string, retryIntent: boolean) 
       releaseTab();
       releaseScreen?.();
     };
-  }, [key, retryIntent, block, sameIdentity, publish, startPhase, submit]);
+  }, [key, retryIntent, block, sameIdentity, publish, startPhase, submit, detachedScreen]);
   useEffect(() => {
     if (view !== "playing") return;
     const tick = () => {

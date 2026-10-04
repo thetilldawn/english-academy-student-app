@@ -525,6 +525,10 @@
     {
       "path": "src/app/quiz-offline/page.tsx",
       "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(...)quiz-offline/page.tsx",
+      "owner": "quiz-player"
     }
   ],
   "nextSpecialEntrypointOwners": [
@@ -690,6 +694,10 @@
     },
     {
       "path": "src/app/student/(protected)/practice/error.tsx",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(...)quiz-offline/loading.tsx",
       "owner": "quiz-player"
     }
   ],
@@ -3133,6 +3141,11 @@
     },
     {
       "path": "supabase/migrations/20261004154512_link_missing_pronunciation_to_existing_keys.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261004161947_improve_quiz_feedback_and_study_cache_access.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
     }
@@ -7333,11 +7346,13 @@
           "src/app/api/student/attempts/[id]/ready/route.ts",
           "src/app/quiz-offline/page.tsx",
           "src/app/api/student/local-quiz/route.ts",
-          "src/app/api/student/local-quiz-protocol/[id]/route.ts"
+          "src/app/api/student/local-quiz-protocol/[id]/route.ts",
+          "src/app/student/(protected)/@detail/(...)quiz-offline/page.tsx"
         ],
         "serverComponent": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
-          "src/app/quiz-offline/page.tsx"
+          "src/app/quiz-offline/page.tsx",
+          "src/app/student/(protected)/@detail/(...)quiz-offline/page.tsx"
         ],
         "ui": [
           "src/features/quiz-player/ui/quiz-player.tsx",
@@ -7362,7 +7377,10 @@
           "src/lib/quiz/question-semantics.ts",
           "src/features/quiz-player/ui/prepared-quiz-player.tsx",
           "src/features/quiz-player/client/components/local-quiz-player.tsx",
-          "src/features/student-dashboard/ui/start-attempt-button.tsx"
+          "src/features/student-dashboard/ui/start-attempt-button.tsx",
+          "src/app/student/(protected)/@detail/(...)quiz-offline/loading.tsx",
+          "src/features/quiz-player/ui/quiz-exit-dialog.tsx",
+          "src/features/quiz-player/public-local-client.ts"
         ],
         "clientState": [
           "src/features/quiz-player/controller/use-quiz-player-controller.ts",

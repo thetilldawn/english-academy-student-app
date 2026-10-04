@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { formatContentText } from "@/content/format";
@@ -19,14 +19,20 @@ export function DeadlineCountdown({
   refreshOnExpire?: boolean;
 }) {
   const router = useRouter();
+  const quizOpen = usePathname() === "/quiz-offline";
+  const clock = useRef<{ deadline: string; remaining: number; startedAt: number } | null>(null);
   const refreshedRef = useRef(false);
   const [remainingSeconds, setRemainingSeconds] = useState(
     initialRemainingSeconds,
   );
 
   useEffect(() => {
-    refreshedRef.current = false;
-    const startedAt = performance.now();
+    if (clock.current?.deadline !== deadlineAt || clock.current.remaining !== initialRemainingSeconds) {
+      clock.current = { deadline: deadlineAt, remaining: initialRemainingSeconds, startedAt: performance.now() };
+      refreshedRef.current = false;
+    }
+    if (quizOpen) return;
+    const startedAt = clock.current.startedAt;
 
     const update = () => {
       const elapsedSeconds = Math.floor(
@@ -61,7 +67,7 @@ export function DeadlineCountdown({
         handleVisibilityChange,
       );
     };
-  }, [deadlineAt, initialRemainingSeconds, refreshOnExpire, router]);
+  }, [deadlineAt, initialRemainingSeconds, refreshOnExpire, router, quizOpen]);
 
   const expired = remainingSeconds === 0;
 
