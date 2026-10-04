@@ -2122,8 +2122,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 150,
-      "pathSetSha256": "533cddbdafcb3fbbf013976c0b0de0e88b77d9a43a62b2b20fc155358dd3d0b1"
+      "fileCount": 151,
+      "pathSetSha256": "eb5ea1765969443493005bf79b313c2fc5e9daf3e179734ade34f7267b8412da"
     },
     {
       "path": "src/lib/deploy",
@@ -2581,6 +2581,11 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20261004050000_stop_duplicate_local_quiz_state.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
     {
       "path": "supabase/migrations/20261001113432_confirm_practice_completion.sql",
       "owner": "quiz-player",
@@ -7479,6 +7484,7 @@
           "supabase/migrations/20261003230000_share_reviewed_resource_evidence.sql",
           "supabase/migrations/20261003233000_compact_local_quiz_receipt_responses.sql",
           "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
+          "supabase/migrations/20261004050000_stop_duplicate_local_quiz_state.sql",
           "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql"
         ],
         "cacheStreaming": [
@@ -7549,6 +7555,7 @@
           "src/features/quiz-player/domain/local-quiz.test.ts",
           "src/features/quiz-player/client/controllers/use-local-quiz-player-controller.test.tsx",
           "src/lib/database/local-quiz-batches.integration.test.ts",
+          "src/lib/database/local-quiz-state-storage.integration.test.ts",
           "src/features/quiz-player/server/local-quiz-http.test.ts",
           "src/features/quiz-player/server/local-quiz-service.test.ts",
           "src/features/quiz-player/client/flows/local-quiz-clock-anchor.test.ts",

@@ -1,0 +1,308 @@
+{
+  "work": "APP-20261004-03",
+  "runtimeCommit": "51e01413cc9c5cbf3b4331a42ea74b424d3a731e",
+  "databaseOnlyChange": true,
+  "preview": {
+    "project": "wojxpruvbjzbhrpmsbuy",
+    "applied": true,
+    "before": [
+      {
+        "signature": "get_admin_student_wrong_word_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text)",
+        "source_md5": "7712126a61327d8444105a4fe9bbc7ad",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer)",
+        "source_md5": "c401cae416b78eeadf033be1f198aafa",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v3(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer,text,integer,text,integer,text[])",
+        "source_md5": "2245af16601de34dc9b2717a35d43c61",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "submit_local_quiz_phase_v1(uuid,uuid,text,text,text,uuid,jsonb,jsonb)",
+        "source_md5": "fb34923b88bc1de459d35db0217c0f42",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      }
+    ],
+    "after": [
+      {
+        "signature": "get_admin_student_wrong_word_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text)",
+        "source_md5": "69a1e4ed20d4d3eadaeac394c2ce8580",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer)",
+        "source_md5": "3e9384019a6ad3413f3ece3f80ef2538",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v3(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer,text,integer,text,integer,text[])",
+        "source_md5": "4638f81a7a7d3666a2bda2ee2d6076ad",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "submit_local_quiz_phase_v1(uuid,uuid,text,text,text,uuid,jsonb,jsonb)",
+        "source_md5": "a2aabb0caaf2f95d7bb4776d877d6d49",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      }
+    ]
+  },
+  "production": {
+    "project": "xdxhswjgksukjmpbzqgz",
+    "migration": [
+      {
+        "version": "20261004045306",
+        "name": "stop_duplicate_local_quiz_state"
+      }
+    ],
+    "before": [
+      {
+        "signature": "get_admin_student_wrong_word_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text)",
+        "source_md5": "7712126a61327d8444105a4fe9bbc7ad",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer)",
+        "source_md5": "c401cae416b78eeadf033be1f198aafa",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v3(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer,text,integer,text,integer,text[])",
+        "source_md5": "2245af16601de34dc9b2717a35d43c61",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "submit_local_quiz_phase_v1(uuid,uuid,text,text,text,uuid,jsonb,jsonb)",
+        "source_md5": "fb34923b88bc1de459d35db0217c0f42",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      }
+    ],
+    "after": [
+      {
+        "signature": "get_admin_student_wrong_word_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text)",
+        "source_md5": "69a1e4ed20d4d3eadaeac394c2ce8580",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v1(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer)",
+        "source_md5": "3e9384019a6ad3413f3ece3f80ef2538",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "private.wrong_word_notebook_page_v3(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer,text,integer,text,integer,text[])",
+        "source_md5": "4638f81a7a7d3666a2bda2ee2d6076ad",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres}",
+        "prosecdef": false,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "signature": "submit_local_quiz_phase_v1(uuid,uuid,text,text,text,uuid,jsonb,jsonb)",
+        "source_md5": "a2aabb0caaf2f95d7bb4776d877d6d49",
+        "owner": "postgres",
+        "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ]
+      }
+    ],
+    "studentBefore": [
+      {
+        "name": "public.quiz_attempts",
+        "rows": 89,
+        "hash": "71ae3b9e579e640da36c68b1568a2535"
+      },
+      {
+        "name": "public.quiz_questions",
+        "rows": 7617,
+        "hash": "35aa70cbf66845360812512a8828257f"
+      },
+      {
+        "name": "public.student_point_events",
+        "rows": 3930,
+        "hash": "b1dc6b58f251d91dcd4d595122ffd8e9"
+      },
+      {
+        "name": "public.student_point_totals",
+        "rows": 4,
+        "hash": "49db54346fc8530323986e04c620ccac"
+      },
+      {
+        "name": "public.student_vocab_state",
+        "rows": 4168,
+        "hash": "db2cf92f7ba77724109c50d720489d3e"
+      },
+      {
+        "name": "public.student_vocab_wrong_events",
+        "rows": 1901,
+        "hash": "b8653ecf069c54687aa3aee2c637c6ab"
+      }
+    ],
+    "studentAfter": [
+      {
+        "name": "public.quiz_attempts",
+        "rows": 89,
+        "hash": "71ae3b9e579e640da36c68b1568a2535"
+      },
+      {
+        "name": "public.quiz_questions",
+        "rows": 7617,
+        "hash": "35aa70cbf66845360812512a8828257f"
+      },
+      {
+        "name": "public.student_point_events",
+        "rows": 3930,
+        "hash": "b1dc6b58f251d91dcd4d595122ffd8e9"
+      },
+      {
+        "name": "public.student_point_totals",
+        "rows": 4,
+        "hash": "49db54346fc8530323986e04c620ccac"
+      },
+      {
+        "name": "public.student_vocab_state",
+        "rows": 4168,
+        "hash": "db2cf92f7ba77724109c50d720489d3e"
+      },
+      {
+        "name": "public.student_vocab_wrong_events",
+        "rows": 1901,
+        "hash": "b8653ecf069c54687aa3aee2c637c6ab"
+      }
+    ],
+    "rowsPreserved": 17709,
+    "studentGroupsPreserved": 6,
+    "studentTestWrites": 0
+  },
+  "local": {
+    "tests": [
+      {
+        "file": "src/lib/database/local-quiz-batches.integration.test.ts",
+        "passed": 33,
+        "at": "2026-10-04T04:46:26Z"
+      },
+      {
+        "file": "src/lib/database/local-quiz-state-storage.integration.test.ts",
+        "passed": 2,
+        "at": "2026-10-04T04:48:20Z"
+      },
+      {
+        "file": "src/lib/database/wrong-word-page.integration.test.ts",
+        "with": "src/lib/database/wrong-word-notebook.integration.test.ts",
+        "combinedPassed": 20,
+        "at": "2026-10-04T04:49:54Z"
+      }
+    ],
+    "typecheck": true,
+    "featureMap": true,
+    "recordDesign": true,
+    "initialFixtureErrorsResolved": [
+      "unit_id required",
+      "existing state requires an owned attempt",
+      "legacy response uses items key"
+    ]
+  },
+  "independentReview": {
+    "reviewer": "m05_db_review",
+    "blockers": 0,
+    "scope": "four functions and changed integration cases"
+  },
+  "notPerformed": [
+    "free-tier capacity threshold experiment",
+    "synthetic load growth",
+    "full regression rerun",
+    "new browser flow or UI change"
+  ]
+}

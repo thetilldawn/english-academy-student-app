@@ -236,7 +236,7 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
     const result=await batch(p,answers(p,()=>n++<3));
     expect(result.result).toMatchObject({state:'completed',finalized:true,attempt:{finalScore:75,passed:true}});
     expect(result.retryTargets).toEqual([]);
-    expect((await owner('select array_agg(unresolved_wrong_count order by vocab_entry_id) values from student_vocab_state where student_id=$1',[student])).rows[0].values).toEqual([0,0,0,1]);
+    expect((await owner('select count(*)::int n from student_vocab_state where student_id=$1',[student])).rows[0].n).toBe(0);
   });
 
   it.each([5,8,10,17,20,600])('기존 %i초 문항 제한을 그대로 시작한다',async seconds=>{
@@ -393,6 +393,22 @@ describe.sequential("기기 풀이의 회차별 묶음 접수",()=>{
     expect((await wordPage('history')).items[0].meanings).toEqual(expect.arrayContaining([
       expect.objectContaining({meaningKey:ai.meaningKey,unresolved:false,currentWrongCount:0,lifetimeWrongCount:5}),
       expect.objectContaining({meaningKey:ci.meaningKey,unresolved:true,currentWrongCount:1,lifetimeWrongCount:1})]));
+    expect((await owner('select count(*)::int n from public.student_vocab_state where student_id=$1',[student])).rows[0].n).toBe(0);
+    // Old stored flags can disagree with the current shared meaning state.
+    await owner(`insert into public.student_vocab_state(student_id,vocab_entry_id,unresolved_wrong_count,resolved_at,last_attempt_id,last_evaluated_at)
+      select $1,e.id,case when e.dataset_id=$2 then 9 else 0 end,
+        case when e.dataset_id=$2 then null else clock_timestamp() end,$4,clock_timestamp()
+      from public.vocab_entries e where e.dataset_id=any($3::uuid[]) and source_row=1`,[student,id(4),[id(4),datasetC],solve.attemptId]);
+    await owner("select set_config('request.jwt.claim.sub',$1,true)",[id(1)]);
+    for(const reader of ['public.get_admin_student_wrong_word_page_v1','private.wrong_word_notebook_page_v1','private.wrong_word_notebook_page_v3']) {
+      for(const [source,resolution] of [[id(4),'resolved'],[datasetB,'resolved'],[datasetC,'unresolved']] as const) {
+        const page=(await owner(`select ${reader}($1,$2,'all','fake1') value`,[student,source])).rows[0].value as {
+          items:Array<{occurrences:Array<{datasetId:string;resolution:string}>}>;
+        };
+        const occurrence=page.items.flatMap(word=>word.occurrences).find(row=>row.datasetId===source);
+        expect(occurrence?.resolution).toBe(resolution);
+      }
+    }
     await owner('set constraints all immediate');const before=await snapshot();
     expect(await batch(a,aAnswers,id(840))).toEqual(aReceipt);expect(await batch(sr,sa,id(846))).toEqual(solved);expect(await snapshot()).toEqual(before);
   });
