@@ -195,4 +195,40 @@ describe.sequential("새 구성 배정은 처음 저장할 때부터 공용 문�
     expect(await contents(created)).toEqual(await contents(oldAssignment));
     expect(await scalar<number>("select count(*)::int value from private.assignment_vocabulary_meaning_refs r join public.assignment_questions q on q.id=r.assignment_question_id where q.assignment_id=$1", [created])).toBe(4);
   });
+
+  it("fills reviewed missing audio from the original key only for new assignments and freezes it", async () => {
+    const oldContents = await contents(oldAssignment);
+    const url = "https://media.merriam-webster.com/audio/prons/en/us/mp3/t/test0001.mp3";
+    const variant = "mw:" + "2".repeat(20);
+    // The selected entries were made before the original-key repair. The
+    // pronunciation is bound to their original source, not the old copied ID.
+    await db.query(`insert into public.vocab_entry_pronunciations
+      (vocab_entry_id,dataset_id,source_row,entry_row_sha256,headword_normalized,provider,status,review_status,
+       needs_review,listening_enabled,selected_variant_id,selected_audio_url,selected_sound_audio,selected_pos,
+       selected_mw_notation,variants,raw_provenance,source_package_version,content_sha256)
+      select e.id,e.dataset_id,e.source_row,upper(e.row_sha256),e.headword_normalized,'merriam_webster',
+        'raw_first_variant_unreviewed','raw_unreviewed',false,true,$2,$3,'test0001','noun','test',
+        jsonb_build_array(jsonb_build_object('variant_id',$2::text,'audio_url',$3::text)),
+        case when e.source_row=1 then jsonb_build_array(jsonb_build_object('review_scope','WORD-20261003-01',
+          'selection_status','source_matched_audio','entry_row_sha256',lower(e.row_sha256),
+          'variant_id',$2::text,'audio_url',$3::text,'selected_pos','noun','manifest_sha256',repeat('a',64))) else '[]'::jsonb end,
+        repeat('A',64),repeat('B',64)
+      from private.vocabulary_composition_entries ce join public.vocab_entries e on e.id=ce.source_entry_id
+      where ce.version_id=$1`, [standard.plan[0].composition_bank.version_id, variant, url]);
+    const created = await create(standard);
+    await owner();
+    const pronunciations = await scalar<Array<{target:{available:boolean;audioUrl:string|null};choices:Array<{available:boolean}>}>>(
+      "select jsonb_agg(composition_pronunciation_snapshot order by base_order_index) value from private.assignment_question_contents_v1 where assignment_id=$1", [created]);
+    expect(pronunciations[0].target.audioUrl).toBe(url);
+    expect(pronunciations.slice(1).every(p => !p.target.available)).toBe(true);
+    expect(pronunciations.every(p => p.choices.filter(c => c.available).length === 1)).toBe(true);
+    expect(await contents(oldAssignment)).toEqual(oldContents);
+    const saved = await contents(created);
+    await db.exec("update public.vocab_entry_pronunciations set listening_enabled=false,status='api_lookup_required',selected_variant_id=null,selected_audio_url=null,selected_sound_audio=null,variants='[]'");
+    expect(await contents(created)).toEqual(saved);
+    expect(await scalar<number>("select count(*)::int value from public.assignment_questions where assignment_id=$1 and composition_pronunciation_snapshot is not null", [created])).toBe(0);
+    await expectFailure(() => scalar("select private.assert_missing_composition_audio_fill_v1($1::jsonb,$2::jsonb) value", [
+      pronunciations[0], {...pronunciations[0], target:{...pronunciations[0].target,audioUrl:url.replace('test0001','test0002')}}
+    ]), "question_pronunciation_fill_invalid");
+  });
 });

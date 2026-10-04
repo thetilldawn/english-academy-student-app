@@ -3130,6 +3130,11 @@
       "path": "supabase/migrations/20261004000000_bound_template_search_document_reads.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261004154512_link_missing_pronunciation_to_existing_keys.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
     }
   ],
   "features": [

@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "id": "WORD-20261003-01",
+  "title": "기존 단어키에 누락 발음 연결",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/WORD-20261003-01.md",
+  "baseline": "59e768fd1e08c43ae9f707c90fb7f860566c2331",
+  "owners": [
+    "quiz-player",
+    "assignments",
+    "wordbook-compositions",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "supabase/migrations/20261004154512_link_missing_pronunciation_to_existing_keys.sql",
+      "state": "planned",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/school-pronunciation-scope.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/composition-question-direct-insert.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "기존 단어키와 음원 참조만 연결하고 정상63개와 학교73 범위를 보존한다.",
+      "acceptance": "기존 단어키와 음원 참조만 연결하고 정상63개와 학교73 범위를 보존한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "신규 배정의 빈 발음만 정확 원키와 승인음원으로 확정한다.",
+      "acceptance": "신규 배정의 빈 발음만 정확 원키와 승인음원으로 확정한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "기존 은행 전체 확인값과 과거/진행시험 및 학생기록을 보존한다.",
+      "acceptance": "기존 은행 전체 확인값과 과거/진행시험 및 학생기록을 보존한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "검토와 운영에 누락키만 추가하고 재접수·이전연결 보존을 확인한다.",
+      "acceptance": "검토와 운영에 누락키만 추가하고 재접수·이전연결 보존을 확인한다.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "database-contract"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "진행 순서와 기존 자료 경계",
+      "answer": "누락 발음 연결 다음 관리자 분리, 패치 공지는 보류. 기존 사전키·태그·음원을 재사용한다.",
+      "source": "2026-10-05 사용자 지시 및 WORD-20261003-01"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "학교 73개와 기존 음원 연결",
+      "answer": "정확한 자료키·원문 확인값·73개 범위만 추가하고 기존 음원 정체성 73개를 참조한다. 정상 63개는 같은 값으로 보존한다.",
+      "source": "docs/work-orders/WORD-20261003-01.md"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "새 시험의 발음 누락 보완",
+      "answer": "신규 배정에서만 원단어키로 빈 음원을 보충해 공용 문항에 확정한다. 기존 은행 전체 확인값과 과거/진행 시험은 유지한다.",
+      "source": "docs/work-orders/WORD-20261003-01.md"
+    },
+    {
+      "id": "D4",
+      "owner": "user",
+      "state": "resolved",
+      "question": "음원 확인 및 작업 범위",
+      "answer": "학생에게 청음을 맡긴다. 기존 공식·승인 음원을 우선 재사용하며 사전/학생/과거 데이터의 일괄 정리와 부하 검사는 하지 않는다.",
+      "source": "기존 사용자 음원 및 검사 범위 지시"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "api": {
+      "status": "checked",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "기존 키와 승인 음원으로 신규 시험 누락만 보충. 기존 UI·채점·캐시·기록은 보존한다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "학생 자기 응시와 관리자 권한, 함수 실행권한을 유지한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "학생 경계와 동일 응답 형식 유지, 개인 행은 공개하지 않는다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "문제/정답 공개 경계와 기존 보관/접수 형태를 유지한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "브라우저·공용 캐시와 기기 답 보관 변경이 없다.",
+      "checkIds": []
+    }
+  },
+  "design": {
+    "dataFlow": "기존 선택 키→원자료 확인값→누락 음원 참조→신규 배정에서만 확정→기존 준비/기기 시험.",
+    "reuse": "기존 발음표·identity·CDN과 공용 문항 payload 재사용. 새 사전/표/단어본문 없음.",
+    "cache": "공용48시간·미사용준비24시간·미접수답보존 유지.",
+    "compatibility": "기존 은행 전체해시와 과거 문항 그대로. 신규 공용payload의 발음필드만 허용.",
+    "rollback": "신규 연결 비활성화, 이전 정상음원 보존. 이미 확정한 발음의 읽기호환 유지."
+  },
+  "uiStates": [],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "WORD-20261003-01",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "기존 구조와 출처를 재사용하고 누락만 보충한다. 과거기록/부하검사는 제외."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/school-pronunciation-scope.integration.test.ts",
+      "scenario": "정확한 학교73키 범위와 기존 승인 음원 참조",
+      "expected": "기존 정체성/출처/권한 유지·다른범위 거절",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "structure"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/composition-question-direct-insert.integration.test.ts",
+      "scenario": "신규4문항의누락보충·기존배정·퇴역후읽기·변조거절",
+      "expected": "기존 정상값/은행해시/학생기록 동일·새음원만 확정",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "structure"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "review",
+      "target": "docs/work-orders/WORD-20261003-01.md",
+      "scenario": "검토와운영 명세/기존행 보존과 실제조회",
+      "expected": "기존행 변경0·누락키만 연결·실학생쓰기0",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "structure"
+      ]
+    }
+  ],
+  "verification": null
+}

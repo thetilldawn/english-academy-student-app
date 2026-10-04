@@ -7,7 +7,7 @@ import { createFinalSchemaDatabase } from "@/test-support/final-schema-database"
 import { nucleusFixture, schoolPronunciationFixture } from "@/test-support/pronunciation-fixtures";
 import { SCHOOL_PRONUNCIATION_SCOPES, validateSchoolPronunciationRelease } from "@/lib/vocab/school-pronunciation-release-contract";
 import { parseVocabPronunciationIdentityV2 } from "@/lib/quiz/pronunciation-snapshot";
-import { vocabPronunciationReleaseHeader } from "@/lib/vocab/vocab-pronunciation-release-v2-contract";
+import { computeVocabPronunciationPackageVersion, vocabPronunciationReleaseHeader } from "@/lib/vocab/vocab-pronunciation-release-v2-contract";
 
 async function seedRelease(db: PGlite, release: {dataset_key:string; dataset_source_sha256:string; summary:{expected_entry_count:number}; bindings:readonly unknown[]}) {
   const result = await db.query<{id:string}>(`insert into public.vocab_datasets(dataset_key,title,source_label,source_sha256,row_count)
@@ -94,6 +94,32 @@ describe.sequential("approved school pronunciation final schema", () => {
         await expect(rpc("register_vocab_pronunciation_tts_asset_batch_v2", [{...asset,...changed}])).rejects.toThrow();
       }
     }
+  });
+
+  it("connects the exact 73-entry school scope to existing identities without importing them again", async () => {
+    const release = schoolPronunciationFixture(0);
+    release.dataset_key = "simseok-g11-english2-ohseonyeong-l2-2026-sem2-school-v2";
+    release.dataset_source_sha256 = "F0663E74565F387B816C3399EB76FCB42FFC452BB9BBAE1705778EFD3DAB37E9";
+    release.bindings = release.bindings.slice(0, 73);
+    Object.assign(release.summary, {expected_entry_count:73,binding_count:73,webster_binding_count:73});
+    release.package_version = computeVocabPronunciationPackageVersion(release);
+    release.release_id = `voca-release:${release.package_version.toLowerCase()}`;
+    await seedRelease(db, release);
+    const before = await db.query("select to_jsonb(i) value from public.vocab_pronunciation_identities_v2 i order by identity_id");
+    const header = vocabPronunciationReleaseHeader(release as never);
+    for (const changed of [{dataset_source_sha256:"0".repeat(64)}, {expected_entry_count:72}]) {
+      await expect(rpc("stage_school_pronunciation_release_v1", {...header,...changed})).rejects.toThrow();
+    }
+    await db.exec("set role service_role");
+    try {
+      await rpc("stage_school_pronunciation_release_v1", header);
+      await rpc("import_vocab_pronunciation_binding_batch_v3",release.release_id,release.bindings);
+      await rpc("import_vocab_pronunciation_binding_batch_v3",release.release_id,release.bindings);
+      await rpc("verify_vocab_pronunciation_release_v3",release.release_id);
+      await rpc("activate_vocab_pronunciation_release_v3",release.release_id);
+    } finally { await db.exec("reset role"); }
+    expect((await db.query("select to_jsonb(i) value from public.vocab_pronunciation_identities_v2 i order by identity_id")).rows).toEqual(before.rows);
+    expect((await db.query<{n:number}>("select count(*)::int n from public.vocab_entry_pronunciation_bindings_v2 where release_id=$1",[release.release_id])).rows[0].n).toBe(73);
   });
 
   it.skipIf(!process.env.SCHOOL_PRONUNCIATION_RELEASE_DIRECTORY)("imports all current local releases against the complete schema and existing identity bytes", async () => {
