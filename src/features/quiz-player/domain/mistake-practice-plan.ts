@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { mistakeTargetSchema } from "@/features/students/public-contracts";
 import { quizContentModes } from "@/lib/quiz/question-content-mode";
 import { reviewedChoiceSafetySchema } from "@/lib/quiz/choice-safety";
 import { buildDirectionalQuestionSets, quizIndependentTargetDirectionEligibility } from "@/lib/quiz/choice-policy";
 import { createTargetedQuizQuestions } from "@/lib/quiz/question-generator";
 import { shuffle } from "@/lib/quiz/random";
-import { practiceSettingsSchema, type PracticeSettings } from "../contracts/practice";
+import { practiceMistakeEpisodeIdSchema, practiceSettingsSchema, type PracticeSettings } from "../contracts/practice";
 import { practiceSourceSchema, seededRandom, type PracticeEntry } from "./practice-plan";
 
 const direction = z.enum(["english_to_korean", "korean_to_english"]);
@@ -13,7 +12,7 @@ export const mistakePracticeSourceSchema = z.object({
   sourceHash: z.string().regex(/^[a-f0-9]{64}$/),
   candidates: practiceSourceSchema.shape.candidates,
   words: z.array(z.object({
-    key: z.string().regex(/^[a-f0-9]{64}$/), wordKey: z.string().min(1), meaningKey: z.string().regex(/^[a-f0-9]{64}$/), episodeId: mistakeTargetSchema.shape.episodeId.nullable(),
+    key: z.string().regex(/^[a-f0-9]{64}$/), wordKey: z.string().min(1), meaningKey: z.string().regex(/^[a-f0-9]{64}$/), episodeId: practiceMistakeEpisodeIdSchema,
     headword: z.string(), primaryMeaning: z.string(), selectedText: z.string(), testedField: z.enum(["primary_meaning", "definition", "example"]),
     latestVocabEntryId: z.number().int().positive(), choiceSafety: reviewedChoiceSafetySchema.nullable(), frozenOnly: z.boolean(),
     sourceQuestionId: z.uuid(), sourceAttemptId: z.uuid(), sourcePhase: z.enum(["initial", "retry"]), sourceContentHash: z.string().regex(/^[a-f0-9]{64}$/),
