@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMistakePracticePlan, type MistakePracticeSource } from "./mistake-practice-plan";
+import { buildMistakePracticePlan, mistakePracticeSourceSchema, type MistakePracticeSource } from "./mistake-practice-plan";
 import { practiceSelectionSchema, type PracticeSettings } from "../contracts/practice";
 
 const uuid = "20000000-0000-4000-8000-000000000001";
@@ -14,6 +14,18 @@ function source(): MistakePracticeSource {
     headword, primaryMeaning: n === 0 ? "현재 뜻" : `뜻 ${n + 1}`, displayKo: null, choiceSafety: null, eligibleDirections: ["english_to_korean", "korean_to_english"] })) };
 }
 describe("뜻별 연습 계획", () => {
+  it("이전 해시 구간키로 연습을 요청하고 원래 오답을 출제한다", () => {
+    const input = source(), episodeId = "abcdef01-2345-f678-0123-456789abcdef";
+    input.words[0].episodeId = episodeId;
+    const word = input.words[0];
+    const selection = { mode: "mistakes", view: "current", stateVersion: "42",
+      meanings: [{ wordKey: word.wordKey, meaningKey: word.meaningKey, episodeId }] };
+    expect(practiceSelectionSchema.parse(selection)).toEqual(selection);
+    const parsed = mistakePracticeSourceSchema.parse(input);
+    expect(buildMistakePracticePlan(parsed, settings(), "legacy").items[0].word.episodeId).toBe(episodeId);
+    expect(mistakePracticeSourceSchema.safeParse({ ...input, words: [{ ...word, episodeId: "invalid" }] }).success).toBe(false);
+    expect(mistakePracticeSourceSchema.safeParse({ ...input, words: [{ ...word, sourceAttemptId: episodeId }] }).success).toBe(false);
+  });
   it("현재 사전으로 과거에 틀린 뜻을 바꾸지 않는다", () => {
     const input = source(), plan = buildMistakePracticePlan(input, settings(), "same-seed"), q = plan.items[0].word.frozenQuestion;
     expect(plan.items[0].generated).toBeNull();

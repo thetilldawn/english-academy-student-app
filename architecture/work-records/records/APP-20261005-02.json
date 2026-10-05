@@ -9,7 +9,8 @@
   "owners": [
     "students",
     "app-shell",
-    "student-dashboard"
+    "student-dashboard",
+    "quiz-player"
   ],
   "plannedOwners": [],
   "plannedFlows": [],
@@ -97,6 +98,48 @@
         "student-wrong-word-read",
         "student-word-practice"
       ]
+    },
+    {
+      "path": "src/features/quiz-player/contracts/practice.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/mistake-practice-plan.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/mistake-practice-plan.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/lib/services/wrong-word-worksheet-service.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
     }
   ],
   "requirements": [
@@ -109,7 +152,8 @@
       "owners": [
         "students",
         "app-shell",
-        "student-dashboard"
+        "student-dashboard",
+        "quiz-player"
       ],
       "flowIds": [
         "student-management-screen",
@@ -123,7 +167,8 @@
         "assignment-series",
         "assignment-workspace-planning",
         "student-word-practice",
-        "student-dashboard-read"
+        "student-dashboard-read",
+        "student-quiz-attempt"
       ],
       "checkIds": [
         "T1"
@@ -138,7 +183,8 @@
       "owners": [
         "students",
         "app-shell",
-        "student-dashboard"
+        "student-dashboard",
+        "quiz-player"
       ],
       "flowIds": [
         "student-management-screen",
@@ -152,7 +198,8 @@
         "assignment-series",
         "assignment-workspace-planning",
         "student-word-practice",
-        "student-dashboard-read"
+        "student-dashboard-read",
+        "student-quiz-attempt"
       ],
       "checkIds": [
         "T2"
@@ -167,7 +214,8 @@
       "owners": [
         "students",
         "app-shell",
-        "student-dashboard"
+        "student-dashboard",
+        "quiz-player"
       ],
       "flowIds": [
         "student-management-screen",
@@ -181,7 +229,8 @@
         "assignment-series",
         "assignment-workspace-planning",
         "student-word-practice",
-        "student-dashboard-read"
+        "student-dashboard-read",
+        "student-quiz-attempt"
       ],
       "checkIds": [
         "T3"
@@ -433,7 +482,7 @@
       "id": "T1",
       "kind": "integration",
       "target": "src/features/students/server/queries/mistake-episode-query.test.ts",
-      "scenario": "이전 hash 구간키의 목록/상세/커서/대상 계약 및 비정상 형식 거절",
+      "scenario": "이전 hash 구간키의 목록/상세/커서/대상 계약 및 비정상 형식 거절; 같은 구간키를 사용하는 연습 입력/출제/오답 문제 내보내기도 공용 계약 사용",
       "expected": "원키 보존·정상 조회·권한 경계 유지",
       "topics": [
         "behavior",

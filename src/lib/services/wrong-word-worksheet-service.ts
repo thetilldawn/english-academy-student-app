@@ -119,7 +119,7 @@ const worksheetMistakeItemSchema = z.object({
   position: z.number().int().min(1).max(50), item_id: z.string().min(3).max(500),
   dictionary_id: z.string().nullable(), dataset_id: z.uuid(), vocab_entry_id: z.number().int().positive(),
   headword: z.string().min(1), testedField: z.enum(["primary_meaning","definition","example"]), selectedText: z.string().min(1),
-  primaryMeaning: z.string().nullable(), meaningKey: mistakeTargetSchema.shape.meaningKey, episodeId: z.uuid(),
+  primaryMeaning: z.string().nullable(), meaningKey: mistakeTargetSchema.shape.meaningKey, episodeId: mistakeTargetSchema.shape.episodeId,
   sourceQuestionId: z.uuid(), sourcePhase: mistakeTargetSchema.shape.sourcePhase, stateVersion: mistakeTargetSchema.shape.stateVersion,
   contentVersionId: z.uuid(), contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
   currentWrongCount: z.number().int().nonnegative(), lifetimeWrongCount: z.number().int().nonnegative(),
