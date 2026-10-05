@@ -23,6 +23,15 @@ function shell(points = 12, gradeLabel: string | null = "고1") {
 }
 
 describe("StudentShell header", () => {
+  it.each(["/student/wordbook", "/student/wordbook/fake-word"])("%s는 정상·대기·실패에서도 메인 이동을 제공한다", path => {
+    mocks.path = path;
+    const { rerender } = render(shell());
+    expect(screen.getByRole("link", { name: "메인으로" })).toHaveAttribute("href", "/student");
+    rerender(<StudentShellPending />);
+    expect(screen.getByRole("link", { name: "메인으로" })).toHaveAttribute("href", "/student");
+    rerender(<StudentShell displayName="가짜 학생" gradeLabel={null} points={null}><p role="alert">단어를 불러오지 못했습니다.</p></StudentShell>);
+    expect(screen.getByRole("link", { name: "메인으로" })).toHaveAttribute("href", "/student");
+  });
   it("로그인 확인 중에도 메뉴 틀만 유지하고 개인정보와 조회효과는 마운트하지 않는다", () => {
     render(<StudentShellPending />);
     expect(screen.getByRole("banner")).toBeVisible();

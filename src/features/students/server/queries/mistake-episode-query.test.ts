@@ -11,6 +11,7 @@ vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({ loadVocabPronunci
 import { decodeMistakeCursor, getOwnMistakePage, getAdminMistakePage, getMistakeStudyPage } from "./mistake-episode-query";
 import { mistakeFiltersSchema, mistakeTarget } from "../../contracts/mistake-episode";
 import { hydratePronunciationRows } from "./notebook-study-query";
+import { mistakeEpisodeCursorSchema, mistakeEpisodeIdSchema } from "../../contracts/mistake-episode-history";
 
 const id = (n: number) => `a3030000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const filters = mistakeFiltersSchema.parse({});
@@ -34,6 +35,25 @@ beforeEach(() => { vi.resetAllMocks(); mocks.session.mockResolvedValue({ student
   mocks.rpc.mockResolvedValue({ data: raw, error: null }); mocks.registry.mockResolvedValue(new Map()); mocks.corrections.mockResolvedValue([]); });
 
 describe("뜻별 오답 조회의 서버 경계", () => {
+  it("기존 해시 구간키를 목록·상세·이력 커서·배정 대상까지 변경 없이 읽는다", async () => {
+    const episodeId = "abcdef01-2345-f678-0123-456789abcdef";
+    const oldMeaning = { ...meaning, episodeId, countQuality: "legacy-continuation", legacyWrongCount: 4,
+      sources: [{ ...source, episodeId }],
+      episodes: [{ episodeId, openedAt: date, resolvedAt: null, wrongCount: 4, missedCount: 0, includesLegacy: true }] };
+    mocks.rpc.mockResolvedValue({ data: { ...raw, items: [{ ...word, meanings: [oldMeaning] }] }, error: null });
+    const student = await getMistakeStudyPage({ filters });
+    expect(student!.items[0].meanings[0].episodeId).toBe(episodeId);
+    expect(student!.items[0].meanings[0].episodes[0].episodeId).toBe(episodeId);
+    const admin = await getAdminMistakePage(id(1), { filters });
+    expect(mistakeTarget(admin!.items[0].meanings[0])?.episodeId).toBe(episodeId);
+    const historyCursor = { schemaVersion: "vocabulary-mistake-episode-cursor-v1", studentId: id(1),
+      meaningKey: meaning.meaningKey, stateVersion: "12", lastSequence: "0", openedAt: date, episodeId };
+    expect(mistakeEpisodeCursorSchema.parse(historyCursor).episodeId).toBe(episodeId);
+    expect(mistakeEpisodeCursorSchema.safeParse({ ...historyCursor, studentId: episodeId }).success).toBe(false);
+    for (const value of ["", "invalid", "abcdef01-2345-f678-0123-456789abcdeg", episodeId + "x"]) {
+      expect(mistakeEpisodeIdSchema.safeParse(value).success).toBe(false);
+    }
+  });
   it("자료판을 상세에도 보존하며 서로 다른 자료판·상태판의 응답은 섞지 않는다", async () => {
     const page = await getMistakeStudyPage({ filters });
     expect(page?.sourceVersion).toBe(cursor.sourceVersion);

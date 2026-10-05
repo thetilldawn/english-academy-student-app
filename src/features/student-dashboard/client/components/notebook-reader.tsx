@@ -32,7 +32,7 @@ export function NotebookReader({ initial, initialIdentity, initialFilters = mist
   const englishHidden = display.hidden === "english", meaningHidden = display.hidden === "meaning";
   if (view.denied) return <main className={styles.reader}><p role="alert">다시 로그인해 주세요.</p><ButtonLink href="/">처음으로</ButtonLink></main>;
   return <main className={styles.reader} id="main-content">
-    <header className={styles.heading}><h1>내 단어장</h1><ButtonLink href="/student" prefetch={false}>시험 목록</ButtonLink></header>
+    <header className={styles.heading}><h1>내 단어장</h1><ButtonLink href="/student" prefetch={false}>메인으로</ButtonLink></header>
     <Tabs ariaLabel="오답 보기" value={view.filters.view} items={[{ value: "current", label: "현재 오답" }, { value: "history", label: "과거 이력" }]}
       onChange={next => { invalidate(); void view.load({ ...view.filters, view: next }); }} />
     <p className={styles.viewNote}>{view.filters.view === "current" ? "아직 해결하지 못한 뜻입니다. 정규 시험에서 해당 뜻을 맞히면 현재 오답에서 빠집니다." : "해결한 뜻을 포함한 학습 이력입니다. 연습해도 정규 시험 기록은 바뀌지 않습니다."}</p>

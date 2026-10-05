@@ -1,16 +1,20 @@
 import { z } from "zod";
 
+// Legacy episodes use md5(... )::uuid in Postgres, without RFC version bits.
+// Keep those existing keys intact; other entity IDs still use z.uuid().
+export const mistakeEpisodeIdSchema = z.guid();
+
 export const mistakeSequenceSchema = z.string().regex(/^\d{1,19}$/)
   .refine(value => BigInt(value) <= BigInt("9223372036854775807"));
 const timestamp = z.iso.datetime({ offset: true });
 const meaningKey = z.string().regex(/^[a-f0-9]{64}$/);
 export const mistakeEpisodeSchema = z.object({
-  episodeId: z.uuid(), openedAt: timestamp, resolvedAt: timestamp.nullable(),
+  episodeId: mistakeEpisodeIdSchema, openedAt: timestamp, resolvedAt: timestamp.nullable(),
   wrongCount: z.number().int().nonnegative(), missedCount: z.number().int().nonnegative(), includesLegacy: z.boolean(),
 });
 export const mistakeEpisodeCursorSchema = z.object({
   schemaVersion: z.literal("vocabulary-mistake-episode-cursor-v1"), studentId: z.uuid(), meaningKey,
-  stateVersion: mistakeSequenceSchema, lastSequence: mistakeSequenceSchema, openedAt: timestamp, episodeId: z.uuid(),
+  stateVersion: mistakeSequenceSchema, lastSequence: mistakeSequenceSchema, openedAt: timestamp, episodeId: mistakeEpisodeIdSchema,
 }).strict().refine(value => BigInt(value.lastSequence) <= BigInt(value.stateVersion));
 export const mistakeEpisodeHistoryInputSchema = z.object({
   meaningKey, upperVersion: mistakeSequenceSchema, cursor: z.string().regex(/^[A-Za-z0-9_-]{1,3000}$/).optional(),

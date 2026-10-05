@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { wrongWordFiltersSchema } from "./wrong-word-filters";
 import { notebookPronunciationSchema } from "./notebook-study";
-import { mistakeEpisodeSchema, mistakeSequenceSchema } from "./mistake-episode-history";
+import { mistakeEpisodeIdSchema, mistakeEpisodeSchema, mistakeSequenceSchema } from "./mistake-episode-history";
 
 const count = z.number().int().nonnegative();
 const timestamp = z.iso.datetime({ offset: true });
@@ -18,7 +18,7 @@ export const mistakeCursorSchema = z.object({
 }).strict();
 export const mistakeTargetSchema = z.object({
   sourceQuestionId: z.uuid(), sourcePhase: z.enum(["initial", "retry"]),
-  meaningKey: z.string().regex(/^[a-f0-9]{64}$/), episodeId: z.uuid(), stateVersion: sequence,
+  meaningKey: z.string().regex(/^[a-f0-9]{64}$/), episodeId: mistakeEpisodeIdSchema, stateVersion: sequence,
 }).strict();
 export type MistakeTarget = z.infer<typeof mistakeTargetSchema>;
 export const queueMistakesSchema = z.object({ targets: z.array(mistakeTargetSchema).min(1).max(500) }).strict()
@@ -27,7 +27,7 @@ export const queueMistakesSchema = z.object({ targets: z.array(mistakeTargetSche
 const counters = { currentWrongCount: count, lifetimeWrongCount: count, currentMissedCount: count, lifetimeMissedCount: count };
 const sourceSchema = z.object({ datasetId: z.uuid(), entryId: z.number().int().positive(), label: z.string(), ...counters, lastWrongAt: timestamp });
 export const mistakeMeaningSchema = z.object({
-  meaningKey: z.string().regex(/^[a-f0-9]{64}$/), episodeId: z.uuid().nullable(), stateVersion: sequence,
+  meaningKey: z.string().regex(/^[a-f0-9]{64}$/), episodeId: mistakeEpisodeIdSchema.nullable(), stateVersion: sequence,
   ...counters, legacyWrongCount: count, countQuality: z.enum(["exact", "legacy-continuation"]),
   unresolved: z.boolean(), resolvedAt: timestamp.nullable(), lastWrongAt: timestamp,
   testedField: z.enum(["primary_meaning", "definition", "example"]), identityKind: z.string(),
@@ -40,7 +40,7 @@ export const adminMistakeMeaningSchema = mistakeMeaningSchema.extend({
   scheduling: z.enum(["available", "queued", "assigned", "none"]),
   activeAssignment: z.object({ assignmentId: z.uuid(), title: z.string(), assignedAt: timestamp }).nullable(),
   sourceQuestionId: z.uuid(), sourceAttemptId: z.uuid(), sourcePhase: z.enum(["initial", "retry"]),
-  sources: z.array(sourceSchema.extend({ sourceQuestionId: z.uuid(), sourcePhase: z.enum(["initial", "retry"]), episodeId: z.uuid().nullable() })),
+  sources: z.array(sourceSchema.extend({ sourceQuestionId: z.uuid(), sourcePhase: z.enum(["initial", "retry"]), episodeId: mistakeEpisodeIdSchema.nullable() })),
 });
 export const mistakeWordSchema = z.object({
   sourceVersion: z.string().regex(/^[a-f0-9]{64}$/),

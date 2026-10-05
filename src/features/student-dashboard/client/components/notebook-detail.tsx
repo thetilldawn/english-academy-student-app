@@ -138,5 +138,6 @@ export function NotebookDetail({ word: initialWord, children, initialIdentity, v
   if (state.denied) return null;
   if (presentation === "page") return <main className={styles.standalone}><ButtonLink href={`/student/wordbook?view=${view}`} prefetch={false}>내 단어장</ButtonLink>{content}</main>;
   if (state.wide) return <aside className={styles.detailPane} aria-label="단어 상세"><div className={styles.detailClose}><Button onClick={() => router.back()}>닫기</Button></div>{content}</aside>;
-  return <RoutedDetailDialog heading={<h2 id="notebook-detail-title">단어 상세</h2>} titleId="notebook-detail-title" closeLabel="닫기" size="compact">{content}</RoutedDetailDialog>;
+  return <RoutedDetailDialog heading={<h2 id="notebook-detail-title">단어 상세</h2>} titleId="notebook-detail-title" closeLabel="닫기" size="compact"
+    headerActions={<ButtonLink href="/student" prefetch={false} size="small" variant="quiet">메인으로</ButtonLink>}>{content}</RoutedDetailDialog>;
 }

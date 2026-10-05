@@ -5,7 +5,7 @@ import type {ReactElement} from 'react';
 import {announceStudentPrivateCacheChange} from '@/features/session/public-client';
 import {readFileSync} from 'node:fs';
 import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest';
-import { act,cleanup,fireEvent,render,screen,waitFor } from '@testing-library/react';
+import { act,cleanup,fireEvent,render,screen,waitFor,within } from '@testing-library/react';
 import type {MistakeStudyPage as NotebookPage,MistakeStudyWord as NotebookWord} from '@/features/students/public-contracts';
 import { installNativeOverlayFixture } from '@/test-support/native-overlay-fixture';
 installNativeOverlayFixture();
@@ -88,6 +88,7 @@ describe('내 단어장 화면',()=>{
     let width=680;vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockImplementation(()=>width);
     render(<NotebookWorkspace identity="test-session" detail={<NotebookDetail initialIdentity="test-session" word={word}/>}><p>목록</p></NotebookWorkspace>);
     expect(screen.getByRole('dialog',{name:'단어 상세'})).toBeVisible();
+    expect(within(screen.getByRole('dialog',{name:'단어 상세'})).getByRole('link',{name:'메인으로'})).toHaveAttribute('href','/student');
     width=681;fireEvent(window,new Event('resize'));
     expect(screen.queryByRole('dialog')).toBeNull();expect(screen.getByRole('complementary',{name:'단어 상세'})).toBeVisible();
     width=680;fireEvent(window,new Event('resize'));

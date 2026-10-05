@@ -1,0 +1,477 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261005-02",
+  "title": "내 단어장 조회와 메인 복귀 수리",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261005-02.md",
+  "baseline": "46853278dea8eaea5a76b9bdb548372b4b214209",
+  "owners": [
+    "students",
+    "app-shell",
+    "student-dashboard"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "src/features/students/contracts/mistake-episode-history.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "student-wrong-word-read"
+      ]
+    },
+    {
+      "path": "src/features/students/contracts/mistake-episode.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "student-wrong-word-read",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-query.test.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "student-management-screen",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-wrong-word-read",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/components/student-shell.tsx",
+      "state": "existing",
+      "owner": "app-shell",
+      "flowIds": [
+        "student-wrong-word-read",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/components/student-shell.test.tsx",
+      "state": "existing",
+      "owner": "app-shell",
+      "flowIds": [
+        "student-dashboard-read",
+        "student-wrong-word-read",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-reader.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-reader.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read",
+        "student-word-practice"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "기존 오답 키를 보존하고 내 단어장을 정상 조회한다.",
+      "acceptance": "원키 보존·정상 조회·권한 경계 유지",
+      "disposition": "required",
+      "owners": [
+        "students",
+        "app-shell",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-management-screen",
+        "student-wrong-word-read",
+        "assignment-notebook-create",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-word-practice",
+        "student-dashboard-read"
+      ],
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "로딩·오류·모바일 상세에서도 메인으로 이동한다.",
+      "acceptance": "메인 링크 활성·기존 닫기/선택 보존·실패 안내",
+      "disposition": "required",
+      "owners": [
+        "students",
+        "app-shell",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-management-screen",
+        "student-wrong-word-read",
+        "assignment-notebook-create",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-word-practice",
+        "student-dashboard-read"
+      ],
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "기록 변경 없이 필요한 검사와 배포 읽기를 확인한다.",
+      "acceptance": "정상 목록과 메인 복귀, 실학생쓰기0",
+      "disposition": "required",
+      "owners": [
+        "students",
+        "app-shell",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-management-screen",
+        "student-wrong-word-read",
+        "assignment-notebook-create",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-word-practice",
+        "student-dashboard-read"
+      ],
+      "checkIds": [
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "수정 범위",
+      "answer": "내 단어장 오류와 메인 복귀를 수정한다. 기존 사전키/기록은 보존한다.",
+      "source": "2026-10-05 사용자 요청"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "키 호환과 이동",
+      "answer": "오답 구간만 GUID 형식 허용, 상단/모바일 모달 메인 링크. DB 변경 없음.",
+      "source": "docs/work-orders/APP-20261005-02.md"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "오답 구간 형식과 메인 링크 및 관련 회귀검사 수정."
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "data": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "api": {
+      "status": "changed",
+      "reason": "오답 구간 형식과 메인 링크 및 관련 회귀검사 수정."
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 주소·DB·원키·권한·캐시·학생기록 유지."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "오답 구간 형식과 메인 링크 및 관련 회귀검사 수정."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "학생 세션→기존 오답 RPC→구간키 형식 확인→목록/상세. 상단 메인 링크→기존 학생 메인.",
+    "reuse": "기존 구간키/화면/공용 버튼·모달 재사용.",
+    "cache": "캐시 수명·계정별 격리 그대로 유지.",
+    "compatibility": "이전 해시 UUID와 새 RFC UUID 함께 허용. 학생·응시 ID 검사는 변경하지 않음.",
+    "rollback": "앱 수정만 되돌리며 DB/학생 행 변경 없음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "첫 조회",
+      "message": "단어를 불러오는 중입니다.",
+      "behavior": "기존 개인정보 가림/로딩/오류 안내와 메인 복귀를 제공.",
+      "recovery": "메인으로 이동 또는 기존 다시 시도.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "조회 실패",
+      "message": "단어를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "기존 개인정보 가림/로딩/오류 안내와 메인 복귀를 제공.",
+      "recovery": "메인으로 이동 또는 기존 다시 시도.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "권한 거절",
+      "message": "다시 로그인해 주세요.",
+      "behavior": "기존 개인정보 가림/로딩/오류 안내와 메인 복귀를 제공.",
+      "recovery": "메인으로 이동 또는 기존 다시 시도.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "behavior": "목록 오류를 빈 결과로 바꾸지 않고 기존 권한과 표시 계약을 유지한다.",
+      "state": "refreshing",
+      "recovery": "메인으로 또는 기존 다시 시도/목록 복귀.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ],
+      "message": "기존 상태 안내와 메인으로 버튼",
+      "trigger": "기존 단어장 해당 상태"
+    },
+    {
+      "behavior": "목록 오류를 빈 결과로 바꾸지 않고 기존 권한과 표시 계약을 유지한다.",
+      "state": "unselected",
+      "recovery": "메인으로 또는 기존 다시 시도/목록 복귀.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ],
+      "message": "기존 상태 안내와 메인으로 버튼",
+      "trigger": "기존 단어장 해당 상태"
+    },
+    {
+      "behavior": "목록 오류를 빈 결과로 바꾸지 않고 기존 권한과 표시 계약을 유지한다.",
+      "state": "empty",
+      "recovery": "메인으로 또는 기존 다시 시도/목록 복귀.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ],
+      "message": "기존 상태 안내와 메인으로 버튼",
+      "trigger": "기존 단어장 해당 상태"
+    },
+    {
+      "behavior": "목록 오류를 빈 결과로 바꾸지 않고 기존 권한과 표시 계약을 유지한다.",
+      "state": "validation",
+      "recovery": "메인으로 또는 기존 다시 시도/목록 복귀.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ],
+      "message": "기존 상태 안내와 메인으로 버튼",
+      "trigger": "기존 단어장 해당 상태"
+    },
+    {
+      "behavior": "목록 오류를 빈 결과로 바꾸지 않고 기존 권한과 표시 계약을 유지한다.",
+      "state": "save-error",
+      "recovery": "메인으로 또는 기존 다시 시도/목록 복귀.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ],
+      "message": "기존 상태 안내와 메인으로 버튼",
+      "trigger": "기존 단어장 해당 상태"
+    },
+    {
+      "behavior": "목록 오류를 빈 결과로 바꾸지 않고 기존 권한과 표시 계약을 유지한다.",
+      "state": "not-found",
+      "recovery": "메인으로 또는 기존 다시 시도/목록 복귀.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ],
+      "message": "기존 상태 안내와 메인으로 버튼",
+      "trigger": "기존 단어장 해당 상태"
+    },
+    {
+      "behavior": "목록 오류를 빈 결과로 바꾸지 않고 기존 권한과 표시 계약을 유지한다.",
+      "state": "unexpected-error",
+      "recovery": "메인으로 또는 기존 다시 시도/목록 복귀.",
+      "component": "src/features/student-dashboard/client/components/notebook-detail.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ],
+      "message": "기존 상태 안내와 메인으로 버튼",
+      "trigger": "기존 단어장 해당 상태"
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "APP-20261005-02",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "기존 연결 최소 수정·실제 실패 재현·필요 범위 검사."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/features/students/server/queries/mistake-episode-query.test.ts",
+      "scenario": "이전 hash 구간키의 목록/상세/커서/대상 계약 및 비정상 형식 거절",
+      "expected": "원키 보존·정상 조회·권한 경계 유지",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "component",
+      "target": "src/components/student-shell.test.tsx",
+      "scenario": "목록/상세/로딩/오류 메인 복귀와 모바일 상세 닫기",
+      "expected": "메인 링크 활성·기존 닫기/선택 보존·실패 안내",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "browser",
+      "target": null,
+      "scenario": "관련 타입/lint/구조/빌드 및 검토/운영 읽기",
+      "expected": "정상 목록과 메인 복귀, 실학생쓰기0",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}

@@ -49,6 +49,7 @@ function StudentShellFrame({
   const pathname = usePathname();
   const focusedAttempt = pathname.startsWith("/student/attempt/") || /^\/student\/practice\/[^/]+\/?$/u.test(pathname);
   const pageTitle = studentPageTitleForPathname(pathname);
+  const inNotebook = pathname === "/student/wordbook" || pathname.startsWith("/student/wordbook/");
   const shellRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
@@ -104,7 +105,8 @@ function StudentShellFrame({
               {points}
             </div>
             <div className={[styles.topbarActions, styles.studentControls].join(" ")}>
-              {pending ? <Button disabled size="small" variant="quiet">내 단어장</Button> : <ButtonLink href="/student/wordbook" prefetch={false} size="small" variant="quiet">내 단어장</ButtonLink>}
+              {inNotebook ? <ButtonLink href="/student" prefetch={false} size="small" variant="quiet">메인으로</ButtonLink>
+                : pending ? <Button disabled size="small" variant="quiet">내 단어장</Button> : <ButtonLink href="/student/wordbook" prefetch={false} size="small" variant="quiet">내 단어장</ButtonLink>}
               <ThemeToggle />
               {pending ? <Button disabled size="small" variant="quiet">{studentAppText.shell.logout}</Button> : <StudentLogoutButton />}
             </div>
