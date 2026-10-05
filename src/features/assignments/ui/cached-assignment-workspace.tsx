@@ -30,6 +30,7 @@ export function CachedAssignmentWorkspace({ initialResponse, initialDatasetId, i
       <AssignmentWorkspace key={entry.blocked ? "blocked" : "allowed"}
         initial={{ directory: entry.blocked ? pendingDirectory : entry.snapshot ?? entry.retainedSnapshot ?? pendingDirectory }} cacheEnabled
         interactionAllowed={Boolean(entry.snapshot) && !entry.blocked} initialDatasetId={initialDatasetId}
+        authenticationRecovery={entry.blocked ? undefined : { error: entry.error ?? "", retry: entry.retry }}
         pendingContent={pendingContent} initialDialogView={initialDialogView} initialStudentId={initialStudentId} />
     </AssignmentAuthenticationBoundary>
   </>;

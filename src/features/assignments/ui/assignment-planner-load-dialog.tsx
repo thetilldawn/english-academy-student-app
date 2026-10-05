@@ -11,11 +11,15 @@ import { RouteLoadingState } from "@/design-system/patterns/route-state/route-st
 export function AssignmentPlannerLoadDialog({
   closeDisabled = false,
   error = "",
+  loadingLabel = "배정 준비 자료를 불러오는 중…",
+  retryLabel = "다시 불러오기",
   onClose,
   onRetry,
 }: {
   closeDisabled?: boolean;
   error?: string;
+  loadingLabel?: string;
+  retryLabel?: string;
   onClose: () => void;
   onRetry?: () => void;
 }) {
@@ -37,13 +41,13 @@ export function AssignmentPlannerLoadDialog({
           <Notice role="alert" tone="danger">{error}</Notice>
         ) : (
           <RouteLoadingState
-            label="배정 준비 자료를 불러오는 중…"
+            label={loadingLabel}
             variant="compact"
           />
         )}
       </DialogBody>
       <DialogFooter>
-        {error && onRetry ? <Button onClick={onRetry}>다시 불러오기</Button> : null}
+        {error && onRetry ? <Button onClick={onRetry}>{retryLabel}</Button> : null}
       </DialogFooter>
     </DialogFrame>
   );

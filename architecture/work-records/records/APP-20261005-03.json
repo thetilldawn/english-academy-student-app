@@ -1,0 +1,576 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261005-03",
+  "title": "배정 범위 조회와 창 전환 복구",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261005-03.md",
+  "baseline": "1315199b160482affa17b2708b489a5bf9fc6535",
+  "owners": [
+    "assignments",
+    "wordbook-compositions",
+    "database-contract"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "public"
+  ],
+  "scope": [
+    {
+      "path": "src/features/assignments/ui/cached-assignment-workspace.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-planner-load-dialog.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/library-query-panels.tsx",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20261005033650_speed_library_reads_and_preserve_assignment_drafts.sql",
+      "state": "planned",
+      "owner": "wordbook-compositions",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/database/vocabulary-library-on-demand.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/lib/database/exam-use-occurrence-archive.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-direct-review-create",
+        "student-quiz-attempt",
+        "mock-wordbook-compose"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "창 복귀에도 배정 초안을 이어가고 조회 실패를 같은 자리에서 복구한다.",
+      "acceptance": "작성창 위치와 값 보존, 미인증 학생정보 비공개",
+      "disposition": "required",
+      "owners": [
+        "assignments",
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-notebook-create",
+        "mock-wordbook-compose",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "숨은 범위 조회를 중단하고 수량 오류를 명확히 표시한다.",
+      "acceptance": "숨은 요청0, 초안 보존, 실패를 0개로 표시하지 않음",
+      "disposition": "required",
+      "owners": [
+        "assignments",
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-notebook-create",
+        "mock-wordbook-compose",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "선택 자료와 목록 페이지의 원키만 읽고 중복 계산을 줄인다.",
+      "acceptance": "기존 범위 키/수량/검사 의미 및 함수 권한 보존",
+      "disposition": "required",
+      "owners": [
+        "assignments",
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-notebook-create",
+        "mock-wordbook-compose",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "7천 개 연결 경로를 확인하고 학생 기록 없이 검토/운영 읽기를 확인한다.",
+      "acceptance": "필요 범위만 정상 조회, 학생쓰기0, 미재현은 분리 보고",
+      "disposition": "required",
+      "owners": [
+        "assignments",
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-notebook-create",
+        "mock-wordbook-compose",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T4"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "창 복귀에도 배정 초안을 이어가고 조회 실패를 같은 자리에서 복구한다.",
+      "answer": "작성창 위치와 값 보존, 미인증 학생정보 비공개",
+      "source": "docs/work-orders/APP-20261005-03.md"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "숨은 범위 조회를 중단하고 수량 오류를 명확히 표시한다.",
+      "answer": "숨은 요청0, 초안 보존, 실패를 0개로 표시하지 않음",
+      "source": "docs/work-orders/APP-20261005-03.md"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "선택 자료와 목록 페이지의 원키만 읽고 중복 계산을 줄인다.",
+      "answer": "분류 메뉴는 등록 상태/판 메타만 읽으며 실제 범위/미리보기/저장에서 기존 전체 검증 유지. 요청 안에서 원키별 계산만 공유. 목록 다음 페이지 오류 수정.",
+      "source": "docs/work-orders/APP-20261005-03.md"
+    },
+    {
+      "id": "D4",
+      "owner": "user",
+      "state": "resolved",
+      "question": "7천 개 연결 경로를 확인하고 학생 기록 없이 검토/운영 읽기를 확인한다.",
+      "answer": "필요 범위만 정상 조회, 학생쓰기0, 미재현은 분리 보고",
+      "source": "docs/work-orders/APP-20261005-03.md"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 범위 키·계정 경계·캐시 수명·학생 기록·API 응답 보존."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "접속 복구·활성 조회·DB 읽기 계산만 수정."
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 범위 키·계정 경계·캐시 수명·학생 기록·API 응답 보존."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 범위 키·계정 경계·캐시 수명·학생 기록·API 응답 보존."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "접속 복구·활성 조회·DB 읽기 계산만 수정."
+    },
+    "api": {
+      "status": "checked",
+      "reason": "기존 범위 키·계정 경계·캐시 수명·학생 기록·API 응답 보존."
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 범위 키·계정 경계·캐시 수명·학생 기록·API 응답 보존."
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "접속 복구·활성 조회·DB 읽기 계산만 수정."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 범위 키·계정 경계·캐시 수명·학생 기록·API 응답 보존."
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 범위 키·계정 경계·캐시 수명·학생 기록·API 응답 보존."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "접속 복구·활성 조회·DB 읽기 계산만 수정."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "기존 학생 경계·정답 비공개·개인자료 가림과 재사용 정책 유지.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "접속 확인→초안 복원; 범위 활성→필요 페이지 조회→기존 원키 비교→수량 표시. 분류 메뉴는 등록 메타만 읽고 실제 범위 선택에서 원행 확인값을 검사한다.",
+    "reuse": "기존 접속 경계·모달·읽기 함수와 키 재사용.",
+    "cache": "성공 페이지와 초안만 기존 기기 메모리에 유지. 숨긴 요청 취소. 계정 거절 시 폐기.",
+    "compatibility": "원키/뜻/학생 기록/범위 개수와 응답 형식을 보존. SQL 권한 유지.",
+    "rollback": "앱 코드와 기존 네 조회 함수 정의만 되돌린다. 학생·원단어·범위 데이터 변경 없음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "initial-loading 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "refreshing 상태",
+      "message": "접속 상태를 확인하고 있습니다. 작성 내용은 보관되어 있습니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "unselected 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "empty 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "validation 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "load-error 상태",
+      "message": "자료를 확인하지 못했습니다. 다시 불러와 주세요.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "save-error 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "auth-error 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "not-found 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "unexpected-error 상태",
+      "message": "기존 배정/범위 상태 안내를 유지합니다.",
+      "behavior": "조회 실패는 빈 결과와 구분하고, 재확인은 개인정보 없이 같은 창에 표시.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "APP-20261005-03",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "기존 연결 최소 수정·실제 실패 재현·필요 범위 검사."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "component",
+      "target": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "scenario": "접속 재확인과 503 뒤 초안 복원·401/403 제거",
+      "expected": "작성창 위치와 값 보존, 미인증 학생정보 비공개",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "component",
+      "target": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+      "scenario": "숨긴 범위 조회 중단과 재사용·실패 수량 안내",
+      "expected": "숨은 요청0, 초안 보존, 실패를 0개로 표시하지 않음",
+      "topics": [
+        "behavior",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/vocabulary-library-on-demand.integration.test.ts",
+      "scenario": "선택 자료 분류·목록 페이지·원자료 변경 판정; 메뉴는 등록 범위를 표시하되 원행 변경 시 상세/미리보기/저장은 거절",
+      "expected": "기존 범위 키/수량/검사 의미 및 함수 권한 보존",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "structure"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "browser",
+      "target": null,
+      "scenario": "관련 타입/lint/구조/빌드와 검토→운영 조회",
+      "expected": "필요 범위만 정상 조회, 학생쓰기0, 미재현은 분리 보고",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}

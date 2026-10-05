@@ -427,7 +427,7 @@ function VocabAssignmentPlannerSession({
       </DialogHeader>
       <DialogBody>
         {composerStarted ? <div hidden={!composerOpen}>
-          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} enabled={interactionAllowed && !editingLocked} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onLibraryChanged={displayedCatalog.refreshMetadata} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
+          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} enabled={composerOpen && interactionAllowed && !editingLocked} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onLibraryChanged={displayedCatalog.refreshMetadata} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
         </div> : null}
         {datasetPicker.open && !composerOpen ? (
           <>

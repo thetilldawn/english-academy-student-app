@@ -289,6 +289,8 @@ describe("library editor with on-demand query boundaries", () => {
     }));
     fireEvent.change(screen.getByLabelText("시행연도 구간 시작"), { target: { value: "2025" } });
     await screen.findAllByText("자료를 불러오지 못했습니다. 다시 시도해 주세요.");
+    expect(screen.getByText("범위 개수를 확인하지 못했습니다.")).toBeVisible();
+    expect(screen.queryByText("이 묶음에 포함 0개 범위")).not.toBeInTheDocument();
     expect(screen.getByLabelText("템플릿 이름")).toHaveValue("나의 템플릿");
     expect(screen.getByLabelText("시행연도 구간 시작")).toHaveValue(2025);
     expect(screen.getByRole("button", { name: "템플릿 저장" })).toBeDisabled();

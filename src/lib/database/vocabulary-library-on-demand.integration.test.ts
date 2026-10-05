@@ -65,6 +65,45 @@ describe.sequential("on-demand vocabulary summaries, criteria snapshots and dele
     expect(facets.facets.years.map(o => o.value)).toEqual([2024, 2025, 2026]); expect(facets.facets.types).toEqual([{ value: "topic", label: "주제", count: 3 }]);
     expect(JSON.stringify(facets)).not.toMatch(/scopeKey|occurrences|rowHash/);
   });
+  it("keeps selected-dataset facets independent of book paging and skips retired candidates", async () => {
+    await owner(); await db.exec("begin");
+    try {
+      const sourceId = bundle.scopes[0]!.source.datasetId;
+      const extraIds = [1, 2, 3].map(n => `00000000-0000-4000-8000-00000000000${n}`);
+      for (const [index, datasetId] of extraIds.entries()) {
+        await db.query(`insert into public.vocab_datasets(id,dataset_key,title,source_label,source_sha256,row_count,status,is_active)
+          values($1,$2,$2,'fake',repeat('A',64),0,'ready',$3)`, [datasetId, `fake-page-${index}`, index !== 0]);
+        const unit = await scalar<string>(`insert into public.vocab_units(dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count)
+          values($1,'fake','fake','day',1,1,0) returning id value`, [datasetId]);
+        await db.query(`insert into private.vocabulary_library_scopes(scope_key,version,dataset_id,unit_id,source_kind,source_release_id,source_version,
+          source_file_sha256,payload,review_references,import_file_sha256)
+          select $1,version,$2,$3,'legacy_vocab',null,source_version,source_file_sha256,
+          jsonb_set(jsonb_set(payload,'{sourceTitle}',to_jsonb($1::text)),'{classification,exam,executionYear}','2000'),review_references,import_file_sha256
+          from private.vocabulary_library_scopes order by revision limit 1`, [`fake-page-${index}`, datasetId, unit]);
+      }
+      await admin();
+      const first = await query("facets", { sourceKind: "mock", datasetId: sourceId, bookSearch: "fake-page", limit: 1 });
+      expect(first.facets.years.map(o => o.value)).toEqual([2024, 2025, 2026]);
+      expect(first.facets.books.map(o => o.id)).toEqual([extraIds[1]]); expect(first.nextCursor).not.toBeNull();
+      const second = await query("facets", { sourceKind: "mock", datasetId: sourceId, bookSearch: "fake-page", limit: 1, cursor: first.nextCursor });
+      expect(second.facets.books.map(o => o.id)).toEqual([extraIds[2]]); expect(second.nextCursor).toBeNull();
+      expect(second.facets.years).toEqual(first.facets.years);
+    } finally { await db.exec("rollback"); await admin(); }
+  });
+  it("reads registered filter headers but still rejects changed word content in a chosen range", async () => {
+    const exact = await preview();
+    await owner(); await db.exec("begin");
+    try {
+      await db.query("update public.vocab_entries set example_en='changed body with original row hash' where dataset_id=$1 and source_row=1", [bundle.scopes[0]!.source.datasetId]);
+      await admin();
+      const facets = await query("facets", { sourceKind: "mock", datasetId: null });
+      expect(facets.facets.years.map(o => o.value)).toEqual([2024, 2025, 2026]);
+      const scopes = await query("scopes", { filters: EMPTY_LIBRARY_FILTERS, datasetId: null });
+      expect(scopes.items.find(s => s.classification.exam?.executionYear === 2024)?.availability).toBe("changed");
+      await expect(query("preview", { selection: { mode: "recipe", recipe: exact.recipe }, compareVersionId: null, metadata })).rejects.toThrow("library_scope_changed");
+      await expect(save({ action: "create", requestId: randomUUID(), metadata, recipe: exact.recipe, criteria, previewHash: exact.contentHash })).rejects.toThrow();
+    } finally { await db.exec("rollback"); await admin(); }
+  });
   it("saves criteria with the exact preview and pages selected words and historical versions", async () => {
     const p = await preview(); expect(p.includedCount).toBe(40); expect(p.recipe.scopes).toHaveLength(2);
     const request = { action: "create", requestId: randomUUID(), metadata, criteria, recipe: p.recipe, previewHash: p.contentHash };

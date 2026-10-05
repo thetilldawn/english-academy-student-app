@@ -219,6 +219,30 @@ describe.sequential("reviewed occurrences share exact fixed fields without chang
     expect(preOnline.scopes.every(s => s.stored === s.current)).toBe(true);
     expect(await scalar("select status::text value from public.quiz_attempts where id=$1", [running.attemptId])).toBe("in_progress");
   });
+  it("compares overlapping full and indexed scopes independently while sharing live source reads", async () => {
+    await owner(); await db.exec("begin");
+    try {
+      const originalId = libraryScopeIds[0], duplicateId = randomUUID();
+      await db.query(`insert into private.vocabulary_library_scopes(id,scope_key,version,dataset_id,unit_id,source_kind,source_release_id,
+        source_version,source_file_sha256,payload,review_references,import_file_sha256)
+        select $2,scope_key||'-full-read',version,dataset_id,unit_id,source_kind,source_release_id,
+          source_version,source_file_sha256,payload,review_references,import_file_sha256
+        from private.vocabulary_library_scopes where id=$1`, [originalId, duplicateId]);
+      await db.query(`insert into private.vocabulary_library_scope_rows(scope_id,occurrence_key,source_row,source_entry_id,row_sha256,state,entry_snapshot,occurrence_snapshot,resources)
+        select $2,r.occurrence_key,r.source_row,r.source_entry_id,r.row_sha256,r.state,to_jsonb(e),
+          private.restore_exam_use_occurrence_v1(to_jsonb(o)),r.resources
+        from private.vocabulary_library_scope_rows r join private.vocabulary_library_scopes s on s.id=r.scope_id
+        left join public.vocab_entries e on e.id=r.source_entry_id
+        left join word_index.app_exam_use_occurrence o on o.release_id=s.source_release_id and o.source_row=r.source_row
+        where r.scope_id=$1`, [originalId, duplicateId]);
+      const state = () => scalar<Record<string, string>>("select private.vocabulary_library_source_states_v1($1::uuid[]) value", [[originalId, duplicateId]]);
+      expect(await state()).toEqual({ [originalId]: "available", [duplicateId]: "available" });
+      await db.exec("alter table private.vocabulary_library_scope_rows disable trigger vocabulary_library_rows_immutable");
+      await db.query(`update private.vocabulary_library_scope_rows set occurrence_snapshot=occurrence_snapshot||'{"fakeChangedField":true}'::jsonb
+        where scope_id=$1 and source_row=(select min(source_row) from private.vocabulary_library_scope_rows where scope_id=$1)`, [duplicateId]);
+      expect(await state()).toEqual({ [originalId]: "available", [duplicateId]: "changed" });
+    } finally { await db.exec("rollback"); }
+  });
   it("preserves numeric text, whitespace, null, absent keys and nested values in the residual", async () => {
     const sample = JSON.parse((await scalar<string>("select to_jsonb(o)::text value from word_index.app_exam_use_occurrence o where release_id=$1 and source_row=1", [a.releaseId])));
     sample.package_entry_json.display_headword = "  retained spaces  ";

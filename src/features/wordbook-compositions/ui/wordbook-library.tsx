@@ -32,7 +32,7 @@ export function WordbookLibrary({ onBack, onLockChange, onDirtyChange, captureAu
   const heading = useRef<HTMLHeadingElement>(null), form = useRef<HTMLDivElement>(null), transition = useRef<(() => void) | null>(null);
   const [discard, setDiscard] = useState(false), [deleting, setDeleting] = useState<LibraryTemplateSummary | null>(null);
   useEffect(() => { if (active && enabled) heading.current?.focus(); }, [active, enabled]);
-  useEffect(() => { onLockChange?.(c.locked); }, [c.locked, onLockChange]);
+  useEffect(() => { onLockChange?.(active && c.locked); }, [active, c.locked, onLockChange]);
   useEffect(() => { onDirtyChange?.(c.dirty); }, [c.dirty, onDirtyChange]);
   const navigate = (action: () => void) => { if (c.dirty) { transition.current = action; setDiscard(true); } else action(); };
   const summary = c.preview.data, rangeLocked = ["metadata", "copy", "summary"].includes(c.editor.mode), fixed = rangeLocked || c.metadataOnly;

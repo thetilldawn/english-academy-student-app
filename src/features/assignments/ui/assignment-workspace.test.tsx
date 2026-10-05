@@ -133,6 +133,12 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     fireEvent.click(screen.getByRole("button",{name:"템플릿 찾기·범위로 새로 만들기"}));await screen.findByText("이 조건에 맞는 템플릿이 없습니다.");
     fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"보존할 가짜 초안"}});
     fireEvent.click(screen.getAllByRole("button",{name:"단어장 찾기로 돌아가기"})[0]!);
+    const hiddenCalls = fetchMock.mock.calls.filter(([url]) => url === "/api/admin/wordbook-library/query").length;
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 350)); });
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/admin/wordbook-library/query")).toHaveLength(hiddenCalls);
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 찾기·범위로 새로 만들기" }));
+    expect(screen.getByLabelText("템플릿 이름")).toHaveValue("보존할 가짜 초안");
+    fireEvent.click(screen.getAllByRole("button", { name: "단어장 찾기로 돌아가기" })[0]!);
     fireEvent.click(screen.getByRole("button",{name:"배정 조건으로 돌아가기"}));fireEvent.click(screen.getByRole("button",{name:"닫기"}));
     expect(screen.getByRole("alertdialog")).toBeVisible();
     expect(fetchMock.mock.calls.filter(([url])=>url==="/api/admin/wordbook-library/commands")).toHaveLength(0);
@@ -360,20 +366,29 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(dialog).toHaveAttribute("open"); expect(name).toHaveValue("오래 작성하는 배정");
   });
-  it("복귀 요청이 실패하면 이전 성공 자료를 새 인증처럼 표시하지 않고 성공 뒤에만 초안을 복원한다", async () => {
+  it.each(["page", "visibility"])("%s 복귀 실패는 같은 자리에서 재확인하고 성공 뒤 초안을 복원한다", async method => {
     const { dialog, name } = await openTimedDraft();
     let finish!: (value: Response) => void;
     fetchMock.mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve; }));
-    act(() => window.dispatchEvent(new Event("pagehide")));
-    act(() => window.dispatchEvent(new Event("pageshow")));
+    const visibility = vi.spyOn(document, "visibilityState", "get");
+    if (method === "page") {
+      act(() => window.dispatchEvent(new Event("pagehide")));
+      act(() => window.dispatchEvent(new Event("pageshow")));
+    } else {
+      visibility.mockReturnValue("hidden"); act(() => document.dispatchEvent(new Event("visibilitychange")));
+      visibility.mockReturnValue("visible"); act(() => document.dispatchEvent(new Event("visibilitychange")));
+    }
     expect(dialog).not.toHaveAttribute("open"); expect(name).not.toBeVisible();
+    expect(within(screen.getByRole("dialog")).getByText("접속 상태를 확인하고 있습니다. 작성 내용은 보관되어 있습니다.")).toBeVisible();
     await act(async () => finish(Response.json({}, { status: 503 })));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(dialog).not.toHaveAttribute("open"); expect(name).not.toBeVisible();
     expect(screen.queryByRole("checkbox", { name: /가짜 학생/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "접속 다시 확인" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(dialog).toHaveAttribute("open"); expect(name).toHaveValue("오래 작성하는 배정");
+    expect(screen.queryByRole("button", { name: "접속 다시 확인" })).not.toBeInTheDocument();
+    visibility.mockRestore();
   });
   it.each([401, 403])("만료 뒤 현재 목록 갱신이 %s이면 보존 중인 배정도 제거한다", async status => {
     const { dialog } = await openTimedDraft();
@@ -461,7 +476,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "단어 배정" })[0]!);
     await waitFor(() => expect(finishPreparation).toBeTypeOf("function"));
     act(() => window.dispatchEvent(new Event("pagehide")));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(within(screen.getByRole("dialog")).getByText("접속 상태를 확인하고 있습니다. 작성 내용은 보관되어 있습니다.")).toBeVisible();
     await act(async () => finishPreparation(Response.json({ preparation: { datasets, initialDatasetId: "", initialUnits: [], timeTemplates: [], students: [students[0]] } })));
     act(() => window.dispatchEvent(new Event("pageshow")));
     // The first real dynamic import also compiles in this test process.

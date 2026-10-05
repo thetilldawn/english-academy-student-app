@@ -3148,6 +3148,11 @@
       "path": "supabase/migrations/20261004161947_improve_quiz_feedback_and_study_cache_access.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20261005033650_speed_library_reads_and_preserve_assignment_drafts.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
     }
   ],
   "features": [

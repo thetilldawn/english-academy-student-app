@@ -50,6 +50,7 @@ export function AssignmentWorkspace({
   initialStudentId = "",
   cacheEnabled = false,
   interactionAllowed = true,
+  authenticationRecovery,
   pendingContent,
 }: {
   initial: AssignmentWorkspaceInitial;
@@ -58,6 +59,7 @@ export function AssignmentWorkspace({
   initialStudentId?: string;
   cacheEnabled?: boolean;
   interactionAllowed?: boolean;
+  authenticationRecovery?: { error: string; retry: () => void };
   pendingContent?: ReactNode;
 }) {
   const controller = useAssignmentWorkspace({
@@ -128,6 +130,12 @@ export function AssignmentWorkspace({
         />
       ) : null}
       </DialogVisibilityBoundary>
+      {!interactionAllowed && authenticationRecovery && (notebook || planner.status !== "idle") ? (
+        <AssignmentPlannerLoadDialog closeDisabled onClose={() => undefined}
+          error={authenticationRecovery.error}
+          loadingLabel="접속 상태를 확인하고 있습니다. 작성 내용은 보관되어 있습니다."
+          retryLabel="접속 다시 확인" onRetry={authenticationRecovery.retry} />
+      ) : null}
     </>
   );
 }

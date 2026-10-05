@@ -45,7 +45,7 @@ export function LibraryRangePanel({ c }: { c: Controller }) {
       {facets.data ? <LibrarySourceFilters facets={facets.data.facets} group={group} disabled={c.scopesLocked} onChange={c.actions.setFilters} onDatasetChange={c.actions.setDataset} /> : null}
       {facets.data?.nextCursor ? <Button size="small" disabled={facets.status !== "ready"} onClick={facets.more}>자료 30개 더 보기</Button> : null}
     </>}
-    <strong aria-live="polite">{c.preview.status === "loading" ? "범위를 확인하는 중…" : `이 묶음에 포함 ${selected.length}개 범위`}</strong>
+    <strong aria-live="polite">{c.preview.status === "error" ? "범위 개수를 확인하지 못했습니다." : c.preview.status !== "ready" ? "범위를 확인하는 중…" : `이 묶음에 포함 ${selected.length}개 범위`}</strong>
     <details open={expanded} onToggle={e => setExpanded(e.currentTarget.open)}><summary>세부 범위 확인·제외</summary>
       <LibraryPageStatus page={scopes} />
       {scopes.status === "ready" && !rows.length ? <p>이 조건에 맞는 등록 자료가 없습니다. 연도·유형 또는 자료 범위를 확인해 주세요.</p> : null}
