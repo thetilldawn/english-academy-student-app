@@ -3,7 +3,8 @@ vi.mock('server-only',()=>({}));
 const mocks=vi.hoisted(()=>({session:vi.fn(),rpc:vi.fn(),registry:vi.fn(),corrections:vi.fn()}));
 vi.mock('@/lib/auth/student-session',()=>({getStudentSession:mocks.session}));
 vi.mock('@/lib/supabase/service',()=>({getServiceSupabaseClient:()=>({rpc:mocks.rpc})}));
-vi.mock('@/lib/services/quiz/pronunciation-registry',()=>({loadVocabPronunciationRegistry:mocks.registry,loadActiveVocabPronunciationReleaseRegistry:mocks.registry,loadSyntheticPronunciationRegistry:mocks.registry,loadApprovedKoreanPronunciationRegistry:mocks.registry,loadEntryApprovedKoreanPronunciationRegistry:mocks.registry,loadEntrySourcePronunciationRegistry:mocks.registry,loadPronunciationAudioCorrections:mocks.corrections}));
+vi.mock('@/lib/services/quiz/pronunciation-registry',()=>({
+  loadPronunciationLineage: vi.fn(async () => new Map()),loadVocabPronunciationRegistry:mocks.registry,loadActiveVocabPronunciationReleaseRegistry:mocks.registry,loadSyntheticPronunciationRegistry:mocks.registry,loadApprovedKoreanPronunciationRegistry:mocks.registry,loadEntryApprovedKoreanPronunciationRegistry:mocks.registry,loadEntrySourcePronunciationRegistry:mocks.registry,loadPronunciationAudioCorrections:mocks.corrections}));
 import { getNotebookPage,getNotebookWord } from './notebook-study-query';
 import { notebookFiltersSchema,notebookWordToken } from '../../contracts/notebook-study';
 const student='00000000-0000-4000-8000-000000000001',dataset='00000000-0000-4000-8000-000000000003';
@@ -18,7 +19,7 @@ describe('본인 단어 학습자료',()=>{
     expect(result?.items[0]).toMatchObject({headword:'potential',pronunciation,example:'This shows potential.'});
     expect(JSON.stringify(result)).not.toMatch(/correctOption|studySource|latestQuestionId/);
     expect(mocks.rpc).toHaveBeenCalledWith('get_student_wrong_word_notebook_page_v2',expect.objectContaining({p_student_id:student,p_order:'count'}));
-    expect(mocks.registry).toHaveBeenCalledWith([],true);
+    expect(mocks.registry).toHaveBeenCalledWith([],true,expect.any(Map));
     expect(mocks.corrections).toHaveBeenCalledWith(true);
   });
   it('첫페이지 11개는10개+커서이며 상세는 안정키로 다시 본인 확인한다',async()=>{
@@ -38,6 +39,6 @@ describe('본인 단어 학습자료',()=>{
     mocks.rpc.mockResolvedValueOnce({data:{...raw,items:[{...word,studySource:{...word.studySource,currentHeadword:'different',compositionPronunciation:null}}]},error:null});
     mocks.registry.mockResolvedValue(new Map([[1,pronunciation]]));
     const result=await getNotebookPage({filters});expect(result?.items[0].pronunciation).toMatchObject({audioUrl:null,displayKo:null});
-    expect(mocks.registry).toHaveBeenCalledWith([],true);
+    expect(mocks.registry).toHaveBeenCalledWith([],true,expect.any(Map));
   });
 });

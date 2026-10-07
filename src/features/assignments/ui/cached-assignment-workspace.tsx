@@ -21,8 +21,8 @@ export function CachedAssignmentWorkspace({ initialResponse, initialDatasetId, i
     <ButtonLink href="/admin/login" variant="quiet">{text.login}</ButtonLink></Notice> : entry.error ? <Notice role="alert" tone="danger">{entry.error}
       <Button onClick={entry.retry} disabled={entry.refreshing} variant="quiet">{text.retry}</Button></Notice>
       : !entry.snapshot ? <RouteLoadingState label={text.loading} variant="compact" />
-      : entry.stale || entry.refreshing ? <Notice role="status" tone="neutral">
-        {entry.refreshing ? text.refreshingList : text.retainedAssignmentList}
+      : entry.stale || entry.refreshing ? <Notice role={entry.refreshing ? undefined : "status"} tone="neutral">
+        {entry.refreshing ? <RouteLoadingState variant="compact" label={text.refreshingList} /> : text.retainedAssignmentList}
         <Button onClick={entry.retry} disabled={entry.refreshing} variant="quiet">{text.retry}</Button>
       </Notice> : null;
   return <>

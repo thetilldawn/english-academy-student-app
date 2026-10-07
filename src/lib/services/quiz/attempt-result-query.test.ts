@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/features/results/public-server", () => ({ getVocabularyResultRecord: mocks.getRecord }));
 vi.mock("@/features/quiz-player/public-server-queries", () => ({ getAttemptQuestionContents: vi.fn().mockResolvedValue(new Map()) }));
 vi.mock("./pronunciation-registry", () => Object.fromEntries([
+  "loadPronunciationLineage",
   "loadActiveVocabPronunciationReleaseRegistry", "loadEntryApprovedKoreanPronunciationRegistry", "loadEntrySourcePronunciationRegistry",
   "loadApprovedKoreanPronunciationRegistry", "loadSyntheticPronunciationRegistry", "loadVocabPronunciationRegistry", "loadPronunciationAudioCorrections",
 ].map(key => [key, vi.fn().mockResolvedValue(new Map())])));

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
+import { AssignmentPreparationChangedContext } from "./use-assignment-planner-preparation";
 import { ZodError } from "zod";
 import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
@@ -33,6 +34,7 @@ export function useVocabTimeTemplates({
   transport?: AssignmentTransport;
 }) {
   const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
+  const preparationChanged = useContext(AssignmentPreparationChangedContext);
   const [state, setState] = useState(() => ({
     saving: false,
     templates: [...initialTemplates],
@@ -81,6 +83,7 @@ export function useVocabTimeTemplates({
         };
       }
       const template = parseCreatedVocabTimeTemplate(response.data);
+      preparationChanged();
       setState((current) => ({
         saving: false,
         templates: [...current.templates, template],

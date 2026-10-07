@@ -1,0 +1,904 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261008-02",
+  "title": "목록 중복 조회와 배정 화면 복구",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261008-02.md",
+  "baseline": "e229ff45397da867d4b72d2470ebaa82f1ac2201",
+  "owners": [
+    "database-contract",
+    "assignments",
+    "history",
+    "session",
+    "students",
+    "quiz-player",
+    "student-dashboard",
+    "results",
+    "wordbook-compositions"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "public",
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/lib/database/notebook-query-cost.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-wrong-word-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-planner-preparation.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-planner-preparation.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-student-directory.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-student-directory.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-workspace.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-time-templates.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/cached-assignment-workspace.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-range-fields.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-direct-review-create"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/mixed-mistake-assignment-sections.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-planning",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/history/controller/use-admin-history-list-controller.ts",
+      "state": "existing",
+      "owner": "history",
+      "flowIds": [
+        "admin-history-read"
+      ]
+    },
+    {
+      "path": "src/features/session/controller/private-list-cache.ts",
+      "state": "existing",
+      "owner": "session",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/session/controller/use-private-list-session.ts",
+      "state": "existing",
+      "owner": "session",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/students/contracts/student-directory-cache-contract.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/students/controller/student-directory-cache.test.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/students/controller/student-directory-cache.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/students/controller/use-student-directory-page.test.tsx",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/students/controller/use-student-directory-page.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-query.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "assignment-range-create",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "student-assignment-study-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-result-query.ts",
+      "state": "existing",
+      "owner": "results",
+      "flowIds": [
+        "student-quiz-attempt",
+        "admin-history-read",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "admin-history-read",
+        "student-management-screen",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-assignment-study-read",
+        "student-wrong-word-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "admin-history-read",
+        "student-management-screen",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-assignment-study-read",
+        "student-wrong-word-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-reader.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/notebook-reader.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/controllers/use-notebook.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/notebook-content.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/students/server/queries/notebook-study-query.test.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-wrong-word-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/students/server/queries/notebook-study-query.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-wrong-word-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-resume-query.test.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-resume-query.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20261007154921_deduplicate_notebook_read_work.sql",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/history/controller/use-admin-history-list-controller.test.tsx",
+      "state": "existing",
+      "owner": "history",
+      "flowIds": [
+        "admin-history-read"
+      ]
+    },
+    {
+      "path": "src/features/session/controller/use-private-list-session.test.tsx",
+      "state": "existing",
+      "owner": "session",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/notebook-content.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-wrong-word-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/features/students/server/queries/mistake-episode-query.test.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-wrong-word-read",
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "student-management-screen",
+        "assignment-series",
+        "assignment-workspace-planning",
+        "student-word-practice"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/queries/composition-lineage.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "student-quiz-attempt",
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/composition-lineage.test.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "student-quiz-attempt",
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-result-query.test.ts",
+      "state": "existing",
+      "owner": "results",
+      "flowIds": [
+        "student-quiz-attempt",
+        "admin-history-read",
+        "assignment-notebook-create"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "목록 이동과 창 복귀의 중복 조회를 없애고 펼친 학생과 포인트를 복원한다.",
+      "acceptance": "최초문서1조회/내부이동중복0/20명복귀보존/현재포인트와계정격리",
+      "disposition": "required",
+      "owners": [
+        "database-contract",
+        "assignments",
+        "history",
+        "session",
+        "students",
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "assignment-workspace-planning",
+        "admin-history-read",
+        "student-management-screen",
+        "student-wrong-word-read"
+      ],
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "오답 및 발음 조회에서 같은 원키와 상태 계산을 공유한다.",
+      "acceptance": "오답정렬·필터·합계·뜻별상태와구형발음동등",
+      "disposition": "required",
+      "owners": [
+        "database-contract",
+        "assignments",
+        "history",
+        "session",
+        "students",
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "assignment-workspace-planning",
+        "admin-history-read",
+        "student-management-screen",
+        "student-wrong-word-read"
+      ],
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "배정 준비를 현재 인증 범위에서 재사용하고 로딩·취소·오류를 정리한다.",
+      "acceptance": "동일조건재열기/창복귀초안보존/늦은응답재개없음",
+      "disposition": "required",
+      "owners": [
+        "database-contract",
+        "assignments",
+        "history",
+        "session",
+        "students",
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "assignment-workspace-planning",
+        "admin-history-read",
+        "student-management-screen",
+        "student-wrong-word-read"
+      ],
+      "checkIds": [
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "목록 이동과 창 복귀의 중복 조회를 없애고 펼친 학생과 포인트를 복원한다.",
+      "answer": "최초문서1조회/내부이동중복0/20명복귀보존/현재포인트와계정격리",
+      "source": "사용자 ㄱㄱ 및 다 고쳐와; docs/work-orders/APP-20261008-02.md"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "오답 및 발음 조회에서 같은 원키와 상태 계산을 공유한다.",
+      "answer": "오답정렬·필터·합계·뜻별상태와구형발음동등",
+      "source": "사용자 ㄱㄱ 및 다 고쳐와; docs/work-orders/APP-20261008-02.md"
+    },
+    {
+      "id": "D3",
+      "owner": "user",
+      "state": "resolved",
+      "question": "배정 준비를 현재 인증 범위에서 재사용하고 로딩·취소·오류를 정리한다.",
+      "answer": "동일조건재열기/창복귀초안보존/늦은응답재개없음",
+      "source": "사용자 ㄱㄱ 및 다 고쳐와; docs/work-orders/APP-20261008-02.md"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "changed",
+      "reason": "최초 문서와 내부 이동을 구분하고 기존 개인 캐시·인증·현재 요청 검사를 재사용한다. 화면 복귀 및 자료 변경 시 현재 상태만 복원한다."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "state": {
+      "status": "changed",
+      "reason": "최초 문서와 내부 이동을 구분하고 기존 개인 캐시·인증·현재 요청 검사를 재사용한다. 화면 복귀 및 자료 변경 시 현재 상태만 복원한다."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "api": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "cache": {
+      "status": "changed",
+      "reason": "최초 문서와 내부 이동을 구분하고 기존 개인 캐시·인증·현재 요청 검사를 재사용한다. 화면 복귀 및 자료 변경 시 현재 상태만 복원한다."
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "최초 문서와 내부 이동을 구분하고 기존 개인 캐시·인증·현재 요청 검사를 재사용한다. 화면 복귀 및 자료 변경 시 현재 상태만 복원한다."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "최초문서→기존개인캐시/기능조회→인증복귀1회→원키조회결과공유",
+    "reuse": "기존15초개인캐시, 인증ticket, 기존원자료 및 페이지커서",
+    "cache": "새캐시층 없음; 기존15초/60초/120초 유지; 확장목록등록은 저장시각 연장없음",
+    "compatibility": "동일계정선택/초안/페이지 보존, 계정변경시폐기, 학생기록변경없음",
+    "rollback": "앱코드/조회함수복원; 학생/사전변경없음"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "initial-loading 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "refreshing 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "unselected 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "empty 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "validation 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "load-error 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "save-error 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "auth-error 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "not-found 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "unexpected-error 상태",
+      "message": "자료를 불러오는 중입니다. 취소 / 다시 불러오기",
+      "behavior": "입력/창틀 유지, 현재요청만 수락하고 닫힌 창을 다시 열지 않는다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "APP-20261008-02",
+      "reference": "docs/work-orders/APP-20261008-02.md",
+      "reason": "승인된 기존 구조와 보존 기준에 따라 중복 조회를 제거한다."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "component",
+      "target": "src/features/assignments/controller/use-assignment-student-directory.test.tsx",
+      "scenario": "목록 이동과 창 복귀의 중복 조회를 없애고 펼친 학생과 포인트를 복원한다.",
+      "expected": "최초문서1조회/내부이동중복0/20명복귀보존/현재포인트와계정격리",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/notebook-query-cost.integration.test.ts",
+      "scenario": "오답 및 발음 조회에서 같은 원키와 상태 계산을 공유한다.",
+      "expected": "오답정렬·필터·합계·뜻별상태와구형발음동등",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "component",
+      "target": "src/features/assignments/controller/use-assignment-planner-preparation.test.tsx",
+      "scenario": "배정 준비를 현재 인증 범위에서 재사용하고 로딩·취소·오류를 정리한다.",
+      "expected": "동일조건재열기/창복귀초안보존/늦은응답재개없음",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    }
+  ],
+  "verification": null
+}

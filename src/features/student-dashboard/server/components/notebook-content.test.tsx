@@ -1,0 +1,20 @@
+import { beforeEach, expect, it, vi } from "vitest";
+const mocks = vi.hoisted(() => ({ headers: vi.fn(), session: vi.fn(), page: vi.fn() }));
+vi.mock("server-only", () => ({}));
+vi.mock("next/headers", () => ({ headers: mocks.headers }));
+vi.mock("@/lib/auth/student-session", () => ({ requireStudentSession: mocks.session }));
+vi.mock("@/lib/auth/private-cache-identity", () => ({ studentNotebookCacheIdentity: () => "fake-session" }));
+vi.mock("@/features/students/public-server", () => ({ getMistakeStudyPage: mocks.page, getMistakeStudyWord: vi.fn() }));
+vi.mock("../../client/components/notebook-reader", () => ({ NotebookReader: () => null }));
+vi.mock("../../client/components/notebook-detail", () => ({ NotebookDetail: () => null }));
+import { NotebookContent } from "./notebook-content";
+beforeEach(() => { vi.clearAllMocks(); mocks.session.mockResolvedValue({ studentId: "fake" }); mocks.page.mockResolvedValue({ items: [] }); });
+it("최초 문서는 한 번 조회하고 내부 이동에는 개인 목록을 중복 조회하지 않는다", async () => {
+  mocks.headers.mockResolvedValue(new Headers({ "sec-fetch-dest": "document" }));
+  expect((await NotebookContent()).props.initial).toEqual({ items: [] });
+  expect(mocks.page).toHaveBeenCalledOnce();
+  mocks.headers.mockResolvedValue(new Headers({ accept: "text/x-component" }));
+  expect((await NotebookContent()).props.initial).toBeUndefined();
+  expect(mocks.page).toHaveBeenCalledOnce();
+  expect(mocks.session).toHaveBeenCalledTimes(2);
+});

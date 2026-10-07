@@ -53,8 +53,14 @@ export function useAssignmentWorkspace({
   const basket = useAssignmentSelectionBasket();
   const datasetDirectory = useAssignmentDatasetDirectory();
   const ensureDatasetDirectory = datasetDirectory.actions.ensure;
-  const planner = useAssignmentPlannerPreparation();
+  const planner = useAssignmentPlannerPreparation(interactionAllowed);
   const openPlanner = planner.actions.open;
+  const invalidatePreparation = planner.actions.invalidate;
+  const refreshMetadata = datasetDirectory.actions.refreshMetadata;
+  const refreshDatasetMetadata = useCallback((...args: Parameters<typeof refreshMetadata>) => {
+    invalidatePreparation();
+    return refreshMetadata(...args);
+  }, [invalidatePreparation, refreshMetadata]);
   const initialOpenHandledRef = useRef(false);
   const selectionAbortRef = useRef<AbortController | null>(null);
   const [selectionLoading, setSelectionLoading] = useState(false);
@@ -261,7 +267,7 @@ export function useAssignmentWorkspace({
       openSingleAssignment,
       prepareBulkAssignment,
       refreshDirectory,
-      refreshDatasetMetadata: datasetDirectory.actions.refreshMetadata,
+      refreshDatasetMetadata,
       resetFilters,
       setEntryDatasetId,
       setEntryMode: changeEntryMode,

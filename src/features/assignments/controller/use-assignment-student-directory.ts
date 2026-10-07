@@ -46,8 +46,17 @@ export function useAssignmentStudentDirectory(
   const timerRef = useRef<number | null>(null);
   const requestVersionRef = useRef(0);
   const acceptedFiltersRef = useRef(initialSnapshot.filters);
+  const requestedFiltersRef = useRef(initialSnapshot.filters);
   const filterRequestRef = useRef({ key: studentDirectoryFilterKey(initialSnapshot.filters), status: "ready" });
   const receivedSnapshotRef = useRef(initialSnapshot);
+
+  const displayedRef = useRef(initialSnapshot);
+  const restoreCountRef = useRef(initialSnapshot.page.items.length);
+  useEffect(() => {
+    displayedRef.current = snapshot;
+    restoreCountRef.current = Math.max(restoreCountRef.current, snapshot.page.items.length);
+    cache?.rememberSnapshot(snapshot);
+  }, [snapshot, cache]);
 
   const stopCurrentRequest = useCallback(() => {
     requestVersionRef.current += 1;
@@ -64,13 +73,47 @@ export function useAssignmentStudentDirectory(
   // without remounting the separate selection basket or editor controllers.
   useLayoutEffect(() => {
     if (!enabled || !cacheEnabled || receivedSnapshotRef.current === initialSnapshot) return;
+    const wasPending = receivedSnapshotRef.current.snapshotAt === "pending";
     receivedSnapshotRef.current = initialSnapshot;
+    if (!wasPending && studentDirectoryFilterKey(initialSnapshot.filters) !== studentDirectoryFilterKey(requestedFiltersRef.current)) return;
     stopCurrentRequest();
+    const previous = displayedRef.current;
+    const targetCount = studentDirectoryFilterKey(previous.filters) === studentDirectoryFilterKey(initialSnapshot.filters)
+      ? Math.max(restoreCountRef.current, previous.page.items.length) : initialSnapshot.page.items.length;
+    restoreCountRef.current = targetCount;
     acceptedFiltersRef.current = initialSnapshot.filters;
+    requestedFiltersRef.current = initialSnapshot.filters;
     filterRequestRef.current = { key: studentDirectoryFilterKey(initialSnapshot.filters), status: "ready" };
     setSnapshot(initialSnapshot); setFilters(initialSnapshot.filters);
-    setFiltering(false); setLoadingMore(false); setError("");
-  }, [initialSnapshot, stopCurrentRequest, cacheEnabled, enabled]);
+    setFiltering(false); setError("");
+    setLoadingMore(false);
+    let restored = initialSnapshot;
+    if (restored.page.items.length >= targetCount || !restored.page.nextCursor) return;
+    const abort = new AbortController();
+    abortRef.current = abort;
+    const requestVersion = requestVersionRef.current;
+    setLoadingMore(true);
+    void (async () => {
+      const cursors = new Set<string>();
+      while (restored.page.items.length < targetCount && restored.page.nextCursor) {
+        const cursor = restored.page.nextCursor;
+        if (cursors.has(cursor)) throw new Error("다음 학생 목록을 다시 불러와 주세요.");
+        cursors.add(cursor);
+        const page = await loadStudentDirectoryNextPage({ mode: "page", filters: restored.filters, cursor,
+          ...(cache ? { cacheIdentity: cache.identity, cacheUserId: cache.userId } : {}) }, abort.signal);
+        if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
+        restored = { ...restored, page: { items: appendUnique(restored.page.items, page.items), nextCursor: page.nextCursor } };
+        setSnapshot(restored);
+        cache?.rememberSnapshot(restored);
+      }
+    })().catch((error: unknown) => {
+      if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
+      if (error instanceof StudentDirectoryRequestError && [401, 403].includes(error.status)) cache?.lock();
+      setError(error instanceof Error ? error.message : "펼친 학생 목록을 불러오지 못했습니다. 더보기를 다시 눌러 주세요.");
+    }).finally(() => {
+      if (requestVersionRef.current === requestVersion) { setLoadingMore(false); abortRef.current = null; }
+    });
+  }, [initialSnapshot, cacheEnabled, stopCurrentRequest, enabled, cache]);
 
   const replaceFilters = useCallback((
     nextFilters: StudentDirectoryFilters,
@@ -78,9 +121,11 @@ export function useAssignmentStudentDirectory(
   ) => {
     if (!enabled) return;
     const next = normalizeStudentDirectoryFilters(nextFilters);
+    requestedFiltersRef.current = next;
     cache?.rememberFilters(next, "assignments");
     const key = studentDirectoryFilterKey(next);
     if (filterRequestRef.current.key === key && filterRequestRef.current.status !== "error") return;
+    restoreCountRef.current = 0;
     filterRequestRef.current = { key, status: "pending" };
     setFilters(next);
     setError("");
@@ -96,12 +141,14 @@ export function useAssignmentStudentDirectory(
         const result = await readSnapshot(next, abort.signal);
         if (requestVersionRef.current !== requestVersion) return;
         acceptedFiltersRef.current = result.filters;
+        requestedFiltersRef.current = result.filters;
         filterRequestRef.current = { key: studentDirectoryFilterKey(result.filters), status: "ready" };
         setFilters(result.filters);
         setSnapshot(result);
       } catch (requestError) {
         if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
         filterRequestRef.current.status = "error";
+        requestedFiltersRef.current = acceptedFiltersRef.current;
         setFilters(acceptedFiltersRef.current);
         setError(
           requestError instanceof Error

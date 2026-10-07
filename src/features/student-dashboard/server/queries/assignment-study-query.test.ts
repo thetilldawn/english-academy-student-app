@@ -3,6 +3,7 @@ const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn
 vi.mock("./assignment-study-example-query", () => ({ getStudyExamplePrompts: mocks.prompts }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
+  loadPronunciationLineage: vi.fn(async () => new Map()),
   loadVocabPronunciationRegistry: mocks.registry,
   loadActiveVocabPronunciationReleaseRegistry: mocks.active,
   loadSyntheticPronunciationRegistry: mocks.synthetic,
@@ -44,7 +45,7 @@ describe("배정 단어장 서버 조회", () => {
     mocks.rpc.mockResolvedValue({ data: { ...raw("canonical_headword_to_definition"), words: [word, fixedWord] }, error: null });
     const result = await getAssignmentStudy(student, id);
     expect(result?.words?.[1]).toMatchObject({ headword: "fixed", meaning: "저장 뜻", definition: word.definition, pronunciation: frozen });
-    for (const fn of [mocks.registry, mocks.active, mocks.entryApproved, mocks.source]) expect(fn).toHaveBeenCalledWith([7], false);
+    for (const fn of [mocks.registry, mocks.active, mocks.entryApproved, mocks.source]) expect(fn).toHaveBeenCalledWith([7], false, expect.any(Map));
     expect(JSON.stringify(result)).not.toMatch(/entryId|releaseId|Snapshot|correct_choice|choices/);
     mocks.rpc.mockResolvedValue({ data: { ...raw(), words: [{ ...fixedWord, compositionPronunciation: { ...frozen, available: true } }] }, error: null });
     await expect(getAssignmentStudy(student, id)).rejects.toThrow("assignment_study_data_invalid");
@@ -56,7 +57,7 @@ describe("배정 단어장 서버 조회", () => {
     expect((await getAssignmentStudy(student,id))?.words?.[0].pronunciation.displayKo).toBe("컬렉트");
     mocks.rpc.mockResolvedValue({data:{...raw(),words:[{...word,headword:"different"}]},error:null});
     expect((await getAssignmentStudy(student,id))?.words?.[0].pronunciation.displayKo).toBe("자동");
-    expect(mocks.source).toHaveBeenCalledWith([7], false);
+    expect(mocks.source).toHaveBeenCalledWith([7], false, expect.any(Map));
   });
   it.each(["waiting_initial", "waiting_time", "held", "schedule_conflict", "cancelled"])(
     "%s는 원문·영영풀이·예문·발음을 읽지 않고 상태만 돌려준다", async (state) => {
@@ -74,8 +75,8 @@ describe("배정 단어장 서버 조회", () => {
   it("세션 학생만 전달하고 발음 대상은 선택지가 아닌 배정 단어 ID뿐이다", async () => {
     const result = await getAssignmentStudy(student, id);
     expect(mocks.rpc).toHaveBeenCalledWith("get_student_assignment_study_v1", { p_assignment_id: id, p_student_id: student.studentId });
-    expect(mocks.registry).toHaveBeenCalledWith([7], false);
-    expect(mocks.entryApproved).toHaveBeenCalledWith([7], false);
+    expect(mocks.registry).toHaveBeenCalledWith([7], false, expect.any(Map));
+    expect(mocks.entryApproved).toHaveBeenCalledWith([7], false, expect.any(Map));
     expect(result?.words?.[0]).toMatchObject({ headword: "collect", meaning: "모으다", definition: null, example: null });
     expect(Object.keys(result!.words![0]!)).toEqual(["key", "headword", "meaning", "definition", "example", "exampleRanges", "pronunciation"]);
     expect(mocks.prompts).not.toHaveBeenCalled();
@@ -94,7 +95,7 @@ describe("배정 단어장 서버 조회", () => {
   });
   it("기기 공용 자료는 발음 조회 실패를 빈 값으로 저장하지 않도록 엄격한 조회를 요구한다", async () => {
     await getAssignmentStudy(student, id, true);
-    for (const fn of [mocks.registry, mocks.active, mocks.entryApproved, mocks.source]) expect(fn).toHaveBeenCalledWith([7], true);
+    for (const fn of [mocks.registry, mocks.active, mocks.entryApproved, mocks.source]) expect(fn).toHaveBeenCalledWith([7], true, expect.any(Map));
     expect(mocks.corrections).toHaveBeenCalledWith(true);
   });
   it("완전 중복만 제거하고 같은 철자의 다른 뜻을 보존한다", async () => {

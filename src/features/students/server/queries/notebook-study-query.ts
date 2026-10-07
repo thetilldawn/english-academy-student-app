@@ -6,7 +6,7 @@ import { frozenPronunciationSchema } from "@/features/wordbook-compositions/publ
 import { normalizeQuizHeadword } from "@/lib/quiz/word-identity";
 import { parseTargetPronunciation, preferredPronunciationWithActiveVocaRelease, syntheticPronunciationBindingKey,
   withPronunciationDisplay, withCorrectedPronunciationAudio } from "@/lib/quiz/pronunciation-snapshot";
-import { loadActiveVocabPronunciationReleaseRegistry, loadEntryApprovedKoreanPronunciationRegistry,
+import { loadActiveVocabPronunciationReleaseRegistry, loadPronunciationLineage, loadEntryApprovedKoreanPronunciationRegistry,
   loadEntrySourcePronunciationRegistry, loadApprovedKoreanPronunciationRegistry, loadSyntheticPronunciationRegistry,
   loadVocabPronunciationRegistry, loadPronunciationAudioCorrections } from "@/lib/services/quiz/pronunciation-registry";
 import { notebookFiltersSchema, notebookPronunciationSchema, notebookStudyPageSchema, type NotebookFilters, type NotebookPage, type NotebookWord } from "../../contracts/notebook-study";
@@ -31,11 +31,12 @@ export async function hydrateStudyRows<T extends StudyInput>(rows: T[]) {
   const matches = (row: StudyInput) => normalizeQuizHeadword(row.headword) === normalizeQuizHeadword(row.studySource.currentHeadword);
   const legacy = rows.filter(row => !row.studySource.compositionPronunciation && !row.studySource.notebookPronunciation && matches(row)).map(row => row.studySource);
   const ids = [...new Set(legacy.map(row => row.entryId))];
+  const lineage = await loadPronunciationLineage(ids);
   const [registry, active, synthetic, approved, entryApproved, entrySource, corrections] = await Promise.all([
-    loadVocabPronunciationRegistry(ids, true), loadActiveVocabPronunciationReleaseRegistry(ids, true),
-    loadSyntheticPronunciationRegistry(legacy.flatMap(row => row.releaseId ? [{ releaseId: row.releaseId, vocabEntryId: row.entryId }] : []), true),
+    loadVocabPronunciationRegistry(ids, true, lineage), loadActiveVocabPronunciationReleaseRegistry(ids, true, lineage),
+    loadSyntheticPronunciationRegistry(legacy.flatMap(row => row.releaseId ? [{ releaseId: row.releaseId, vocabEntryId: row.entryId }] : []), true, lineage),
     loadApprovedKoreanPronunciationRegistry(legacy.flatMap(row => row.dictionaryId ? [row.dictionaryId] : []), true),
-    loadEntryApprovedKoreanPronunciationRegistry(ids, true), loadEntrySourcePronunciationRegistry(ids, true), loadPronunciationAudioCorrections(true),
+    loadEntryApprovedKoreanPronunciationRegistry(ids, true, lineage), loadEntrySourcePronunciationRegistry(ids, true, lineage), loadPronunciationAudioCorrections(true),
   ]);
   return rows.map(({ studySource: source, ...word }) => ({ ...word,
     definition: source.definition, example: source.example && !/_{2,}/u.test(source.example) ? source.example : null,

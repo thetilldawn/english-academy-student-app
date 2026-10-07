@@ -13,7 +13,7 @@ import {
   withCorrectedPronunciationAudio,
 } from "@/lib/quiz/pronunciation-snapshot";
 import {
-  loadActiveVocabPronunciationReleaseRegistry,
+  loadActiveVocabPronunciationReleaseRegistry, loadPronunciationLineage,
   loadEntryApprovedKoreanPronunciationRegistry,
   loadEntrySourcePronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
@@ -106,14 +106,15 @@ export async function getAssignmentStudy(
     ? [{ releaseId: word.releaseId, vocabEntryId: word.entryId }]
     : []);
   const dictionaryIds = legacyRows.flatMap((word) => word.dictionaryId ? [word.dictionaryId] : []);
+  const lineage = await loadPronunciationLineage([...ids, ...bindings.map(binding => binding.vocabEntryId)]);
   const [registry, active, synthetic, approved, examplePrompts, entryApproved, entrySource, audioCorrections] = await Promise.all([
-    loadVocabPronunciationRegistry(ids, strictPronunciation),
-    loadActiveVocabPronunciationReleaseRegistry(ids, strictPronunciation),
-    loadSyntheticPronunciationRegistry(bindings, strictPronunciation),
+    loadVocabPronunciationRegistry(ids, strictPronunciation, lineage),
+    loadActiveVocabPronunciationReleaseRegistry(ids, strictPronunciation, lineage),
+    loadSyntheticPronunciationRegistry(bindings, strictPronunciation, lineage),
     loadApprovedKoreanPronunciationRegistry(dictionaryIds, strictPronunciation),
     mode === "canonical_example_to_headword" ? getStudyExamplePrompts(student.studentId, assignmentId, ids) : Promise.resolve(new Map<number, string[]>()),
-    loadEntryApprovedKoreanPronunciationRegistry(ids, strictPronunciation),
-    loadEntrySourcePronunciationRegistry(ids, strictPronunciation),
+    loadEntryApprovedKoreanPronunciationRegistry(ids, strictPronunciation, lineage),
+    loadEntrySourcePronunciationRegistry(ids, strictPronunciation, lineage),
     loadPronunciationAudioCorrections(strictPronunciation),
   ]);
   return {

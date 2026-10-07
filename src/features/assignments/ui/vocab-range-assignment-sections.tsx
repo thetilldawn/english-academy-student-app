@@ -1,5 +1,6 @@
 "use client";
 
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
@@ -156,9 +157,7 @@ export function VocabRangeAssignmentSections({
         />
         {unitLoadState.datasetId === controller.planner.datasetId &&
         unitLoadState.status === "loading" ? (
-          <div aria-busy="true" className={styles.reviewCalculation} role="status">
-            범위를 불러오는 중…
-          </div>
+          <RouteLoadingState variant="compact" label="범위를 불러오는 중…" />
         ) : unitLoadState.datasetId === controller.planner.datasetId &&
           unitLoadState.status === "error" ? (
           <Notice role="alert" tone="danger">

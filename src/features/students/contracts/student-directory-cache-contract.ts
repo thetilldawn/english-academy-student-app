@@ -31,14 +31,15 @@ export const directorySnapshotSchema = z.object({
   snapshotAt: z.iso.datetime({ offset: true }), totalCount: nonnegativeInteger,
 }).refine(value => value.totalCount >= value.page.items.length);
 const identitySchema = z.string().regex(/^[a-f0-9]{64}$/u);
+export const DIRECTORY_RESUME_MAX = 500;
 export const directoryCacheRequestSchema = z.object({
   mode: z.literal("cache"), filters: directoryFiltersSchema,
   identity: identitySchema.optional(),
-  studentIds: z.array(z.uuid()).max(10).refine(ids => new Set(ids).size === ids.length).optional(),
+  studentIds: z.array(z.uuid()).max(DIRECTORY_RESUME_MAX).refine(ids => new Set(ids).size === ids.length).optional(),
 });
 export const directoryCacheResponseSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("snapshot"), identity: identitySchema.nullable(), userId: z.uuid(), snapshot: directorySnapshotSchema }),
-  z.object({ kind: z.literal("resume"), identity: identitySchema, userId: z.uuid(), points: z.array(z.object({ id: z.uuid(), rawPoints: directoryIntegerSchema })).max(10) }),
+  z.object({ kind: z.literal("resume"), identity: identitySchema, userId: z.uuid(), points: z.array(z.object({ id: z.uuid(), rawPoints: directoryIntegerSchema })).max(DIRECTORY_RESUME_MAX) }),
 ]);
 export type DirectoryCacheRequest = z.infer<typeof directoryCacheRequestSchema>;
 export type DirectoryCacheResponse = z.infer<typeof directoryCacheResponseSchema>;

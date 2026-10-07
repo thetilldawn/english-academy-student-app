@@ -9,7 +9,7 @@ import { withCorrectedPronunciationAudio } from "@/lib/quiz/pronunciation-snapsh
 import { getStudentAttemptPointSummary } from "@/lib/services/learning-point-read-service";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
-  loadActiveVocabPronunciationReleaseRegistry,
+  loadActiveVocabPronunciationReleaseRegistry, loadPronunciationLineage,
   loadEntryApprovedKoreanPronunciationRegistry,
   loadEntrySourcePronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
@@ -82,6 +82,7 @@ export async function getAttemptQuestionResults(
     const snapshot = reviewedExamUseSnapshot(oneRelation(row.assignment_question));
     return typeof snapshot?.dictionary_id === "string" ? [snapshot.dictionary_id] : [];
   });
+  const lineage = await loadPronunciationLineage([...registryIds, ...syntheticBindings.map(binding => binding.vocabEntryId)]);
   const [
     pronunciationRegistry,
     syntheticPronunciationRegistry,
@@ -91,12 +92,12 @@ export async function getAttemptQuestionResults(
     entrySourceRegistry,
     audioCorrections,
   ] = await Promise.all([
-    loadVocabPronunciationRegistry(registryIds),
-    loadSyntheticPronunciationRegistry(syntheticBindings),
+    loadVocabPronunciationRegistry(registryIds, false, lineage),
+    loadSyntheticPronunciationRegistry(syntheticBindings, false, lineage),
     loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds),
-    loadActiveVocabPronunciationReleaseRegistry(registryIds),
-    loadEntryApprovedKoreanPronunciationRegistry(registryIds),
-    loadEntrySourcePronunciationRegistry(registryIds),
+    loadActiveVocabPronunciationReleaseRegistry(registryIds, false, lineage),
+    loadEntryApprovedKoreanPronunciationRegistry(registryIds, false, lineage),
+    loadEntrySourcePronunciationRegistry(registryIds, false, lineage),
     loadPronunciationAudioCorrections(),
   ]);
 

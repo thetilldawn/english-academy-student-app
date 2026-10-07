@@ -27,6 +27,9 @@ import {
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 
+export { readCompositionLineage as loadPronunciationLineage };
+type VerifiedLineage = Awaited<ReturnType<typeof readCompositionLineage>>;
+
 export async function loadPronunciationAudioCorrections(strict = false): Promise<PronunciationAudioCorrection[]> {
   try {
     const { data, error } = await getServiceSupabaseClient().rpc("list_pronunciation_audio_corrections_v1");
@@ -47,24 +50,24 @@ export async function loadPronunciationAudioCorrections(strict = false): Promise
   }
 }
 
-export function loadEntrySourcePronunciationRegistry(ids: readonly number[], strict = false) {
-  return readMappedEntryResources(ids, values => readEntrySourcePronunciationRegistry(values, strict), (rows, targetId) => rows.map(row => ({ ...row, entryId: targetId })));
+export function loadEntrySourcePronunciationRegistry(ids: readonly number[], strict = false, lineage?: VerifiedLineage) {
+  return readMappedEntryResources(ids, values => readEntrySourcePronunciationRegistry(values, strict), (rows, targetId) => rows.map(row => ({ ...row, entryId: targetId })), lineage);
 }
-export function loadEntryApprovedKoreanPronunciationRegistry(ids: readonly number[], strict = false) {
-  return readMappedEntryResources(ids, values => readEntryApprovedKoreanPronunciationRegistry(values, strict));
+export function loadEntryApprovedKoreanPronunciationRegistry(ids: readonly number[], strict = false, lineage?: VerifiedLineage) {
+  return readMappedEntryResources(ids, values => readEntryApprovedKoreanPronunciationRegistry(values, strict), undefined, lineage);
 }
-export function loadVocabPronunciationRegistry(ids: readonly number[], strict = false) {
-  return readMappedEntryResources(ids, values => readVocabPronunciationRegistry(values, strict));
+export function loadVocabPronunciationRegistry(ids: readonly number[], strict = false, lineage?: VerifiedLineage) {
+  return readMappedEntryResources(ids, values => readVocabPronunciationRegistry(values, strict), undefined, lineage);
 }
-export function loadActiveVocabPronunciationReleaseRegistry(ids: readonly number[], strict = false) {
-  return readMappedEntryResources(ids, values => readActiveVocabPronunciationReleaseRegistry(values, strict));
+export function loadActiveVocabPronunciationReleaseRegistry(ids: readonly number[], strict = false, lineage?: VerifiedLineage) {
+  return readMappedEntryResources(ids, values => readActiveVocabPronunciationReleaseRegistry(values, strict), undefined, lineage);
 }
-export function loadVocabPronunciationDisplayRegistry(ids: readonly number[], strict = false) {
-  return readMappedEntryResources(ids, values => readVocabPronunciationDisplayRegistry(values, strict));
+export function loadVocabPronunciationDisplayRegistry(ids: readonly number[], strict = false, lineage?: VerifiedLineage) {
+  return readMappedEntryResources(ids, values => readVocabPronunciationDisplayRegistry(values, strict), undefined, lineage);
 }
-export async function loadSyntheticPronunciationRegistry(bindings: readonly { releaseId: string; vocabEntryId: number }[], strict = false) {
+export async function loadSyntheticPronunciationRegistry(bindings: readonly { releaseId: string; vocabEntryId: number }[], strict = false, verifiedLineage?: VerifiedLineage) {
   if (!bindings.length) return new Map<string, QuizPronunciation>();
-  const lineage = await readCompositionLineage(bindings.map(b => b.vocabEntryId));
+  const lineage = verifiedLineage ?? await readCompositionLineage(bindings.map(b => b.vocabEntryId));
   const mapped = bindings.map(binding => {
     const source = lineage.get(binding.vocabEntryId);
     return source && source.compositionReleaseId === binding.releaseId

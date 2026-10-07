@@ -5,7 +5,8 @@ vi.mock("@/lib/auth/student-session", () => ({ getStudentSession: mocks.session 
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: mocks.admin }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ rpc: mocks.rpc }) }));
-vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({ loadVocabPronunciationRegistry: mocks.registry, loadActiveVocabPronunciationReleaseRegistry: mocks.registry,
+vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
+  loadPronunciationLineage: vi.fn(async () => new Map()), loadVocabPronunciationRegistry: mocks.registry, loadActiveVocabPronunciationReleaseRegistry: mocks.registry,
   loadSyntheticPronunciationRegistry: mocks.registry, loadApprovedKoreanPronunciationRegistry: mocks.registry, loadEntryApprovedKoreanPronunciationRegistry: mocks.registry,
   loadEntrySourcePronunciationRegistry: mocks.registry, loadPronunciationAudioCorrections: mocks.corrections }));
 import { decodeMistakeCursor, getOwnMistakePage, getAdminMistakePage, getMistakeStudyPage } from "./mistake-episode-query";

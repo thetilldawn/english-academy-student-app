@@ -1,3 +1,4 @@
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import type { AssignmentUnitItem } from "../catalog-types";
 import { mixedMistakeFieldKey, type MixedMistakeAssignmentController } from "../controller/use-mixed-mistake-assignment-controller";
 import type { ExamSettings } from "../domain/model";
@@ -28,7 +29,7 @@ export function MixedMistakeAssignmentSections({ controller, units, showErrors, 
       <VocabRangeFields dataset={dataset} units={selectedUnits} selectedUnitIds={draft.range.orderedUnitIds}
         datasetError={errors.dataset} rangeError={errors.range} onSelectUnit={controller.toggleUnit} onToggleAllUnits={controller.toggleAllUnits}
         onOpenDatasetPicker={onOpenDatasetPicker} datasetTriggerRef={datasetTriggerRef} />
-      {unitLoadState.status === "loading" ? <p role="status">시험 범위를 불러오고 있습니다.</p> : null}
+      {unitLoadState.status === "loading" ? <RouteLoadingState variant="compact" label="시험 범위를 불러오고 있습니다." /> : null}
       {unitLoadState.status === "error" ? <Notice tone="danger" role="alert"><p>{unitLoadState.message}</p><Button onClick={onRetryUnits}>범위 다시 불러오기</Button></Notice> : null}
       {controller.datasetOptions.length === 0 ? <p role="status">현재 혼합 배정에 사용할 수 있는 단어장이 없습니다.</p> : null}
       <Field data-field-key="reviewLevels" tabIndex={-1}>
@@ -66,11 +67,11 @@ export function MixedMistakeAssignmentSections({ controller, units, showErrors, 
     </AssignmentSection>
     <AssignmentSection index={4} title="배정 미리보기" help="단어의 뜻과 원래 문제 종류를 보존하기 위해 시험이 나뉠 수 있습니다. 아래 내용대로 저장합니다." helpLabel="혼합 배정 미리보기 설명">
       <div className={styles.fieldStack} data-field-key="preview" tabIndex={-1} aria-busy={controller.calculationPending}>
-        {controller.calculationPending ? <p role="status">일반 단어와 오답을 함께 계산하고 있습니다.</p> : null}
+        {controller.calculationPending ? <RouteLoadingState variant="compact" label="일반 단어와 오답을 함께 계산하고 있습니다." /> : null}
         {controller.message ? <Notice tone="danger" role="alert">{controller.message}</Notice> : null}
         {preview.status === "error" ? <Button onClick={controller.retryPreview}>미리보기 다시 계산</Button> : null}
         {!value && !controller.calculationPending && preview.status !== 'error' ? <p>단어장과 범위, 시험 조건을 선택하면 미리보기가 표시됩니다.</p> : null}
-        {value ? <>
+        {value && !controller.calculationPending ? <>
           <dl className={styles.reviewPreview}>
             <div><dt>일반 후보</dt><dd>{value.availablePrimaryCount}개</dd></div>
             <div><dt>미배정 오답</dt><dd>{value.candidateReviewCount}개 · 제외 {value.unavailableCount}개</dd></div>

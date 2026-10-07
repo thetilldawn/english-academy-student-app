@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import { studentNotebookCacheIdentity } from "@/lib/auth/private-cache-identity";
 import { getMistakeStudyPage, getMistakeStudyWord } from "@/features/students/public-server";
@@ -15,9 +16,14 @@ async function readView(searchParams?: Search) {
 export async function NotebookContent({ searchParams }: { searchParams?: Search } = {}) {
   const student = await requireStudentSession();
   const { view } = await readView(searchParams), filters = mistakeFiltersSchema.parse({ view });
-  const page = await getMistakeStudyPage({ filters }, student);
-  if (!page) notFound();
-  return <NotebookReader initial={page} initialFilters={filters} initialIdentity={studentNotebookCacheIdentity(student)} />;
+  const requestHeaders = await headers();
+  const destination = requestHeaders.get("sec-fetch-dest");
+  // Headers choose rendering strategy only; the authenticated session above
+  // is required for both document and internal navigation.
+  const documentRequest = destination === "document" || (!destination && requestHeaders.get("accept")?.includes("text/html"));
+  const page = documentRequest ? await getMistakeStudyPage({ filters }, student) : undefined;
+  if (documentRequest && !page) notFound();
+  return <NotebookReader initial={page ?? undefined} initialFilters={filters} initialIdentity={studentNotebookCacheIdentity(student)} />;
 }
 export async function NotebookDetailContent({ params, searchParams, presentation }: { params: Promise<{ id: string }>; searchParams?: Search; presentation: "page" | "intercepted" }) {
   const student = await requireStudentSession();

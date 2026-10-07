@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeAdminHistoryQuery, type AdminHistorySnapshot } from "../contracts/admin-history-read-model";
 import { historyFailureKind, isHistoryAccessFailure, type AdminHistoryFailureKind } from "../contracts/admin-history-request-error";
 import type { AdminHistoryStatusFilter } from "../domain/learning-activity";
@@ -20,6 +20,8 @@ export function useAdminHistoryListController(
   const [retryRevision, setRetryRevision] = useState(0);
   const [accessFailure, setAccessFailure] = useState<AdminHistoryFailureKind | null>(null);
   const normalizedQuery = normalizeAdminHistoryQuery(query);
+  const conditionsKey = JSON.stringify([normalizedQuery, statusFilter]);
+  const forcedRetry = useRef<string | null>(null);
   const requestKey = JSON.stringify([normalizedQuery, statusFilter, retryRevision]);
   const [requestState, setRequestState] = useState<{
     key: string;
@@ -45,11 +47,14 @@ export function useAdminHistoryListController(
   }, [cache, normalizedQuery, statusFilter]);
 
   useEffect(() => {
+    if (forcedRetry.current !== conditionsKey) forcedRetry.current = null;
     if (conditionsMatchSnapshot || accessFailure) return;
     const controller = new AbortController();
     const timeout = window.setTimeout(() => {
+      const force = forcedRetry.current === conditionsKey;
+      forcedRetry.current = null;
       const read = cache
-        ? cache.read({ currentOnly: false, query: normalizedQuery, statusFilter }, controller.signal, retryRevision > 0).then(result => result.snapshot)
+        ? cache.read({ currentOnly: false, query: normalizedQuery, statusFilter }, controller.signal, force).then(result => result.snapshot)
         : loadAdminHistorySnapshot({
         currentOnly: initialSnapshot.currentOnly,
         mode: "initial",
@@ -72,14 +77,14 @@ export function useAdminHistoryListController(
       controller.abort();
     };
   }, [conditionsMatchSnapshot, accessFailure, initialSnapshot.currentOnly,
-    normalizedQuery, requestKey, statusFilter, reportAccessFailure, cache, retryRevision]);
+    normalizedQuery, conditionsKey, requestKey, statusFilter, reportAccessFailure, cache, retryRevision]);
 
   return {
     failure,
     isCurrentSnapshot,
     loading: !isCurrentSnapshot && !failure,
     reportAccessFailure,
-    retry: () => setRetryRevision((revision) => revision + 1),
+    retry: () => { forcedRetry.current = conditionsKey; setRetryRevision((revision) => revision + 1); },
     snapshot,
   };
 }

@@ -11,6 +11,13 @@ beforeEach(()=>{vi.resetAllMocks();tables={};queries.length=0;mocks.rpc.mockImpl
   mocks.from.mockImplementation((table:string)=>{const chain={select:()=>chain,eq:(field:string,value:unknown)=>{queries.push({table,field,value});return chain;},in:(field:string,value:unknown)=>{queries.push({table,field,value});return chain;},
     then:(resolve:(v:unknown)=>unknown)=>Promise.resolve({data:tables[table]??[],error:null}).then(resolve)};return chain;});});
 describe('verified source resource mapping',()=>{
+  it('shares a verified lineage read between resource consumers',async()=>{
+    const lineage=await readCompositionLineage([107,108]);
+    const read=vi.fn(async()=>new Map([[7,'source']]));
+    const results=await Promise.all([readMappedEntryResources([107],read,undefined,lineage),readMappedEntryResources([108],read,undefined,lineage)]);
+    expect(results).toEqual([new Map([[107,'source']]),new Map([[108,'source']])]);
+    expect(mocks.rpc.mock.calls.filter(([name])=>name==='list_mock_composition_lineage_v1')).toHaveLength(1);
+  });
   it('expands one source to multiple new IDs and leaves unrelated IDs unchanged',async()=>{
     const read=vi.fn(async()=>new Map([[7,'same audio'],[9,'ordinary']]));
     expect(await readMappedEntryResources([107,108,9],read)).toEqual(new Map([[107,'same audio'],[108,'same audio'],[9,'ordinary']]));

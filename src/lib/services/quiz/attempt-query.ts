@@ -16,7 +16,7 @@ import {
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
-  loadActiveVocabPronunciationReleaseRegistry,
+  loadActiveVocabPronunciationReleaseRegistry, loadPronunciationLineage,
   loadEntryApprovedKoreanPronunciationRegistry,
   loadEntrySourcePronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
@@ -210,6 +210,7 @@ export async function hydrateQuizQuestions(rows: QuestionRow[], quizContentMode:
         vocabEntryId,
       }));
   });
+  const lineage = await loadPronunciationLineage([...registryIds, ...syntheticBindings.map(binding => binding.vocabEntryId)]);
   const [
     pronunciationRegistry,
     syntheticPronunciationRegistry,
@@ -220,13 +221,13 @@ export async function hydrateQuizQuestions(rows: QuestionRow[], quizContentMode:
     entrySourceRegistry,
     audioCorrections,
   ] = await Promise.all([
-    loadVocabPronunciationRegistry(registryIds, options.strictPronunciation),
-    loadSyntheticPronunciationRegistry(syntheticBindings, options.strictPronunciation),
-    loadVocabPronunciationDisplayRegistry(registryIds, options.strictPronunciation),
+    loadVocabPronunciationRegistry(registryIds, options.strictPronunciation, lineage),
+    loadSyntheticPronunciationRegistry(syntheticBindings, options.strictPronunciation, lineage),
+    loadVocabPronunciationDisplayRegistry(registryIds, options.strictPronunciation, lineage),
     loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds, options.strictPronunciation),
-    loadActiveVocabPronunciationReleaseRegistry(registryIds, options.strictPronunciation),
-    loadEntryApprovedKoreanPronunciationRegistry(registryIds, options.strictPronunciation),
-    loadEntrySourcePronunciationRegistry(registryIds, options.strictPronunciation),
+    loadActiveVocabPronunciationReleaseRegistry(registryIds, options.strictPronunciation, lineage),
+    loadEntryApprovedKoreanPronunciationRegistry(registryIds, options.strictPronunciation, lineage),
+    loadEntrySourcePronunciationRegistry(registryIds, options.strictPronunciation, lineage),
     loadPronunciationAudioCorrections(options.strictPronunciation),
   ]);
   return rows.map((question) => {

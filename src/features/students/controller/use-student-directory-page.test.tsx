@@ -40,6 +40,17 @@ function student(index: number): StudentDirectoryListItem {
   };
 }
 
+it("오래된 목록 복귀는 새 커서로 펼쳤던 20명을 복원한다", async () => {
+  const old=snapshot({items:Array.from({length:20},(_,n)=>student(n+1)),totalCount:20,snapshotAt:"old"});
+  vi.mocked(loadStudentDirectoryNextPage).mockResolvedValue({items:Array.from({length:10},(_,n)=>({...student(n+11),rawPoints:77})),nextCursor:null});
+  const {result,rerender}=renderHook(({initial})=>useStudentDirectoryPage(initial,true),{initialProps:{initial:old}});
+  const fresh=snapshot({items:old.page.items.slice(0,10),totalCount:20,nextCursor:"fresh-page2",snapshotAt:"new"});
+  rerender({initial:fresh});
+  await waitFor(()=>expect(result.current.snapshot.page.items).toHaveLength(20));
+  expect(result.current.snapshot.page.items[19].rawPoints).toBe(77);
+  expect(loadStudentDirectoryNextPage).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({cursor:"fresh-page2"}),expect.any(AbortSignal));
+});
+
 function snapshot(input: {
   items?: StudentDirectoryListItem[];
   nextCursor?: string | null;

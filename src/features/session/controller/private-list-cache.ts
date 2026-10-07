@@ -14,6 +14,7 @@ type Policy<Filters, Snapshot, Stored, Resume, Consumer extends string> = {
   key: (filters: Filters) => string;
   filters: (snapshot: Snapshot) => Filters;
   retain: (snapshot: Snapshot) => Stored;
+  sameSnapshot?: (stored: Stored, snapshot: Snapshot) => boolean;
   restore: (stored: Stored, resume: Resume) => Snapshot;
   reader: (filters: Filters, reusable: { identity: string; snapshot: Stored } | undefined, signal: AbortSignal) => Promise<PrivateListResponse<Snapshot, Resume>>;
   error: (status: 401 | 502 | 503) => Error;
@@ -112,6 +113,13 @@ export function createPrivateListCache<Filters, Snapshot, Stored, Resume, Consum
       return { snapshot: result.snapshot, savedAt };
     },
     rememberFilters(filters: Filters, consumer: Consumer = policy.defaultConsumer) { rememberedFilters.set(consumer, policy.normalize(filters)); },
+    rememberSnapshot(snapshot: Snapshot) {
+      if (disposed || blocked || !identity || !policy.sameSnapshot) return;
+      const entry = entries.get(policy.key(policy.filters(snapshot)));
+      if (!entry || !policy.sameSnapshot(entry.snapshot, snapshot)) return;
+      // More pages do not make the first page newer or extend retention.
+      entry.snapshot = policy.retain(snapshot);
+    },
     filtersFor,
     invalidate() { clear(); displayDeadlineAt = 0; emit(); },
     get blocked() { return blocked; },

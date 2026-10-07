@@ -13,6 +13,27 @@ function response(points = 30): DirectoryCacheResponse {
 function deferred<T>() { let resolve!: (value:T)=>void; const promise = new Promise<T>(done=>{resolve=done;}); return { promise, resolve }; }
 afterEach(()=>vi.useRealTimers());
 describe("개인 학생 목록 캐시",()=>{
+  it("펼친 20명을 같은 저장시각으로 보존하고 모두의 현재 포인트로 복원한다",async()=>{
+    vi.useFakeTimers();
+    const first=response(); if(first.kind!=="snapshot")throw new Error();
+    const rows=Array.from({length:20},(_,n)=>({...first.snapshot.page.items[0],id:`00000000-0000-4000-8000-${String(n+1).padStart(12,'0')}`,rawPoints:n}));
+    first.snapshot={...first.snapshot,totalCount:20,page:{items:rows.slice(0,10),nextCursor:"page2"}};
+    const reader=vi.fn().mockResolvedValueOnce(first).mockResolvedValueOnce({kind:"resume",identity,userId,points:rows.map(r=>({id:r.id,rawPoints:r.rawPoints+10}))}).mockResolvedValue(first);
+    const cache=createStudentDirectoryCache(userId,reader);
+    const initial=await cache.read(filters);
+    await vi.advanceTimersByTimeAsync(5000);
+    cache.rememberSnapshot({...initial.snapshot,page:{items:rows,nextCursor:null}});
+    const resumed=await cache.read(filters);
+    expect(resumed.snapshot.page.items).toHaveLength(20);
+    expect(resumed.snapshot.page.items[19].rawPoints).toBe(29);
+    expect(reader.mock.calls[1][0].studentIds).toHaveLength(20);
+    expect(resumed.savedAt).toBe(initial.savedAt);
+    expect(JSON.stringify(cache.inspect())).not.toContain('rawPoints');
+    await vi.advanceTimersByTimeAsync(10000);
+    await cache.read(filters);
+    expect(reader.mock.calls[2][0].identity).toBeUndefined();
+    cache.dispose();
+  });
   it("학생과 배정은 마지막 필터를 따로 기억하고 같은 결과만 공유한다",async()=>{
     const read = vi.fn().mockImplementation(async input => {
       const result = response(); if (result.kind !== "snapshot") throw new Error();

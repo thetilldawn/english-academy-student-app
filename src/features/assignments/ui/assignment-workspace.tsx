@@ -18,20 +18,9 @@ import {
 } from "../controller/use-assignment-workspace";
 import { AssignmentPlannerLoadDialog } from "./assignment-planner-load-dialog";
 import { AssignmentStudentBrowser } from "./assignment-student-browser";
+import { AssignmentPreparationChangedContext } from "../controller/use-assignment-planner-preparation";
 
 const NotebookAssignmentDialog = dynamic(() => import("./notebook-assignment-dialog").then(module => module.NotebookAssignmentDialog), { ssr: false });
-
-const VocabAssignmentPlanner = dynamic(
-  () => import("./vocab-assignment-planner").then(
-    (module) => module.VocabAssignmentPlanner,
-  ),
-  {
-    loading: () => (
-      <AssignmentPlannerLoadDialog closeDisabled onClose={() => undefined} />
-    ),
-    ssr: false,
-  },
-);
 
 export const pendingAssignmentDirectory: StudentDirectorySnapshot = {
   filters: { ...emptyStudentDirectoryFilters, status: "active" }, filterOptions: { classGroups: [], grades: [], schools: [], wordbooks: [] },
@@ -71,13 +60,19 @@ export function AssignmentWorkspace({
     interactionAllowed,
   });
   const planner = controller.planner;
+  const [Planner, setPlanner] = useState<typeof import("./vocab-assignment-planner").VocabAssignmentPlanner | null>(null);
+  const [moduleError, setModuleError] = useState("");
+  const [moduleRetry, setModuleRetry] = useState(0);
   const [notebook, setNotebook] = useState<{ students: { id: string; displayName: string }[]; audienceMode: "single" | "bulk" } | null>(null);
 
   useEffect(() => {
-    if (planner.status === "loading") {
-      void import("./vocab-assignment-planner");
-    }
-  }, [planner.status]);
+    if (Planner || (planner.status !== "loading" && planner.status !== "ready")) return;
+    let active = true;
+    void import("./vocab-assignment-planner").then(module => {
+      if (active) setPlanner(() => module.VocabAssignmentPlanner);
+    }).catch(() => { if (active) setModuleError("배정 화면을 불러오지 못했습니다. 다시 시도해 주세요."); });
+    return () => { active = false; };
+  }, [Planner, planner.status, moduleRetry]);
 
   return (
     <>
@@ -90,16 +85,17 @@ export function AssignmentWorkspace({
         if (!cacheEnabled) controller.actions.refreshDirectory();
       }} /> : null}
 
-      {planner.status === "loading" ? (
-        <AssignmentPlannerLoadDialog onClose={planner.actions.close} />
+      {planner.status === "loading" || (planner.status === "ready" && !Planner) ? (
+        <AssignmentPlannerLoadDialog onClose={planner.actions.close} error={moduleError}
+          onRetry={() => { setModuleError(""); setModuleRetry(value => value + 1); }} />
       ) : planner.status === "error" ? (
         <AssignmentPlannerLoadDialog
           error={planner.error}
           onClose={planner.actions.close}
           onRetry={() => void planner.actions.retry()}
         />
-      ) : planner.status === "ready" && planner.request ? (
-        <VocabAssignmentPlanner
+      ) : planner.status === "ready" && planner.request && Planner ? (
+        <AssignmentPreparationChangedContext.Provider value={planner.actions.invalidate}><Planner
           bulkFilterLabels={planner.request.bulkFilterLabels}
           data={{
             datasets: planner.data.datasets,
@@ -127,7 +123,7 @@ export function AssignmentWorkspace({
           }}
           selectionMode={planner.request.selectionMode}
           students={planner.data.students}
-        />
+        /></AssignmentPreparationChangedContext.Provider>
       ) : null}
       </DialogVisibilityBoundary>
       {!interactionAllowed && authenticationRecovery && (notebook || planner.status !== "idle") ? (

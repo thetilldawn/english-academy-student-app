@@ -1,3 +1,4 @@
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { Button } from "@/design-system/primitives/button/button";
 import { Field, FieldError, FieldLabel } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
@@ -49,7 +50,7 @@ export function DirectReviewRangeFields({
         <div className={styles.warningActions}>
           <Button onClick={onRetryCalculation} size="small" variant="secondary">{view.calculation.retryLabel}</Button>
         </div>
-      </> : <div aria-live="polite" className={styles.reviewCalculation} data-field-key="questionCount"
+      </> : view.calculation.status === "loading" ? <RouteLoadingState variant="compact" label={view.calculation.countText} /> : <div aria-live="polite" className={styles.reviewCalculation} data-field-key="questionCount"
         data-status={view.calculation.status} role="status" tabIndex={-1}>{view.calculation.countText}</div>}
       {fieldErrors.questionCount ? <FieldError>{fieldErrors.questionCount}</FieldError> : null}
     </div>

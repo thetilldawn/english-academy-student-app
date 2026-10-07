@@ -4,11 +4,14 @@ import { mistakeFiltersSchema, type MistakeFilters, type MistakeStudyPage } from
 import { loadNotebook, NotebookRequestError } from "../transport/notebook-transport";
 import { subscribeStudentPrivateCacheChanges, useInitialServerHydration } from "@/features/session/public-client";
 
-export function useNotebook(initial: MistakeStudyPage, initialFilters: MistakeFilters, boundary: { identity: string; initialIdentity: string }) {
+export function useNotebook(initial: MistakeStudyPage | undefined, initialFilters: MistakeFilters, boundary: { identity: string; initialIdentity: string }) {
   const hydrating = useInitialServerHydration();
-  const [seeded] = useState(() => hydrating && boundary.identity === boundary.initialIdentity);
+  const [seeded] = useState(() => !!initial && hydrating && boundary.identity === boundary.initialIdentity);
   const blocked = useRef(boundary.identity !== boundary.initialIdentity);
-  const [page, setPage] = useState(() => seeded ? initial : { ...initial, items: [], nextCursor: null, totalCount: null, summary: null, datasetOptions: null });
+  const [page, setPage] = useState<MistakeStudyPage>(() => seeded && initial ? initial : {
+    view: initialFilters.view, stateVersion: "0", sourceVersion: "0".repeat(64),
+    items: [], nextCursor: null, totalCount: null, summary: null, datasetOptions: null,
+  });
   const [filters, setFilters] = useState(initialFilters);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -30,10 +30,10 @@ export async function readCompositionLineage(entryIds: readonly number[]): Promi
 }
 
 export async function readMappedEntryResources<T>(entryIds: readonly number[], readOriginal: (ids: readonly number[]) => Promise<Map<number,T>>,
-  mapValue: (value: T, targetId: number) => T = value => value) {
+  mapValue: (value: T, targetId: number) => T = value => value, verifiedLineage?: ReadonlyMap<number, CompositionLineage>) {
   const ids = [...new Set(entryIds.filter(id => Number.isSafeInteger(id) && id > 0))];
   if (!ids.length) return new Map<number,T>();
-  const lineage = await readCompositionLineage(ids);
+  const lineage = verifiedLineage ?? await readCompositionLineage(ids);
   const sourceIds = [...new Set(ids.map(id => lineage.get(id)?.sourceEntryId ?? id))];
   const resources = await readOriginal(sourceIds);
   const result = new Map<number,T>();

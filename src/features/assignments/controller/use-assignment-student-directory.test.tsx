@@ -9,6 +9,18 @@ afterEach(() => { cleanup(); vi.resetAllMocks(); });
 function snapshot(query = "", cursor: string | null = null): StudentDirectorySnapshot {
   return { filters: { ...emptyStudentDirectoryFilters, query }, filterOptions: { classGroups: [], grades: [], schools: [], wordbooks: [] }, page: { items: [], nextCursor: cursor }, totalCount: 0, snapshotAt: query || "initial" };
 }
+it("검색 중 늦게 도착한 이전 첫 화면 자료가 현재 검색을 덮지 않는다", async () => {
+  let finish!: (value: StudentDirectorySnapshot) => void;
+  vi.mocked(loadStudentDirectorySnapshot).mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  const { result, rerender } = renderHook(({ initial }) => useAssignmentStudentDirectory(initial, true), { initialProps: { initial: snapshot() } });
+  act(() => result.current.actions.replaceFilters({ ...emptyStudentDirectoryFilters, query: "가람" }));
+  await waitFor(() => expect(loadStudentDirectorySnapshot).toHaveBeenCalledOnce());
+  rerender({ initial: { ...snapshot(), snapshotAt: "late-initial" } });
+  await act(async () => finish(snapshot("가람")));
+  expect(result.current.snapshot.filters.query).toBe("가람");
+  rerender({ initial: { ...snapshot(), snapshotAt: "later-initial" } });
+  expect(result.current.snapshot.filters.query).toBe("가람");
+});
 it("같은 정규화조건의 성공/진행중 요청을 합치고 실제 다른 조건은 읽는다", async () => {
   let resolve!: (value: StudentDirectorySnapshot) => void;
   let signal: AbortSignal | undefined;

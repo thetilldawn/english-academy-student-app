@@ -3,7 +3,7 @@ import "server-only";
 import { z } from "zod";
 import type { AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { directoryIntegerSchema, type DirectoryCacheRequest, type DirectoryCacheResponse } from "../../contracts/student-directory-cache-contract";
+import { DIRECTORY_RESUME_MAX, directoryIntegerSchema, type DirectoryCacheRequest, type DirectoryCacheResponse } from "../../contracts/student-directory-cache-contract";
 import { getStudentDirectoryInitial } from "./student-directory-query";
 import { StudentDirectoryReadError } from "./student-directory-read-error";
 import { studentDirectoryCacheIdentity } from "../student-directory-cache-identity";
@@ -24,7 +24,7 @@ export async function getStudentDirectoryCacheRead(input: DirectoryCacheRequest,
     const { data, error } = await supabase.from("students")
       .select("id, student_point_totals(total_points)").in("id", ids).is("deleted_at", null);
     if (error) throw new StudentDirectoryReadError("학생 포인트를 확인하지 못했습니다.");
-    const parsed = z.array(rowSchema).max(10).safeParse(data);
+    const parsed = z.array(rowSchema).max(DIRECTORY_RESUME_MAX).safeParse(data);
     if (!parsed.success) throw new StudentDirectoryReadError("학생 포인트 응답을 확인하지 못했습니다.", "contract");
     const unique = new Set(parsed.data.map(row => row.id));
     if (unique.size !== parsed.data.length || parsed.data.some(row => !ids.includes(row.id))) {

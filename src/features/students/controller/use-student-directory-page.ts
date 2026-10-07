@@ -70,6 +70,14 @@ export function useStudentDirectoryPage(
   const removedIdsRef = useRef(new Set<string>());
   const incomingSnapshotRef = useRef(initialSnapshot);
 
+  const displayedRef = useRef(initialSnapshot);
+  const restoreCountRef = useRef(initialSnapshot.page.items.length);
+  useEffect(() => {
+    displayedRef.current = snapshot;
+    restoreCountRef.current = Math.max(restoreCountRef.current, snapshot.page.items.length);
+    cache?.rememberSnapshot(snapshot);
+  }, [snapshot, cache]);
+
   const stopCurrentRequest = useCallback(() => {
     requestVersionRef.current += 1;
     abortRef.current?.abort();
@@ -92,6 +100,10 @@ export function useStudentDirectoryPage(
     // A later search wins over a refresh started with an older filter.
     if (!wasPending && studentDirectoryFilterKey(initialSnapshot.filters) !== studentDirectoryFilterKey(requestedFiltersRef.current)) return;
     stopCurrentRequest();
+    const previous = displayedRef.current;
+    const targetCount = studentDirectoryFilterKey(previous.filters) === studentDirectoryFilterKey(initialSnapshot.filters)
+      ? Math.max(restoreCountRef.current, previous.page.items.length) : initialSnapshot.page.items.length;
+    restoreCountRef.current = targetCount;
     const next = withoutRemovedStudents(initialSnapshot, removedIdsRef.current);
     acceptedFiltersRef.current = next.filters;
     requestedFiltersRef.current = next.filters;
@@ -101,7 +113,33 @@ export function useStudentDirectoryPage(
     setError("");
     setFiltering(false);
     setLoadingMore(false);
-  }, [initialSnapshot, syncInitialSnapshot, stopCurrentRequest, enabled]);
+    let restored = next;
+    if (restored.page.items.length >= targetCount || !restored.page.nextCursor) return;
+    const abort = new AbortController();
+    abortRef.current = abort;
+    const requestVersion = requestVersionRef.current;
+    setLoadingMore(true);
+    void (async () => {
+      const cursors = new Set<string>();
+      while (restored.page.items.length < targetCount && restored.page.nextCursor) {
+        const cursor = restored.page.nextCursor;
+        if (cursors.has(cursor)) throw new Error("다음 학생 목록을 다시 불러와 주세요.");
+        cursors.add(cursor);
+        const page = await loadStudentDirectoryNextPage({ mode: "page", filters: restored.filters, cursor,
+          ...(cache ? { cacheIdentity: cache.identity, cacheUserId: cache.userId } : {}) }, abort.signal);
+        if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
+        restored = { ...restored, page: { items: appendUniqueStudents(restored.page.items, page.items, removedIdsRef.current), nextCursor: page.nextCursor } };
+        setSnapshot(restored);
+        cache?.rememberSnapshot(restored);
+      }
+    })().catch((error: unknown) => {
+      if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
+      if (error instanceof StudentDirectoryRequestError && [401, 403].includes(error.status)) cache?.lock();
+      setError(error instanceof Error ? error.message : "펼친 학생 목록을 불러오지 못했습니다. 더보기를 다시 눌러 주세요.");
+    }).finally(() => {
+      if (requestVersionRef.current === requestVersion) { setLoadingMore(false); abortRef.current = null; }
+    });
+  }, [initialSnapshot, syncInitialSnapshot, stopCurrentRequest, enabled, cache]);
 
   const reloadCurrent = useCallback(async () => {
     if (!enabled) return;
@@ -168,6 +206,7 @@ export function useStudentDirectoryPage(
     cache?.rememberFilters(next);
     const key = studentDirectoryFilterKey(next);
     if (filterRequestRef.current.key === key && filterRequestRef.current.status !== "error") return;
+    restoreCountRef.current = 0;
     filterRequestRef.current = { key, status: "pending" };
     requestedFiltersRef.current = next;
     setFilters(next);

@@ -36,18 +36,32 @@ export function usePrivateListSession<Cache extends SessionCache>(cache: Cache) 
       if (kind === "identity") cache.lock();
       else refresh();
     });
-    const hide = () => { cache.cancelRequests(); setVisibility(current => ({ visible: false, epoch: current.epoch + 1 })); };
-    const show = () => setVisibility(current => ({ visible: document.visibilityState !== "hidden", epoch: current.epoch + 1 }));
+    let needsResume = document.visibilityState === "hidden";
+    let hidden = false;
+    const hide = () => {
+      needsResume = true;
+      if (hidden) return;
+      hidden = true;
+      cache.cancelRequests(); setVisibility(current => ({ visible: false, epoch: current.epoch + 1 }));
+    };
+    const show = () => {
+      if (!needsResume || document.visibilityState === "hidden") return;
+      needsResume = false; hidden = false;
+      setVisibility(current => ({ visible: true, epoch: current.epoch + 1 }));
+    };
+    const offline = () => { needsResume = true; };
     const visibilityChanged = () => { if (document.visibilityState === "hidden") hide(); else show(); };
     window.addEventListener("pagehide", hide);
     window.addEventListener("pageshow", show);
     window.addEventListener("online", show);
+    window.addEventListener("offline", offline);
     document.addEventListener("visibilitychange", visibilityChanged);
     return () => {
       unsubscribe(); cache.invalidate();
       window.removeEventListener("pagehide", hide);
       window.removeEventListener("pageshow", show);
       window.removeEventListener("online", show);
+      window.removeEventListener("offline", offline);
       document.removeEventListener("visibilitychange", visibilityChanged);
     };
   }, [cache, refresh]);

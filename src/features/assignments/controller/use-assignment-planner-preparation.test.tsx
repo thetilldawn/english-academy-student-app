@@ -8,7 +8,48 @@ import { useAssignmentPlannerPreparation } from "./use-assignment-planner-prepar
 
 vi.mock("../transport/assignment-workspace-reads", () => ({ loadAssignmentPlannerPreparation: vi.fn() }));
 vi.mock("./assignment-authentication-boundary", () => ({ useAssignmentAuthenticationFailure: () => () => vi.fn() }));
-afterEach(() => { cleanup(); vi.resetAllMocks(); });
+const session = vi.hoisted(() => ({ cache: { identity: "a".repeat(64), blocked: false } }));
+vi.mock("@/features/students/public-client", async original => ({ ...await original<typeof import("@/features/students/public-client")>(), useStudentDirectoryCache: () => session }));
+afterEach(() => { cleanup(); vi.resetAllMocks(); vi.useRealTimers(); session.cache.identity="a".repeat(64); });
+
+it("준비 도중 자료가 바뀌면 늦은 응답을 성공 캐시에 남기지 않는다", async () => {
+  const data: AssignmentPlannerPreparation = { datasets: [], initialUnits: [], initialDatasetId: "", timeTemplates: [], students: [] };
+  let finish!: (value: AssignmentPlannerPreparation) => void;
+  vi.mocked(loadAssignmentPlannerPreparation).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; })).mockResolvedValue(data);
+  const { result } = renderHook(() => useAssignmentPlannerPreparation());
+  const request = { studentIds: ["fake"], selectionMode: "single" as const, initialDatasetId: "", bulkFilterLabels: [] };
+  let pending!: Promise<void>;
+  act(() => { pending = result.current.actions.open(request); });
+  act(() => result.current.actions.invalidate());
+  await act(async () => { finish(data); await pending; });
+  expect(result.current.status).toBe("error");
+  expect(result.current.data).toBeNull();
+  act(() => result.current.actions.close());
+  await act(() => result.current.actions.open(request));
+  expect(loadAssignmentPlannerPreparation).toHaveBeenCalledTimes(2);
+  expect(result.current.status).toBe("ready");
+});
+
+it("같은 인증과 대상은 15초만 재사용하고 재시도·자료변경·세대변경 때 새로 받는다",async()=>{
+  vi.useFakeTimers();
+  const data: AssignmentPlannerPreparation={datasets:[],initialUnits:[],initialDatasetId:"",timeTemplates:[],students:[]};
+  vi.mocked(loadAssignmentPlannerPreparation).mockResolvedValue(data);
+  const {result}=renderHook(()=>useAssignmentPlannerPreparation());
+  const request={studentIds:["fake"],selectionMode:"single" as const,initialDatasetId:"",bulkFilterLabels:[]};
+  await act(()=>result.current.actions.open(request));
+  act(()=>result.current.actions.close());
+  await act(()=>result.current.actions.open(request));
+  expect(loadAssignmentPlannerPreparation).toHaveBeenCalledOnce();
+  await act(()=>result.current.actions.retry());
+  expect(loadAssignmentPlannerPreparation).toHaveBeenCalledTimes(2);
+  act(()=>result.current.actions.invalidate());
+  await act(()=>result.current.actions.open(request));
+  session.cache.identity="b".repeat(64);
+  await act(()=>result.current.actions.open(request));
+  await vi.advanceTimersByTimeAsync(15000);
+  await act(()=>result.current.actions.open(request));
+  expect(loadAssignmentPlannerPreparation).toHaveBeenCalledTimes(5);
+});
 
 it("프로필 저장은 열린 준비 자료의 학생만 바꾸고 배정 자료와 선택 요청을 보존한다", async () => {
   const data: AssignmentPlannerPreparation = {

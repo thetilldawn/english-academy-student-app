@@ -14,7 +14,7 @@ import { StudyBlur } from "../../ui/study-blur";
 import { StudyVisibilityControls } from "../../ui/study-visibility-controls";
 import styles from "../../ui/notebook.module.css";
 
-export function NotebookReader({ initial, initialIdentity, initialFilters = mistakeFiltersSchema.parse({ view: initial.view }) }: { initial: MistakeStudyPage; initialIdentity: string; initialFilters?: MistakeFilters }) {
+export function NotebookReader({ initial, initialIdentity, initialFilters = mistakeFiltersSchema.parse({ view: initial?.view ?? "current" }) }: { initial?: MistakeStudyPage; initialIdentity: string; initialFilters?: MistakeFilters }) {
   const display = useNotebookDisplay();
   const view = useNotebook(initial, initialFilters, { identity: display.identity, initialIdentity });
   const audio = display.audio;
