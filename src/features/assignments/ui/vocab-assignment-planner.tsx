@@ -146,7 +146,9 @@ function VocabAssignmentPlannerSession({
   });
   function receiveCreatedBook(book: CreatedLibraryBook) {
     setComposedDatasets(current => [...current.filter(d => d.id !== book.dataset.id), { ...book.dataset, vocabularyRole: "composition" }]);
-    controller.actions.changeDataset(book.dataset.id);
+    if (controller.planner.datasetId !== book.dataset.id) {
+      controller.actions.changeDataset(book.dataset.id);
+    }
     datasetPicker.actions.rememberSelection(book.dataset.id);
     datasetPicker.actions.close();
     setComposerOpen(false); setComposerStarted(false); setComposerLocked(false); setComposerDirty(false);

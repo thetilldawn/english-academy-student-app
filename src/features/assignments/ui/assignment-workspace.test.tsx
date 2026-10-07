@@ -93,6 +93,105 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
+  it.each([true, false])("템플릿 사용 뒤 같은 자료의 배정 입력을 보존하고 다른 자료는 초기화한다(같은 자료=%s)", async sameDataset => {
+    const original = fetchMock.getMockImplementation()!;
+    const books = datasets.map((dataset, index) => ({
+      ...dataset, title: `가짜 선택 자료 ${index + 1}`, displayName: `가짜 선택 자료 ${index + 1}`,
+      materialKind: "wordbook", rowCount: 40, questionBankKind: "vocabulary_composition_v1",
+      availableQuestionModes: ["book_meaning_choice"], vocabularyRole: "composition", templateKind: "mock_exam",
+    }));
+    const book = books[sameDataset ? 0 : 1]!;
+    const metadata = { title: "가짜 저장 범위", tags: [], school: null, targetGrade: null,
+      schoolYear: null, semester: null, assessment: null, purpose: null };
+    const version = { id: uid(502), number: 1, contentHash: "a".repeat(64), scopeStatus: "confirmed",
+      scopeCount: 2, sourceCount: 40, includedCount: 40, sourceVersionId: null, datasetId: book.id,
+      createdAt: "2026-10-05T00:00:00Z", hasCriteria: false };
+    const template = { id: uid(501), revision: 1, metadata, templateKind: "mock_exam", latestVersion: version };
+    const filters = { search: "", kinds: [], years: [], yearFrom: null, yearTo: null, months: [], types: [], questions: [],
+      sourceGrades: [], dayFrom: null, dayTo: null, lessons: [], schools: [], targetGrades: [], semesters: [], assessments: [], purposes: [] };
+    const recipe = { filters, scopes: [503, 504].map(n => ({ id: uid(n), version: "b".repeat(64) })),
+      excludedOccurrenceKeys: [], scopeStatus: "confirmed" };
+    const quantities = { uniqueWordCount: 40, unknownWordItems: 0, meaningItemCount: 40,
+      unknownMeaningItems: 0, sourceSpecificMeaningItems: 0, questionCounts: null };
+    let materialized = false;
+    let finishRefresh: ((value: Response) => void) | undefined;
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === "/api/admin/wordbook-library/query") {
+        const query = JSON.parse(String(init?.body));
+        if (query.kind === "templates") return Response.json({ kind: query.kind, viewerId: uid(999), items: [template], nextCursor: null });
+        if (query.kind === "detail") return Response.json({ kind: query.kind, viewerId: uid(999), template, version, recipe,
+          criteria: null, automaticTags: [], sourceTags: [], quantities });
+        if (query.kind === "preview") return Response.json({ kind: query.kind, viewerId: uid(999), recipe,
+          contentHash: version.contentHash, sourceCount: 40, includedCount: 40, heldCount: 0, excludedCount: 0,
+          groups: query.selection.criteria.groups.map((group: { id: string }) => ({ id: group.id, scopes: recipe.scopes })),
+          orphanedExclusions: [], difference: { added: 0, removed: 0, scopeAdded: 0, scopeRemoved: 0, orderChanged: false, changed: false },
+          automaticTags: [], suggestedTitle: metadata.title, quantities });
+        throw new Error(`Unexpected local library query: ${query.kind}`);
+      }
+      if (url === "/api/admin/wordbook-library/commands") {
+        expect(JSON.parse(String(init?.body))).toMatchObject({ action: "materialize", templateId: template.id, versionId: version.id });
+        materialized = true;
+        const { vocabularyRole: _role, ...resultDataset } = book;
+        void _role;
+        return Response.json({ template, createdBook: { versionId: version.id, contentHash: version.contentHash, dataset: resultDataset } });
+      }
+      if (url === "/api/admin/assignment-workspace/datasets") {
+        if (materialized) return new Promise<Response>(resolve => { finishRefresh = resolve; });
+        return Response.json({ datasets: books });
+      }
+      if (url === "/api/admin/bulk-assignments/preview") return Response.json({
+        assignableCount: 1, assignmentCount: 1, blockedCount: 0, commonPlanSummary: null,
+        planSignature: "c".repeat(64), rangeLabel: "DAY 01", items: [{ available: true, availableQuestionCount: 20,
+          datasetId: books[0]!.id, datasetLabel: books[0]!.title, defaultSessionCount: 1, error: null, remainingQuestionCount: 13,
+          requiresExtraDateDecision: false, scheduledQuestionCount: 7, selectedQuestionCount: 7, studentId: students[0]!.id,
+          studentName: students[0]!.displayName, sessions: [{ available: true, availableFrom: null, availableUntil: null,
+            cycleIndex: 0, error: null, questionCount: 7, rangeTruncated: false, sessionNumber: 1, sourceSessionNumber: 1,
+            unitId: uid(100), unitIds: [uid(100)], unitLabel: "DAY 01", unitLabels: ["DAY 01"] }] }],
+      });
+      const response = await original(url, init);
+      if (url === "/api/admin/assignment-workspace/preparation") {
+        const body = await response.json();
+        return Response.json({ ...body, preparation: { ...body.preparation, datasets: books, initialDatasetId: books[0]!.id,
+          initialUnits: [0, 1].map(index => ({ id: uid(100 + index), datasetId: books[0]!.id,
+            label: `DAY 0${index + 1}`, displayName: `DAY 0${index + 1}`, entryCount: 20,
+            kind: "day", number: index + 1, sortIndex: index + 1, catalogSortIndex: index + 1,
+            catalogGroup: "high", unitType: "day", academicYear: null, agency: null, examMonth: null, itemRange: null })) } });
+      }
+      if (url.endsWith("/units")) {
+        const body = await response.json(), first = body.units[0];
+        return Response.json({ ...body, units: [first, { ...first, id: uid(101), label: "DAY 02", displayName: "DAY 02", number: 2, sortIndex: 2 }] });
+      }
+      return response;
+    });
+    render(<AssignmentWorkspace initial={{ directory }} />);
+    fireEvent.click(screen.getAllByRole("button", { name: "단어 배정" })[0]!);
+    fireEvent.click(await screen.findByRole("button", { name: "DAY 01" }, { timeout: 5000 }));
+    fireEvent.click(screen.getByRole("button", { name: "단어 수" }));
+    const count = await screen.findByRole("textbox", { name: "회차당 단어 수" });
+    fireEvent.change(count, { target: { value: "7" } });
+    expect(screen.getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /단어장 찾기/ }));
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 찾기·범위로 새로 만들기" }));
+    fireEvent.click(await screen.findByRole("button", { name: "이 단어장 사용" }));
+    const useBook = await screen.findByRole("button", { name: "확인한 범위로 단어장 만들기" });
+    await waitFor(() => expect(useBook).toBeEnabled());
+    fireEvent.click(useBook);
+    await waitFor(() => expect(finishRefresh).toBeDefined());
+    expect(screen.getByRole("region", { name: "단어장과 템플릿" })).toBeVisible();
+    await act(async () => { finishRefresh!(Response.json({ datasets: books })); });
+    await screen.findByRole("button", { name: new RegExp(`${book.title}.*단어장 찾기`) });
+    const selectedUnit = await screen.findByRole("button", { name: "DAY 01" });
+    expect(selectedUnit).toHaveAttribute("aria-pressed", String(sameDataset));
+    expect(screen.getByRole("button", { name: "DAY 02" })).toHaveAttribute("aria-pressed", "false");
+    if (sameDataset) {
+      expect(screen.getByRole("textbox", { name: "회차당 단어 수" })).toHaveValue("7");
+      expect(screen.getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
+    } else {
+      expect(screen.getByRole("textbox", { name: "회차당 단어 수" })).toHaveAttribute("data-active", "false");
+    }
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/admin/wordbook-library/commands")).toHaveLength(1);
+    expect(fetchMock.mock.calls.some(([url]) => url === "/api/admin/bulk-assignments")).toBe(false);
+  }, 15_000);
   it("서버 최초 대기판에도 검색과 탭은 있으며 자료 조회나 빈 목록 안내는 없다", async () => {
     render(<AssignmentWorkspacePending />);
     expect(screen.getByRole("searchbox")).toBeDisabled();

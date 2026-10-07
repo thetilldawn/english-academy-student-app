@@ -238,6 +238,22 @@
       "checkIds": [
         "T4"
       ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "배정 범위를 보존한다는 기존 요구의 누락 보완: 같은 저장판을 다시 사용할 때 작성 중 범위와 수량을 지우지 않는다.",
+      "acceptance": "동일 자료 ID는 범위/직접 문항수/일정을 유지, 다른 자료 ID는 기존 초기화 규칙 유지",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-workspace-planning"
+      ],
+      "checkIds": [
+        "T5"
+      ]
     }
   ],
   "decisions": [
@@ -272,6 +288,14 @@
       "question": "7천 개 연결 경로를 확인하고 학생 기록 없이 검토/운영 읽기를 확인한다.",
       "answer": "필요 범위만 정상 조회, 학생쓰기0, 미재현은 분리 보고",
       "source": "docs/work-orders/APP-20261005-03.md"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "기존 저장판을 다시 사용하는 경우의 상태 연결",
+      "answer": "기존 자료의 ID가 같으면 새 자료로 바꾸는 action을 생략한다. 표시정보 갱신과 창 복귀는 유지하며 ID가 다르면 기존 action을 실행한다. 새 저장층/DB/학생 기록 변경 없음.",
+      "source": "receiveCreatedBook와 기존 ready composition 재사용 경로의 읽기 검토"
     }
   ],
   "impacts": {
@@ -570,10 +594,23 @@
         "answer-leak",
         "cache"
       ]
+    },
+    {
+      "id": "T5",
+      "kind": "component",
+      "target": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "scenario": "실제 배정/템플릿 화면에서 일부 범위와 직접 문항수를 정한 뒤 같은 저장판 사용. 자료 목록 갱신을 지연했다가 완료. 다른 저장판 선택은 별도 분기 대조.",
+      "expected": "동일 자료는 입력 보존, 다른 자료는 이전 범위 제거. 전체수록과 실제 선택 수를 구분하고 배정 저장은 하지 않음.",
+      "topics": [
+        "behavior",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
     }
   ],
   "verification": {
-    "fingerprint": "ea258c429aae9d3cdae2712c8168049e0b5df501e2e697199a4a1edd45503b92",
+    "fingerprint": "7df3ae5f13cd22a7c1fbb4c0f119050a37660c53a74b39e0fc99f6b76d1b0966",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
@@ -2073,7 +2110,7 @@
       },
       {
         "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
-        "sha256": "be64d8856abc1175704c302d67ea55daf28882dd2f8346478696c9e8c79b93b0"
+        "sha256": "f054f48e7fa080c2f2df6f0e4b387967f3e62d758e492815b2976bd2405eb7dd"
       },
       {
         "path": "src/features/assignments/ui/assignment-workspace.tsx",
@@ -2241,7 +2278,7 @@
       },
       {
         "path": "src/features/assignments/ui/vocab-assignment-planner.tsx",
-        "sha256": "7f2f0255db30dab5c39bb18028270307480a048ce75cd154708d5ef748ef62b6"
+        "sha256": "68734da132d18f98e139c5eebcfa61acb90d3f4d4c60532308a8061f98454354"
       },
       {
         "path": "src/features/assignments/ui/vocab-question-fields.test.tsx",
@@ -4596,6 +4633,14 @@
         "ranAt": "2026-10-05T04:10:00.007Z",
         "command": "typecheck; changed-file eslint; feature-map/UI architecture; node .codex-tmp/app10-build-only.mjs --webpack --vocabulary-library --assignment-cache; Vercel ui06 read-release; Supabase read; CUA authenticated assignment/template reads",
         "summary": "[local] 타입/lint/구조·54페이지 빌드 통과, 읽기 전용 독립 검토 반영. 전체 검사나 부하/용량 실험을 반복하지 않음. [production] 운영 앱READY/c379673, SQL20261005035936, 분류985.7ms. 심석고2 실제 편집 화면37범위671개·변경0, 학생 목록 재조회/작성창 복귀 확인. 7천 개 사용자 경로 미재현은 해결로 처리하지 않음. 실제 Alt+Tab 오류 상황 강제 재현은 로컬 회귀검사 근거이며 운영 학생 쓰기0."
+      },
+      {
+        "checkId": "T5",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-10-07T11:14:25.824Z",
+        "command": "vitest run src/features/assignments/ui/assignment-workspace.test.tsx; tsc --noEmit; changed-file eslint; app10-build-only.mjs --webpack --vocabulary-library --assignment-cache",
+        "summary": "동일 자료 재사용 회귀는 수정 전 선택 범위 소실로 실패/다른 자료 초기화 통과, 수정 후 해당 파일33개 통과. 실제 배정/템플릿 컴포넌트와 지연된 가짜 HTTP 응답으로 범위·직접7문항 보존 및 다른ID 초기화 확인. 타입/lint/격리 빌드와 읽기 전용 독립 검토 통과. 실제 관리자 저장이나 새판 DB 생성 검사는 아님. 기존 T1~T4 근거는 이전 실행이며 변경 없는 SQL/용량 검사를 반복하지 않음."
       }
     ]
   }
