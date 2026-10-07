@@ -1,0 +1,179 @@
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Cloning github.com/thetilldawn/english-academy-student-app (Branch: codex/vocabulary-templates-20260920, Commit: 76e570b)
+Cloning completed: 2.848s
+Found .vercelignore
+Removed 82 ignored files defined in .vercelignore
+  /.env.example
+  /.git/config
+  /.git/description
+  /.git/FETCH_HEAD
+  /.git/HEAD
+  /.git/hooks/applypatch-msg.sample
+  /.git/hooks/commit-msg.sample
+  /.git/hooks/fsmonitor-watchman.sample
+  /.git/hooks/post-update.sample
+  /.git/hooks/pre-applypatch.sample
+Restored build cache from previous deployment (Cy3K7LVaPThmffCEotqAMLu2KqbX)
+Running "vercel build"
+Vercel CLI 62.1.0
+Installing dependencies...
+
+up to date in 3s
+
+172 packages are looking for funding
+  run `npm fund` for details
+npm warn install-scripts 2 packages have install scripts not yet covered by allowScripts:
+npm warn install-scripts   esbuild@0.28.1 (postinstall: node install.js)
+npm warn install-scripts   unrs-resolver@1.12.2 (postinstall: node postinstall.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+Detected Next.js version: 16.2.12
+Running "npm run build"
+
+> english-academy-student-app@0.1.0 prebuild
+> node scripts/verify-preview-environment.mjs && node scripts/check-feature-map.mjs --verify && node scripts/check-work-records.mjs --phase format
+
+기능 지도 정상: 기능 12, page 34, Route Handler 69, Next.js 특수 진입점 42, Next.js 루트 설정 1, App Router 보조 파일 48, server service 45, 공유 시험 계산 18, 공유 배정 계산 4, lib 루트 파일 11, lib 기반 디렉터리 9, src 공용 디렉터리 3, 관리자 계약 35, 기존 component 26, 공용 UI 44, 구조 보호선 44, 공통 server 0, 기능 server 103, 관리 migration 115, 상세 흐름 19, 기능 간 직접 import 114, lib→기능 import 14, 기능→lib 중계 8, 기능→lib→기능 간접 import 15
+작업 기록 format 검사 통과 (123건). 자동검사는 누락·불일치만 확인합니다.
+
+> english-academy-student-app@0.1.0 build
+> next build --webpack
+
+  Applying modifyConfig from Vercel
+▲ Next.js 16.2.12 (webpack)
+- Experiments (use with caution):
+  ✓ typedEnv
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 20.3s
+  Running TypeScript ...
+  Finished TypeScript in 47s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/54) ...
+  Generating static pages using 1 worker (13/54) 
+  Generating static pages using 1 worker (26/54) 
+  Generating static pages using 1 worker (40/54) 
+✓ Generating static pages using 1 worker (54/54) in 958ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+  Running onBuildComplete from Vercel
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/(.)results/[entryKey]
+├ ƒ /admin/(.)school-schedules/edit
+├ ƒ /admin/(.)students/[studentId]
+├ ƒ /admin/[...catchAll]
+├ ƒ /admin/assignments
+├ ○ /admin/login
+├ ƒ /admin/results
+├ ƒ /admin/results/[id]
+├ ƒ /admin/school-schedules/edit
+├ ƒ /admin/students
+├ ƒ /admin/students/[studentId]
+├ ƒ /api/admin/assignment-capacity
+├ ƒ /api/admin/assignment-workspace/datasets
+├ ƒ /api/admin/assignment-workspace/datasets/[datasetId]/units
+├ ƒ /api/admin/assignment-workspace/preparation
+├ ƒ /api/admin/assignment-workspace/previous-exam
+├ ƒ /api/admin/assignment-workspace/selection
+├ ƒ /api/admin/assignments
+├ ƒ /api/admin/assignments/[assignmentId]
+├ ƒ /api/admin/assignments/[assignmentId]/students/[studentId]
+├ ƒ /api/admin/assignments/[assignmentId]/students/[studentId]/edit-context
+├ ƒ /api/admin/attempts/[id]
+├ ƒ /api/admin/bulk-assignments
+├ ƒ /api/admin/bulk-assignments/preview
+├ ƒ /api/admin/exact-review-assignments
+├ ƒ /api/admin/exact-review-assignments/preview
+├ ƒ /api/admin/history
+├ ƒ /api/admin/mixed-assignments
+├ ƒ /api/admin/mixed-assignments/preview
+├ ƒ /api/admin/notebook-assignments
+├ ƒ /api/admin/notebook-assignments/preview
+├ ƒ /api/admin/notifications
+├ ƒ /api/admin/review-assignments
+├ ƒ /api/admin/schools/search
+├ ƒ /api/admin/session
+├ ƒ /api/admin/students
+├ ƒ /api/admin/students/[id]
+├ ƒ /api/admin/students/[id]/code
+├ ƒ /api/admin/students/[id]/code/rotate
+├ ƒ /api/admin/students/[id]/direct-review-summaries
+├ ƒ /api/admin/students/[id]/history
+├ ƒ /api/admin/students/[id]/review-assignment-drafts
+├ ƒ /api/admin/students/[id]/review-assignment-drafts/[draftId]
+├ ƒ /api/admin/students/[id]/status
+├ ƒ /api/admin/students/[id]/vocab
+├ ƒ /api/admin/students/[id]/vocab-assignment-queues
+├ ƒ /api/admin/students/[id]/worksheet-requests
+├ ƒ /api/admin/students/[id]/wrong-words
+├ ƒ /api/admin/students/[id]/wrong-words/episodes
+├ ƒ /api/admin/students/directory
+├ ƒ /api/admin/vocab-assignment-queues/[seriesId]
+├ ƒ /api/admin/vocab-time-templates
+├ ƒ /api/admin/wordbook-compositions
+├ ƒ /api/admin/wordbook-library
+├ ƒ /api/admin/wordbook-library/commands
+├ ƒ /api/admin/wordbook-library/query
+├ ƒ /api/admin/worksheet-requests/[id]/export
+├ ƒ /api/preview-identity
+├ ƒ /api/student/assignments/[id]/attempts
+├ ƒ /api/student/attempts/[id]
+├ ƒ /api/student/attempts/[id]/answers
+├ ƒ /api/student/attempts/[id]/expire
+├ ƒ /api/student/attempts/[id]/feedback
+├ ƒ /api/student/attempts/[id]/ready
+├ ƒ /api/student/attempts/[id]/retry
+├ ƒ /api/student/attempts/[id]/timeouts
+├ ƒ /api/student/dashboard/completed
+├ ƒ /api/student/dashboard/sections
+├ ƒ /api/student/local-quiz
+├ ƒ /api/student/local-quiz-protocol/[id]
+├ ƒ /api/student/notebook
+├ ƒ /api/student/notebook/[id]
+├ ƒ /api/student/notebook/episodes
+├ ƒ /api/student/notifications
+├ ƒ /api/student/practice
+├ ƒ /api/student/practice/[id]
+├ ƒ /api/student/practice/[id]/[command]
+├ ƒ /api/student/practice/preview
+├ ƒ /api/student/session
+├ ƒ /api/student/wrong-words
+├ ○ /code
+├ ○ /icon.svg
+├ ○ /quiz-offline
+├ ƒ /student
+├ ƒ /student/(...)quiz-offline
+├ ƒ /student/(.)assignments/[id]/words
+├ ƒ /student/[...catchAll]
+├ ƒ /student/assignments/[id]/words
+├ ƒ /student/attempt/[id]
+├ ƒ /student/practice
+├ ƒ /student/practice/[id]
+├ ƒ /student/practice/[id]/result
+├ ƒ /student/result/[id]
+├ ƒ /student/wordbook
+├ ƒ /student/wordbook/(.)[id]
+├ ƒ /student/wordbook/[...catchAll]
+└ ƒ /student/wordbook/[id]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> english-academy-student-app@0.1.0 postbuild
+> node scripts/build-quiz-offline-assets.mjs
+
+Offline quiz: 25 verified public assets, cf684b6dba40
+Build Completed in /vercel/output [2m]
+Deploying outputs...
+Deployment completed
+Creating build cache...
+Created build cache: 26s
+Uploading build cache [439.45 MB]
+Build cache uploaded: 11.252s
