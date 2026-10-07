@@ -4639,8 +4639,8 @@
         "result": "pass",
         "environment": "local",
         "ranAt": "2026-10-07T11:14:25.824Z",
-        "command": "vitest run src/features/assignments/ui/assignment-workspace.test.tsx; tsc --noEmit; changed-file eslint; app10-build-only.mjs --webpack --vocabulary-library --assignment-cache",
-        "summary": "동일 자료 재사용 회귀는 수정 전 선택 범위 소실로 실패/다른 자료 초기화 통과, 수정 후 해당 파일33개 통과. 실제 배정/템플릿 컴포넌트와 지연된 가짜 HTTP 응답으로 범위·직접7문항 보존 및 다른ID 초기화 확인. 타입/lint/격리 빌드와 읽기 전용 독립 검토 통과. 실제 관리자 저장이나 새판 DB 생성 검사는 아님. 기존 T1~T4 근거는 이전 실행이며 변경 없는 SQL/용량 검사를 반복하지 않음."
+        "command": "vitest run src/features/assignments/ui/assignment-workspace.test.tsx; tsc --noEmit; changed-file eslint; app10-build-only.mjs --webpack --vocabulary-library --assignment-cache; Vercel ui07 release readback; CUA preview login",
+        "summary": "동일 자료 재사용 회귀는 수정 전 선택 범위 소실로 실패/다른 자료 초기화 통과, 수정 후 해당 파일33개 통과. 실제 배정/템플릿 컴포넌트와 지연된 가짜 HTTP 응답으로 범위·직접7문항 보존 및 다른ID 초기화 확인. 타입/lint/격리 빌드와 읽기 전용 독립 검토 통과. 실제 관리자 저장이나 새판 DB 생성 검사는 아님. 기존 T1~T4 근거는 이전 실행이며 변경 없는 SQL/용량 검사를 반복하지 않음. [release] 구현f72984d10038fef477a52c164fba7a8a5775e90e, 검토dpl_81tFyChCU2PYcRKqb7oBSPp5ZVrn READY → 운영dpl_Cy3K7LVaPThmffCEotqAMLu2KqbX READY. 정식 주소의 현재 배포 ID와 구현 SHA 일치, 검토/운영 DB 분리 확인. 검토 로그인 화면은 실제 브라우저에서 확인했다. 동일 저장판 재사용은 가짜 HTTP 응답을 사용하는 실제 컴포넌트 검사로 검증했으며 운영의 저장/새판 발급/학생 배정은 실행하지 않았다."
       }
     ]
   }
