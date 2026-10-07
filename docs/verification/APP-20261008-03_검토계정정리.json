@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-07T16:41:10.240Z",
+  "fakeAdminId": "b5301b59-a734-4b6e-a289-ae477b3914d9",
+  "adminInactive": true,
+  "passwordRotated": true,
+  "datasetRestored": {
+    "is_active": false,
+    "is_assignable": false
+  },
+  "productionWrites": 0
+}

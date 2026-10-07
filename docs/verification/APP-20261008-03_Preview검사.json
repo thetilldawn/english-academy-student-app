@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-07T16:39:22.048Z",
+  "sha": "76e570b635badd86ccda4dca7905c773a771f818",
+  "deploymentId": "dpl_BeNgkFaRgoku8VaNQMDLUcRmh8db",
+  "origin": "https://english-academy-student-i3agc3ggn-thetilldawn-3859s-projects.vercel.app",
+  "productionWrites": 0,
+  "keyRevoked": true,
+  "errors": [],
+  "identity": {
+    "deploymentHost": "english-academy-student-i3agc3ggn-thetilldawn-3859s-projects.vercel.app",
+    "gitCommitRef": "codex/vocabulary-templates-20260920",
+    "gitCommitSha": "76e570b635badd86ccda4dca7905c773a771f818",
+    "supabaseProjectRef": "wojxpruvbjzbhrpmsbuy",
+    "vercelEnvironment": "preview"
+  },
+  "exitCode": 0
+}

@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-07T16:47:33.735Z",
+  "origin": "https://english-academy-student-app.vercel.app",
+  "checks": [
+    {
+      "path": "/quiz-offline",
+      "status": 200,
+      "cacheControl": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/quiz-offline-sw.js",
+      "status": 200,
+      "cacheControl": "no-store, max-age=0"
+    },
+    {
+      "path": "/api/student/notebook",
+      "status": 401,
+      "cacheControl": "private, no-store"
+    },
+    {
+      "path": "/api/admin/wordbook-library",
+      "status": 401,
+      "cacheControl": "private, no-store"
+    }
+  ],
+  "offlineDocumentMatchesWorker": true,
+  "workerBuild": "cf684b6dba40f08d3022e742b9977176230899c69e6dcbff1e59e2e403ddc7f0",
+  "publicAssetCount": 25,
+  "productionStudentWrites": 0
+}

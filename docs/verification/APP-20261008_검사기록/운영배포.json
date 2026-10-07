@@ -1,0 +1,1 @@
+{"canonical":{"id":"dpl_8StMbpuErk7GqpNqMuaRf2cJCquG","sha":"76e570b635badd86ccda4dca7905c773a771f818","state":"READY","target":"production"},"publicDatabaseEnvironments":[{"value":"https://xdxhswjgksukjmpbzqgz.supabase.co","target":["production"],"branch":null},{"value":"https://wojxpruvbjzbhrpmsbuy.supabase.co","target":["preview"],"branch":null}]}

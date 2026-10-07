@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-10-07T16:45:02.920Z",
+  "scope": "함수·제약·참조 해석 수정. 기존 행 삭제/일괄 이전 없음.",
+  "before": [
+    {
+      "name": "public.vocab_entries",
+      "rows": 30073,
+      "hash": "cb1ea7f9f2faaacb9401c0a31324f4e9"
+    },
+    {
+      "name": "private.vocabulary_composition_items",
+      "rows": 15064,
+      "hash": "e9fed34a5608e61691abf9ca2146038b"
+    },
+    {
+      "name": "public.quiz_attempts",
+      "rows": 92,
+      "hash": "16fb594e473a218f4f11569255d6c212"
+    },
+    {
+      "name": "public.assignments",
+      "rows": 190,
+      "hash": "f3c9d5d38ff9d1f70613881360c49ab7"
+    }
+  ],
+  "after": [
+    {
+      "name": "public.vocab_entries",
+      "rows": 30073,
+      "hash": "cb1ea7f9f2faaacb9401c0a31324f4e9"
+    },
+    {
+      "name": "private.vocabulary_composition_items",
+      "rows": 15064,
+      "hash": "e9fed34a5608e61691abf9ca2146038b"
+    },
+    {
+      "name": "public.quiz_attempts",
+      "rows": 92,
+      "hash": "16fb594e473a218f4f11569255d6c212"
+    },
+    {
+      "name": "public.assignments",
+      "rows": 190,
+      "hash": "f3c9d5d38ff9d1f70613881360c49ab7"
+    }
+  ],
+  "identical": true,
+  "previewVersions": [
+    "20261007162013",
+    "20261007162054"
+  ],
+  "productionVersions": [
+    {
+      "version": "20261007164215",
+      "name": "deduplicate_notebook_read_work"
+    },
+    {
+      "version": "20261007164154",
+      "name": "preserve_source_keys_and_retire_body_copies"
+    }
+  ]
+}
