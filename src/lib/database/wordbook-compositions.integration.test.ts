@@ -176,6 +176,8 @@ async function createFinalSchemaDatabase() {
     $$;
   `);
   for (const migrationPath of migrationPaths) {
+    // Construct historical fixtures before the retired endpoint is closed.
+    if (path.basename(migrationPath) === "20261007151833_preserve_source_keys_and_retire_body_copies.sql") continue;
     const migration = fs
       .readFileSync(migrationPath, "utf8")
       .replace("create extension if not exists pg_cron;", "");
@@ -335,5 +337,24 @@ describe.sequential("saved mock wordbooks", () => {
     await expect(db.query("select public.list_mock_wordbook_scopes_v1()")).rejects.toThrow('admin_required');
     await expect(db.query("select public.create_mock_wordbook_composition_v1($1::jsonb)",[JSON.stringify(request())])).rejects.toThrow('admin_required');
     await admin();
+  });
+  it("retires new copies while retaining matching receipts, source keys and existing assignments",async()=>{
+    await db.exec('reset role');
+    const snapshot = () => db.query(`select jsonb_build_object(
+      'entries',(select jsonb_agg(to_jsonb(e) order by id) from public.vocab_entries e),
+      'assignments',(select jsonb_agg(to_jsonb(a) order by id) from public.assignments a),
+      'questions',(select jsonb_agg(to_jsonb(q) order by id) from public.assignment_questions q),
+      'receipts',(select jsonb_agg(to_jsonb(c) order by dataset_id) from word_index.mock_wordbook_composition c)) value`);
+    const before=(await snapshot()).rows;
+    await db.exec(fs.readFileSync(path.join(migrationsDirectory,'20261007151833_preserve_source_keys_and_retire_body_copies.sql'),'utf8'));
+    await admin();
+    const retry=await db.query<{result:unknown}>("select public.create_mock_wordbook_composition_v1($1::jsonb) result",[JSON.stringify(request())]);
+    expect(retry.rows[0]!.result).toEqual(saved);
+    await expect(db.query("select public.create_mock_wordbook_composition_v1($1::jsonb)",[JSON.stringify({...request(),requestId:ids.student})])).rejects.toThrow('legacy_composition_creation_retired');
+    await expect(db.query("select public.create_mock_wordbook_composition_v1($1::jsonb)",[JSON.stringify({...request(),title:'다른 내용'})])).rejects.toThrow('composition_request_conflict');
+    await db.exec("select set_config('request.jwt.claim.sub','',false)");
+    await expect(db.query("select public.create_mock_wordbook_composition_v1($1::jsonb)",[JSON.stringify(request())])).rejects.toThrow('admin_required');
+    await db.exec('reset role');
+    expect((await snapshot()).rows).toEqual(before);
   });
 });

@@ -25,11 +25,14 @@ const selectedForRow = (n: number) => ({ ...resource, lexicalPos: "noun", defini
     audioUrl: `https://media.merriam-webster.com/audio/prons/en/us/mp3/a/fake${n}.mp3`, available: true } });
 describe.sequential("vocabulary compositions: source resources, questions, and real delivery", () => {
   let db: PGlite, originalDataset: string, template: LibraryTemplate, prepared: CompositionPreparation, schoolPrepared: CompositionPreparation, schoolAssignment: string;
+  let interrupted: { versionId: string; contentHash: string; questions: ReturnType<typeof planCompositionQuestions>; before: unknown; plan: unknown };
   const scalar = async <T>(sql: string, args: unknown[] = []) => (await db.query<{ value: T }>(sql, args)).rows[0]!.value;
   const admin = () => db.exec(`reset role; set role authenticated; select set_config('request.jwt.claim.sub','${adminId}',false); select set_config('request.jwt.claim.role','authenticated',false);`);
   const service = () => db.exec("reset role; set role service_role; select set_config('request.jwt.claim.role','service_role',false);");
   beforeAll(async () => {
-    db = await createFinalSchemaDatabase();
+    db = await createFinalSchemaDatabase({ beforeMigration: async (database, name) => {
+    if (name !== "20261007151833_preserve_source_keys_and_retire_body_copies.sql") return;
+    db = database;
     await db.exec(`insert into auth.users(id) values('${adminId}'); insert into public.admin_profiles(user_id,display_name) values('${adminId}','가짜 관리자');
       insert into public.students(id,display_name,created_by,school_name,grade_label) values('${studentId}','가짜 학생','${adminId}','가짜 고등학교','고2');
       select set_config('request.jwt.claims','{"ref":"wojxpruvbjzbhrpmsbuy"}',false);`);
@@ -60,8 +63,34 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     const result = libraryCommandResultSchema.parse(await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({ action: "create", requestId: randomUUID(),
       metadata: { title: "가짜 부분 범위 조합", tags: [], school: null, targetGrade: "g11", schoolYear: 2026, semester: null, assessment: null, purpose: null }, recipe })]));
     template = result.template;
+    const legacy = libraryCommandResultSchema.parse(await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({ action: "copy", requestId: randomUUID(), sourceVersionId: template.versions[0]!.id, metadata: template.metadata })])).template;
+    const version = legacy.versions[0]!;
+    const oldPrepared = compositionPreparationSchema.parse(await scalar("select public.prepare_vocabulary_template_book_v1($1::jsonb) value", [JSON.stringify({ action: "materialize", requestId: randomUUID(), templateId: legacy.id, versionId: version.id, contentHash: version.contentHash })]));
+    const questions = planCompositionQuestions(oldPrepared).slice(0, 6);
+    await db.exec("reset role");
+    await db.query("select private.validate_vocabulary_composition_question_plan_v1($1,$2::jsonb)", [version.id, JSON.stringify(questions)]);
+    await db.query("insert into private.vocabulary_composition_question_plans(version_id,content_sha256,plan_sha256,payload,total_count,processed_count) values($1,$2,private.reviewed_exam_sha256_v1($3::jsonb),$3::jsonb,6,3)", [version.id, version.contentHash, JSON.stringify(questions)]);
+    await db.query("select private.insert_vocabulary_composition_question_batch_v1($1,$2::jsonb)", [version.id, JSON.stringify(questions.slice(0, 3))]);
+    interrupted = { versionId: version.id, contentHash: version.contentHash, questions,
+      before: await scalar("select jsonb_agg(to_jsonb(i) order by item_id) value from private.vocabulary_composition_items i where version_id=$1", [version.id]),
+      plan: await scalar("select jsonb_build_array(payload,plan_sha256) value from private.vocabulary_composition_question_plans where version_id=$1", [version.id]) };
+    }});
+    await admin();
   }, 60_000);
   afterAll(async () => { await db?.close(); });
+  it("finishes an interrupted full-body plan without rewriting previously saved items", async () => {
+    await service();
+    const advance = () => scalar<{ state: string }>("select public.advance_vocabulary_composition_questions_v1($1,$2,null) value", [interrupted.versionId, interrupted.contentHash]);
+    expect(await advance()).toMatchObject({ stage: "questions", done: 6 });
+    expect(await advance()).toMatchObject({ state: "ready" });
+    await db.exec("reset role");
+    expect(await scalar("select jsonb_agg(to_jsonb(i) order by item_id) value from private.vocabulary_composition_items i where version_id=$1 and prompt is not null", [interrupted.versionId])).toEqual(interrupted.before);
+    expect(await scalar("select count(*)::int value from private.vocabulary_composition_items where version_id=$1 and prompt is null and choice_texts is null and pronunciation_snapshot is null", [interrupted.versionId])).toBe(3);
+    expect(await scalar("select jsonb_build_array(payload,plan_sha256) value from private.vocabulary_composition_question_plans where version_id=$1", [interrupted.versionId])).toEqual(interrupted.plan);
+    const contents = await scalar<Array<{ vocabEntryId: number; direction: string; prompt: string; choices: string[] }>>("select jsonb_agg(jsonb_build_object('vocabEntryId',vocab_entry_id,'direction',direction,'prompt',prompt,'choices',choice_texts)) value from private.vocabulary_composition_item_contents_v1 where version_id=$1", [interrupted.versionId]);
+    for (const q of interrupted.questions) expect(contents).toContainEqual({ vocabEntryId: q.vocabEntryId, direction: q.direction, prompt: q.prompt, choices: q.choices });
+    await admin();
+  });
   it("materializes consecutive disjoint units while keeping overlap membership and source order", async () => {
     await db.exec("reset role");
     const originalRows = await scalar("select jsonb_agg(to_jsonb(e) order by id) value from public.vocab_entries e");
@@ -111,9 +140,11 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     expect(prepared.state).toBe("ready");
     expect(await scalar("select public.finalize_vocabulary_composition_v1($1,$2,'[]') value", [v.id, v.contentHash])).toEqual(prepared);
     await admin(); const catalog = libraryCatalogSchema.parse(await scalar("select public.list_vocabulary_library_v1() value"));
-    expect(catalog.templates[0]!.versions[0]!.datasetId).toBe(prepared.datasetId);
+    expect(catalog.templates.find(t => t.id === template.id)!.versions[0]!.datasetId).toBe(prepared.datasetId);
     await db.exec("reset role");
     expect(await scalar("select count(*)::int value from private.vocabulary_composition_items where version_id=$1", [v.id])).toBe(12);
+    expect(await scalar("select bool_and(prompt is null and choice_texts is null and pronunciation_snapshot is null and source_proof ? 'bodyRef') value from private.vocabulary_composition_items where version_id=$1", [v.id])).toBe(true);
+    expect(await scalar("select bool_and(prompt is not null and cardinality(choice_texts)=4 and pronunciation_snapshot is not null) value from private.vocabulary_composition_item_contents_v1 where version_id=$1", [v.id])).toBe(true);
     expect(await scalar("select count(*)::int value from private.vocabulary_composition_entries where version_id=$1", [prepared.versionId])).toBe(6);
     await expect(db.query("update private.vocabulary_composition_entries set entry_sha256=repeat('a',64) where version_id=$1", [prepared.versionId])).rejects.toThrow("immutable");
     await expect(db.query("update private.vocabulary_composition_items set prompt='변경' where version_id=$1", [v.id])).rejects.toThrow("immutable");
@@ -431,12 +462,13 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     await service(); await db.query("select public.finalize_vocabulary_composition_v1($1,$2,'[]')", [version.id, version.contentHash]); await db.exec("reset role");
     const items = (await db.query<{ preserved: boolean; outside: boolean; pronunciation_snapshot: { choices: unknown[] } }>(`select i.prompt=o.prompt and i.choice_texts=o.choice_texts and i.correct_choice_index=o.correct_choice_index preserved,
       exists(select 1 from unnest(i.choice_vocab_entry_ids)x where x not in(select vocab_entry_id from private.vocabulary_composition_entries where version_id=$1)) outside,i.pronunciation_snapshot
-      from private.vocabulary_composition_items i join private.reviewed_exam_items o on o.release_id=i.source_release_id and o.item_id=i.source_item_id where i.version_id=$1`, [version.id])).rows;
+      from private.vocabulary_composition_item_contents_v1 i join private.reviewed_exam_items o on o.release_id=i.source_release_id and o.item_id=i.source_item_id where i.version_id=$1`, [version.id])).rows;
+    expect(await scalar("select bool_and(prompt is null and choice_texts is null and pronunciation_snapshot is null and not(source_proof ? 'originalItem')) value from private.vocabulary_composition_items where version_id=$1", [version.id])).toBe(true);
     expect(items).toHaveLength(16); expect(items.every(i => i.preserved && i.pronunciation_snapshot.choices.length === 4)).toBe(true); expect(items.some(i => i.outside)).toBe(true);
     const expectedVoices = new Map(bundle.scopes.flatMap(s => s.rows.map(r => [r.sourceRow, r.resources.selected.pronunciation] as const)));
     const fullVoices = (await db.query<{ pronunciation_snapshot: { target: unknown; choices: unknown[] }; target_row: number; choice_rows: number[] }>(`select i.pronunciation_snapshot,te.source_row target_row,
       (select array_agg(ce.source_row order by x.n) from unnest(o.choice_vocab_entry_ids) with ordinality x(id,n) join public.vocab_entries ce on ce.id=x.id) choice_rows
-      from private.vocabulary_composition_items i join private.reviewed_exam_items o on o.release_id=i.source_release_id and o.item_id=i.source_item_id
+      from private.vocabulary_composition_item_contents_v1 i join private.reviewed_exam_items o on o.release_id=i.source_release_id and o.item_id=i.source_item_id
       join public.vocab_entries te on te.id=o.vocab_entry_id where i.version_id=$1`, [version.id])).rows;
     for (const item of fullVoices) {
       expect(item.pronunciation_snapshot.target).toEqual(expectedVoices.get(item.target_row));

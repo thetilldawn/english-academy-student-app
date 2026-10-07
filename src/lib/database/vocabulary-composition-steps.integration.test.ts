@@ -102,8 +102,11 @@ describe.sequential("bounded composition commits and publication", () => {
     await owner(); expect(await counts()).toMatchObject({ rows: 501, items: 501, plans: 1, contexts: 0, status: "ready", assignable: true });
     expect(await counts()).toMatchObject({ rows: 501, copies: 0 });
     expect(await scalar("select bool_and(vocab_entry_id=source_entry_id and resources#>>'{selected,schemaVersion}'='vocabulary-source-key-v3') value from private.vocabulary_composition_entries where version_id=$1", [command.versionId])).toBe(true);
-    const stored = await scalar("select jsonb_agg(jsonb_build_object('vocabEntryId',vocab_entry_id,'direction',direction,'prompt',prompt,'choices',choice_texts,'choiceVocabEntryIds',choice_vocab_entry_ids,'correctChoiceIndex',correct_choice_index) order by vocab_entry_id) value from private.vocabulary_composition_items where version_id=$1", [command.versionId]);
-    expect(stored).toEqual([...questions].sort((a, b) => a.vocabEntryId - b.vocabEntryId));
+    expect(await scalar("select bool_and(prompt is null and choice_texts is null and pronunciation_snapshot is null and source_proof ? 'bodyRef') value from private.vocabulary_composition_items where version_id=$1", [command.versionId])).toBe(true);
+    expect(await scalar("select bool_and(not(q ? 'prompt') and not(q ? 'choices')) value from private.vocabulary_composition_question_plans p cross join lateral jsonb_array_elements(p.payload) q where version_id=$1", [command.versionId])).toBe(true);
+    const boundaryIds = [questions[0]!.vocabEntryId, questions[499]!.vocabEntryId, questions[500]!.vocabEntryId];
+    const stored = await scalar("select jsonb_agg(jsonb_build_object('vocabEntryId',vocab_entry_id,'direction',direction,'prompt',prompt,'choices',choice_texts,'choiceVocabEntryIds',choice_vocab_entry_ids,'correctChoiceIndex',correct_choice_index) order by vocab_entry_id) value from private.vocabulary_composition_item_contents_v1 where version_id=$1 and vocab_entry_id=any($2::bigint[])", [command.versionId, boundaryIds]);
+    expect(stored).toEqual(questions.filter(q => boundaryIds.includes(q.vocabEntryId)).sort((a, b) => a.vocabEntryId - b.vocabEntryId));
     await admin(); expect(await advance()).toMatchObject({ state: "ready" });
   });
   it("does not expose private cursors or allow context spoofing from any application role", async () => {

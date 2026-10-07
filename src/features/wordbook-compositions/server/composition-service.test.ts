@@ -19,7 +19,7 @@ describe('composition server boundary',()=>{
     await expect(createComposition({...request,words:['unreviewed']})).rejects.toMatchObject({status:422});
     mocks.rpc.mockResolvedValue({data:{...created,title:'wrong'},error:null});await expect(createComposition(request)).rejects.toMatchObject({status:503});
   });
-  it.each([['42501',403],['40001',409],['22023',422],['XX000',503]])('maps %s to safe status %s',async(code,status)=>{
+  it.each([['42501',403],['40001',409],['PT410',410],['22023',422],['XX000',503]])('maps %s to safe status %s',async(code,status)=>{
     mocks.rpc.mockResolvedValue({error:{code,message:'private SQL content'},data:null});
     const response=await POST(new Request('http://localhost/api/admin/wordbook-compositions',{method:'POST',body:JSON.stringify(request)}));
     expect(response.status).toBe(status);expect(response.headers.get('cache-control')).toBe('private, no-store');expect(await response.text()).not.toContain('private SQL');

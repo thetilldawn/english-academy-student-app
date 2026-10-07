@@ -1,0 +1,504 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261008-01",
+  "title": "기존 사전 키 참조의 남은 복사 경로 제거",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261008-01.md",
+  "baseline": "e229ff45397da867d4b72d2470ebaa82f1ac2201",
+  "owners": [
+    "wordbook-compositions",
+    "database-contract"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "public",
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/features/wordbook-compositions/public-ui.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-composer.tsx",
+      "state": "removed",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-composer.test.tsx",
+      "state": "removed",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
+      "state": "removed",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/client/transport/composition-transport.ts",
+      "state": "removed",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/commands/create-composition.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/composition-service.test.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/wordbook-compositions/route.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20261007151833_preserve_source_keys_and_retire_body_copies.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/lib/database/vocabulary-composition-questions.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "mock-wordbook-compose",
+        "student-wrong-word-read",
+        "student-word-practice",
+        "assignment-notebook-create"
+      ]
+    },
+    {
+      "path": "src/lib/database/wordbook-compositions.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/commands/materialize-composition.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/use-cases/composition-question-plan.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/lib/database/vocabulary-composition-steps.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/lib/database/composition-question-direct-insert.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "구형 신규 단어 복사를 차단하고 기존 접수 결과를 보존한다.",
+      "acceptance": "관리자·요청검증 유지, 신규복사0, 기존 재접수 동일",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "선택과 문제 준비의 신규 본문 저장을 기존 키 참조로 고친다.",
+      "acceptance": "질문·보기·발음 본문 신규저장0, 기존 모든 배정/준비/응시 읽기 보존",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "관련 실제 흐름과 데이터 보존을 확인한다.",
+      "acceptance": "가짜 선택/배정/준비/채점 정상, 실제 학생 시험쓰기0",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions",
+        "database-contract"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "구형 신규 단어 복사를 차단하고 기존 접수 결과를 보존한다.",
+      "answer": "관리자·요청검증 유지, 신규복사0, 기존 재접수 동일",
+      "source": "2026-10-08 사용자 ㄱㄱ와 전체 수리 지시; docs/work-orders/APP-20261008-01.md"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "선택과 문제 준비의 신규 본문 저장을 기존 키 참조로 고친다.",
+      "answer": "질문·보기·발음 본문 신규저장0, 기존 모든 배정/준비/응시 읽기 보존",
+      "source": "2026-10-08 사용자 ㄱㄱ와 전체 수리 지시; docs/work-orders/APP-20261008-01.md"
+    },
+    {
+      "id": "D3",
+      "owner": "user",
+      "state": "resolved",
+      "question": "관련 실제 흐름과 데이터 보존을 확인한다.",
+      "answer": "가짜 선택/배정/준비/채점 정상, 실제 학생 시험쓰기0",
+      "source": "2026-10-08 사용자 ㄱㄱ와 전체 수리 지시; docs/work-orders/APP-20261008-01.md"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "api": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "기존 범위 키→선택의 원키/보기순서 저장→기존 원자료에서 준비/배정/과거 읽기",
+    "reuse": "source-keys-v3와 기존 불변 원단어/뜻/원문항 키, 현재 판독기",
+    "cache": "공용48시간/준비24시간/미접수답 보존, 새 공유캐시 없음",
+    "compatibility": "구형 본문행과 모든 기존 배정/준비/진행/완료 참조·완료 영수증 유지",
+    "rollback": "신규키형 읽기 보존 후 쓰기만 중지. 기존행 삭제/일괄이전 없음"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "initial-loading 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "refreshing 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "unselected 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "empty 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "validation 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "load-error 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "save-error 상태",
+      "message": "이전 방식의 단어장 생성은 종료되었습니다. 현재 범위 선택 화면을 이용해 주세요.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "auth-error 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "not-found 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "unexpected-error 상태",
+      "message": "현재 범위 선택 화면의 기존 상태 안내를 유지합니다.",
+      "behavior": "구형 신규 요청만 거절하고 현재 선택·기존 접수 결과·입력을 보존합니다.",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/app/api/admin/wordbook-compositions/route.ts",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "APP-20261008-01",
+      "reference": "docs/work-orders/APP-20261008-01.md",
+      "reason": "사용자 승인된 기존 사전키 원칙과 신규 복사 제거, 기존 시험 보존"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/wordbook-compositions.integration.test.ts",
+      "scenario": "구형 신규 단어 복사를 차단하고 기존 접수 결과를 보존한다.",
+      "expected": "관리자·요청검증 유지, 신규복사0, 기존 재접수 동일",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/vocabulary-composition-questions.integration.test.ts",
+      "scenario": "선택과 문제 준비의 신규 본문 저장을 기존 키 참조로 고친다.",
+      "expected": "질문·보기·발음 본문 신규저장0, 기존 모든 배정/준비/응시 읽기 보존",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "review",
+      "target": "docs/work-orders/APP-20261008-01.md",
+      "scenario": "관련 실제 흐름과 데이터 보존을 확인한다.",
+      "expected": "가짜 선택/배정/준비/채점 정상, 실제 학생 시험쓰기0",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    }
+  ],
+  "verification": null
+}
