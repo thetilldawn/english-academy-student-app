@@ -2,7 +2,7 @@ import { studentIdentityGeneration } from "@/features/session/public-client";
 import { z } from "zod";
 import { requestLocalQuiz } from "../../api/local-quiz";
 import { COMMON_QUIZ_FRESH_MS, commonQuizPacketSchema } from "../../contracts/local-quiz";
-import { cacheLocalQuizContents, knownLocalQuizContentKeys } from "./local-quiz-store";
+import { cacheLocalQuizContents, knownLocalQuizContentKeys, knownLocalQuizKeysFor } from "./local-quiz-store";
 
 type Task = {
   key: string; assignmentId: string; identity: string; controller: AbortController;
@@ -24,10 +24,10 @@ function drain() {
         if (task.controller.signal.aborted || studentIdentityGeneration() !== task.identity) throw cancelled();
       };
       check();
-      const knownKeys = await knownLocalQuizContentKeys();
-      check();
       const previous = completed.get(task.key);
       const age = previous ? Date.now() - previous.fetchedAt : Infinity;
+      const knownKeys = previous && age >= 0 && age < COMMON_QUIZ_FRESH_MS ? await knownLocalQuizKeysFor(previous.keys) : await knownLocalQuizContentKeys();
+      check();
       const known = new Set(knownKeys);
       if (previous && age >= 0 && age < COMMON_QUIZ_FRESH_MS && previous.keys.every(key => known.has(key))) return;
       completed.delete(task.key);
@@ -40,8 +40,7 @@ function drain() {
         if (completed.size >= 64) completed.delete(completed.keys().next().value!);
         completed.set(task.key, { fetchedAt: Date.now(), keys: packet.requiredKeys });
       }
-    })().then(task.resolve, task.reject).finally(() => {
-      task.settled = true;
+    })().then(() => { task.settled = true; task.resolve(); }, error => { task.settled = true; task.reject(error); }).finally(() => {
       if (tasks.get(task.key) === task) tasks.delete(task.key);
       active--;
       drain();
@@ -61,7 +60,26 @@ export async function prefetchLocalQuiz(assignmentId: string, signal?: AbortSign
     tasks.set(key, task); queue.push(task);
     queueMicrotask(drain);
   }
-  const subscribed = task;
+  return subscribe(task, signal);
+}
+
+/** Join an existing hover read before its button unsubscribes on click. */
+export async function joinLocalQuizPrefetch(assignmentId: string, signal?: AbortSignal): Promise<string[]> {
+  signal?.throwIfAborted();
+  const identity = studentIdentityGeneration(), key = identity + ":" + assignmentId;
+  const task = tasks.get(key);
+  if (task && !task.controller.signal.aborted) {
+    const queued = queue.indexOf(task);
+    if (queued > 0) { queue.splice(queued, 1); queue.unshift(task); }
+    await subscribe(task, signal);
+  }
+  signal?.throwIfAborted();
+  if (studentIdentityGeneration() !== identity) throw cancelled();
+  const result = completed.get(key), age = result ? Date.now() - result.fetchedAt : Infinity;
+  return result && age >= 0 && age < COMMON_QUIZ_FRESH_MS ? result.keys : [];
+}
+
+function subscribe(subscribed: Task, signal?: AbortSignal): Promise<void> {
   subscribed.subscribers++;
   return new Promise<void>((resolve, reject) => {
     let finished = false;

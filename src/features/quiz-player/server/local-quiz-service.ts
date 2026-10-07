@@ -3,7 +3,7 @@ import { studentAppText } from "@/content/ko/student-app";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
-import { startStudentAttempt } from "@/lib/services/quiz/attempt-start";
+import { resolveStudentAttemptInput } from "@/lib/services/quiz/attempt-start";
 import { materializeReadyVocabAssignmentQueue } from "@/lib/services/vocab-assignment-queue-command";
 import { getQuizPreparation } from "./attempt-preparation";
 import { commonQuizBodySchema, localPhasePlanSchema, localQuizPreparationSchema, localReceiptSchema, type CommonQuizContent, type LocalQuizRequest } from "../contracts/local-quiz";
@@ -68,8 +68,9 @@ export async function handleLocalQuizCommand(studentId: string, command: LocalQu
   if (command.action === "prepare") {
     // Reuse the existing bank/legacy selection and release checks. This creates
     // only a private preparation; clocks, attempts and answers remain untouched.
-    await startStudentAttempt(studentId, command.assignmentId, true);
-    const raw = await rpc("prepare_local_quiz_v1", { ...base, p_assignment_id: command.assignmentId });
+    const input = await resolveStudentAttemptInput(studentId, command.assignmentId);
+    const raw = await rpc("prepare_local_quiz_v1", { ...base, p_assignment_id: command.assignmentId,
+      ...(input.kind === "legacy" ? { p_questions: input.questions } : {}) });
     const resume = z.object({ protocol: z.enum(["legacy", "local_batch_v1"]), resumeId: z.uuid() }).safeParse(raw);
     if (resume.success) return { ...resume.data, studentId };
     const prepared = z.object({ preparationId: z.uuid(), planHash: z.string(), assignmentId: z.uuid(),

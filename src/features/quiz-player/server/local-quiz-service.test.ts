@@ -3,15 +3,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const m=vi.hoisted(()=>({rpc:vi.fn(),queue:vi.fn(),study:vi.fn(),access:vi.fn(),pack:vi.fn(),start:vi.fn(),prepare:vi.fn(),hydrate:vi.fn()}));
 vi.mock("@/lib/supabase/service",()=>({getServiceSupabaseClient:()=>({rpc:m.rpc})}));
 vi.mock("@/lib/services/vocab-assignment-queue-command",()=>({materializeReadyVocabAssignmentQueue:m.queue}));
-vi.mock("@/lib/services/quiz/attempt-start",()=>({startStudentAttempt:m.start}));
+vi.mock("@/lib/services/quiz/attempt-start",()=>({resolveStudentAttemptInput:m.start}));
 vi.mock("./attempt-preparation",()=>({getQuizPreparation:m.prepare}));
 vi.mock("@/features/student-dashboard/public-server",()=>({getAssignmentStudy:m.study,getAssignmentStudyAccess:m.access,packAssignmentStudy:m.pack}));
 vi.mock("@/lib/services/quiz/attempt-query",()=>({hydrateQuizQuestions:m.hydrate}));
 import { handleLocalQuizCommand } from "./local-quiz-service";
 import { localFixture, localId, receiptFor } from "../test-support/local-quiz-fixtures";
 import { recordLocalAnswer } from "../domain/local-quiz";
-beforeEach(()=>{vi.resetAllMocks();m.queue.mockResolvedValue([]);});
+beforeEach(()=>{vi.resetAllMocks();m.queue.mockResolvedValue([]);m.start.mockResolvedValue({kind:"bank"});});
 describe("기기 시험 서버 연결",()=>{
+  it.each(["bank","legacy","existing"])("%s 준비는 준비 RPC를 한 번만 실행한다",async kind=>{
+    const questions=[{vocab_entry_id:1,order_index:1,direction:"english_to_korean",prompt:"fake",choices:["a","b","c","d"],correct_choice_index:0}];
+    m.start.mockResolvedValue(kind==="legacy"?{kind,questions}:kind==="existing"?{kind,attemptId:localId(8)}:{kind});
+    m.rpc.mockResolvedValue({data:{protocol:"local_batch_v1",resumeId:localId(8)},error:null});
+    const result=await handleLocalQuizCommand(localId(1),{action:"prepare",assignmentId:localId(4),device:"a".repeat(64),knownKeys:[]});
+    expect(result).toMatchObject({studentId:localId(1),resumeId:localId(8)});
+    expect(m.rpc).toHaveBeenCalledExactlyOnceWith("prepare_local_quiz_v1",expect.objectContaining({p_student_id:localId(1),p_assignment_id:localId(4),...(kind==="legacy"?{p_questions:questions}:{})}));
+    if(kind!=="legacy")expect(m.rpc.mock.calls[0][1]).not.toHaveProperty("p_questions");
+  });
   it("학습 본문은 한 번 읽으며 전후 배정판이 바뀌면 캐시에 넣을 응답을 거절한다",async()=>{
     const access={studentId:localId(1),assignmentId:localId(4),title:"가짜",mode:"book_meaning_choice",revision:"a".repeat(32)};
     const study={assignmentId:localId(4),words:[]};m.study.mockResolvedValue(study);m.pack.mockResolvedValue({manifest:{assignmentId:localId(4)},atoms:[]});

@@ -1,4 +1,4 @@
-import { COMMON_QUIZ_FRESH_MS, commonQuizPacketSchema, type CommonQuizContent, type CommonQuizPacket, type CommonQuizReference, type LocalQuizRun } from "../../contracts/local-quiz";
+import { COMMON_QUIZ_FRESH_MS, commonQuizPacketSchema, commonQuizReferenceSchema, type CommonQuizContent, type CommonQuizPacket, type CommonQuizReference, type LocalQuizRun } from "../../contracts/local-quiz";
 import { makeDisplayAtom, type DisplayAtom } from "@/lib/quiz/shared-display";
 import { localContentAtomKeys, unpackLocalQuizContent } from "../../domain/local-quiz-content";
 
@@ -90,9 +90,36 @@ export async function knownLocalQuizContentKeys(now = Date.now()) {
     .sort((a, b) => b.cachedAt - a.cachedAt).slice(0, 5000).map(a => a.key), false, now);
   return [...validContents.keys(), ...validAtoms.keys()];
 }
+/** Validate the references required by this assignment, including older cache
+ * entries beyond the general inventory's most recent 500. No store-wide scan. */
+export async function knownLocalQuizKeysFor(required: readonly string[], now = Date.now()) {
+  const keys = [...new Set(required)];
+  const contentKeys = keys.filter(key => /^[0-9a-f-]{36}:[a-f0-9]{64}$/.test(key));
+  const rows = await transaction<Array<StoredContent | undefined>>(["contents"], "readonly", (tx, finish) => {
+    const result: Array<StoredContent | undefined> = new Array(contentKeys.length); finish(result);
+    contentKeys.forEach((key, index) => { const request = tx.objectStore("contents").get(key); request.onsuccess = () => { result[index] = request.result; }; });
+  });
+  const references = rows.flatMap(row => {
+    if (!row || !Number.isFinite(row.cachedAt) || now < row.cachedAt || now - row.cachedAt >= COMMON_QUIZ_FRESH_MS) return [];
+    const { cachedAt, ...reference } = row;
+    void cachedAt;
+    const parsed = commonQuizReferenceSchema.safeParse(reference);
+    return parsed.success ? [parsed.data] : [];
+  });
+  const atomKeys = [...new Set([...keys.filter(key => /^display:v1:[a-f0-9]{64}$/.test(key)), ...references.flatMap(localContentAtomKeys)])];
+  const atoms = await readLocalDisplayAtoms(atomKeys, false, now);
+  const known = new Set(atoms.keys());
+  await Promise.all(references.map(async reference => {
+    try { if (await unpackLocalQuizContent(reference, atoms)) known.add(reference.key); } catch { /* Repair only the affected reference. */ }
+  }));
+  return [...known].slice(0, 5500);
+}
 export const getLocalQuizRun = (key: string) => read<LocalQuizRun>("runs", key);
 export async function findLocalQuizRun(attemptId: string, studentId: string) {
-  return (await all<LocalQuizRun>("runs")).find(run => run.studentId === studentId && (run.plan?.attemptId ?? run.preparation.preparationId) === attemptId);
+  const matches = (run: LocalQuizRun) => run.studentId === studentId && (run.plan?.attemptId ?? run.preparation.preparationId) === attemptId;
+  const direct = await read<LocalQuizRun>("runs", attemptId);
+  if (direct && matches(direct)) return direct;
+  return (await all<LocalQuizRun>("runs")).find(matches);
 }
 export async function saveLocalQuizRun(run: LocalQuizRun, expectedRevision: number | null) {
   return transaction<void>(["runs"], "readwrite", tx => {

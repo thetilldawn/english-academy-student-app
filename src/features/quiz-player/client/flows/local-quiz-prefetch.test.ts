@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({ request: vi.fn(), known: vi.fn(), cache: vi.fn(), identity: "first" }));
 vi.mock("@/features/session/public-client", () => ({ studentIdentityGeneration: () => m.identity }));
 vi.mock("../../api/local-quiz", () => ({ requestLocalQuiz: m.request }));
-vi.mock("./local-quiz-store", () => ({ knownLocalQuizContentKeys: m.known, cacheLocalQuizContents: m.cache }));
+vi.mock("./local-quiz-store", () => ({ knownLocalQuizContentKeys: m.known, knownLocalQuizKeysFor: m.known, cacheLocalQuizContents: m.cache }));
 let prefetch: typeof import("./local-quiz-prefetch").prefetchLocalQuiz;
 const packet = { contents: [], atoms: [] };
 const tick = async () => { for (let i = 0; i < 15; i++) await Promise.resolve(); };

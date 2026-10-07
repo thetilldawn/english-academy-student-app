@@ -1,0 +1,491 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20261008-03",
+  "title": "시험 준비 중복 실행과 공용 자료 재조회 제거",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20261008-03.md",
+  "baseline": "e229ff45397da867d4b72d2470ebaa82f1ac2201",
+  "owners": [
+    "quiz-player",
+    "student-dashboard",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "public",
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/lib/services/quiz/attempt-start.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-start.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-service.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/server/local-quiz-service.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-prefetch.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-prefetch.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-preparation.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/client/flows/local-quiz-store.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/start-attempt-button.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "scripts/verify-quiz-preparation-reuse.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20261004161947_improve_quiz_feedback_and_study_cache_access.sql",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "test/e2e/authenticated/app-latency-repair.spec.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "student-quiz-attempt",
+        "assignment-workspace-planning"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "시험 준비를 한 번 실행하며 기존 권한과 구형 시험 선택은 유지한다.",
+      "acceptance": "bank/legacy/resume 모두 준비DB명령1회",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "미리받기와 클릭은 진행중 요청을 공유하고 필요한 공용자료 키만 확인한다.",
+      "acceptance": "동시공유/개별취소/뒤쪽 유효 캐시 재사용",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "공용48시간·미사용준비24시간·미접수답 무기한보호를 유지한다.",
+      "acceptance": "기존답 덮어쓰기0/기기복구/시험중네트워크0",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "시험 준비를 한 번 실행하며 기존 권한과 구형 시험 선택은 유지한다.",
+      "answer": "bank/legacy/resume 모두 준비DB명령1회",
+      "source": "사용자 ㄱㄱ 및 다 고쳐와; docs/work-orders/APP-20261008-03.md"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "미리받기와 클릭은 진행중 요청을 공유하고 필요한 공용자료 키만 확인한다.",
+      "answer": "동시공유/개별취소/뒤쪽 유효 캐시 재사용",
+      "source": "사용자 ㄱㄱ 및 다 고쳐와; docs/work-orders/APP-20261008-03.md"
+    },
+    {
+      "id": "D3",
+      "owner": "user",
+      "state": "resolved",
+      "question": "공용48시간·미사용준비24시간·미접수답 무기한보호를 유지한다.",
+      "answer": "기존답 덮어쓰기0/기기복구/시험중네트워크0",
+      "source": "사용자 ㄱㄱ 및 다 고쳐와; docs/work-orders/APP-20261008-03.md"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "api": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "기존 키와 읽기를 재사용하고 신규 복사 입구·본문 저장만 수정. 과거 데이터·캐시 기간·권한 보존."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "관리자 권한·원자료 연결·기존 시험과 미접수 답을 보존한다.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "hover공용자료→click가 같은요청에가입→준비1회→기존키로필요자료확인→local시험",
+    "reuse": "기존SharedRead, IndexedDB, local preparation protocol, bank/legacy source selection",
+    "cache": "기존공용48시간/미사용준비24시간/미접수답보존; 음원파일저장추가없음",
+    "compatibility": "기존prepare/startAPI및이전run키fallback, 기존학생답우선",
+    "rollback": "코드복원; DB스키마/보관정책변경없음"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "initial-loading 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "refreshing 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "unselected 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "empty 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "validation 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "load-error 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "save-error 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "auth-error 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "not-found 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "unexpected-error 상태",
+      "message": "시험 자료를 준비하는 중 / 취소",
+      "behavior": "동일진행공유, 취소한 소비자만 이탈, 미접수답 유지",
+      "recovery": "다시 확인 또는 기존 취소/돌아가기. 초안 유지.",
+      "component": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "APP-20261008-03",
+      "reference": "docs/work-orders/APP-20261008-03.md",
+      "reason": "승인된 기존 구조와 보존 기준에 따라 중복 조회를 제거한다."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/features/quiz-player/server/local-quiz-service.test.ts",
+      "scenario": "시험 준비를 한 번 실행하며 기존 권한과 구형 시험 선택은 유지한다.",
+      "expected": "bank/legacy/resume 모두 준비DB명령1회",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "browser",
+      "target": "scripts/verify-quiz-preparation-reuse.ts",
+      "scenario": "미리받기와 클릭은 진행중 요청을 공유하고 필요한 공용자료 키만 확인한다.",
+      "expected": "동시공유/개별취소/뒤쪽 유효 캐시 재사용",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "review",
+      "target": "src/features/quiz-player/client/flows/local-quiz-store.ts",
+      "scenario": "공용48시간·미사용준비24시간·미접수답 무기한보호를 유지한다.",
+      "expected": "기존답 덮어쓰기0/기기복구/시험중네트워크0",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    }
+  ],
+  "verification": null
+}

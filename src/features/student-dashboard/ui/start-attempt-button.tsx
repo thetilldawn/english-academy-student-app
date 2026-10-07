@@ -38,13 +38,14 @@ export function StartAttemptButton({
 
   async function start() {
     if (preparation.current) return;
-    cancelPrefetch();
     const controller = new AbortController();
     preparation.current = controller;
     setError("");
     setSubmitting(true);
     try {
-      const href = await prepareLocalQuiz(assignmentId, controller.signal);
+      const operation = prepareLocalQuiz(assignmentId, controller.signal);
+      cancelPrefetch();
+      const href = await operation;
       if (!controller.signal.aborted) router.push(href);
     } catch (failure) {
       if (!controller.signal.aborted) setError(failure instanceof Error && /[가-힣]/.test(failure.message) ? failure.message : studentAppText.actions.networkError);

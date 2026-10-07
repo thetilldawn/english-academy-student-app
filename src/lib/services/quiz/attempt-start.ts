@@ -55,11 +55,10 @@ export function reusableInProgressAttemptId(
     : null;
 }
 
-export async function startStudentAttempt(
-  studentId: string,
-  assignmentId: string,
-  prepare = false,
-): Promise<string> {
+type LegacyQuestionInput = { vocab_entry_id: number; order_index: number; direction: "english_to_korean" | "korean_to_english"; prompt: string; choices: string[]; correct_choice_index: number };
+export type StudentAttemptInput = { kind: "existing"; attemptId: string } | { kind: "bank" } | { kind: "legacy"; questions: LegacyQuestionInput[] };
+
+export async function resolveStudentAttemptInput(studentId: string, assignmentId: string): Promise<StudentAttemptInput> {
   const supabase = getServiceSupabaseClient();
   const [{ data: assignmentData, error: assignmentError }, { data: linkData }] =
     await Promise.all([
@@ -107,7 +106,7 @@ export async function startStudentAttempt(
   const reusableAttemptId = reusableInProgressAttemptId(
     existingAttempt as ExistingAttemptRow | null,
   );
-  if (reusableAttemptId) return reusableAttemptId;
+  if (reusableAttemptId) return { kind: "existing", attemptId: reusableAttemptId };
 
   if (existingAttempt) {
     const { data: finalized, error: finalizeError } = await supabase.rpc(
@@ -129,39 +128,11 @@ export async function startStudentAttempt(
       if (currentAttemptError) {
         throw new Error("진행 중인 시험을 다시 확인하지 못했습니다.");
       }
-      if (currentAttempt?.id) return currentAttempt.id;
+      if (currentAttempt?.id) return { kind: "existing", attemptId: currentAttempt.id };
     }
   }
 
-  if (
-    assignment.range_basis === "units" &&
-    assignment.question_bank_version !== null
-  ) {
-    const { data, error } = await supabase.rpc(
-      prepare ? "prepare_quiz_attempt_v1" : "create_quiz_attempt_from_bank",
-      {
-        p_student_id: studentId,
-        p_assignment_id: assignmentId,
-      },
-    );
-
-    if (error || typeof data !== "string") {
-      const { data: recoveredAttempt } = await supabase
-        .from("quiz_attempts")
-        .select("id, phase, deadline_at")
-        .eq("student_id", studentId)
-        .eq("assignment_id", assignmentId)
-        .eq("status", "in_progress")
-        .maybeSingle();
-      const recoveredAttemptId = reusableInProgressAttemptId(
-        recoveredAttempt as ExistingAttemptRow | null,
-      );
-      if (recoveredAttemptId) return recoveredAttemptId;
-      throw new Error(assignmentReleaseStartError(error?.message) ?? "시험을 시작하지 못했습니다.");
-    }
-
-    return data;
-  }
+  if (assignment.range_basis === "units" && assignment.question_bank_version !== null) return { kind: "bank" };
 
   if (isCanonicalQuizContentMode(quizContentMode)) {
     throw new Error("이 시험의 검증된 문제를 찾지 못했습니다.");
@@ -217,19 +188,24 @@ export async function startStudentAttempt(
     assignment.question_count,
     assignment.english_to_korean_ratio,
   );
-  const { data, error } = await supabase.rpc(prepare ? "prepare_quiz_attempt_v1" : "create_quiz_attempt", {
-    p_student_id: studentId,
-    p_assignment_id: assignmentId,
-    p_questions: questions.map((question, index) => ({
+  return { kind: "legacy", questions: questions.map((question, index) => ({
       vocab_entry_id: question.vocabEntryId,
       order_index: index + 1,
       direction: question.direction,
       prompt: question.prompt,
       choices: question.choices,
       correct_choice_index: question.correctChoiceIndex,
-    })),
-  });
+    })) };
+}
 
+export async function startStudentAttempt(studentId: string, assignmentId: string, prepare = false): Promise<string> {
+  const input = await resolveStudentAttemptInput(studentId, assignmentId);
+  if (input.kind === "existing") return input.attemptId;
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase.rpc(prepare ? "prepare_quiz_attempt_v1" : input.kind === "bank" ? "create_quiz_attempt_from_bank" : "create_quiz_attempt", {
+    p_student_id: studentId, p_assignment_id: assignmentId,
+    ...(input.kind === "legacy" ? { p_questions: input.questions } : {}),
+  });
   if (error || typeof data !== "string") {
     const { data: recoveredAttempt } = await supabase
       .from("quiz_attempts")

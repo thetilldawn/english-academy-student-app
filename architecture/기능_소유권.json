@@ -360,6 +360,30 @@
       "owner": "assignments",
       "retiredIn": "R5",
       "reason": "features/assignments/server/planning/vocab-assignment-queue-plan.test.ts로 이동"
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-composer.tsx",
+      "owner": "wordbook-compositions",
+      "retiredIn": "APP-20261008-01",
+      "reason": "미사용 구형 본문 복사 UI/전송 제거. 기존 분류 및 접수 조회 유지."
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-composer.test.tsx",
+      "owner": "wordbook-compositions",
+      "retiredIn": "APP-20261008-01",
+      "reason": "미사용 구형 본문 복사 UI/전송 제거. 기존 분류 및 접수 조회 유지."
+    },
+    {
+      "path": "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
+      "owner": "wordbook-compositions",
+      "retiredIn": "APP-20261008-01",
+      "reason": "미사용 구형 본문 복사 UI/전송 제거. 기존 분류 및 접수 조회 유지."
+    },
+    {
+      "path": "src/features/wordbook-compositions/client/transport/composition-transport.ts",
+      "owner": "wordbook-compositions",
+      "retiredIn": "APP-20261008-01",
+      "reason": "미사용 구형 본문 복사 UI/전송 제거. 기존 분류 및 접수 조회 유지."
     }
   ],
   "specialOwners": [
@@ -3153,6 +3177,16 @@
       "path": "supabase/migrations/20261005033650_speed_library_reads_and_preserve_assignment_drafts.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261007151833_preserve_source_keys_and_retire_body_copies.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20261007154921_deduplicate_notebook_read_work.sql",
+      "owner": "students",
+      "flow": "student-wrong-word-read"
     }
   ],
   "features": [
@@ -3985,6 +4019,12 @@
       "to": "src/features/session/public-client.ts",
       "reason": "미리 읽기 요청을 계정 세대에 묶고 전환 때 취소",
       "removeIn": "공개 진입점으로 유지"
+    },
+    {
+      "from": "src/features/assignments/controller/use-assignment-planner-preparation.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "배정 준비 재사용을 기존 인증 세대와 자료 변경 알림에 연결",
+      "removeIn": "공개 진입점으로 고정"
     }
   ],
   "currentLibToFeatureImports": [
@@ -5750,7 +5790,8 @@
           "src/lib/database/pronunciation-audio-corrections.integration.test.ts",
           "src/lib/database/vocabulary-question-content.integration.test.ts",
           "src/lib/database/vocabulary-question-content-compatibility.integration.test.ts",
-          "src/lib/database/vocabulary-result-records.integration.test.ts"
+          "src/lib/database/vocabulary-result-records.integration.test.ts",
+          "src/features/history/controller/use-admin-history-list-controller.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -7519,7 +7560,9 @@
           "supabase/migrations/20261003235500_compact_local_quiz_phase_plans.sql",
           "supabase/migrations/20261004050000_stop_duplicate_local_quiz_state.sql",
           "supabase/migrations/20261003114247_pause_new_assigned_quiz_attempts.sql",
-          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql"
+          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql",
+          "supabase/migrations/20261004154512_link_missing_pronunciation_to_existing_keys.sql",
+          "supabase/migrations/20261004161947_improve_quiz_feedback_and_study_cache_access.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx",
@@ -7609,7 +7652,9 @@
           "src/lib/database/local-quiz-phase-plan-storage.integration.test.ts",
           "src/features/quiz-player/server/quiz-ready-http.test.ts",
           "src/lib/database/vocabulary-composition-questions.integration.test.ts",
-          "src/lib/database/composition-assignment-hash-sharing.integration.test.ts"
+          "src/lib/database/composition-assignment-hash-sharing.integration.test.ts",
+          "scripts/verify-quiz-preparation-reuse.ts",
+          "test/e2e/authenticated/app-latency-repair.spec.ts"
         ]
       },
       "requiredImportEdges": [
@@ -7796,7 +7841,8 @@
           "src/features/assignments/controller/use-assignment-student-directory.test.tsx",
           "src/features/assignments/domain/assignment-student-context.test.ts",
           "src/features/assignments/controller/use-assignment-planner-preparation.test.tsx",
-          "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx"
+          "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx",
+          "test/e2e/authenticated/app-latency-repair.spec.ts"
         ]
       },
       "requiredImportEdges": [
@@ -8231,7 +8277,6 @@
         ],
         "serverComponent": [],
         "ui": [
-          "src/features/wordbook-compositions/ui/wordbook-composer.tsx",
           "src/features/wordbook-compositions/ui/mock-scope-filters.tsx",
           "src/features/wordbook-compositions/ui/wordbook-composer.module.css",
           "src/features/wordbook-compositions/ui/wordbook-library.tsx",
@@ -8245,7 +8290,6 @@
           "src/features/assignments/ui/vocab-assignment-planner.tsx"
         ],
         "clientState": [
-          "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
           "src/features/wordbook-compositions/client/controllers/use-wordbook-library.ts",
           "src/features/wordbook-compositions/client/controllers/use-library-page.ts",
           "src/features/wordbook-compositions/client/controllers/use-library-command.ts",
@@ -8274,7 +8318,6 @@
           "src/features/wordbook-compositions/contracts/library-v3.ts"
         ],
         "transport": [
-          "src/features/wordbook-compositions/client/transport/composition-transport.ts",
           "src/features/wordbook-compositions/client/transport/library-transport.ts"
         ],
         "server": [
@@ -8341,7 +8384,6 @@
           "src/features/wordbook-compositions/domain/scope-selection.test.ts",
           "src/features/wordbook-compositions/server/composition-lineage.test.ts",
           "src/features/wordbook-compositions/server/composition-service.test.ts",
-          "src/features/wordbook-compositions/ui/wordbook-composer.test.tsx",
           "src/lib/database/wordbook-compositions.integration.test.ts",
           "src/lib/vocab/reviewed-mock-import-contract.test.ts",
           "src/lib/database/reviewed-mock-wordbook.integration.test.ts",
