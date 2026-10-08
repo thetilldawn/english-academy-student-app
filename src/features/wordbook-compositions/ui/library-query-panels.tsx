@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/design-system/primitives/button/button";
 import { Input } from "@/design-system/primitives/form/field";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { EMPTY_LIBRARY_FILTERS, libraryFiltersSchema } from "../contracts/library";
 import { type LibraryQuery, type LibraryVersionSummary } from "../contracts/library-query";
 import { templateKindLabel, type ClassifiedTemplateSummary as LibraryTemplateSummary, type ClassifiedLibraryDetail } from "../contracts/library-v3";
@@ -24,7 +25,7 @@ export function LibraryQuantitySummary({ quantities: q }: { quantities: Classifi
   </div>;
 }
 export function LibraryPageStatus({ page }: { page: { status: string; error: string; reload: () => void } }) {
-  return page.status === "loading" ? <p role="status">자료를 불러오는 중…</p> : page.status === "error" ? <div role="alert"><p>{page.error}</p><Button size="small" onClick={page.reload}>다시 불러오기</Button></div> : null;
+  return page.status === "loading" ? <RouteLoadingState variant="compact" label="자료를 불러오는 중…" /> : page.status === "error" ? <div role="alert"><p>{page.error}</p><Button size="small" onClick={page.reload}>다시 불러오기</Button></div> : null;
 }
 
 export function LibraryRangePanel({ c }: { c: Controller }) {
@@ -98,7 +99,7 @@ export function LibraryTemplateCard({ template: t, c, navigate, onDelete }: { te
   const detail = useLibraryPage(selectedVersion ? { kind: "detail", templateId: t.id, versionId: v.id } : null, c.viewerId, c.reportError, undefined, c.enabled);
   const empty = v.scopeStatus === "confirmed" && v.includedCount === 0;
   return <article className={styles.card}>
-    <h4>{t.metadata.title}</h4><p>{templateKindLabel(t.templateKind)}{t.metadata.purpose ? ` · ${t.metadata.purpose}` : ""}</p>
+    <h4>{t.metadata.title}</h4><p>{templateKindLabel(t.templateKind)}{t.metadata.purpose ? ` · ${t.templateKind ? "" : "기존 설명: "}${t.metadata.purpose}` : ""}</p>
     {selectedVersion ? <><LibraryPageStatus page={detail} /><p aria-label="선택한 판의 자료 태그">{detail.data?.sourceTags.map(tag => <span className={styles.tag} key={tag}>{tag}</span>)}</p></> :
       <p aria-label="저장 태그">{t.metadata.tags.map(tag => <span className={styles.tag} key={tag}>{tag}</span>)}</p>}
     <p>{v.scopeStatus === "unconfirmed" ? "시험 범위가 아직 정해지지 않았습니다." : `${v.number}판 · 범위 ${v.scopeCount}개 · 원자료 항목 ${v.sourceCount}개 · 포함 항목 ${v.includedCount}개`}</p>

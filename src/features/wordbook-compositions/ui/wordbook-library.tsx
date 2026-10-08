@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/design-system/primitives/button/button";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { Tabs } from "@/design-system/primitives/tabs/tabs";
 import { TEMPLATE_KINDS } from "@/lib/admin/dataset-catalog";
 import { DialogBody, DialogFooter, DialogFrame, DialogHeader } from "@/design-system/primitives/dialog/dialog";
@@ -55,7 +56,7 @@ export function WordbookLibrary({ onBack, onLockChange, onDirtyChange, captureAu
       <Button variant="filter" aria-pressed={c.tab === "saved"} disabled={c.locked} onClick={() => c.actions.setTab("saved")}>저장한 템플릿 찾기</Button>
       <Button variant="filter" aria-pressed={c.tab === "sources" && c.editor.mode === "create"} disabled={c.locked || !c.viewerId} onClick={() => navigate(c.actions.newTemplate)}>범위로 새로 만들기</Button>
     </div>
-    {c.opening ? <p role="status">템플릿을 불러오는 중…</p> : null}{c.openError ? <p role="alert">{c.openError}</p> : null}
+    {c.opening ? <RouteLoadingState variant="compact" label="템플릿을 불러오는 중…" /> : null}{c.openError ? <p role="alert">{c.openError}</p> : null}
     {c.notice ? <p role="status">{c.notice}</p> : null}
     <div id="library-kind-panel" role="tabpanel" aria-label="단어장 구성">
     {c.tab === "saved" ? <>
@@ -65,7 +66,10 @@ export function WordbookLibrary({ onBack, onLockChange, onDirtyChange, captureAu
         <option value="all">전체</option>{TEMPLATE_KINDS.map(kind => <option key={kind} value={kind}>{TEMPLATE_KIND_LABELS[kind]}</option>)}<option value="unclassified">분류 확인</option>
       </select></Field>
       <LibraryPageStatus page={c.templates} />
-      {c.templates.status === "ready" && !c.templates.data?.items.length ? <p>이 조건에 맞는 템플릿이 없습니다.</p> : null}
+      {c.templates.status === "ready" && !c.templates.data?.items.length ? <div><p>이 조건에 맞는 템플릿이 없습니다.</p>
+        {c.savedKindFilter !== "all" && c.savedKindFilter !== "unclassified" ? <><p className={styles.hint}>이전에 저장한 구성은 종류가 지정되지 않았을 수 있습니다.</p>
+          <Button size="small" disabled={c.locked} onClick={() => c.actions.setSavedKindFilter("unclassified")}>분류 확인에서도 찾아보기</Button></> : null}
+      </div> : null}
       <div className={styles.cards}>{c.templates.data?.items.map(t => <LibraryTemplateCard key={t.id} template={t} c={c} navigate={navigate} onDelete={() => navigate(() => setDeleting(t))} />)}</div>
       {c.templates.data?.nextCursor ? <Button disabled={c.templates.status !== "ready" || c.locked} onClick={c.templates.more}>템플릿 20개 더 보기</Button> : null}
       {c.saveState.status === "saving" ? <p role="status">요청한 내용을 저장하는 중…</p> : null}
