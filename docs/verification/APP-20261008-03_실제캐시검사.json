@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-08T01:36:25.065Z",
+  "at": "2026-10-08T01:52:46.519Z",
   "browser": "151.0.7922.34",
   "scope": "실제 준비·단어보기·IndexedDB, 가짜 3문항 HTTP. 구형 v1 최초 runs 순회는 별도 집계. 운영 인증 검사와 부하 시험이 아님.",
   "results": {
@@ -65,6 +65,10 @@
       "aliasSameStudent": true,
       "expiredCount": 0,
       "otherCount": 0
+    },
+    "maintenance": {
+      "duringExam": true,
+      "afterExam": false
     }
   }
 }

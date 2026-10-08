@@ -19,6 +19,15 @@ import {packAssignmentStudy,studyAtomKeys} from './src/features/student-dashboar
 import * as store from './src/features/quiz-player/client/flows/local-quiz-store';
 const open=()=>new Promise((resolve,reject)=>{const q=indexedDB.open('english-academy-local-quiz-v1',1);q.onupgradeneeded=()=>{for(const table of ['runs','contents','atoms','meta'])q.result.createObjectStore(table,{keyPath:'key'});};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
 const rawSave=async run=>{const db=await open();await new Promise((resolve,reject)=>{const tx=db.transaction('runs','readwrite');tx.objectStore('runs').put(run);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});db.close();};
+window.maintenanceProbe=async()=>{
+ const db=await open();await new Promise((resolve,reject)=>{const tx=db.transaction('atoms','readwrite');tx.objectStore('atoms').put({key:'expired-probe',cachedAt:Date.now()-49*3600000});tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+ const present=()=>new Promise((resolve,reject)=>{const q=db.transaction('atoms').objectStore('atoms').get('expired-probe');q.onsuccess=()=>resolve(!!q.result);q.onerror=()=>reject(q.error);});
+ let release,acquired;const ready=new Promise(resolve=>acquired=resolve);
+ const held=navigator.locks.request('quiz-offline-assets-v1',{mode:'shared'},async()=>{acquired();await new Promise(resolve=>release=resolve);});
+ await ready;scheduleLocalQuizMaintenance();await new Promise(resolve=>setTimeout(resolve,5500));const duringExam=await present();
+ release();await held;scheduleLocalQuizMaintenance();await new Promise(resolve=>setTimeout(resolve,5500));const afterExam=await present();db.close();
+ return {duringExam,afterExam};
+};
 async function fixture(){const data=await localFixture(3);localStorage.setItem('student-private-cache-identity',data.run.identity);return data;}
 async function measured(action){
  const scans=[],cursors=[],rows=[],getAll=IDBObjectStore.prototype.getAll,openCursor=IDBObjectStore.prototype.openCursor;
@@ -85,11 +94,13 @@ window.sharedAndProtected=async()=>{
   const browser = await chromium.launch({ headless: true });
   const results: Record<string, unknown> = {};
   try {
-    for (const scenario of ["old", "study", "shared"] as const) {
+    for (const scenario of ["old", "study", "shared", "maintenance"] as const) {
       const context = await browser.newContext(), page = await context.newPage();
       await page.goto(`http://127.0.0.1:${address.port}`); await page.addScriptTag({ content: bundle });
       const invoke = (method: string) => page.evaluate(name => (window as unknown as Record<string, () => Promise<unknown>>)[name](), method);
-      if (scenario === "shared") {
+      if (scenario === "maintenance") {
+        const result=await invoke("maintenanceProbe");expect(result).toEqual({duringExam:true,afterExam:false});results.maintenance=result;
+      } else if (scenario === "shared") {
         const result = await invoke("sharedAndProtected");
         expect(result).toEqual({ initialCommands: ["prefetch", "prepare"], sharedAlive: true, cancelledName: "AbortError",
           protectedCases: { answers: true, startRequested: true, batch: true, plan: true }, reclickRequests: 2, oldName: "AbortError", latePreserved: true, aliasSameStudent: true, expiredCount: 0, otherCount: 0 });

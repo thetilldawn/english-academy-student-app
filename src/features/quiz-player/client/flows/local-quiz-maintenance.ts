@@ -15,8 +15,10 @@ export function scheduleLocalQuizMaintenance() {
     timer = null;
     if (!navigator.locks) { if (pending === controller) pending = null; return; }
     // The same origin's other exam tabs hold this existing shared lock too.
-    void navigator.locks.request("quiz-offline-assets-v1", { mode: "exclusive", ifAvailable: true, signal: controller.signal },
-      async lock => { if (lock) await pruneLocalQuizContents(Date.now(), controller.signal); }).catch(() => {
+    // Web Locks forbids combining ifAvailable with signal. Cancellation is
+    // checked on grant and passed to the actual storage transaction instead.
+    void navigator.locks.request("quiz-offline-assets-v1", { mode: "exclusive", ifAvailable: true },
+      async lock => { if (lock && !controller.signal.aborted) await pruneLocalQuizContents(Date.now(), controller.signal); }).catch(() => {
       // A later list visit can retry cleanup. It never owns unsent answers.
     }).finally(() => { if (pending === controller) pending = null; });
   }, 5000);

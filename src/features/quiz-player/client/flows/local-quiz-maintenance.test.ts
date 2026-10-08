@@ -12,6 +12,7 @@ describe("시험과 겹치지 않는 기기 자료 정리", () => {
     vi.stubGlobal("navigator", { locks: { request } });
     scheduleLocalQuizMaintenance(); await vi.advanceTimersByTimeAsync(5000);
     expect(request).toHaveBeenCalledWith("quiz-offline-assets-v1", expect.objectContaining({ mode: "exclusive", ifAvailable: true }), expect.any(Function));
+    expect(request.mock.calls[0][1]).not.toHaveProperty("signal");
     expect(prune).not.toHaveBeenCalled();
   });
   it("시험 진입은 예약과 이미 진행 중인 정리를 취소한다", async () => {
