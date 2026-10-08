@@ -93,6 +93,8 @@ export type AdminHistoryInitialRequest = {
 };
 
 export type AdminHistoryPageRequest = {
+  cacheIdentity?: string | null;
+  cacheUserId?: string;
   currentOnly: boolean;
   cursor: string;
   groupKey: string;

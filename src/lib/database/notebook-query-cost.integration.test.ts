@@ -9,16 +9,20 @@ const admin=id(1),student=id(2),other=id(3),dataset=id(4),unit=id(5);
 const signature='private.wrong_word_notebook_page_v3(uuid,uuid,text,text,bigint,timestamptz,text,integer,integer,text,integer,text,integer,text[])';
 type Page={items:Array<{key:string;wrongCount:number;lastWrongAt:string;scheduling:string}>;totalCount:number;eventUpperId:string};
 describe.sequential('단어장 활성 배정과 대기 항목의 반복 계산 회귀',()=>{
- let db:PGlite,beforeDefinition:string,afterDefinition:string;
+ let db:PGlite,beforeDefinition:string,afterDefinition:string,beforeReuseDefinition:string;
  let beforeRights:unknown;
  beforeAll(async()=>{
   db=await createFinalSchemaDatabase({beforeMigration:async(database,name)=>{
+   if(name==='20261008011927_reuse_notebook_meaning_reads.sql') {
+    beforeReuseDefinition=(await database.query<{body:string}>('select pg_get_functiondef($1::regprocedure) body',[signature])).rows[0].body;
+   }
    if(name!==migration)return;
    const row=(await database.query<{body:string;rights:unknown}>("select pg_get_functiondef($1::regprocedure) body,jsonb_build_array(proowner,proacl,prosecdef,provolatile,proisstrict,proconfig) rights from pg_proc where oid=$1::regprocedure",[signature])).rows[0];
    beforeDefinition=row.body;beforeRights=row.rights;
   }});
   afterDefinition=(await db.query<{body:string}>('select pg_get_functiondef($1::regprocedure) body',[signature])).rows[0].body;
   await db.exec(beforeDefinition.replace('private.wrong_word_notebook_page_v3(','private.expected_notebook_before_cost_fix('));
+  await db.exec(beforeReuseDefinition.replace('private.wrong_word_notebook_page_v3(','private.expected_notebook_before_reuse('));
   await db.exec(`begin;
    select set_config('request.jwt.claim.sub','${admin}',true);select set_config('request.jwt.claim.role','authenticated',true);
    insert into auth.users(id) values('${admin}');insert into admin_profiles(user_id,display_name,is_active) values('${admin}','가짜관리자',true);
@@ -64,6 +68,32 @@ describe.sequential('단어장 활성 배정과 대기 항목의 반복 계산 �
   const current=await page();expect(current).toEqual(previous);expect(current.totalCount).toBe(12);
   expect(current.items.every(w=>w.scheduling==='assigned')).toBe(true);
  },120000);
+ it('최신 문항과 과거 오답에 겹친 뜻은 한 조회에서 한번만 해석한다',async()=>{
+  await db.exec('begin');
+  try {
+   const definition=(await db.query<{body:string}>("select pg_get_functiondef('private.quiz_vocabulary_meaning_v1(uuid,integer)'::regprocedure) body")).rows[0].body;
+   await db.exec(definition.replace('private.quiz_vocabulary_meaning_v1(','private.notebook_test_meaning_original('));
+   await db.exec(`create temporary sequence notebook_meaning_calls;
+    create or replace function private.quiz_vocabulary_meaning_v1(p_question_id uuid,p_depth integer default 0) returns jsonb
+    language plpgsql volatile set search_path='' as $$ begin
+      perform nextval('pg_temp.notebook_meaning_calls');
+      return private.notebook_test_meaning_original(p_question_id,p_depth);
+    end $$;`);
+   const previous=await page('private.expected_notebook_before_reuse');
+   const before=(await db.query<{n:number}>('select last_value::int n from pg_temp.notebook_meaning_calls')).rows[0].n;
+   await db.exec('alter sequence pg_temp.notebook_meaning_calls restart with 1');
+   const current=await page();
+   const after=(await db.query<{n:number}>('select last_value::int n from pg_temp.notebook_meaning_calls')).rows[0].n;
+   expect(current).toEqual(previous); expect(after).toBe(12); expect(before).toBe(24);
+  } finally { await db.exec('rollback'); }
+ },120000);
+ it('빈 요청은 과거 기록을 읽지 않으며 내부 재사용 함수는 외부 실행 불가다',async()=>{
+  expect((await db.query("select * from private.notebook_vocabulary_meaning_states_v1($1,'{}','{}')",[student])).rows).toEqual([]);
+  const rights=(await db.query<{allowed:boolean}>(`select has_function_privilege(r,'private.notebook_vocabulary_meaning_states_v1(uuid,text[],jsonb)','EXECUTE')
+    or has_function_privilege(r,'private.legacy_vocabulary_meaning_states_with_identities_v1(uuid,uuid,text,jsonb,jsonb)','EXECUTE') allowed
+    from unnest(array['anon','authenticated','service_role']) r`)).rows;
+  expect(rights.every(row=>!row.allowed)).toBe(true);
+ });
  it('비교식은 출처별 한 번만 계산하고 권한·정렬·본인 경계를 유지한다',async()=>{
   const expression='private.wrong_history_identity_v1(f.dataset_id,f.vocab_entry_id,g.dictionary_id,g.canonical_id,f.headword,true)';
   expect(afterDefinition.split(expression)).toHaveLength(2);

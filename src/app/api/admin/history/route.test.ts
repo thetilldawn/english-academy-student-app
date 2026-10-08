@@ -68,6 +68,15 @@ const snapshot = {
 };
 
 describe("POST /api/admin/history", () => {
+  it.each(["user", "session"])("더보기의 %s 변경은 조회 전에 차단한다", async change => {
+    const admin = { userId: "00000000-0000-4000-8000-000000000999", sessionId: "current-session" } as AdminContext;
+    mocks.getAdminContext.mockResolvedValue(admin);
+    const response = await POST(request({ mode: "page", currentOnly: false, query: "", statusFilter: "all",
+      groupKey: "open", cursor: "cursor", cacheUserId: change === "user" ? "00000000-0000-4000-8000-000000000111" : admin.userId,
+      cacheIdentity: change === "session" ? "a".repeat(64) : privateListCacheIdentity(admin, "history-list-v1") }));
+    expect(response.status).toBe(401);
+    expect(mocks.listAdminHistoryNextPage).not.toHaveBeenCalled();
+  });
   it("캐시 복원도 현재 인증 뒤에만 허용하고 첫 목록 RPC는 생략한다", async () => {
     const admin = { userId: "00000000-0000-4000-8000-000000000999", sessionId: "current-session" } as AdminContext;
     const identity = privateListCacheIdentity(admin, "history-list-v1");

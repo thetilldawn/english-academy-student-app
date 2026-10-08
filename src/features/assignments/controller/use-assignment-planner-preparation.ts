@@ -95,7 +95,8 @@ export function useAssignmentPlannerPreparation(interactionAllowed = true) {
         },
         abort.signal,
       );
-      if (abort.signal.aborted || versionRef.current !== version || cache?.blocked || cache?.identity !== identity) return;
+      if (abort.signal.aborted || versionRef.current !== version) return;
+      if (cache?.blocked || cache?.identity !== identity) { setState(idleState); return; }
       if (sourceRevision !== invalidationRevision.current) throw new Error("준비하는 동안 학생 또는 배정 자료가 바뀌었습니다. 다시 불러와 주세요.");
       if (identity) saved.current = { key, data, at: Date.now() };
       setState({ data, error: "", request, status: "ready" });

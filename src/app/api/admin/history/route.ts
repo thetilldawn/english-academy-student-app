@@ -50,6 +50,8 @@ const historyReadSchema = z.discriminatedUnion("mode", [
     cursor: z.string().min(1).max(2048),
     groupKey: z.string().min(1).max(40),
     mode: z.literal("page"),
+    cacheIdentity: z.string().regex(/^[a-f0-9]{64}$/u).nullable().optional(),
+    cacheUserId: z.uuid().optional(),
   }).strict(),
   historyReadBaseSchema.extend({
     groupKey: z.string().min(1).max(40),
@@ -115,6 +117,10 @@ export const POST = withAuthenticationFailureResponse(async function POST(reques
         request.signal,
       );
       return Response.json({ section }, { headers: privateNoStoreHeaders });
+    }
+    if ((input.cacheUserId && input.cacheUserId !== admin.userId) ||
+        (input.cacheIdentity && input.cacheIdentity !== privateListCacheIdentity(admin, "history-list-v1"))) {
+      return privateJsonError("로그인을 다시 확인해 주세요.", 401);
     }
     const page = await listAdminHistoryNextPage(input, admin, request.signal);
     return Response.json({ page }, { headers: privateNoStoreHeaders });

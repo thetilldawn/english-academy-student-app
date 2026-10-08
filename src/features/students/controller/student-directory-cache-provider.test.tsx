@@ -6,7 +6,8 @@ import { hydrateRoot } from "react-dom/client";
 import type { DirectoryCacheResponse } from "../contracts/student-directory-cache-contract";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ pathname: "/admin/students", background: "", read: vi.fn() }));
+const mocks = vi.hoisted(() => ({ pathname: "/admin/students", background: "", read: vi.fn(), more: vi.fn() }));
+vi.mock("../transport/student-directory-pages", () => ({ loadStudentDirectoryNextPage: mocks.more, loadStudentDirectorySnapshot: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname, useSelectedLayoutSegments: () => (mocks.background || mocks.pathname).split("/").slice(2) }));
 vi.mock("../transport/student-directory-cache-read", () => ({ readStudentDirectoryCache: mocks.read }));
 import { StudentDirectoryCacheProvider } from "./student-directory-cache-provider";
@@ -21,6 +22,26 @@ function view(owner = userId, initialResponse?: Extract<DirectoryCacheResponse, 
 beforeEach(() => { mocks.pathname = "/admin/students"; mocks.background = ""; mocks.read.mockReset().mockImplementation(async () => response()); });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 describe("실제 학생 목록과 개인 캐시 연결", () => {
+  it("20명을 펼친 뒤 16초 동안 다른 화면에 다녀와도 새 커서와 포인트로 20명을 복원한다", async () => {
+    let now = Date.now(); const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+    const first = response();
+    const rows = Array.from({ length: 20 }, (_, i) => ({ ...first.snapshot.page.items[0],
+      id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`, displayName: `학생 ${i + 1}` }));
+    const initial = { ...first, snapshot: { ...first.snapshot, totalCount: 20, page: { items: rows.slice(0, 10), nextCursor: "old-cursor" } } };
+    mocks.read.mockResolvedValue(initial); mocks.more.mockReset().mockResolvedValue({ items: rows.slice(10), nextCursor: null });
+    try {
+      const { rerender } = render(view()); await screen.findByText("학생 1", { exact: true });
+      fireEvent.click(screen.getByRole("button", { name: "10명 더보기" })); await screen.findByText("학생 20", { exact: true });
+      mocks.pathname = "/admin/assignments"; rerender(view()); now += 16000;
+      mocks.read.mockResolvedValue({ ...initial, snapshot: { ...initial.snapshot, snapshotAt: "2026-09-06T00:01:00Z",
+        page: { items: rows.slice(0, 10), nextCursor: "new-cursor" } } });
+      mocks.more.mockResolvedValue({ items: rows.slice(10).map(row => ({ ...row, rawPoints: 95 })), nextCursor: null });
+      mocks.pathname = "/admin/students"; rerender(view()); await screen.findByText("학생 20", { exact: true });
+      expect(screen.getAllByText("현재 포인트 95")).toHaveLength(10);
+      expect(mocks.more).toHaveBeenCalledTimes(2);
+      expect(mocks.more.mock.calls.at(-1)?.[0]).toMatchObject({ cursor: "new-cursor", cacheIdentity: identity, cacheUserId: userId });
+    } finally { clock.mockRestore(); }
+  });
   it("가로채기 상세 왕복은 배경 목록 DOM과 작성 중 검색을 보존하고 재조회하지 않는다", async () => {
     mocks.background = "/admin/students";
     const persistent = () => <StudentDirectoryCacheProvider userId={userId}><CachedStudentDirectory /></StudentDirectoryCacheProvider>;

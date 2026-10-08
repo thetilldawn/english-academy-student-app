@@ -17,6 +17,8 @@ import { subscribeAdminHistoryMutation } from "./history-change-listener";
 import type { HistoryFreshSectionReader } from "./history-refresh-coordinator";
 
 export type AdminHistoryLoadMoreContext = {
+  cacheIdentity?: string | null;
+  cacheUserId?: string;
   currentOnly: boolean;
   query: string;
   statusFilter: AdminHistoryStatusFilter;
@@ -34,11 +36,13 @@ function mergeUniqueItems(current: readonly AdminHistoryListItem[], incoming: re
 export function useAdminHistorySectionPage({
   loadMoreContext, onAccessFailure, section, readFreshSection = loadAdminHistoryFreshSection,
   onCursorRejected,
+  onPageChange,
   mutationRefreshEnabled = true,
 }: {
   loadMoreContext?: AdminHistoryLoadMoreContext;
   onAccessFailure?: (kind: AdminHistoryFailureKind) => void;
   onCursorRejected?: () => void;
+  onPageChange?: (section: AdminHistorySectionPage) => void;
   section: AdminHistorySectionPage;
   readFreshSection?: HistoryFreshSectionReader;
   mutationRefreshEnabled?: boolean;
@@ -54,6 +58,12 @@ export function useAdminHistorySectionPage({
   const accessDeniedRef = useRef(false);
 
   useEffect(() => () => requestRef.current?.abort(), []);
+
+  useEffect(() => {
+    if (loading || failure || invalidated || accessDeniedRef.current) return;
+    if (items === section.items && nextCursor === section.nextCursor && totalCount === section.totalCount) return;
+    onPageChange?.({ ...section, items, nextCursor, totalCount });
+  }, [items, nextCursor, totalCount, loading, failure, invalidated, section, onPageChange]);
 
   const runRequest = useCallback(async (request: AdminHistoryReadRequest) => {
     if (accessDeniedRef.current) return;

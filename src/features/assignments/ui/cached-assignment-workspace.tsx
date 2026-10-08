@@ -29,7 +29,7 @@ export function CachedAssignmentWorkspace({ initialResponse, initialDatasetId, i
     <AssignmentAuthenticationBoundary onFailure={context?.cache.lock}>
       <AssignmentWorkspace key={entry.blocked ? "blocked" : "allowed"}
         initial={{ directory: entry.blocked ? pendingDirectory : entry.snapshot ?? entry.retainedSnapshot ?? pendingDirectory }} cacheEnabled
-        interactionAllowed={Boolean(entry.snapshot) && !entry.blocked} initialDatasetId={initialDatasetId}
+        interactionAllowed={Boolean(entry.snapshot) && !entry.blocked && !entry.initializing} initialDatasetId={initialDatasetId}
         authenticationRecovery={entry.blocked ? undefined : { error: entry.error ?? "", retry: entry.retry }}
         pendingContent={pendingContent} initialDialogView={initialDialogView} initialStudentId={initialStudentId} />
     </AssignmentAuthenticationBoundary>

@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+const more = vi.hoisted(() => vi.fn());
+vi.mock("../transport/student-directory-pages", () => ({ loadStudentDirectoryNextPage: more }));
 import { emptyStudentDirectoryFilters as filters } from "../contracts/student-directory-read-model";
 import type { DirectoryCacheResponse } from "../contracts/student-directory-cache-contract";
 import { StudentDirectoryRequestError } from "../contracts/student-directory-cache-contract";
@@ -12,6 +14,7 @@ function response(points = 30): DirectoryCacheResponse {
 }
 function deferred<T>() { let resolve!: (value:T)=>void; const promise = new Promise<T>(done=>{resolve=done;}); return { promise, resolve }; }
 afterEach(()=>vi.useRealTimers());
+beforeEach(() => more.mockReset());
 describe("개인 학생 목록 캐시",()=>{
   it("펼친 20명을 같은 저장시각으로 보존하고 모두의 현재 포인트로 복원한다",async()=>{
     vi.useFakeTimers();
@@ -30,7 +33,12 @@ describe("개인 학생 목록 캐시",()=>{
     expect(resumed.savedAt).toBe(initial.savedAt);
     expect(JSON.stringify(cache.inspect())).not.toContain('rawPoints');
     await vi.advanceTimersByTimeAsync(10000);
-    await cache.read(filters);
+    more.mockResolvedValue({ items: rows.slice(10).map(row => ({ ...row, rawPoints: 90 })), nextCursor: null });
+    const fresh = await cache.read(filters);
+    expect(fresh.snapshot.page.items).toHaveLength(20);
+    expect(fresh.snapshot.page.items[19].rawPoints).toBe(90);
+    expect(more).toHaveBeenCalledOnce();
+    expect(more.mock.calls[0][0]).toMatchObject({ cursor: "page2", cacheIdentity: identity, cacheUserId: userId });
     expect(reader.mock.calls[2][0].identity).toBeUndefined();
     cache.dispose();
   });

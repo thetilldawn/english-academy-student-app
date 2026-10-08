@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { normalizeAdminHistoryQuery, type AdminHistorySnapshot } from "../contracts/admin-history-read-model";
+import { normalizeAdminHistoryQuery, type AdminHistorySectionPage, type AdminHistorySnapshot } from "../contracts/admin-history-read-model";
 import { historyFailureKind, isHistoryAccessFailure, type AdminHistoryFailureKind } from "../contracts/admin-history-request-error";
 import type { AdminHistoryStatusFilter } from "../domain/learning-activity";
 import { loadAdminHistorySnapshot } from "../transport/history-pages";
@@ -46,6 +46,19 @@ export function useAdminHistoryListController(
     cache?.rememberFilters({ currentOnly: false, query: normalizedQuery, statusFilter });
   }, [cache, normalizedQuery, statusFilter]);
 
+  useEffect(() => { cache?.rememberSnapshot(snapshot); }, [cache, snapshot]);
+  const rememberSectionPage = useCallback((section: AdminHistorySectionPage) => {
+    if (cache?.blocked) return;
+    setSnapshot(current => {
+      if (current.snapshotAt !== snapshot.snapshotAt || current.query !== snapshot.query ||
+          current.statusFilter !== snapshot.statusFilter || current.currentOnly !== snapshot.currentOnly) return current;
+      const previous = current.sections.find(item => item.groupKey === section.groupKey);
+      if (!previous || (previous.items === section.items && previous.nextCursor === section.nextCursor &&
+          previous.totalCount === section.totalCount)) return current;
+      return { ...current, sections: current.sections.map(item => item.groupKey === section.groupKey ? section : item) };
+    });
+  }, [cache, snapshot.snapshotAt, snapshot.query, snapshot.statusFilter, snapshot.currentOnly]);
+
   useEffect(() => {
     if (forcedRetry.current !== conditionsKey) forcedRetry.current = null;
     if (conditionsMatchSnapshot || accessFailure) return;
@@ -84,6 +97,8 @@ export function useAdminHistoryListController(
     isCurrentSnapshot,
     loading: !isCurrentSnapshot && !failure,
     reportAccessFailure,
+    rememberSectionPage,
+    pageIdentity: cache ? { cacheIdentity: cache.identity, cacheUserId: cache.userId } : {},
     retry: () => { forcedRetry.current = conditionsKey; setRetryRevision((revision) => revision + 1); },
     snapshot,
   };

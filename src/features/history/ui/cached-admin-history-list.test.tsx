@@ -32,6 +32,27 @@ function view(seed?: HistoryCacheSeed, owner=userId) {
 beforeEach(()=>{vi.clearAllMocks();mocks.pathname="/admin/results";mocks.mainPathname=null;mocks.read.mockImplementation(async input=>({...response(),snapshot:{...response().snapshot,...input.filters}}));});
 afterEach(()=>{cleanup();vi.useRealTimers();});
 describe("실제 내역 첫 목록과 개인 캐시",()=>{
+  it("숨김 복귀는 펼친 행을 인증 뒤 그대로 복원하고 오래된 복귀는 새 커서로 채운다", async () => {
+    let now = Date.now(); const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+    try {
+      const { rerender } = render(view()); await screen.findByText("가짜 내역 학생");
+      mocks.more.mockResolvedValue({ items: [{ ...item, id: "extra", studentName: "더 본 학생" }], nextCursor: null });
+      fireEvent.click(screen.getByRole("button", { name: "10개 더보기" })); await screen.findByText("더 본 학생");
+      mocks.read.mockResolvedValue({ kind: "resume", identity, userId });
+      act(() => window.dispatchEvent(new Event("pagehide")));
+      expect(screen.queryByText("더 본 학생")).not.toBeInTheDocument();
+      act(() => window.dispatchEvent(new Event("pageshow")));
+      await screen.findByText("더 본 학생"); expect(mocks.more).toHaveBeenCalledOnce();
+      mocks.pathname = "/admin/students"; rerender(view()); now += 16000;
+      const fresh = response("2026-09-06T00:00:20.000900Z"); fresh.snapshot.sections[0].nextCursor = "fresh-cursor";
+      mocks.read.mockResolvedValue(fresh);
+      mocks.more.mockResolvedValue({ items: [{ ...item, id: "extra", studentName: "갱신한 학생" }], nextCursor: null });
+      mocks.pathname = "/admin/results"; rerender(view()); await screen.findByText("갱신한 학생");
+      expect(screen.queryByText("더 본 학생")).not.toBeInTheDocument();
+      expect(mocks.more).toHaveBeenCalledTimes(2);
+      expect(mocks.more.mock.calls.at(-1)?.[0]).toMatchObject({ cursor: "fresh-cursor", cacheIdentity: identity, cacheUserId: userId });
+    } finally { clock.mockRestore(); }
+  });
   it.each([false,true])("거절된 커서의 복구 실패=%s 후 왕복에도 옛 커서를 복원하지 않는다",async fail=>{
     const {rerender}=render(view());await screen.findByText("가짜 내역 학생");
     mocks.more.mockRejectedValue(new AdminHistoryRequestError("invalid-request"));
@@ -84,7 +105,9 @@ describe("실제 내역 첫 목록과 개인 캐시",()=>{
   });
   it.each(["unauthenticated","forbidden"] as const)("현재 %s 또는 로그아웃은 행·개수·더보기 전체를 숨긴다",async kind=>{
     render(view());await screen.findByText("가짜 내역 학생");
-    mocks.read.mockRejectedValue(new AdminHistoryRequestError(kind));act(()=>window.dispatchEvent(new Event("pageshow")));
+    mocks.read.mockRejectedValue(new AdminHistoryRequestError(kind));
+    act(()=>window.dispatchEvent(new Event("pagehide")));
+    act(()=>window.dispatchEvent(new Event("pageshow")));
     await screen.findByRole("link",{name:"관리자 로그인"});expect(screen.queryByText("가짜 내역 학생")).not.toBeInTheDocument();expect(screen.queryByText("11건")).not.toBeInTheDocument();
     expect(screen.queryByRole("button",{name:"10개 더보기"})).not.toBeInTheDocument();
     const count=mocks.read.mock.calls.length;act(()=>announceAdminPrivateCacheChange("identity"));expect(mocks.read).toHaveBeenCalledTimes(count);
@@ -131,6 +154,7 @@ describe("실제 내역 첫 목록과 개인 캐시",()=>{
     vi.useFakeTimers(); render(view()); await act(async () => { await Promise.resolve(); });
     await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
     mocks.read.mockRejectedValue(new AdminHistoryRequestError("unavailable"));
+    act(()=>window.dispatchEvent(new Event("pagehide")));
     act(()=>window.dispatchEvent(new Event("pageshow")));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(screen.getByRole("alert")).not.toHaveTextContent("최신 시험 내역을 다시 확인해 주세요.");

@@ -3187,6 +3187,11 @@
       "path": "supabase/migrations/20261007154921_deduplicate_notebook_read_work.sql",
       "owner": "students",
       "flow": "student-wrong-word-read"
+    },
+    {
+      "path": "supabase/migrations/20261008011927_reuse_notebook_meaning_reads.sql",
+      "owner": "quiz-player",
+      "flow": "student-wrong-word-read"
     }
   ],
   "features": [
@@ -7842,7 +7847,8 @@
           "src/features/assignments/domain/assignment-student-context.test.ts",
           "src/features/assignments/controller/use-assignment-planner-preparation.test.tsx",
           "src/features/assignments/controller/use-assignment-dataset-metadata.test.tsx",
-          "test/e2e/authenticated/app-latency-repair.spec.ts"
+          "test/e2e/authenticated/app-latency-repair.spec.ts",
+          "src/features/assignments/ui/cached-assignment-workspace.hydration.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -8531,7 +8537,8 @@
           "supabase/migrations/20261002015333_preserve_mistake_assignment_soft_deletion.sql",
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
           "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
-          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql"
+          "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql",
+          "supabase/migrations/20261008011927_reuse_notebook_meaning_reads.sql"
         ],
         "cacheStreaming": [
           "src/app/api/student/wrong-words/route.ts",

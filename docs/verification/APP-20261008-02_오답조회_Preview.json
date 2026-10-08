@@ -1,0 +1,75 @@
+{
+  "at": "2026-10-08T01:48:50.027Z",
+  "project": "wojxpruvbjzbhrpmsbuy",
+  "migration": "20261008014025",
+  "localFile": "20261008011927_reuse_notebook_meaning_reads.sql",
+  "sha256": "9247e59d7353b84241fde51691ec2e5f4fd2fa9a7c5db7ef852660e8e2c10eb5",
+  "existingFunctionMetadataPreserved": true,
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres}",
+      "oid": "394974",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "signature": "private.legacy_vocabulary_meaning_states_v1(uuid,uuid,text,jsonb)",
+      "securityDefiner": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "oid": "411679",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "signature": "private.legacy_vocabulary_meaning_states_with_identities_v1(uuid,uuid,text,jsonb,jsonb)",
+      "securityDefiner": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "oid": "411682",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "signature": "private.notebook_vocabulary_meaning_states_v1(uuid,text[],jsonb)",
+      "securityDefiner": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "oid": "394952",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "signature": "private.quiz_vocabulary_meaning_v1(uuid,integer)",
+      "securityDefiner": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "oid": "394217",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "signature": "private.wrong_word_notebook_page_v3(uuid,uuid,text,text,bigint,timestamp with time zone,text,integer,integer,text,integer,text,integer,text[])",
+      "securityDefiner": false
+    }
+  ],
+  "rows": {
+    "before": {
+      "questions": 1746,
+      "assignments": 5791,
+      "attempts": 172,
+      "wrong_events": 890
+    },
+    "after": {
+      "questions": 1746,
+      "assignments": 5791,
+      "attempts": 172,
+      "wrong_events": 890
+    }
+  },
+  "productionApplied": false
+}

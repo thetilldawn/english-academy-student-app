@@ -12,6 +12,18 @@ const session = vi.hoisted(() => ({ cache: { identity: "a".repeat(64), blocked: 
 vi.mock("@/features/students/public-client", async original => ({ ...await original<typeof import("@/features/students/public-client")>(), useStudentDirectoryCache: () => session }));
 afterEach(() => { cleanup(); vi.resetAllMocks(); vi.useRealTimers(); session.cache.identity="a".repeat(64); });
 
+it("준비 응답 전에 계정이 바뀌면 자료를 가리고 로딩을 끝낸다", async () => {
+  let finish!: (value: AssignmentPlannerPreparation) => void;
+  vi.mocked(loadAssignmentPlannerPreparation).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const { result } = renderHook(() => useAssignmentPlannerPreparation());
+  let pending!: Promise<void>;
+  act(() => { pending = result.current.actions.open({ studentIds: ["fake"], selectionMode: "single", initialDatasetId: "", bulkFilterLabels: [] }); });
+  session.cache.identity = "b".repeat(64);
+  await act(async () => { finish({ datasets: [], initialUnits: [], initialDatasetId: "", timeTemplates: [], students: [] }); await pending; });
+  expect(result.current.status).toBe("idle");
+  expect(result.current.data).toBeNull();
+});
+
 it("준비 도중 자료가 바뀌면 늦은 응답을 성공 캐시에 남기지 않는다", async () => {
   const data: AssignmentPlannerPreparation = { datasets: [], initialUnits: [], initialDatasetId: "", timeTemplates: [], students: [] };
   let finish!: (value: AssignmentPlannerPreparation) => void;

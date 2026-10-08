@@ -77,7 +77,7 @@ function AdminHistoryListContent({
   query: string;
   statusFilter: AdminHistoryStatusFilter;
 }) {
-  const { failure, isCurrentSnapshot, loading, reportAccessFailure, retry, snapshot } =
+  const { failure, isCurrentSnapshot, loading, reportAccessFailure, rememberSectionPage, pageIdentity, retry, snapshot } =
     useAdminHistoryListController(initialSnapshot, { query, statusFilter }, cacheEnabled);
 
   const sections = useMemo(() => snapshotSections(snapshot), [snapshot]);
@@ -109,6 +109,7 @@ function AdminHistoryListContent({
           key={JSON.stringify([snapshot.snapshotAt, snapshot.query, snapshot.statusFilter, snapshot.currentOnly])}
           countSuffix={adminHistoryText.sections.countSuffix}
           loadMoreContext={{
+            ...pageIdentity,
             currentOnly: snapshot.currentOnly,
             query: snapshot.query,
             statusFilter: snapshot.statusFilter,
@@ -116,6 +117,7 @@ function AdminHistoryListContent({
           revision={snapshot.snapshotAt}
           sections={sections}
           onAccessFailure={reportAccessFailure}
+          onPageChange={cacheEnabled ? rememberSectionPage : undefined}
           mutationRefreshEnabled={!cacheEnabled}
           onCursorRejected={onCursorRejected}
         />

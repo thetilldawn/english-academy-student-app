@@ -29,6 +29,7 @@ function HistorySectionGroup({
   mutationRefreshEnabled,
   onAccessFailure,
   onCursorRejected,
+  onPageChange,
   readFreshSection,
   section,
 }: {
@@ -38,11 +39,12 @@ function HistorySectionGroup({
   mutationRefreshEnabled: boolean;
   onAccessFailure: (kind: AdminHistoryFailureKind) => void;
   onCursorRejected?: () => void;
+  onPageChange?: (section: AdminHistorySectionPage) => void;
   section: HistorySection;
   readFreshSection: HistoryFreshSectionReader;
 }) {
   const { countKnown, failure, items, loadMore, loading, nextCursor, retry, totalCount } =
-    useAdminHistorySectionPage({ loadMoreContext, onAccessFailure, onCursorRejected, section, readFreshSection, mutationRefreshEnabled });
+    useAdminHistorySectionPage({ loadMoreContext, onAccessFailure, onCursorRejected, onPageChange, section, readFreshSection, mutationRefreshEnabled });
 
   return (
     <CollapsibleStatusSection
@@ -80,6 +82,7 @@ export function HistorySectionGroups({
   mutationRefreshEnabled = true,
   onAccessFailure,
   onCursorRejected,
+  onPageChange,
   revision = "static",
   sections,
 }: {
@@ -89,6 +92,7 @@ export function HistorySectionGroups({
   mutationRefreshEnabled?: boolean;
   onAccessFailure?: (kind: AdminHistoryFailureKind) => void;
   onCursorRejected?: () => void;
+  onPageChange?: (section: AdminHistorySectionPage) => void;
   revision?: string;
   sections: HistorySection[];
 }) {
@@ -116,6 +120,7 @@ export function HistorySectionGroups({
           mutationRefreshEnabled={mutationRefreshEnabled}
           onAccessFailure={reportAccessFailure}
           onCursorRejected={onCursorRejected}
+          onPageChange={onPageChange}
           readFreshSection={refresh.readFreshSection}
           section={section}
         />

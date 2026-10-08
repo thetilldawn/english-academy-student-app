@@ -15,6 +15,8 @@ type Policy<Filters, Snapshot, Stored, Resume, Consumer extends string> = {
   filters: (snapshot: Snapshot) => Filters;
   retain: (snapshot: Snapshot) => Stored;
   sameSnapshot?: (stored: Stored, snapshot: Snapshot) => boolean;
+  pageCounts?: (snapshot: Snapshot) => Record<string, number>;
+  completeSnapshot?: (snapshot: Snapshot, counts: Readonly<Record<string, number>>, context: { identity: string; userId: string }, signal: AbortSignal) => Promise<Snapshot>;
   restore: (stored: Stored, resume: Resume) => Snapshot;
   reader: (filters: Filters, reusable: { identity: string; snapshot: Stored } | undefined, signal: AbortSignal) => Promise<PrivateListResponse<Snapshot, Resume>>;
   error: (status: 401 | 502 | 503) => Error;
@@ -31,22 +33,31 @@ export function createPrivateListCache<Filters, Snapshot, Stored, Resume, Consum
   const pending = new Map<string, SharedRead<PrivateListRead<Snapshot>>>();
   const listeners = new Set<() => void>();
   const rememberedFilters = new Map<Consumer, Filters>();
+  const rememberedPageCounts = new Map<string, Record<string, number>>();
   let identity: string | null = null;
   let revision = 0;
   let blocked = false;
   let disposed = false;
+  let seedInstalled = false;
   let displayDeadlineAt = 0;
   const filtersFor = (consumer: Consumer = policy.defaultConsumer) => rememberedFilters.get(consumer) ?? policy.defaultFilters(consumer);
   const emit = () => { revision++; listeners.forEach(listener => listener()); };
   const removeEntry = (key: string) => { const entry = entries.get(key); if (entry) clearTimeout(entry.timer); entries.delete(key); };
   const cancelRequests = () => { for (const request of pending.values()) request.abort.abort(); pending.clear(); };
   const clear = () => { cancelRequests(); for (const key of entries.keys()) removeEntry(key); };
-  const lock = () => { if (blocked) return; blocked = true; clear(); rememberedFilters.clear(); identity = null; emit(); };
-  function store(key: string, snapshot: Snapshot) {
+  const lock = () => { if (blocked) return; blocked = true; clear(); rememberedFilters.clear(); rememberedPageCounts.clear(); identity = null; emit(); };
+  function rememberPageCounts(key: string, snapshot: Snapshot) {
+    if (!policy.pageCounts) return;
+    rememberedPageCounts.delete(key);
+    rememberedPageCounts.set(key, policy.pageCounts(snapshot));
+    while (rememberedPageCounts.size > 20) rememberedPageCounts.delete(rememberedPageCounts.keys().next().value!);
+  }
+  function store(key: string, snapshot: Snapshot, savedAt = now()) {
     removeEntry(key);
     const time = now();
-    entries.set(key, { snapshot: policy.retain(snapshot), savedAt: time, lastUsedAt: time,
+    entries.set(key, { snapshot: policy.retain(snapshot), savedAt, lastUsedAt: time,
       timer: setTimeout(() => removeEntry(key), PRIVATE_LIST_GC_MS) });
+    rememberPageCounts(key, snapshot);
     while (entries.size > 20) removeEntry(entries.keys().next().value!);
   }
   async function read(filtersInput: Filters, signal?: AbortSignal, force = false, consumer: Consumer = policy.defaultConsumer): Promise<PrivateListRead<Snapshot>> {
@@ -68,7 +79,7 @@ export function createPrivateListCache<Filters, Snapshot, Stored, Resume, Consum
     const request: SharedRead<PrivateListRead<Snapshot>> = { abort, consumers: [], promise: Promise.resolve(undefined as never) };
     pending.set(key, request);
     const checkCurrent = () => { if (disposed || blocked || abort.signal.aborted || pending.get(key) !== request) throw aborted(); };
-    request.promise = policy.reader(filters, usable && identity ? { identity, snapshot: usable.snapshot } : undefined, abort.signal).then(result => {
+    request.promise = policy.reader(filters, usable && identity ? { identity, snapshot: usable.snapshot } : undefined, abort.signal).then(async result => {
       checkCurrent();
       if (result.userId !== expectedUserId || (identity && result.identity !== identity)) {
         lock(); throw policy.error(401);
@@ -79,7 +90,12 @@ export function createPrivateListCache<Filters, Snapshot, Stored, Resume, Consum
       if (result.kind === "snapshot") {
         if (policy.key(policy.filters(result.snapshot)) !== key) throw policy.error(502);
         snapshot = result.snapshot; savedAt = now();
-        if (identity) store(key, snapshot);
+        const counts = rememberedPageCounts.get(key);
+        if (identity && counts && policy.completeSnapshot) {
+          snapshot = await policy.completeSnapshot(snapshot, counts, { identity, userId: expectedUserId }, abort.signal);
+          checkCurrent();
+        }
+        if (identity) store(key, snapshot, savedAt);
       } else {
         if (!usable || now() - usable.savedAt >= PRIVATE_LIST_DISPLAY_MS) throw policy.error(503);
         snapshot = policy.restore(usable.snapshot, result.value);
@@ -109,6 +125,7 @@ export function createPrivateListCache<Filters, Snapshot, Stored, Resume, Consum
       const savedAt = now();
       if (identity) store(policy.key(filters), result.snapshot);
       displayDeadlineAt = savedAt + PRIVATE_LIST_DISPLAY_MS;
+      seedInstalled = true;
       emit();
       return { snapshot: result.snapshot, savedAt };
     },
@@ -116,13 +133,17 @@ export function createPrivateListCache<Filters, Snapshot, Stored, Resume, Consum
     rememberSnapshot(snapshot: Snapshot) {
       if (disposed || blocked || !identity || !policy.sameSnapshot) return;
       const entry = entries.get(policy.key(policy.filters(snapshot)));
-      if (!entry || !policy.sameSnapshot(entry.snapshot, snapshot)) return;
+      // An active authorized screen can outlive the short-lived row cache.
+      if (!entry) { rememberPageCounts(policy.key(policy.filters(snapshot)), snapshot); return; }
+      if (!policy.sameSnapshot(entry.snapshot, snapshot)) return;
       // More pages do not make the first page newer or extend retention.
       entry.snapshot = policy.retain(snapshot);
+      rememberPageCounts(policy.key(policy.filters(snapshot)), snapshot);
     },
     filtersFor,
     invalidate() { clear(); displayDeadlineAt = 0; emit(); },
     get blocked() { return blocked; },
+    get seedInstalled() { return seedInstalled; },
     get revision() { return revision; },
     get lastFilters() { return filtersFor(); },
     get identity() { return identity; },
@@ -130,6 +151,6 @@ export function createPrivateListCache<Filters, Snapshot, Stored, Resume, Consum
     get displayDeadlineAt() { return displayDeadlineAt; },
     subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
     inspect() { return [...entries.values()].map(({ snapshot, savedAt, lastUsedAt }) => ({ snapshot, savedAt, lastUsedAt })); },
-    dispose() { disposed = true; clear(); rememberedFilters.clear(); listeners.clear(); },
+    dispose() { disposed = true; clear(); rememberedFilters.clear(); rememberedPageCounts.clear(); listeners.clear(); },
   };
 }

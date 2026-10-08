@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import type { PrivateListRead, PrivateListSeed } from "./private-list-cache";
 
 type EntryCache<Snapshot, Filters, Consumer extends string> = {
-  readonly userId: string; readonly blocked: boolean; readonly displayDeadlineAt: number;
+  readonly userId: string; readonly blocked: boolean; readonly displayDeadlineAt: number; readonly seedInstalled: boolean;
   hydrate: (seed: PrivateListSeed<Snapshot>, consumer?: Consumer) => PrivateListRead<Snapshot>;
   read: (filters: Filters, signal?: AbortSignal, force?: boolean, consumer?: Consumer) => Promise<PrivateListRead<Snapshot>>;
   filtersFor: (consumer?: Consumer) => Filters;
@@ -46,7 +46,10 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
   const deadline = cache?.displayDeadlineAt ?? 0;
   useEffect(() => {
     if (!cache || !ticket || !visible || cache.blocked) return;
-    if (seed && seed.ticket === ticket && attempt === 0) { cache.hydrate(seed.response, consumer); return; }
+    if (seed && seed.ticket === ticket && attempt === 0) {
+      cache.hydrate(seed.response, consumer);
+      return;
+    }
     const abort = new AbortController();
     void cache.read(cache.filtersFor(consumer), abort.signal, retryRequest.ticket === ticket, consumer).then(read => {
       if (!abort.signal.aborted) setState({ ticket, attempt, success: { ticket, read } });
@@ -68,6 +71,9 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
   const snapshot = options.retainActiveSnapshot ? activeRead?.snapshot
     : activeRead && current && !expired && !current.error ? activeRead.snapshot : undefined;
   return {
+    // SSR can display its authorized seed before effects install the cache.
+    // Child commands must wait for that installation, not capture null identity.
+    initializing: Boolean(seed && seed.ticket === ticket && !cache?.seedInstalled),
     expired: expired && !current?.error,
     stale: Boolean(snapshot && expired),
     refreshing: Boolean(cache && ticket && visible && !cache.blocked && !current),
