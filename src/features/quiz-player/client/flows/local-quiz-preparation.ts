@@ -5,12 +5,14 @@ import { joinSharedRead, type SharedRead } from "@/lib/network/join-shared-read"
 import { studentIdentityGeneration } from "@/features/session/public-client";
 import { requestLocalQuiz } from "../../api/local-quiz";
 import { localQuizPreparationSchema, type LocalQuizRun } from "../../contracts/local-quiz";
-import { cacheLocalQuizContents, findLocalQuizRun, getLocalQuizDevice, knownLocalQuizContentKeys, knownLocalQuizKeysFor,
-  readLocalQuizContents, saveLocalQuizRun, pruneLocalQuizContents } from "./local-quiz-store";
+import { cacheLocalQuizContents, findLocalQuizRun, getLocalQuizDevice, knownLocalQuizAssignmentKeys, knownLocalQuizKeysFor,
+  readLocalQuizContents, saveLocalQuizRun } from "./local-quiz-store";
+import { cancelLocalQuizMaintenance } from "./local-quiz-maintenance";
 
 const preparations = new Map<string, SharedRead<string>>();
 export function prepareLocalQuiz(assignmentId: string, signal?: AbortSignal): Promise<string> {
   if (signal?.aborted) return Promise.reject(new DOMException("Request cancelled", "AbortError"));
+  cancelLocalQuizMaintenance();
   const identity = studentIdentityGeneration(), key = identity + ":" + assignmentId;
   let request = preparations.get(key);
   if (!request || request.abort.signal.aborted) {
@@ -34,8 +36,7 @@ async function executePreparation(assignmentId: string, identity: string, signal
   check();
   const device = await getLocalQuizDevice();
   check();
-  if (!warmKeys.length) { await pruneLocalQuizContents(); check(); }
-  const knownKeys = warmKeys.length ? await knownLocalQuizKeysFor(warmKeys) : await knownLocalQuizContentKeys();
+  const knownKeys = warmKeys.length ? await knownLocalQuizKeysFor(warmKeys) : await knownLocalQuizAssignmentKeys(identity, assignmentId);
   check();
   const response = await requestLocalQuiz({ action: "prepare", assignmentId, device, knownKeys }, signal);
   check();

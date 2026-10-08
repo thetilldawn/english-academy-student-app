@@ -7,12 +7,21 @@ const TABLES = ["contents", "atoms", "runs", "meta"] as const;
 type Table = typeof TABLES[number];
 type StoredContent = CommonQuizReference & { cachedAt: number };
 type StoredAtom = DisplayAtom & { cachedAt: number };
+type MaterialReferences = { key: string; runKey?: string; questionKeys: string[]; displayKeys: string[]; updatedAt: number };
+const RUN_REFERENCES_READY = "run-references:v1";
+const materialsKey = (identity: string, assignmentId: string) => `assignment-materials:${identity}:${assignmentId}`;
+const runAliasKey = (studentId: string, attemptId: string) => `run-alias:${studentId}:${attemptId}`;
+const questionKeys = (keys: readonly string[]) => [...new Set(keys.filter(key => /^[0-9a-f-]{36}:[a-f0-9]{64}$/.test(key)))].slice(0, 500);
+const displayKeys = (keys: readonly string[]) => [...new Set(keys.filter(key => /^display:v1:[a-f0-9]{64}$/.test(key)))].slice(0, 5000);
 let opened: Promise<IDBDatabase> | null = null;
 function database() {
   if (opened) return opened;
   opened = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(NAME, 1);
-    request.onupgradeneeded = () => { for (const name of TABLES) request.result.createObjectStore(name, { keyPath: "key" }); };
+    request.onupgradeneeded = () => {
+      for (const name of TABLES) request.result.createObjectStore(name, { keyPath: "key" });
+      request.transaction!.objectStore("meta").put({ key: RUN_REFERENCES_READY, value: true });
+    };
     request.onerror = () => reject(request.error ?? new Error("local_storage_unavailable"));
     request.onblocked = () => reject(new Error("local_storage_blocked"));
     request.onsuccess = () => { request.result.onversionchange = () => { request.result.close(); opened = null; }; resolve(request.result); };
@@ -20,13 +29,16 @@ function database() {
   return opened;
 }
 /** Resolution means transaction COMMIT, never merely a successful put request. */
-async function transaction<T>(tables: Table[], mode: IDBTransactionMode, act: (tx: IDBTransaction, finish: (value: T) => void) => void): Promise<T> {
+async function transaction<T>(tables: Table[], mode: IDBTransactionMode, act: (tx: IDBTransaction, finish: (value: T) => void) => void, signal?: AbortSignal): Promise<T> {
   const db = await database();
+  signal?.throwIfAborted();
   return new Promise<T>((resolve, reject) => {
     const tx = db.transaction(tables, mode, mode === "readwrite" ? { durability: "strict" } : undefined);
     let value: T; let failure: unknown;
-    tx.oncomplete = () => resolve(value);
-    tx.onabort = () => reject(failure ?? tx.error ?? new Error("local_storage_aborted"));
+    const abort = () => { try { tx.abort(); } catch { /* Already committed. */ } };
+    signal?.addEventListener("abort", abort, { once: true });
+    tx.oncomplete = () => { signal?.removeEventListener("abort", abort); resolve(value); };
+    tx.onabort = () => { signal?.removeEventListener("abort", abort); reject(signal?.aborted ? signal.reason : failure ?? tx.error ?? new Error("local_storage_aborted")); };
     tx.onerror = () => { failure ??= tx.error; };
     try { act(tx, result => { value = result; }); } catch (error) { failure = error; tx.abort(); }
   });
@@ -108,21 +120,81 @@ export async function knownLocalQuizKeysFor(required: readonly string[], now = D
   });
   const atomKeys = [...new Set([...keys.filter(key => /^display:v1:[a-f0-9]{64}$/.test(key)), ...references.flatMap(localContentAtomKeys)])];
   const atoms = await readLocalDisplayAtoms(atomKeys, false, now);
-  const known = new Set(atoms.keys());
+  const validReferences: CommonQuizReference[] = [];
   await Promise.all(references.map(async reference => {
-    try { if (await unpackLocalQuizContent(reference, atoms)) known.add(reference.key); } catch { /* Repair only the affected reference. */ }
+    try { if (await unpackLocalQuizContent(reference, atoms)) validReferences.push(reference); } catch { /* Repair only the affected reference. */ }
   }));
+  // Required questions and their atoms take precedence over older study hints.
+  const known = new Set(validReferences.map(reference => reference.key));
+  validReferences.flatMap(localContentAtomKeys).forEach(key => { if (atoms.has(key)) known.add(key); });
+  for (const key of atoms.keys()) { if (known.size >= 5500) break; known.add(key); }
   return [...known].slice(0, 5500);
 }
 export const getLocalQuizRun = (key: string) => read<LocalQuizRun>("runs", key);
+
+function writeRunReferences(tx: IDBTransaction, run: LocalQuizRun, onlyIfNewer = false) {
+  const meta = tx.objectStore("meta");
+  for (const id of new Set([run.preparation.preparationId, run.plan?.attemptId].filter((id): id is string => Boolean(id)))) {
+    meta.put({ key: runAliasKey(run.studentId, id), runKey: run.key });
+  }
+  const key = materialsKey(run.identity, run.preparation.assignmentId);
+  const request = meta.get(key);
+  request.onsuccess = () => {
+    const previous = request.result as MaterialReferences | undefined;
+    if (onlyIfNewer && previous && previous.updatedAt > run.clock.wallAt) return;
+    meta.put({ key, runKey: run.key, questionKeys: questionKeys(run.preparation.items.map(item => item.key)),
+      displayKeys: previous?.displayKeys ?? [], updatedAt: onlyIfNewer ? run.clock.wallAt : Date.now() });
+  };
+}
+
+let runReferencesReady: Promise<void> | null = null;
+/** Older v1 stores need one runs-only cursor pass. Never rewrite the runs. */
+function ensureRunReferences() {
+  if (!runReferencesReady) runReferencesReady = transaction<void>(["runs", "meta"], "readwrite", tx => {
+    const meta = tx.objectStore("meta"); const marker = meta.get(RUN_REFERENCES_READY);
+    marker.onsuccess = () => {
+      if (marker.result?.value) return;
+      const cursor = tx.objectStore("runs").openCursor();
+      cursor.onsuccess = () => {
+        if (!cursor.result) { meta.put({ key: RUN_REFERENCES_READY, value: true }); return; }
+        const run = cursor.result.value as LocalQuizRun;
+        if (run.preparation?.items && run.studentId && run.identity && run.clock) writeRunReferences(tx, run, true);
+        cursor.result.continue();
+      };
+    };
+  }).catch(error => { runReferencesReady = null; throw error; });
+  return runReferencesReady;
+}
+
+/** References are hints only. Each actual body still uses its original TTL/hash. */
+export async function knownLocalQuizAssignmentKeys(identity: string, assignmentId: string, now = Date.now()) {
+  await ensureRunReferences();
+  const reference = await read<MaterialReferences>("meta", materialsKey(identity, assignmentId));
+  if (!reference) return [];
+  return knownLocalQuizKeysFor([...(reference.questionKeys ?? []), ...(reference.displayKeys ?? [])], now);
+}
+export async function rememberLocalQuizMaterials(identity: string, assignmentId: string, keys: readonly string[]) {
+  const questions = questionKeys(keys), displays = displayKeys(keys);
+  await transaction<void>(["meta"], "readwrite", tx => {
+    const meta = tx.objectStore("meta"), key = materialsKey(identity, assignmentId), request = meta.get(key);
+    request.onsuccess = () => {
+      const previous = request.result as MaterialReferences | undefined;
+      meta.put({ ...previous, key, questionKeys: questions.length ? questions : previous?.questionKeys ?? [],
+        displayKeys: displayKeys([...displays, ...(previous?.displayKeys ?? [])]), updatedAt: Date.now() });
+    };
+  });
+}
 export async function findLocalQuizRun(attemptId: string, studentId: string) {
   const matches = (run: LocalQuizRun) => run.studentId === studentId && (run.plan?.attemptId ?? run.preparation.preparationId) === attemptId;
   const direct = await read<LocalQuizRun>("runs", attemptId);
   if (direct && matches(direct)) return direct;
-  return (await all<LocalQuizRun>("runs")).find(matches);
+  await ensureRunReferences();
+  const alias = await read<{ runKey: string }>("meta", runAliasKey(studentId, attemptId));
+  const linked = alias && await read<LocalQuizRun>("runs", alias.runKey);
+  return linked && matches(linked) ? linked : undefined;
 }
 export async function saveLocalQuizRun(run: LocalQuizRun, expectedRevision: number | null) {
-  return transaction<void>(["runs"], "readwrite", tx => {
+  return transaction<void>(["runs", "meta"], "readwrite", tx => {
     const store = tx.objectStore("runs"); const request = store.get(run.key);
     request.onsuccess = () => {
       const prior = request.result as LocalQuizRun | undefined;
@@ -130,12 +202,13 @@ export async function saveLocalQuizRun(run: LocalQuizRun, expectedRevision: numb
         tx.abort(); return;
       }
       store.put(run);
+      writeRunReferences(tx, run);
     };
   });
 }
 /** Evict only expired, unreferenced common material. Answers have no TTL/deletion path. */
-export async function pruneLocalQuizContents(now = Date.now()) {
-  await transaction<void>(["runs", "contents", "atoms"], "readwrite", tx => {
+export async function pruneLocalQuizContents(now = Date.now(), signal?: AbortSignal) {
+  await transaction<void>(["runs", "contents", "atoms", "meta"], "readwrite", tx => {
     const runs = tx.objectStore("runs").getAll(); const contents = tx.objectStore("contents").getAll(); const atoms = tx.objectStore("atoms").getAll();
     let count = 0;
     const ready = () => {
@@ -151,7 +224,14 @@ export async function pruneLocalQuizContents(now = Date.now()) {
       }
     };
     runs.onsuccess = ready; contents.onsuccess = ready; atoms.onsuccess = ready;
-  });
+    const references = tx.objectStore("meta").openCursor(IDBKeyRange.bound("assignment-materials:", "assignment-materials:\uffff"));
+    references.onsuccess = () => {
+      const cursor = references.result;
+      if (!cursor) return;
+      if (now - (cursor.value as MaterialReferences).updatedAt >= COMMON_QUIZ_FRESH_MS) cursor.delete();
+      cursor.continue();
+    };
+  }, signal);
 }
 export async function holdLocalQuizTab(key: string) {
   if (!navigator.locks) throw new Error("local_tab_lock_unavailable");

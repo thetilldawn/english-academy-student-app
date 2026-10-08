@@ -2,7 +2,8 @@ import { studentIdentityGeneration } from "@/features/session/public-client";
 import { z } from "zod";
 import { requestLocalQuiz } from "../../api/local-quiz";
 import { COMMON_QUIZ_FRESH_MS, commonQuizPacketSchema } from "../../contracts/local-quiz";
-import { cacheLocalQuizContents, knownLocalQuizContentKeys, knownLocalQuizKeysFor } from "./local-quiz-store";
+import { cacheLocalQuizContents, knownLocalQuizAssignmentKeys, knownLocalQuizKeysFor, rememberLocalQuizMaterials } from "./local-quiz-store";
+import { cancelLocalQuizMaintenance } from "./local-quiz-maintenance";
 
 type Task = {
   key: string; assignmentId: string; identity: string; controller: AbortController;
@@ -26,7 +27,7 @@ function drain() {
       check();
       const previous = completed.get(task.key);
       const age = previous ? Date.now() - previous.fetchedAt : Infinity;
-      const knownKeys = previous && age >= 0 && age < COMMON_QUIZ_FRESH_MS ? await knownLocalQuizKeysFor(previous.keys) : await knownLocalQuizContentKeys();
+      const knownKeys = previous && age >= 0 && age < COMMON_QUIZ_FRESH_MS ? await knownLocalQuizKeysFor(previous.keys) : await knownLocalQuizAssignmentKeys(task.identity, task.assignmentId);
       check();
       const known = new Set(knownKeys);
       if (previous && age >= 0 && age < COMMON_QUIZ_FRESH_MS && previous.keys.every(key => known.has(key))) return;
@@ -37,6 +38,8 @@ function drain() {
       await cacheLocalQuizContents({ contents: packet.contents, atoms: packet.atoms });
       check();
       if (packet.requiredKeys.length) {
+        await rememberLocalQuizMaterials(task.identity, task.assignmentId, packet.requiredKeys);
+        check();
         if (completed.size >= 64) completed.delete(completed.keys().next().value!);
         completed.set(task.key, { fetchedAt: Date.now(), keys: packet.requiredKeys });
       }
@@ -50,6 +53,7 @@ function drain() {
 /** At most two reads and six queued reads across every assignment card. */
 export async function prefetchLocalQuiz(assignmentId: string, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) return Promise.reject(cancelled());
+  cancelLocalQuizMaintenance();
   const identity = studentIdentityGeneration(); const key = identity + ":" + assignmentId;
   let task = tasks.get(key);
   if (!task || task.controller.signal.aborted) {

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { StudentShell, StudentShellPending } from "@/components/student-shell";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { StudentSessionRenewal } from "@/features/session/ui/student-session-renewal";
+import { LocalQuizCacheMaintenance } from "@/features/quiz-player/public-local-client";
 import { SessionLogoutBoundary } from "@/features/session/public-client";
 import {
   getStudentSession,
@@ -43,6 +44,7 @@ async function StudentProtectedShell({
         )}
       />
       <NotificationBootstrap role="student" />
+      <LocalQuizCacheMaintenance />
       <StudentShell
         displayName={student.displayName}
         gradeLabel={student.gradeLabel}

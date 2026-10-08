@@ -1,25 +1,70 @@
 {
-  "at": "2026-10-07T16:17:59.337Z",
+  "at": "2026-10-08T01:36:25.065Z",
   "browser": "151.0.7922.34",
-  "scope": "실제 준비/미리받기/IndexedDB 코드, HTTP만 가짜 응답. 운영 인증 화면 검사를 대신하지 않음.",
-  "result": {
-    "firstCommands": [
-      "prefetch",
-      "prepare"
-    ],
-    "sharedTransportAlive": true,
-    "cancelledName": "AbortError",
-    "href": "/quiz-offline#a5050000-0000-4000-8000-000000000002",
-    "contentReused": true,
-    "bodyCount": 0,
-    "atomCount": 0,
-    "answersPreserved": true,
-    "revisionPreserved": true,
-    "inventoryExcluded": true,
-    "directFound": true,
-    "directRunFound": true,
-    "fullStoreScans": 0,
-    "expiredExcluded": true,
-    "incompleteExcluded": true
+  "scope": "실제 준비·단어보기·IndexedDB, 가짜 3문항 HTTP. 구형 v1 최초 runs 순회는 별도 집계. 운영 인증 검사와 부하 시험이 아님.",
+  "results": {
+    "old1": {
+      "href": "/quiz-offline#a5050000-0000-4000-8000-000000000900",
+      "commands": [
+        "prepare"
+      ],
+      "packetBodies": 0,
+      "version": 1,
+      "scans": [],
+      "cursors": [
+        "runs"
+      ],
+      "cursorRows": [
+        "runs"
+      ],
+      "packetAtoms": 0,
+      "preserved": true
+    },
+    "old2": {
+      "href": "/quiz-offline#a5050000-0000-4000-8000-000000000900",
+      "commands": [
+        "prepare"
+      ],
+      "packetBodies": 0,
+      "version": 1,
+      "scans": [],
+      "cursors": [],
+      "cursorRows": [],
+      "packetAtoms": 0,
+      "preserved": true
+    },
+    "study1": {
+      "href": "/quiz-offline#a5050000-0000-4000-8000-000000000002",
+      "commands": [
+        "prepare"
+      ],
+      "packetBodies": 3,
+      "version": 1,
+      "scans": [],
+      "cursors": [],
+      "cursorRows": [],
+      "packetAtoms": 3,
+      "repeatedStudyAtoms": 0
+    },
+    "shared": {
+      "initialCommands": [
+        "prefetch",
+        "prepare"
+      ],
+      "sharedAlive": true,
+      "cancelledName": "AbortError",
+      "protectedCases": {
+        "answers": true,
+        "startRequested": true,
+        "batch": true,
+        "plan": true
+      },
+      "reclickRequests": 2,
+      "oldName": "AbortError",
+      "latePreserved": true,
+      "aliasSameStudent": true,
+      "expiredCount": 0,
+      "otherCount": 0
+    }
   }
 }

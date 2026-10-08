@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { cacheLocalQuizContents, knownLocalQuizContentKeys, readLocalDisplayAtoms, requestLocalQuiz } from "@/features/quiz-player/public-local-client";
+import { cacheLocalQuizContents, knownLocalQuizAssignmentKeys, rememberLocalQuizMaterials, readLocalDisplayAtoms, requestLocalQuiz } from "@/features/quiz-player/public-local-client";
 import { studentIdentityGeneration, subscribeStudentPrivateCacheChanges } from "@/features/session/public-client";
 import { studyResponseSchema, type OpenStudyAccess, type StudyManifest } from "../contracts/study-materials";
 import type { AssignmentStudy, LockedAssignmentStudy } from "../contracts/assignment-study";
@@ -39,7 +39,7 @@ export function useSharedStudy(initial: OpenStudyAccess) {
         let manifest = fresh ? cached.manifest : null;
         let atoms = manifest ? await readLocalDisplayAtoms(studyAtomKeys(manifest)) : new Map();
         if (!manifest || atoms.size !== studyAtomKeys(manifest).length) {
-          const response = studyResponseSchema.parse(await requestLocalQuiz({ action: "study", assignmentId: initial.assignmentId, knownKeys: await knownLocalQuizContentKeys() }, abort.signal));
+          const response = studyResponseSchema.parse(await requestLocalQuiz({ action: "study", assignmentId: initial.assignmentId, knownKeys: await knownLocalQuizAssignmentKeys(identity, initial.assignmentId) }, abort.signal));
           if (!alive || identity !== studentIdentityGeneration()) return;
           if ("locked" in response) { manifests.delete(cacheKey); setResult(null); setLocked(response.locked); return; }
           if (response.access.studentId !== initial.studentId || response.access.assignmentId !== initial.assignmentId || response.manifest.assignmentId !== initial.assignmentId) throw new Error("study_identity_mismatch");
@@ -51,6 +51,8 @@ export function useSharedStudy(initial: OpenStudyAccess) {
           manifests.set(`${identity}:${accessKey(response.access)}`, { manifest, fetchedAt: Date.now() });
         }
         const restored = unpackAssignmentStudy(manifest, atoms);
+        if (!alive || identity !== studentIdentityGeneration()) return;
+        await rememberLocalQuizMaterials(identity, initial.assignmentId, studyAtomKeys(manifest));
         if (alive && identity === studentIdentityGeneration()) { setResult({ key, study: restored }); setLocked(null); setError(""); }
       } catch { if (alive) setError("단어 자료를 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요."); }
     })();

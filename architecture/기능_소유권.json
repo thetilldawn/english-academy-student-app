@@ -7431,7 +7431,8 @@
           "src/features/student-dashboard/ui/start-attempt-button.tsx",
           "src/app/student/(protected)/@detail/(...)quiz-offline/loading.tsx",
           "src/features/quiz-player/ui/quiz-exit-dialog.tsx",
-          "src/features/quiz-player/public-local-client.ts"
+          "src/features/quiz-player/public-local-client.ts",
+          "src/features/quiz-player/client/components/local-quiz-cache-maintenance.tsx"
         ],
         "clientState": [
           "src/features/quiz-player/controller/use-quiz-player-controller.ts",
@@ -7456,7 +7457,8 @@
           "src/features/quiz-player/client/flows/local-quiz-screen.ts",
           "src/features/quiz-player/client/flows/local-quiz-clock-anchor.ts",
           "src/features/quiz-player/public-local-client.ts",
-          "src/features/quiz-player/client/flows/local-quiz-prefetch.ts"
+          "src/features/quiz-player/client/flows/local-quiz-prefetch.ts",
+          "src/features/quiz-player/client/flows/local-quiz-maintenance.ts"
         ],
         "application": [],
         "domain": [
@@ -7659,7 +7661,8 @@
           "src/lib/database/vocabulary-composition-questions.integration.test.ts",
           "src/lib/database/composition-assignment-hash-sharing.integration.test.ts",
           "scripts/verify-quiz-preparation-reuse.ts",
-          "test/e2e/authenticated/app-latency-repair.spec.ts"
+          "test/e2e/authenticated/app-latency-repair.spec.ts",
+          "src/features/quiz-player/client/flows/local-quiz-maintenance.test.ts"
         ]
       },
       "requiredImportEdges": [
