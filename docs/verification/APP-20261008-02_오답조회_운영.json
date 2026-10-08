@@ -1,0 +1,31 @@
+{
+  "work": "APP-20261008-02",
+  "date": "2026-10-08",
+  "kind": "read-only-query-repair",
+  "migration": "20261008015736_bound_notebook_active_assignment_reads.sql",
+  "sha256": "b8cf066bb422129b8b2854f77b8f3648a991fb18e82d2e0163484f7b81549410",
+  "versions": {
+    "preview": "20261008020432",
+    "production": "20261008020455"
+  },
+  "timingMs": {
+    "before": 4339.08,
+    "afterFirstRepair": 4093.59,
+    "afterBoundRead": 2428.95
+  },
+  "response": {
+    "hash": "ab773ff26f08bf2559e0f85b39997bec73e32450129b903f6256d7c77b98cb72",
+    "items": 11,
+    "wordCount": 538,
+    "wrongEventCount": 914,
+    "repeatedWordCount": 207
+  },
+  "functionRightsPreserved": true,
+  "previewProductionDefinitionsEqual": true,
+  "rowsWritten": 0,
+  "localDatabaseTests": {
+    "files": 2,
+    "passed": 13
+  },
+  "limit": "One production read before and after; query time only, not whole page or load/capacity benchmark."
+}

@@ -3192,6 +3192,11 @@
       "path": "supabase/migrations/20261008011927_reuse_notebook_meaning_reads.sql",
       "owner": "quiz-player",
       "flow": "student-wrong-word-read"
+    },
+    {
+      "path": "supabase/migrations/20261008015736_bound_notebook_active_assignment_reads.sql",
+      "owner": "quiz-player",
+      "flow": "student-wrong-word-read"
     }
   ],
   "features": [
@@ -8541,7 +8546,8 @@
           "supabase/migrations/20261002023003_return_vocab_state_conflicts_without_retries.sql",
           "supabase/migrations/20261002192000_migrate_historical_learning_sources.sql",
           "supabase/migrations/20261004083102_reuse_original_vocabulary_keys_in_selections.sql",
-          "supabase/migrations/20261008011927_reuse_notebook_meaning_reads.sql"
+          "supabase/migrations/20261008011927_reuse_notebook_meaning_reads.sql",
+          "supabase/migrations/20261008015736_bound_notebook_active_assignment_reads.sql"
         ],
         "cacheStreaming": [
           "src/app/api/student/wrong-words/route.ts",

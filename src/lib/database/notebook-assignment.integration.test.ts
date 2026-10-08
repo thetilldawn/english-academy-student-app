@@ -9,9 +9,13 @@ const practiceSettings={questionCount:4,englishToKoreanRatio:50 as const,timingM
 const settings={...practiceSettings,passingScore:80,retryEnabled:false,retryPassingScore:null};
 const voice={displayKo:'가짜발음',variantId:null,audioUrl:null,available:false};
 describe.sequential('교사 개인 오답 배정: 최종 SQL',()=>{
- let db:PGlite;
+ let db:PGlite,beforeActiveDefinition:string;
  beforeAll(async()=>{
-  db=await createFinalSchemaDatabase();
+  db=await createFinalSchemaDatabase({beforeMigration:async(database,name)=>{
+   if(name!=='20261008015736_bound_notebook_active_assignment_reads.sql')return;
+   beforeActiveDefinition=(await database.query<{body:string}>("select pg_get_functiondef('private.wrong_word_notebook_page_v3(uuid,uuid,text,text,bigint,timestamptz,text,integer,integer,text,integer,text,integer,text[])'::regprocedure) body")).rows[0].body;
+  }});
+  await db.exec(beforeActiveDefinition.replace('private.wrong_word_notebook_page_v3(','private.expected_notebook_before_active('));
   await db.exec(`begin;
     select set_config('request.jwt.claim.sub','${admin}',true);select set_config('request.jwt.claim.role','authenticated',true);
     insert into auth.users(id) values('${admin}');insert into admin_profiles(user_id,display_name,is_active) values('${admin}','가짜관리자',true);
@@ -152,6 +156,11 @@ describe.sequential('교사 개인 오답 배정: 최종 SQL',()=>{
   // isolated database while still checking the new view's service-role grant.
   await owner('alter role service_role bypassrls');
   expect(await rpc('get_student_wrong_word_notebook_page_v1',[student])).toBeTruthy();
+  // Compare the entire notebook response with the old UNION-based read while
+  // normal and notebook assignments, with and without dictionary IDs, coexist.
+  const [previous]=await owner<{value:unknown}>('select private.expected_notebook_before_active($1) value',[student]);
+  const [current]=await owner<{value:unknown}>('select private.wrong_word_notebook_page_v3($1) value',[student]);
+  expect(current.value).toEqual(previous.value);
   const started={run:await rpc<string>('create_quiz_attempt_from_bank',[student,saved.assignmentId])};
   const questions=await owner<{id:string;correct_choice_index:number;dictionary_id:string|null}>('select q.id,q.correct_choice_index,i.dictionary_id from quiz_questions q join private.assignment_question_word_identity_v1 i on i.assignment_question_id=q.assignment_question_id where q.attempt_id=$1 order by q.order_index',[started.run]);
   for(const q of questions){await owner("update quiz_attempts set current_question_started_at=clock_timestamp()-interval '20 seconds' where id=$1",[started.run]);await owner('select answer_quiz_question_v4($1,$2,$3,$4,$5::smallint,false)',[student,started.run,q.id,'initial',q.dictionary_id==='word:notebook-fake-1'?(q.correct_choice_index+1)%4:q.correct_choice_index]);}

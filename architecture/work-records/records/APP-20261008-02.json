@@ -626,6 +626,22 @@
       "flowIds": [
         "student-wrong-word-read"
       ]
+    },
+    {
+      "path": "supabase/migrations/20261008015736_bound_notebook_active_assignment_reads.sql",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-wrong-word-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/notebook-assignment.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-notebook-create"
+      ]
     }
   ],
   "requirements": [
